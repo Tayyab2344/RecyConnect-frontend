@@ -173,13 +173,13 @@ class _CompanyDashboardState extends State<CompanyDashboard> with TickerProvider
             duration: const Duration(milliseconds: 300), 
             curve: Curves.easeInOut),
         ),
-        DashboardCard(
+        const DashboardCard(
           title: 'Monthly Purchase',
           value: '1,850 kg',
           icon: Icons.trending_up,
           color: AppTheme.warningOrange,
         ),
-        DashboardCard(
+        const DashboardCard(
           title: 'Total Savings',
           value: 'PKR 8,420',
           icon: Icons.savings,

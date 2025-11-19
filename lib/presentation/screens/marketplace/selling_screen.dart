@@ -278,10 +278,10 @@ class _SellingScreenState extends State<SellingScreen> {
             const SizedBox(height: 12),
             Row(
               children: [
-                Icon(Icons.visibility, size: 16, color: AppTheme.textLight),
+                const Icon(Icons.visibility, size: 16, color: AppTheme.textLight),
                 Text(' ${listing['views']} views'),
                 const SizedBox(width: 16),
-                Icon(Icons.message, size: 16, color: AppTheme.textLight),
+                const Icon(Icons.message, size: 16, color: AppTheme.textLight),
                 Text(' ${listing['inquiries']} inquiries'),
                 const Spacer(),
                 if (isActive) ...[

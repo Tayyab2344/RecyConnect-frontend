@@ -159,7 +159,7 @@ class _IndividualDashboardState extends State<IndividualDashboard>
                   Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
+                      gradient: const LinearGradient(
                         colors: [
                           AppTheme.primaryGreen,
                           AppTheme.lightGreen,
@@ -306,7 +306,7 @@ class _IndividualDashboardState extends State<IndividualDashboard>
               title: 'Total Points',
               value: '1,250',
               icon: Icons.stars_rounded,
-              gradient: [Color(0xFFFF6B6B), Color(0xFFFF8E53)],
+              gradient: [const Color(0xFFFF6B6B), const Color(0xFFFF8E53)],
               trend: '+12%',
             ),
           ),
@@ -316,7 +316,7 @@ class _IndividualDashboardState extends State<IndividualDashboard>
               title: 'Your Rank',
               value: '#127',
               icon: Icons.emoji_events_rounded,
-              gradient: [Color(0xFF4E54C8), Color(0xFF8F94FB)],
+              gradient: [const Color(0xFF4E54C8), const Color(0xFF8F94FB)],
               trend: '↑ 5',
             ),
           ),
@@ -456,7 +456,7 @@ class _IndividualDashboardState extends State<IndividualDashboard>
                       'Buy Materials',
                       'Browse Items',
                       Icons.shopping_bag_rounded,
-                      [Color(0xFF667EEA), Color(0xFF764BA2)],
+                      [const Color(0xFF667EEA), const Color(0xFF764BA2)],
                       () => Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => const BuyingScreen()),
@@ -473,7 +473,7 @@ class _IndividualDashboardState extends State<IndividualDashboard>
                       'Sell Materials',
                       'List Items',
                       Icons.sell_rounded,
-                      [Color(0xFFF857A6), Color(0xFFFF5858)],
+                      [const Color(0xFFF857A6), const Color(0xFFFF5858)],
                       () => Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -487,7 +487,7 @@ class _IndividualDashboardState extends State<IndividualDashboard>
                       'Rewards',
                       'Redeem Points',
                       Icons.card_giftcard_rounded,
-                      [Color(0xFFFDC830), Color(0xFFF37335)],
+                      [const Color(0xFFFDC830), const Color(0xFFF37335)],
                       () => Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -615,7 +615,7 @@ class _IndividualDashboardState extends State<IndividualDashboard>
                   'Paper materials sold',
                   'Yesterday',
                   Icons.sell_rounded,
-                  Color(0xFFF857A6),
+                  const Color(0xFFF857A6),
                   'PKR 450',
                 ),
                 Divider(height: 1, color: Colors.grey.shade200),
@@ -623,7 +623,7 @@ class _IndividualDashboardState extends State<IndividualDashboard>
                   'Achievement unlocked',
                   '2 days ago',
                   Icons.emoji_events_rounded,
-                  Color(0xFFFDC830),
+                  const Color(0xFFFDC830),
                   'Eco Warrior',
                 ),
               ],
@@ -751,7 +751,7 @@ class _IndividualDashboardState extends State<IndividualDashboard>
         ),
         decoration: BoxDecoration(
           gradient: isSelected
-              ? LinearGradient(
+              ? const LinearGradient(
                   colors: [AppTheme.primaryGreen, AppTheme.lightGreen],
                 )
               : null,

@@ -35,6 +35,11 @@ class _RegistrationScreenState extends State<RegistrationScreen>
   File? _utilityImage;
   File? _ntnImage;
 
+  // Extracted document data (will be populated by backend OCR after OTP verification)
+  String? _extractedCnicNumber;
+  String? _extractedUtilityBillNumber;
+  String? _extractedNtnNumber;
+
   bool _isLoading = false;
   bool _obscurePassword = true;
   int _currentStep = 0;
@@ -162,6 +167,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
         setState(() {
           _utilityImage = File(image.path);
         });
+        await _onUtilityImageSelected(_utilityImage);
       }
     } catch (e) {
       _showSnackBar('Error picking image: $e', isError: true);
@@ -651,7 +657,8 @@ class _RegistrationScreenState extends State<RegistrationScreen>
           if (widget.role == 'warehouse' || widget.role == 'company') ...[
             _buildDocumentUploadCard(
               title: 'CNIC Verification',
-              description: 'Upload front side of your CNIC',
+              description:
+                  'Upload front side of your CNIC - Number will be extracted automatically',
               icon: Icons.credit_card_rounded,
               image: _cnicImage,
               onTap: _pickCnicImage,
@@ -670,24 +677,27 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                 child: Row(
                   children: [
                     const Icon(Icons.check_circle_rounded,
-                        color: AppTheme.primaryGreen),
+                        color: AppTheme.primaryGreen, size: 24),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            'CNIC Extracted',
+                            'CNIC Number Extracted',
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
                               color: AppTheme.textDark,
+                              fontSize: 14,
                             ),
                           ),
+                          const SizedBox(height: 4),
                           Text(
                             _cnicController.text,
                             style: const TextStyle(
-                              color: AppTheme.textLight,
-                              fontSize: 13,
+                              color: AppTheme.primaryGreen,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ],
@@ -710,7 +720,8 @@ class _RegistrationScreenState extends State<RegistrationScreen>
             const SizedBox(height: 20),
             _buildDocumentUploadCard(
               title: 'NTN Certificate',
-              description: 'National Tax Number certificate',
+              description:
+                  'National Tax Number certificate - Number will be extracted automatically',
               icon: Icons.account_balance_rounded,
               image: _ntnImage,
               onTap: _pickNtnImage,
@@ -729,24 +740,27 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                 child: Row(
                   children: [
                     const Icon(Icons.check_circle_rounded,
-                        color: AppTheme.primaryGreen),
+                        color: AppTheme.primaryGreen, size: 24),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            'NTN Extracted',
+                            'NTN Number Extracted',
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
                               color: AppTheme.textDark,
+                              fontSize: 14,
                             ),
                           ),
+                          const SizedBox(height: 4),
                           Text(
                             _ntnController.text,
                             style: const TextStyle(
-                              color: AppTheme.textLight,
-                              fontSize: 13,
+                              color: AppTheme.primaryGreen,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ],
@@ -885,6 +899,127 @@ class _RegistrationScreenState extends State<RegistrationScreen>
               _ntnController.text,
               Icons.receipt_long_rounded,
             ),
+
+          // Document Upload Status Section
+          if (_cnicImage != null ||
+              _utilityImage != null ||
+              _ntnImage != null) ...[
+            const SizedBox(height: 24),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryGreen.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(12),
+                border:
+                    Border.all(color: AppTheme.primaryGreen.withOpacity(0.2)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.auto_awesome,
+                        size: 22,
+                        color: AppTheme.primaryGreen,
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Automatic Document Processing',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.textDark,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Your documents will be automatically processed after email verification. Document numbers (CNIC, NTN, etc.) will be extracted using OCR and saved to your profile.',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: AppTheme.textLight,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  if (_cnicImage != null)
+                    _buildExtractedDataItem(
+                      'CNIC Document',
+                      '✓ Uploaded - Ready for processing',
+                      Icons.credit_card_rounded,
+                    ),
+                  if (_utilityImage != null)
+                    _buildExtractedDataItem(
+                      'Utility Bill',
+                      '✓ Uploaded - Ready for processing',
+                      Icons.receipt_long_rounded,
+                    ),
+                  if (_ntnImage != null)
+                    _buildExtractedDataItem(
+                      'NTN Certificate',
+                      '✓ Uploaded - Ready for processing',
+                      Icons.account_balance_rounded,
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExtractedDataItem(
+    String label,
+    String value,
+    IconData icon,
+  ) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryGreen.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 18, color: AppTheme.primaryGreen),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textLight,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textDark,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(Icons.check_circle, size: 20, color: AppTheme.primaryGreen),
         ],
       ),
     );
@@ -1076,15 +1211,17 @@ class _RegistrationScreenState extends State<RegistrationScreen>
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide(color: AppTheme.primaryGreen, width: 2),
+              borderSide:
+                  const BorderSide(color: AppTheme.primaryGreen, width: 2),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide(color: AppTheme.errorRed, width: 1.5),
+              borderSide:
+                  const BorderSide(color: AppTheme.errorRed, width: 1.5),
             ),
             focusedErrorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide(color: AppTheme.errorRed, width: 2),
+              borderSide: const BorderSide(color: AppTheme.errorRed, width: 2),
             ),
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
@@ -1106,7 +1243,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
               onPressed: () => setState(() => _currentStep--),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppTheme.primaryGreen,
-                side: BorderSide(color: AppTheme.primaryGreen, width: 2),
+                side: const BorderSide(color: AppTheme.primaryGreen, width: 2),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
@@ -1221,7 +1358,8 @@ class _RegistrationScreenState extends State<RegistrationScreen>
         }
         return _formKey.currentState?.validate() ?? false;
       case 1:
-        // Validate documents
+        // Validate documents - Only check if images are uploaded
+        // Numbers will be extracted automatically by backend OCR
         if (widget.role == 'warehouse' || widget.role == 'company') {
           if (_cnicImage == null) {
             _showSnackBar('Please upload CNIC document', isError: true);
@@ -1253,29 +1391,44 @@ class _RegistrationScreenState extends State<RegistrationScreen>
   }
 
   Future<void> _onCnicImageSelected(dynamic imageData) async {
-    setState(() => _cnicImage = imageData ?? File(''));
+    if (imageData == null) return;
 
-    // Show loading indicator
-    _showSnackBar('Extracting CNIC data...', isError: false);
+    setState(() => _cnicImage = imageData);
 
-    // Simulate OCR extraction
-    await Future.delayed(const Duration(seconds: 2));
-    setState(() => _cnicController.text = '12345-6789012-3');
+    // Show success message
+    _showSnackBar(
+        'CNIC uploaded! Number will be extracted automatically after verification.',
+        isError: false);
 
-    _showSnackBar('CNIC data extracted successfully!', isError: false);
+    // Note: OCR extraction happens on backend after OTP verification
+    // The extracted CNIC number will be stored in the user's profile
+  }
+
+  Future<void> _onUtilityImageSelected(dynamic imageData) async {
+    if (imageData == null) return;
+
+    setState(() => _utilityImage = imageData);
+
+    // Show success message
+    _showSnackBar(
+        'Utility bill uploaded! Will be processed after verification.',
+        isError: false);
+
+    // Note: OCR extraction happens on backend after OTP verification
   }
 
   Future<void> _onNtnImageSelected(dynamic imageData) async {
-    setState(() => _ntnImage = imageData ?? File(''));
+    if (imageData == null) return;
 
-    // Show loading indicator
-    _showSnackBar('Extracting NTN data...', isError: false);
+    setState(() => _ntnImage = imageData);
 
-    // Simulate OCR extraction
-    await Future.delayed(const Duration(seconds: 2));
-    setState(() => _ntnController.text = 'NTN-123456789');
+    // Show success message
+    _showSnackBar(
+        'NTN uploaded! Number will be extracted automatically after verification.',
+        isError: false);
 
-    _showSnackBar('NTN data extracted successfully!', isError: false);
+    // Note: OCR extraction happens on backend after OTP verification
+    // The extracted NTN number will be stored in the user's profile
   }
 
   Future<void> _handleRegister() async {

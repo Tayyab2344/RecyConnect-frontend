@@ -173,13 +173,13 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> with TickerProv
             duration: const Duration(milliseconds: 300), 
             curve: Curves.easeInOut),
         ),
-        DashboardCard(
+        const DashboardCard(
           title: 'Today\'s Collection',
           value: '340 kg',
           icon: Icons.today,
           color: AppTheme.warningOrange,
         ),
-        DashboardCard(
+        const DashboardCard(
           title: 'Total Revenue',
           value: 'PKR 15,240',
           icon: Icons.attach_money,
