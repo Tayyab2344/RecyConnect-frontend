@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:fl_chart/fl_chart.dart';
 import '../../../core/constants/admin_colors.dart';
+
+// Conditional import for web
+import 'admin_reports_export_stub.dart'
+    if (dart.library.html) 'admin_reports_export_web.dart' as export_helper;
 
 class AdminReportsScreen extends StatefulWidget {
   const AdminReportsScreen({super.key});
@@ -12,7 +17,6 @@ class AdminReportsScreen extends StatefulWidget {
 class _AdminReportsScreenState extends State<AdminReportsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  DateTimeRange? _selectedDateRange;
 
   // Dummy Data
   final List<double> monthlyRevenue = [45000, 52000, 48000, 58000, 63000, 65000];
@@ -84,14 +88,319 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
     super.dispose();
   }
 
-  void _showExportSnackbar() {
+  // ==================== EXPORT FUNCTIONALITY ====================
+
+  String _getTabName(int index) {
+    switch (index) {
+      case 0:
+        return 'Revenue Report';
+      case 1:
+        return 'Materials Report';
+      case 2:
+        return 'User Performance Report';
+      case 3:
+        return 'Collector Performance Report';
+      default:
+        return 'Report';
+    }
+  }
+
+  String _getFileName(int index) {
+    switch (index) {
+      case 0:
+        return 'revenue_report';
+      case 1:
+        return 'materials_report';
+      case 2:
+        return 'users_report';
+      case 3:
+        return 'collectors_report';
+      default:
+        return 'report';
+    }
+  }
+
+  Future<void> _showExportDialog() async {
+    String selectedFormat = 'text';
+
+    await showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AdminColors.primaryGreen.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.download_rounded,
+                    color: AdminColors.primaryGreen,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  'Export Report',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                  ),
+                ),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Show which report is being exported
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AdminColors.primaryGreen.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: AdminColors.primaryGreen.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.info_outline,
+                        size: 18,
+                        color: AdminColors.primaryGreen,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Exporting: ${_getTabName(_tabController.index)}',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AdminColors.primaryGreen,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                const Text(
+                  'Select format:',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    color: AdminColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // Format options
+                _buildFormatOption(
+                  icon: Icons.description_outlined,
+                  title: 'Text File (.txt)',
+                  subtitle: 'Plain text format',
+                  value: 'text',
+                  groupValue: selectedFormat,
+                  onChanged: (value) {
+                    setDialogState(() {
+                      selectedFormat = value!;
+                    });
+                  },
+                ),
+                const SizedBox(height: 8),
+                _buildFormatOption(
+                  icon: Icons.table_chart_outlined,
+                  title: 'CSV File (.csv)',
+                  subtitle: 'Spreadsheet compatible',
+                  value: 'csv',
+                  groupValue: selectedFormat,
+                  onChanged: (value) {
+                    setDialogState(() {
+                      selectedFormat = value!;
+                    });
+                  },
+                ),
+              ],
+            ),
+            actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                ),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(
+                    color: AdminColors.textSecondary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _exportData(selectedFormat);
+                },
+                icon: const Icon(Icons.download, size: 18),
+                label: const Text('Export'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AdminColors.primaryGreen,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildFormatOption({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required String value,
+    required String groupValue,
+    required ValueChanged<String?> onChanged,
+  }) {
+    final isSelected = value == groupValue;
+    return InkWell(
+      onTap: () => onChanged(value),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AdminColors.primaryGreen.withValues(alpha: 0.1)
+              : AdminColors.surfaceLight,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected
+                ? AdminColors.primaryGreen
+                : AdminColors.border,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              color: isSelected
+                  ? AdminColors.primaryGreen
+                  : AdminColors.textSecondary,
+              size: 24,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: isSelected
+                          ? AdminColors.primaryGreen
+                          : AdminColors.textPrimary,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AdminColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Radio<String>(
+              value: value,
+              groupValue: groupValue,
+              onChanged: onChanged,
+              activeColor: AdminColors.primaryGreen,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _exportData(String format) {
+    String data = '';
+    String filename = _getFileName(_tabController.index);
+    String extension = format == 'csv' ? '.csv' : '.txt';
+    String mimeType = format == 'csv' ? 'text/csv' : 'text/plain';
+
+    // Get data based on current tab
+    switch (_tabController.index) {
+      case 0:
+        data = format == 'csv' ? _generateRevenueCsv() : _generateRevenueReport();
+        break;
+      case 1:
+        data = format == 'csv' ? _generateMaterialsCsv() : _generateMaterialsReport();
+        break;
+      case 2:
+        data = format == 'csv' ? _generateUsersCsv() : _generateUsersReport();
+        break;
+      case 3:
+        data = format == 'csv' ? _generateCollectorsCsv() : _generateCollectorsReport();
+        break;
+    }
+
+    try {
+      if (kIsWeb) {
+        export_helper.downloadFile(data, '$filename$extension', mimeType);
+        _showExportSuccess();
+      } else {
+        // For mobile, show a message that file saving is not yet implemented
+        _showExportNotSupported();
+      }
+    } catch (e) {
+      _showExportError();
+    }
+  }
+
+  void _showExportSuccess() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.white),
+            SizedBox(width: 12),
+            Text('Report exported successfully!'),
+          ],
+        ),
+        backgroundColor: AdminColors.success,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
+  }
+
+  void _showExportNotSupported() {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: const Row(
           children: [
             Icon(Icons.info_outline, color: Colors.white),
             SizedBox(width: 12),
-            Text('Export feature coming soon!'),
+            Text('Export is currently only supported on web'),
           ],
         ),
         backgroundColor: AdminColors.accentBlue,
@@ -102,52 +411,245 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
     );
   }
 
-  Future<void> _showDateRangePicker() async {
-    final DateTimeRange? picked = await showDateRangePicker(
-      context: context,
-      firstDate: DateTime(2023),
-      lastDate: DateTime.now(),
-      initialDateRange: _selectedDateRange ??
-          DateTimeRange(
-            start: DateTime.now().subtract(const Duration(days: 30)),
-            end: DateTime.now(),
-          ),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AdminColors.primaryGreen,
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: AdminColors.textPrimary,
-            ),
-          ),
-          child: child!,
-        );
-      },
+  void _showExportError() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Row(
+          children: [
+            Icon(Icons.error_outline, color: Colors.white),
+            SizedBox(width: 12),
+            Text('Failed to export report'),
+          ],
+        ),
+        backgroundColor: AdminColors.error,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.all(16),
+      ),
     );
-    if (picked != null) {
-      setState(() {
-        _selectedDateRange = picked;
-      });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Date range selected: ${_formatDate(picked.start)} - ${_formatDate(picked.end)}',
-            ),
-            backgroundColor: AdminColors.primaryGreen,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            margin: const EdgeInsets.all(16),
-          ),
-        );
-      }
-    }
   }
 
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
+  // ==================== REPORT GENERATION - TEXT FORMAT ====================
+
+  String _generateRevenueReport() {
+    final now = DateTime.now();
+    final totalRevenue = revenueByMaterial.values.reduce((a, b) => a + b);
+
+    StringBuffer sb = StringBuffer();
+    sb.writeln('═══════════════════════════════════════════════════════════');
+    sb.writeln('                    REVENUE REPORT');
+    sb.writeln('═══════════════════════════════════════════════════════════');
+    sb.writeln('Generated: ${now.day}/${now.month}/${now.year} ${now.hour}:${now.minute.toString().padLeft(2, '0')}');
+    sb.writeln('');
+    sb.writeln('───────────────────────────────────────────────────────────');
+    sb.writeln('SUMMARY');
+    sb.writeln('───────────────────────────────────────────────────────────');
+    sb.writeln('Total Revenue:    Rs ${_formatNumber(totalRevenue)}');
+    sb.writeln('This Month:       Rs ${_formatNumber(monthlyRevenue.last.toInt())}');
+    sb.writeln('Daily Average:    Rs ${_formatNumber((monthlyRevenue.last / 30).toInt())}');
+    sb.writeln('');
+    sb.writeln('───────────────────────────────────────────────────────────');
+    sb.writeln('MONTHLY BREAKDOWN');
+    sb.writeln('───────────────────────────────────────────────────────────');
+    for (int i = 0; i < months.length; i++) {
+      sb.writeln('${months[i].padRight(15)} Rs ${_formatNumber(monthlyRevenue[i].toInt())}');
+    }
+    sb.writeln('');
+    sb.writeln('───────────────────────────────────────────────────────────');
+    sb.writeln('REVENUE BY MATERIAL');
+    sb.writeln('───────────────────────────────────────────────────────────');
+    revenueByMaterial.forEach((material, revenue) {
+      final percentage = (revenue / totalRevenue * 100).round();
+      sb.writeln('${material.padRight(15)} Rs ${_formatNumber(revenue).padRight(10)} ($percentage%)');
+    });
+    sb.writeln('');
+    sb.writeln('═══════════════════════════════════════════════════════════');
+    sb.writeln('                    END OF REPORT');
+    sb.writeln('═══════════════════════════════════════════════════════════');
+
+    return sb.toString();
+  }
+
+  String _generateMaterialsReport() {
+    final now = DateTime.now();
+    final totalWeight = collectionData.values.map((e) => e['weight'] as int).reduce((a, b) => a + b);
+    final totalRevenue = collectionData.values.map((e) => e['revenue'] as int).reduce((a, b) => a + b);
+
+    StringBuffer sb = StringBuffer();
+    sb.writeln('═══════════════════════════════════════════════════════════');
+    sb.writeln('              MATERIALS COLLECTION REPORT');
+    sb.writeln('═══════════════════════════════════════════════════════════');
+    sb.writeln('Generated: ${now.day}/${now.month}/${now.year} ${now.hour}:${now.minute.toString().padLeft(2, '0')}');
+    sb.writeln('');
+    sb.writeln('───────────────────────────────────────────────────────────');
+    sb.writeln('COLLECTION SUMMARY');
+    sb.writeln('───────────────────────────────────────────────────────────');
+    collectionData.forEach((material, data) {
+      sb.writeln('${material.padRight(12)} ${_formatNumber(data['weight'] as int).padRight(8)} kg   Rs ${_formatNumber(data['revenue'] as int).padRight(10)} (${data['percentage']}%)');
+    });
+    sb.writeln('');
+    sb.writeln('───────────────────────────────────────────────────────────');
+    sb.writeln('TOTALS');
+    sb.writeln('───────────────────────────────────────────────────────────');
+    sb.writeln('Total Collected:  ${_formatNumber(totalWeight)} kg');
+    sb.writeln('Total Revenue:    Rs ${_formatNumber(totalRevenue)}');
+    sb.writeln('');
+    sb.writeln('═══════════════════════════════════════════════════════════');
+    sb.writeln('                    END OF REPORT');
+    sb.writeln('═══════════════════════════════════════════════════════════');
+
+    return sb.toString();
+  }
+
+  String _generateUsersReport() {
+    final now = DateTime.now();
+
+    StringBuffer sb = StringBuffer();
+    sb.writeln('═══════════════════════════════════════════════════════════');
+    sb.writeln('              USER PERFORMANCE REPORT');
+    sb.writeln('═══════════════════════════════════════════════════════════');
+    sb.writeln('Generated: ${now.day}/${now.month}/${now.year} ${now.hour}:${now.minute.toString().padLeft(2, '0')}');
+    sb.writeln('');
+    sb.writeln('───────────────────────────────────────────────────────────');
+    sb.writeln('SUMMARY');
+    sb.writeln('───────────────────────────────────────────────────────────');
+    sb.writeln('Total Users:      1,234');
+    sb.writeln('Growth:           +12% this month');
+    sb.writeln('Top Seller:       ${topUsers[0]['name']} - Rs ${_formatNumber(topUsers[0]['sales'] as int)}');
+    sb.writeln('');
+    sb.writeln('───────────────────────────────────────────────────────────');
+    sb.writeln('USER TYPE DISTRIBUTION');
+    sb.writeln('───────────────────────────────────────────────────────────');
+    userTypeDistribution.forEach((type, count) {
+      sb.writeln('${type.padRight(15)} $count users');
+    });
+    sb.writeln('');
+    sb.writeln('───────────────────────────────────────────────────────────');
+    sb.writeln('TOP 10 USERS');
+    sb.writeln('───────────────────────────────────────────────────────────');
+    sb.writeln('Rank  Name                 Type         Sales       Purchases');
+    sb.writeln('────  ───────────────────  ───────────  ──────────  ──────────');
+    for (var user in topUsers) {
+      sb.writeln('${user['rank'].toString().padRight(6)}${(user['name'] as String).padRight(21)}${(user['type'] as String).padRight(13)}Rs ${_formatNumber(user['sales'] as int).padRight(8)}Rs ${_formatNumber(user['purchases'] as int)}');
+    }
+    sb.writeln('');
+    sb.writeln('═══════════════════════════════════════════════════════════');
+    sb.writeln('                    END OF REPORT');
+    sb.writeln('═══════════════════════════════════════════════════════════');
+
+    return sb.toString();
+  }
+
+  String _generateCollectorsReport() {
+    final now = DateTime.now();
+
+    StringBuffer sb = StringBuffer();
+    sb.writeln('═══════════════════════════════════════════════════════════');
+    sb.writeln('            COLLECTOR PERFORMANCE REPORT');
+    sb.writeln('═══════════════════════════════════════════════════════════');
+    sb.writeln('Generated: ${now.day}/${now.month}/${now.year} ${now.hour}:${now.minute.toString().padLeft(2, '0')}');
+    sb.writeln('');
+    sb.writeln('───────────────────────────────────────────────────────────');
+    sb.writeln('SUMMARY');
+    sb.writeln('───────────────────────────────────────────────────────────');
+    sb.writeln('Total Collectors: 87');
+    sb.writeln('Growth:           +5% this month');
+    sb.writeln('Top Performer:    ${topCollectors[0]['name']} - ${topCollectors[0]['pickups']} pickups');
+    sb.writeln('');
+    sb.writeln('───────────────────────────────────────────────────────────');
+    sb.writeln('RATING DISTRIBUTION');
+    sb.writeln('───────────────────────────────────────────────────────────');
+    collectorRatings.forEach((stars, count) {
+      sb.writeln('$stars Stars:        $count collectors');
+    });
+    sb.writeln('');
+    sb.writeln('───────────────────────────────────────────────────────────');
+    sb.writeln('TOP 10 COLLECTORS');
+    sb.writeln('───────────────────────────────────────────────────────────');
+    sb.writeln('Rank  Name                 Rating   Pickups   Performance');
+    sb.writeln('────  ───────────────────  ───────  ────────  ───────────');
+    for (var collector in topCollectors) {
+      sb.writeln('${collector['rank'].toString().padRight(6)}${(collector['name'] as String).padRight(21)}${collector['rating'].toString().padRight(9)}${collector['pickups'].toString().padRight(10)}${collector['performance']}%');
+    }
+    sb.writeln('');
+    sb.writeln('═══════════════════════════════════════════════════════════');
+    sb.writeln('                    END OF REPORT');
+    sb.writeln('═══════════════════════════════════════════════════════════');
+
+    return sb.toString();
+  }
+
+  // ==================== REPORT GENERATION - CSV FORMAT ====================
+
+  String _generateRevenueCsv() {
+    StringBuffer sb = StringBuffer();
+    sb.writeln('REVENUE REPORT');
+    sb.writeln('Generated,${DateTime.now().toIso8601String()}');
+    sb.writeln('');
+    sb.writeln('MONTHLY REVENUE');
+    sb.writeln('Month,Revenue (Rs)');
+    for (int i = 0; i < months.length; i++) {
+      sb.writeln('${months[i]},${monthlyRevenue[i].toInt()}');
+    }
+    sb.writeln('');
+    sb.writeln('REVENUE BY MATERIAL');
+    sb.writeln('Material,Revenue (Rs),Percentage');
+    final totalRevenue = revenueByMaterial.values.reduce((a, b) => a + b);
+    revenueByMaterial.forEach((material, revenue) {
+      final percentage = (revenue / totalRevenue * 100).round();
+      sb.writeln('$material,$revenue,$percentage%');
+    });
+    return sb.toString();
+  }
+
+  String _generateMaterialsCsv() {
+    StringBuffer sb = StringBuffer();
+    sb.writeln('MATERIALS COLLECTION REPORT');
+    sb.writeln('Generated,${DateTime.now().toIso8601String()}');
+    sb.writeln('');
+    sb.writeln('Material,Weight (kg),Revenue (Rs),Percentage');
+    collectionData.forEach((material, data) {
+      sb.writeln('$material,${data['weight']},${data['revenue']},${data['percentage']}%');
+    });
+    return sb.toString();
+  }
+
+  String _generateUsersCsv() {
+    StringBuffer sb = StringBuffer();
+    sb.writeln('USER PERFORMANCE REPORT');
+    sb.writeln('Generated,${DateTime.now().toIso8601String()}');
+    sb.writeln('');
+    sb.writeln('TOP USERS');
+    sb.writeln('Rank,Name,Type,Sales (Rs),Purchases (Rs)');
+    for (var user in topUsers) {
+      sb.writeln('${user['rank']},${user['name']},${user['type']},${user['sales']},${user['purchases']}');
+    }
+    sb.writeln('');
+    sb.writeln('USER TYPE DISTRIBUTION');
+    sb.writeln('Type,Count');
+    userTypeDistribution.forEach((type, count) {
+      sb.writeln('$type,$count');
+    });
+    return sb.toString();
+  }
+
+  String _generateCollectorsCsv() {
+    StringBuffer sb = StringBuffer();
+    sb.writeln('COLLECTOR PERFORMANCE REPORT');
+    sb.writeln('Generated,${DateTime.now().toIso8601String()}');
+    sb.writeln('');
+    sb.writeln('TOP COLLECTORS');
+    sb.writeln('Rank,Name,Rating,Pickups,Performance (%)');
+    for (var collector in topCollectors) {
+      sb.writeln('${collector['rank']},${collector['name']},${collector['rating']},${collector['pickups']},${collector['performance']}');
+    }
+    sb.writeln('');
+    sb.writeln('RATING DISTRIBUTION');
+    sb.writeln('Stars,Collectors');
+    collectorRatings.forEach((stars, count) {
+      sb.writeln('$stars,$count');
+    });
+    return sb.toString();
   }
 
   @override
@@ -166,14 +668,9 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
-            icon: const Icon(Icons.download, color: Colors.white),
-            onPressed: _showExportSnackbar,
+            icon: const Icon(Icons.download_rounded, color: Colors.white),
             tooltip: 'Export Report',
-          ),
-          IconButton(
-            icon: const Icon(Icons.calendar_today, color: Colors.white),
-            onPressed: _showDateRangePicker,
-            tooltip: 'Select Date Range',
+            onPressed: _showExportDialog,
           ),
         ],
         bottom: TabBar(
@@ -1108,16 +1605,6 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
           ),
           const SizedBox(width: 12),
           _buildSummaryCard(
-            icon: Icons.verified_user,
-            iconColor: AdminColors.primaryGreen,
-            iconBgColor: AdminColors.primaryGreen.withValues(alpha: 0.1),
-            label: 'Active Users',
-            value: '987',
-            trend: '80% active rate',
-            trendPositive: true,
-          ),
-          const SizedBox(width: 12),
-          _buildSummaryCard(
             icon: Icons.emoji_events,
             iconColor: AdminColors.accentOrange,
             iconBgColor: AdminColors.accentOrange.withValues(alpha: 0.1),
@@ -1450,16 +1937,6 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
             label: 'Total Collectors',
             value: '87',
             trend: '+5% this month',
-            trendPositive: true,
-          ),
-          const SizedBox(width: 12),
-          _buildSummaryCard(
-            icon: Icons.verified,
-            iconColor: AdminColors.primaryGreen,
-            iconBgColor: AdminColors.primaryGreen.withValues(alpha: 0.1),
-            label: 'Active Collectors',
-            value: '78',
-            trend: '90% active rate',
             trendPositive: true,
           ),
           const SizedBox(width: 12),
