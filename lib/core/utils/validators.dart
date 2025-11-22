@@ -172,4 +172,38 @@ class Validators {
 
     return null;
   }
+
+  // CNIC validation - Pakistani CNIC format: XXXXX-XXXXXXX-X
+  static String? cnic(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'CNIC is required';
+    }
+
+    // Remove any spaces
+    final cleanedValue = value.trim().replaceAll(' ', '');
+
+    // Check for standard CNIC format: 5 digits - 7 digits - 1 digit
+    if (!RegExp(r'^\d{5}-\d{7}-\d{1}$').hasMatch(cleanedValue)) {
+      return 'CNIC must be in format: XXXXX-XXXXXXX-X (e.g., 12345-1234567-1)';
+    }
+
+    return null;
+  }
+
+  // NTN validation - Pakistani NTN format
+  static String? ntn(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'NTN is required';
+    }
+
+    // Remove any spaces and dashes
+    final cleanedValue = value.trim().replaceAll(RegExp(r'[\s\-]'), '');
+
+    // NTN should be 7-10 digits
+    if (!RegExp(r'^\d{7,10}$').hasMatch(cleanedValue)) {
+      return 'NTN must be 7-10 digits';
+    }
+
+    return null;
+  }
 }

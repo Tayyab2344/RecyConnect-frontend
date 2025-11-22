@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/auth_service.dart';
+import '../../../core/services/ocr_service.dart';
 import '../../../core/utils/validators.dart';
 import 'otp_verification_screen.dart';
 
@@ -1227,6 +1228,12 @@ class _RegistrationScreenState extends State<RegistrationScreen>
             _showSnackBar('Please upload CNIC document', isError: true);
             return false;
           }
+          // Validate extracted CNIC format
+          final cnicError = Validators.cnic(_cnicController.text);
+          if (cnicError != null) {
+            _showSnackBar(cnicError, isError: true);
+            return false;
+          }
         }
         if (widget.role == 'company') {
           if (_utilityImage == null) {
@@ -1235,6 +1242,12 @@ class _RegistrationScreenState extends State<RegistrationScreen>
           }
           if (_ntnImage == null) {
             _showSnackBar('Please upload NTN certificate', isError: true);
+            return false;
+          }
+          // Validate extracted NTN format
+          final ntnError = Validators.ntn(_ntnController.text);
+          if (ntnError != null) {
+            _showSnackBar(ntnError, isError: true);
             return false;
           }
         }
@@ -1253,29 +1266,54 @@ class _RegistrationScreenState extends State<RegistrationScreen>
   }
 
   Future<void> _onCnicImageSelected(dynamic imageData) async {
-    setState(() => _cnicImage = imageData ?? File(''));
+    if (imageData == null) return;
+
+    setState(() => _cnicImage = imageData);
 
     // Show loading indicator
     _showSnackBar('Extracting CNIC data...', isError: false);
 
-    // Simulate OCR extraction
-    await Future.delayed(const Duration(seconds: 2));
-    setState(() => _cnicController.text = '12345-6789012-3');
+    try {
+      // Use real OCR extraction
+      final extractedData = await OcrService.extractCnicData(imageData);
 
-    _showSnackBar('CNIC data extracted successfully!', isError: false);
+      if (extractedData.containsKey('cnic') && extractedData['cnic']!.isNotEmpty) {
+        setState(() {
+          _cnicController.text = extractedData['cnic']!;
+          if (extractedData.containsKey('name') && _nameController.text.isEmpty) {
+            _nameController.text = extractedData['name']!;
+          }
+        });
+        _showSnackBar('CNIC data extracted successfully!', isError: false);
+      } else {
+        _showSnackBar('Could not extract CNIC number. Please enter manually.', isError: true);
+      }
+    } catch (e) {
+      _showSnackBar('OCR failed: ${e.toString()}. Please enter manually.', isError: true);
+    }
   }
 
   Future<void> _onNtnImageSelected(dynamic imageData) async {
-    setState(() => _ntnImage = imageData ?? File(''));
+    if (imageData == null) return;
+
+    setState(() => _ntnImage = imageData);
 
     // Show loading indicator
     _showSnackBar('Extracting NTN data...', isError: false);
 
-    // Simulate OCR extraction
-    await Future.delayed(const Duration(seconds: 2));
-    setState(() => _ntnController.text = 'NTN-123456789');
+    try {
+      // Use real OCR extraction
+      final extractedData = await OcrService.extractNtnData(imageData);
 
-    _showSnackBar('NTN data extracted successfully!', isError: false);
+      if (extractedData.containsKey('ntn') && extractedData['ntn']!.isNotEmpty) {
+        setState(() => _ntnController.text = extractedData['ntn']!);
+        _showSnackBar('NTN data extracted successfully!', isError: false);
+      } else {
+        _showSnackBar('Could not extract NTN number. Please enter manually.', isError: true);
+      }
+    } catch (e) {
+      _showSnackBar('OCR failed: ${e.toString()}. Please enter manually.', isError: true);
+    }
   }
 
   Future<void> _handleRegister() async {
@@ -1302,7 +1340,13 @@ class _RegistrationScreenState extends State<RegistrationScreen>
         userData['companyName'] = _companyNameController.text.trim();
       }
 
-      final response = await authService.register(userData);
+      final response = await authService.register(
+        userData,
+        profileImage: _profileImage,
+        cnicImage: _cnicImage,
+        utilityImage: _utilityImage,
+        ntnImage: _ntnImage,
+      );
 
       if (mounted) {
         if (response['success'] == true) {

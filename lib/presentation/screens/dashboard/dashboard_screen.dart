@@ -6,7 +6,7 @@ import 'individual_dashboard.dart';
 import 'warehouse_dashboard.dart';
 import 'company_dashboard.dart';
 import 'collector_dashboard.dart';
-import 'admin_dashboard.dart';
+import '../admin/admin_dashboard_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -27,7 +27,7 @@ class DashboardScreen extends StatelessWidget {
           case 'collector':
             return const CollectorDashboard();
           case 'admin':
-            return const AdminDashboard();
+            return const AdminDashboardScreen();
           default:
             return const IndividualDashboard();
         }

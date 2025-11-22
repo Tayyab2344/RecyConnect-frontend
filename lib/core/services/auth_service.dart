@@ -74,17 +74,143 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-  Future<Map<String, dynamic>> register(Map<String, dynamic> userData) async {
+  Future<Map<String, dynamic>> register(Map<String, dynamic> userData, {
+    File? profileImage,
+    File? cnicImage,
+    File? utilityImage,
+    File? ntnImage,
+    List<File>? extraDocs,
+  }) async {
     try {
       _setLoading(true);
       _setError(null);
 
-      final response = await http.post(
+      var request = http.MultipartRequest(
+        'POST',
         Uri.parse('$baseUrl/auth/register'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(userData),
       );
 
+      // Add text fields from userData
+      userData.forEach((key, value) {
+        if (value != null) {
+          request.fields[key] = value.toString();
+        }
+      });
+
+      // Add profile image if provided
+      if (profileImage != null) {
+        try {
+          final bytes = await profileImage.readAsBytes();
+          final filename = profileImage.path.split(Platform.pathSeparator).last;
+          request.files.add(
+            http.MultipartFile.fromBytes(
+              'profileImage',
+              bytes,
+              filename: filename,
+            ),
+          );
+        } catch (e) {
+          _setError('Error reading profile image: ${e.toString()}');
+          _setLoading(false);
+          return {
+            'success': false,
+            'message': 'Error reading profile image: ${e.toString()}'
+          };
+        }
+      }
+
+      // Add CNIC image if provided
+      if (cnicImage != null) {
+        try {
+          final bytes = await cnicImage.readAsBytes();
+          final filename = cnicImage.path.split(Platform.pathSeparator).last;
+          request.files.add(
+            http.MultipartFile.fromBytes(
+              'cnic',
+              bytes,
+              filename: filename,
+            ),
+          );
+        } catch (e) {
+          _setError('Error reading CNIC image: ${e.toString()}');
+          _setLoading(false);
+          return {
+            'success': false,
+            'message': 'Error reading CNIC image: ${e.toString()}'
+          };
+        }
+      }
+
+      // Add utility bill image if provided
+      if (utilityImage != null) {
+        try {
+          final bytes = await utilityImage.readAsBytes();
+          final filename = utilityImage.path.split(Platform.pathSeparator).last;
+          request.files.add(
+            http.MultipartFile.fromBytes(
+              'utility',
+              bytes,
+              filename: filename,
+            ),
+          );
+        } catch (e) {
+          _setError('Error reading utility bill: ${e.toString()}');
+          _setLoading(false);
+          return {
+            'success': false,
+            'message': 'Error reading utility bill: ${e.toString()}'
+          };
+        }
+      }
+
+      // Add NTN document if provided
+      if (ntnImage != null) {
+        try {
+          final bytes = await ntnImage.readAsBytes();
+          final filename = ntnImage.path.split(Platform.pathSeparator).last;
+          request.files.add(
+            http.MultipartFile.fromBytes(
+              'ntn',
+              bytes,
+              filename: filename,
+            ),
+          );
+        } catch (e) {
+          _setError('Error reading NTN document: ${e.toString()}');
+          _setLoading(false);
+          return {
+            'success': false,
+            'message': 'Error reading NTN document: ${e.toString()}'
+          };
+        }
+      }
+
+      // Add extra documents if provided
+      if (extraDocs != null && extraDocs.isNotEmpty) {
+        for (var doc in extraDocs) {
+          try {
+            final bytes = await doc.readAsBytes();
+            final filename = doc.path.split(Platform.pathSeparator).last;
+            request.files.add(
+              http.MultipartFile.fromBytes(
+                'extraDocs',
+                bytes,
+                filename: filename,
+              ),
+            );
+          } catch (e) {
+            _setError('Error reading extra document: ${e.toString()}');
+            _setLoading(false);
+            return {
+              'success': false,
+              'message': 'Error reading extra document: ${e.toString()}'
+            };
+          }
+        }
+      }
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 201) {

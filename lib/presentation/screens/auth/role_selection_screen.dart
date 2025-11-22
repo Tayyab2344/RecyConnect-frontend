@@ -149,12 +149,13 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 32.0),
                           child: Column(
+                            mainAxisSize: MainAxisSize.min,
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               // Animated Icon
                               Container(
-                                width: 100,
-                                height: 100,
+                                width: 80,
+                                height: 80,
                                 decoration: BoxDecoration(
                                   gradient: LinearGradient(
                                     begin: Alignment.topLeft,
@@ -176,11 +177,11 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
                                 ),
                                 child: const Icon(
                                   Icons.recycling_rounded,
-                                  size: 50,
+                                  size: 40,
                                   color: Colors.white,
                                 ),
                               ),
-                              const SizedBox(height: 24),
+                              const SizedBox(height: 16),
 
                               // Title
                               ShaderMask(
@@ -193,7 +194,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
                                 child: const Text(
                                   'Welcome to RecycleHub',
                                   style: TextStyle(
-                                    fontSize: 32,
+                                    fontSize: 28,
                                     fontWeight: FontWeight.bold,
                                     color: Colors.white,
                                     letterSpacing: -0.5,
@@ -201,15 +202,15 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
                                   textAlign: TextAlign.center,
                                 ),
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 8),
 
                               // Subtitle
                               Text(
                                 'Choose your role to start making\na positive environmental impact',
                                 style: TextStyle(
-                                  fontSize: 16,
+                                  fontSize: 14,
                                   color: Colors.grey.shade600,
-                                  height: 1.5,
+                                  height: 1.4,
                                 ),
                                 textAlign: TextAlign.center,
                               ),

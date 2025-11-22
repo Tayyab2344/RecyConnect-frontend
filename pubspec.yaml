@@ -28,6 +28,15 @@ dependencies:
   # UI & Icons
   cupertino_icons: ^1.0.6
 
+  # Charts & Graphs
+  fl_chart: ^0.69.0
+
+  # Fonts
+  google_fonts: ^6.2.1
+
+  # SVG Icons
+  flutter_svg: ^2.0.10
+
   # File handling
   path_provider: ^2.1.1
 
