@@ -5,7 +5,7 @@ import '../../screens/admin/admin_users_screen.dart';
 import '../../screens/admin/admin_collectors_screen.dart';
 import '../../screens/admin/admin_orders_screen.dart';
 import '../../screens/admin/admin_pricing_screen.dart';
-import '../../screens/admin/admin_logs_screen.dart';
+import '../../screens/admin/admin_activities_screen.dart';
 import '../../screens/admin/admin_reports_screen.dart';
 import '../../screens/admin/admin_notifications_screen.dart';
 import '../../screens/admin/admin_settings_screen.dart';
@@ -164,7 +164,7 @@ class _AdminDrawerState extends State<AdminDrawer> {
                   icon: Icons.history,
                   title: 'Activity Logs',
                   route: 'logs',
-                  screen: const AdminLogsScreen(),
+                  screen: const AdminActivitiesScreen(),
                 ),
                 _buildMenuItem(
                   icon: Icons.bar_chart,
