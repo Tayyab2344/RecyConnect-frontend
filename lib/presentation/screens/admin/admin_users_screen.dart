@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/admin_colors.dart';
+import '../../../core/constants/modern_colors.dart';
 import '../../widgets/admin/admin_drawer.dart';
 import 'admin_user_profile_screen.dart';
 
@@ -1014,46 +1015,61 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
 
   Widget _buildUserCard(Map<String, dynamic> user) {
     final isSuspended = user['isSuspended'] ?? false;
+    final typeColor = _getUserTypeColor(user['type']);
 
-    return Opacity(
-      opacity: isSuspended ? 0.6 : 1.0,
+    return TweenAnimationBuilder<double>(
+      duration: const Duration(milliseconds: 300),
+      tween: Tween(begin: 0, end: 1),
+      builder: (context, value, child) {
+        return Opacity(
+          opacity: value * (isSuspended ? 0.7 : 1.0),
+          child: Transform.translate(
+            offset: Offset(0, 15 * (1 - value)),
+            child: child,
+          ),
+        );
+      },
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
+        margin: const EdgeInsets.only(bottom: 14),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AdminColors.cardBackground,
-          borderRadius: BorderRadius.circular(12),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
           border: isSuspended
               ? Border.all(color: Colors.red.withOpacity(0.3), width: 1.5)
-              : null,
-          boxShadow: [
-            BoxShadow(
-              color: AdminColors.shadow.withOpacity(0.08),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+              : Border.all(color: Colors.grey.withOpacity(0.1), width: 1),
+          boxShadow: ModernColors.softShadow,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                // Avatar
+                // Modern Avatar with gradient border
                 Container(
-                  width: 50,
-                  height: 50,
+                  padding: const EdgeInsets.all(2),
                   decoration: BoxDecoration(
-                    color: _getUserTypeColor(user['type']).withOpacity(0.1),
+                    gradient: LinearGradient(
+                      colors: [typeColor, typeColor.withOpacity(0.6)],
+                    ),
                     shape: BoxShape.circle,
                   ),
-                  child: Center(
-                    child: Text(
-                      user['initials'],
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: _getUserTypeColor(user['type']),
+                  child: Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: typeColor.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    child: Center(
+                      child: Text(
+                        user['initials'],
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: typeColor,
+                        ),
                       ),
                     ),
                   ),
@@ -1221,45 +1237,64 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
           ),
           const SizedBox(height: 12),
 
-          // View Profile Button
-          SizedBox(
+          // Modern View Profile Button with gradient
+          Container(
             width: double.infinity,
-            child: TextButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => AdminUserProfileScreen(
-                      userId: user['email'], // Using email as temporary ID
-                      userName: user['name'],
-                      userType: user['type'],
-                    ),
-                  ),
-                );
-              },
-              style: TextButton.styleFrom(
-                foregroundColor: AdminColors.primaryGreen,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  side: const BorderSide(
-                    color: AdminColors.primaryGreen,
-                    width: 1.5,
-                  ),
+            decoration: BoxDecoration(
+              gradient: ModernColors.primaryGradient,
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: AdminColors.primaryGreen.withOpacity(0.3),
+                  offset: const Offset(0, 4),
+                  blurRadius: 12,
                 ),
-              ),
-              child: const Text(
-                'View Profile',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    PageRouteBuilder(
+                      pageBuilder: (context, animation, secondaryAnimation) =>
+                        AdminUserProfileScreen(
+                          userId: user['email'],
+                          userName: user['name'],
+                          userType: user['type'],
+                        ),
+                      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                        return FadeTransition(opacity: animation, child: child);
+                      },
+                    ),
+                  );
+                },
+                borderRadius: BorderRadius.circular(10),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.person_outline, color: Colors.white, size: 18),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'View Profile',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
         ],
       ),
-    ),
+      ),
     );
   }
 

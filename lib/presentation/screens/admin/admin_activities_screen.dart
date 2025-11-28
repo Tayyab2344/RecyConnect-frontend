@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/admin_colors.dart';
+import '../../../core/constants/modern_colors.dart';
+import '../../widgets/admin/admin_drawer.dart';
 
 // Admin Activity Model
 class AdminActivity {
@@ -1185,22 +1187,23 @@ class _AdminActivitiesScreenState extends State<AdminActivitiesScreen>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: AdminColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Activity Logs',
           style: TextStyle(
-            color: AdminColors.textWhite,
+            color: theme.appBarTheme.foregroundColor,
             fontWeight: FontWeight.bold,
           ),
         ),
-        backgroundColor: AdminColors.primaryGreen,
+        backgroundColor: theme.appBarTheme.backgroundColor,
         elevation: 0,
-        iconTheme: const IconThemeData(color: AdminColors.textWhite),
+        iconTheme: IconThemeData(color: theme.appBarTheme.foregroundColor),
         actions: [
           PopupMenuButton<String>(
-            icon: const Icon(Icons.filter_list, color: AdminColors.textWhite),
+            icon: Icon(Icons.filter_list, color: theme.appBarTheme.foregroundColor),
             onSelected: (value) {
               // Handle quick filter selection
             },
@@ -1276,6 +1279,7 @@ class _AdminActivitiesScreenState extends State<AdminActivitiesScreen>
           ],
         ),
       ),
+      drawer: const AdminDrawer(currentRoute: 'logs'),
       body: TabBarView(
         controller: _mainTabController,
         children: [

@@ -1,44 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/admin_colors.dart';
+import '../../../core/constants/modern_colors.dart';
 import '../../widgets/admin/admin_drawer.dart';
 
 // Data model for material pricing
 class MaterialPricing {
-  final String material;
+  final String id;
+  final String name;
   final IconData icon;
   final Color color;
-  int buyingPrice;
-  int sellingPrice;
+  int minPrice;
+  int maxPrice;
   DateTime lastUpdated;
 
-  // Default values for reset
-  final int defaultBuyingPrice;
-  final int defaultSellingPrice;
-
   MaterialPricing({
-    required this.material,
+    required this.id,
+    required this.name,
     required this.icon,
     required this.color,
-    required this.buyingPrice,
-    required this.sellingPrice,
+    required this.minPrice,
+    required this.maxPrice,
     required this.lastUpdated,
-    required this.defaultBuyingPrice,
-    required this.defaultSellingPrice,
   });
 
-  int get profitMargin => sellingPrice - buyingPrice;
+  bool get isValid => minPrice > 0 && maxPrice > minPrice;
 
-  double get profitPercentage =>
-      buyingPrice > 0 ? ((sellingPrice - buyingPrice) / buyingPrice * 100) : 0;
-
-  bool get isValid => buyingPrice > 0 && sellingPrice > buyingPrice;
-
-  void resetToDefaults() {
-    buyingPrice = defaultBuyingPrice;
-    sellingPrice = defaultSellingPrice;
-    lastUpdated = DateTime.now();
-  }
+  String get priceRange => '$minPrice - $maxPrice PKR/kg';
 }
 
 class AdminPricingScreen extends StatefulWidget {
@@ -49,155 +37,118 @@ class AdminPricingScreen extends StatefulWidget {
 }
 
 class _AdminPricingScreenState extends State<AdminPricingScreen> {
-  late List<MaterialPricing> pricingData;
-  late List<TextEditingController> buyingControllers;
-  late List<TextEditingController> sellingControllers;
+  late List<MaterialPricing> materials;
+  late List<TextEditingController> minControllers;
+  late List<TextEditingController> maxControllers;
   bool _isSaving = false;
-  bool _hasChanges = false;
 
   @override
   void initState() {
     super.initState();
-    _initializePricingData();
+    _initializeMaterials();
     _initializeControllers();
   }
 
-  void _initializePricingData() {
-    pricingData = [
+  void _initializeMaterials() {
+    materials = [
       MaterialPricing(
-        material: 'Plastic',
+        id: '1',
+        name: 'Plastic',
         icon: Icons.water_drop,
         color: const Color(0xFF3B82F6),
-        buyingPrice: 100,
-        sellingPrice: 120,
-        lastUpdated: DateTime.now().subtract(const Duration(days: 5)),
-        defaultBuyingPrice: 100,
-        defaultSellingPrice: 120,
+        minPrice: 80,
+        maxPrice: 120,
+        lastUpdated: DateTime.now().subtract(const Duration(days: 2)),
       ),
       MaterialPricing(
-        material: 'Paper',
+        id: '2',
+        name: 'Paper',
         icon: Icons.description,
         color: const Color(0xFF10B981),
-        buyingPrice: 50,
-        sellingPrice: 65,
-        lastUpdated: DateTime.now().subtract(const Duration(days: 3)),
-        defaultBuyingPrice: 50,
-        defaultSellingPrice: 65,
+        minPrice: 40,
+        maxPrice: 60,
+        lastUpdated: DateTime.now().subtract(const Duration(days: 1)),
       ),
       MaterialPricing(
-        material: 'Metal',
+        id: '3',
+        name: 'Metal',
         icon: Icons.build,
         color: const Color(0xFFF59E0B),
-        buyingPrice: 150,
-        sellingPrice: 180,
-        lastUpdated: DateTime.now().subtract(const Duration(days: 7)),
-        defaultBuyingPrice: 150,
-        defaultSellingPrice: 180,
+        minPrice: 140,
+        maxPrice: 180,
+        lastUpdated: DateTime.now().subtract(const Duration(days: 3)),
       ),
       MaterialPricing(
-        material: 'E-Waste',
+        id: '4',
+        name: 'E-Waste',
         icon: Icons.devices,
         color: const Color(0xFF8B5CF6),
-        buyingPrice: 200,
-        sellingPrice: 240,
-        lastUpdated: DateTime.now().subtract(const Duration(days: 10)),
-        defaultBuyingPrice: 200,
-        defaultSellingPrice: 240,
+        minPrice: 180,
+        maxPrice: 240,
+        lastUpdated: DateTime.now().subtract(const Duration(days: 5)),
       ),
     ];
   }
 
   void _initializeControllers() {
-    buyingControllers = pricingData
-        .map((p) => TextEditingController(text: p.buyingPrice.toString()))
+    minControllers = materials
+        .map((m) => TextEditingController(text: m.minPrice.toString()))
         .toList();
-    sellingControllers = pricingData
-        .map((p) => TextEditingController(text: p.sellingPrice.toString()))
+    maxControllers = materials
+        .map((m) => TextEditingController(text: m.maxPrice.toString()))
         .toList();
   }
 
   @override
   void dispose() {
-    for (var controller in buyingControllers) {
+    for (var controller in minControllers) {
       controller.dispose();
     }
-    for (var controller in sellingControllers) {
+    for (var controller in maxControllers) {
       controller.dispose();
     }
     super.dispose();
   }
 
-  bool get _allValid => pricingData.every((p) => p.isValid);
-
-  String? _getBuyingError(int index) {
-    final price = pricingData[index].buyingPrice;
-    if (price <= 0) {
-      return 'Price must be greater than 0';
-    }
-    return null;
-  }
-
-  String? _getSellingError(int index) {
-    final buying = pricingData[index].buyingPrice;
-    final selling = pricingData[index].sellingPrice;
-    if (selling <= 0) {
-      return 'Price must be greater than 0';
-    }
-    if (selling <= buying) {
-      return 'Must be greater than buying price';
-    }
-    return null;
-  }
-
-  void _onBuyingPriceChanged(int index, String value) {
+  void _onMinPriceChanged(int index, String value) {
     final parsed = int.tryParse(value) ?? 0;
     setState(() {
-      pricingData[index].buyingPrice = parsed;
-      _hasChanges = true;
+      materials[index].minPrice = parsed;
     });
   }
 
-  void _onSellingPriceChanged(int index, String value) {
+  void _onMaxPriceChanged(int index, String value) {
     final parsed = int.tryParse(value) ?? 0;
     setState(() {
-      pricingData[index].sellingPrice = parsed;
-      _hasChanges = true;
+      materials[index].maxPrice = parsed;
     });
   }
 
   Future<void> _saveAllPrices() async {
-    if (!_allValid) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Row(
-            children: [
-              Icon(Icons.error_outline, color: Colors.white),
-              SizedBox(width: 12),
-              Text('Please fix errors before saving'),
-            ],
-          ),
-          backgroundColor: AdminColors.error,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
-      );
-      return;
+    // Validate all materials
+    for (var material in materials) {
+      if (material.minPrice <= 0) {
+        _showError('${material.name}: Min price must be greater than 0');
+        return;
+      }
+      if (material.maxPrice <= material.minPrice) {
+        _showError('${material.name}: Max price must be greater than min price');
+        return;
+      }
     }
 
     setState(() => _isSaving = true);
 
     // Simulate API call
-    await Future.delayed(const Duration(seconds: 2));
+    await Future.delayed(const Duration(seconds: 1));
 
     // Update timestamps
     final now = DateTime.now();
-    for (var pricing in pricingData) {
-      pricing.lastUpdated = now;
-    }
-
     setState(() {
+      for (var material in materials) {
+        material.lastUpdated = now;
+      }
       _isSaving = false;
-      _hasChanges = false;
     });
 
     if (mounted) {
@@ -210,7 +161,7 @@ class _AdminPricingScreenState extends State<AdminPricingScreen> {
               Text('Prices updated successfully!'),
             ],
           ),
-          backgroundColor: AdminColors.success,
+          backgroundColor: Colors.green,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
@@ -218,98 +169,57 @@ class _AdminPricingScreenState extends State<AdminPricingScreen> {
     }
   }
 
-  void _showResetConfirmation() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
-          children: [
-            Icon(Icons.warning_amber_rounded, color: AdminColors.warning, size: 28),
-            SizedBox(width: 12),
-            Text('Reset Prices?'),
-          ],
-        ),
-        content: const Text(
-          'Are you sure you want to reset all prices to default values? This cannot be undone.',
-          style: TextStyle(color: AdminColors.textSecondary),
-        ),
-        actions: [
-          OutlinedButton(
-            onPressed: () => Navigator.pop(context),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AdminColors.textSecondary,
-              side: const BorderSide(color: AdminColors.border),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _resetToDefaults();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AdminColors.warning,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: const Text('Reset'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _resetToDefaults() {
-    setState(() {
-      for (int i = 0; i < pricingData.length; i++) {
-        pricingData[i].resetToDefaults();
-        buyingControllers[i].text = pricingData[i].buyingPrice.toString();
-        sellingControllers[i].text = pricingData[i].sellingPrice.toString();
-      }
-      _hasChanges = true;
-    });
-
+  void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Row(
+        content: Row(
           children: [
-            Icon(Icons.refresh, color: Colors.white),
-            SizedBox(width: 12),
-            Text('Prices reset to defaults'),
+            const Icon(Icons.error_outline, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(child: Text(message)),
           ],
         ),
-        backgroundColor: AdminColors.info,
+        backgroundColor: Colors.red,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }
 
-  String _formatDate(DateTime date) {
-    return DateFormat('MMM dd, yyyy - hh:mm a').format(date);
+  String _getLastUpdatedText(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inDays == 0) {
+      if (difference.inHours == 0) {
+        return 'Just now';
+      }
+      return '${difference.inHours} hours ago';
+    } else if (difference.inDays == 1) {
+      return 'Yesterday';
+    } else {
+      return '${difference.inDays} days ago';
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final today = DateFormat('MMMM dd, yyyy').format(DateTime.now());
+
     return Scaffold(
-      backgroundColor: AdminColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Pricing Management',
           style: TextStyle(
-            color: AdminColors.textWhite,
+            color: theme.appBarTheme.foregroundColor,
             fontWeight: FontWeight.w600,
           ),
         ),
-        backgroundColor: AdminColors.primaryGreen,
+        backgroundColor: theme.appBarTheme.backgroundColor,
         elevation: 0,
-        iconTheme: const IconThemeData(color: AdminColors.textWhite),
+        iconTheme: IconThemeData(color: theme.appBarTheme.foregroundColor),
         actions: [
           if (_isSaving)
             const Center(
@@ -328,72 +238,70 @@ class _AdminPricingScreenState extends State<AdminPricingScreen> {
           else
             IconButton(
               icon: const Icon(Icons.save),
-              onPressed: _hasChanges ? _saveAllPrices : null,
+              onPressed: _saveAllPrices,
               tooltip: 'Save All Changes',
             ),
         ],
       ),
-      drawer: const AdminDrawer(currentRoute: '/admin/pricing'),
+      drawer: const AdminDrawer(currentRoute: 'pricing'),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Page Header
-            _buildPageHeader(),
-            const SizedBox(height: 20),
+            _buildPageHeader(theme, today),
+            const SizedBox(height: 16),
 
-            // Info Card
-            _buildInfoCard(),
+            // Info Banner
+            _buildInfoBanner(theme),
             const SizedBox(height: 24),
 
             // Material Price Cards
-            ..._buildPricingCards(),
+            ...List.generate(materials.length, (index) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: _buildMaterialCard(theme, index),
+              );
+            }),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showResetConfirmation,
-        backgroundColor: AdminColors.warning,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.refresh),
-        label: const Text('Reset to Defaults'),
       ),
     );
   }
 
-  Widget _buildPageHeader() {
+  Widget _buildPageHeader(ThemeData theme, String today) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Material Pricing',
+        Text(
+          "Today's Material Prices",
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
-            color: AdminColors.textPrimary,
+            color: theme.textTheme.bodyLarge?.color,
           ),
         ),
         const SizedBox(height: 4),
         Text(
-          'Set buying and selling prices for waste materials',
+          'Set estimated price ranges for waste materials',
           style: TextStyle(
             fontSize: 14,
-            color: AdminColors.textSecondary.withValues(alpha: 0.8),
+            color: theme.textTheme.bodyMedium?.color,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildInfoCard() {
+  Widget _buildInfoBanner(ThemeData theme) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AdminColors.info.withValues(alpha: 0.1),
+        color: theme.colorScheme.primary.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AdminColors.info.withValues(alpha: 0.3),
+          color: theme.colorScheme.primary.withValues(alpha: 0.3),
         ),
       ),
       child: Row(
@@ -401,21 +309,21 @@ class _AdminPricingScreenState extends State<AdminPricingScreen> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AdminColors.info.withValues(alpha: 0.2),
+              color: theme.colorScheme.primary.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.lightbulb_outline,
-              color: AdminColors.info,
+              color: theme.colorScheme.primary,
               size: 24,
             ),
           ),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Text(
-              'Prices are per kilogram (PKR/kg)',
+              'Prices are estimated ranges per kilogram (PKR/kg)',
               style: TextStyle(
-                color: AdminColors.info,
+                color: theme.colorScheme.primary,
                 fontWeight: FontWeight.w500,
                 fontSize: 14,
               ),
@@ -426,35 +334,24 @@ class _AdminPricingScreenState extends State<AdminPricingScreen> {
     );
   }
 
-  List<Widget> _buildPricingCards() {
-    return List.generate(pricingData.length, (index) {
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 16),
-        child: _buildMaterialCard(index),
-      );
-    });
-  }
-
-  Widget _buildMaterialCard(int index) {
-    final pricing = pricingData[index];
-    final buyingError = _getBuyingError(index);
-    final sellingError = _getSellingError(index);
-    final hasError = buyingError != null || sellingError != null;
+  Widget _buildMaterialCard(ThemeData theme, int index) {
+    final material = materials[index];
+    final isValid = material.isValid;
 
     return Container(
       decoration: BoxDecoration(
-        color: AdminColors.cardBackground,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AdminColors.shadow.withValues(alpha: 0.1),
+            color: theme.shadowColor.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
         border: Border(
           left: BorderSide(
-            color: hasError ? AdminColors.error : pricing.color,
+            color: isValid ? material.color : Colors.red,
             width: 4,
           ),
         ),
@@ -472,76 +369,106 @@ class _AdminPricingScreenState extends State<AdminPricingScreen> {
                   width: 60,
                   height: 60,
                   decoration: BoxDecoration(
-                    color: pricing.color.withValues(alpha: 0.15),
+                    color: material.color.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Icon(
-                    pricing.icon,
-                    color: pricing.color,
+                    material.icon,
+                    color: material.color,
                     size: 32,
                   ),
                 ),
                 const SizedBox(width: 16),
                 // Material Name and Badge
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      pricing.material,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: AdminColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: pricing.color.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        'Recyclable Material',
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        material.name,
                         style: TextStyle(
-                          fontSize: 11,
-                          color: pricing.color,
-                          fontWeight: FontWeight.w500,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: theme.textTheme.bodyLarge?.color,
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: material.color.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          'Per KG',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: material.color,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
 
-            // Pricing Section (2 columns)
+            // Today's Estimated Price Label
+            Center(
+              child: Column(
+                children: [
+                  Text(
+                    "Today's Estimated Price",
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: theme.textTheme.bodyLarge?.color,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    DateFormat('MMMM dd, yyyy').format(DateTime.now()),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: theme.textTheme.bodyMedium?.color,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Price Input Fields (Side by Side)
             Row(
               children: [
-                // Buying Price Column
+                // Min Price Field
                 Expanded(
                   child: _buildPriceField(
-                    label: 'BUYING PRICE',
-                    controller: buyingControllers[index],
-                    onChanged: (value) => _onBuyingPriceChanged(index, value),
-                    error: buyingError,
-                    color: pricing.color,
+                    theme: theme,
+                    label: 'Min Price',
+                    controller: minControllers[index],
+                    onChanged: (value) => _onMinPriceChanged(index, value),
+                    placeholder: '80',
+                    color: material.color,
                   ),
                 ),
                 const SizedBox(width: 16),
-                // Selling Price Column
+                // Max Price Field
                 Expanded(
                   child: _buildPriceField(
-                    label: 'SELLING PRICE',
-                    controller: sellingControllers[index],
-                    onChanged: (value) => _onSellingPriceChanged(index, value),
-                    error: sellingError,
-                    color: pricing.color,
+                    theme: theme,
+                    label: 'Max Price',
+                    controller: maxControllers[index],
+                    onChanged: (value) => _onMaxPriceChanged(index, value),
+                    placeholder: '120',
+                    color: material.color,
                   ),
                 ),
               ],
@@ -549,36 +476,33 @@ class _AdminPricingScreenState extends State<AdminPricingScreen> {
 
             const SizedBox(height: 16),
 
-            // Profit Margin Row
+            // Price Range Display
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: pricing.isValid
-                    ? AdminColors.success.withValues(alpha: 0.1)
-                    : AdminColors.error.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
+                color: isValid
+                    ? theme.colorScheme.primary.withValues(alpha: 0.1)
+                    : Colors.red.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    pricing.isValid
-                        ? Icons.trending_up
-                        : Icons.trending_down,
-                    size: 16,
-                    color: pricing.isValid
-                        ? AdminColors.success
-                        : AdminColors.error,
+                    isValid ? Icons.check_circle : Icons.error,
+                    size: 18,
+                    color: isValid ? theme.colorScheme.primary : Colors.red,
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Profit Margin: ${pricing.profitMargin} PKR/kg (${pricing.profitPercentage.toStringAsFixed(1)}%)',
+                    isValid
+                        ? 'Range: ${material.minPrice} - ${material.maxPrice} PKR/kg'
+                        : 'Invalid range!',
                     style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: pricing.isValid
-                          ? AdminColors.success
-                          : AdminColors.error,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: isValid ? theme.colorScheme.primary : Colors.red,
                     ),
                   ),
                 ],
@@ -587,22 +511,28 @@ class _AdminPricingScreenState extends State<AdminPricingScreen> {
 
             const SizedBox(height: 12),
 
-            // Last Updated Row
+            // Last Updated
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
                   Icons.access_time,
                   size: 14,
-                  color: AdminColors.textLight,
+                  color: theme.textTheme.bodySmall?.color,
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  'Updated: ${_formatDate(pricing.lastUpdated)}',
-                  style: const TextStyle(
+                  'Last updated: ${_getLastUpdatedText(material.lastUpdated)}',
+                  style: TextStyle(
                     fontSize: 11,
-                    color: AdminColors.textLight,
+                    color: theme.textTheme.bodySmall?.color,
                   ),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.edit,
+                  size: 12,
+                  color: theme.textTheme.bodySmall?.color,
                 ),
               ],
             ),
@@ -613,14 +543,13 @@ class _AdminPricingScreenState extends State<AdminPricingScreen> {
   }
 
   Widget _buildPriceField({
+    required ThemeData theme,
     required String label,
     required TextEditingController controller,
     required Function(String) onChanged,
-    required String? error,
+    required String placeholder,
     required Color color,
   }) {
-    final hasError = error != null;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -628,9 +557,8 @@ class _AdminPricingScreenState extends State<AdminPricingScreen> {
           label,
           style: TextStyle(
             fontSize: 12,
-            color: AdminColors.textSecondary,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.5,
+            color: theme.textTheme.bodyMedium?.color,
+            fontWeight: FontWeight.w500,
           ),
         ),
         const SizedBox(height: 8),
@@ -638,46 +566,42 @@ class _AdminPricingScreenState extends State<AdminPricingScreen> {
           controller: controller,
           keyboardType: TextInputType.number,
           onChanged: onChanged,
-          style: const TextStyle(
-            fontSize: 28,
+          style: TextStyle(
+            fontSize: 24,
             fontWeight: FontWeight.bold,
-            color: AdminColors.textPrimary,
+            color: theme.textTheme.bodyLarge?.color,
           ),
           decoration: InputDecoration(
+            hintText: placeholder,
+            hintStyle: TextStyle(
+              color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
+            ),
             suffixText: 'PKR/kg',
-            suffixStyle: const TextStyle(
-              fontSize: 14,
-              color: AdminColors.textSecondary,
+            suffixStyle: TextStyle(
+              fontSize: 12,
+              color: theme.textTheme.bodyMedium?.color,
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
-              vertical: 12,
+              vertical: 14,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: hasError ? AdminColors.error : AdminColors.border,
-              ),
+              borderSide: BorderSide(color: theme.dividerColor),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: hasError ? AdminColors.error : AdminColors.border,
-              ),
+              borderSide: BorderSide(color: theme.dividerColor),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(
-                color: hasError ? AdminColors.error : AdminColors.primaryGreen,
+                color: theme.colorScheme.primary,
                 width: 2,
               ),
             ),
-            errorText: error,
-            errorStyle: const TextStyle(fontSize: 11),
             filled: true,
-            fillColor: hasError
-                ? AdminColors.error.withValues(alpha: 0.05)
-                : AdminColors.surfaceLight.withValues(alpha: 0.5),
+            fillColor: theme.colorScheme.surface,
           ),
         ),
       ],

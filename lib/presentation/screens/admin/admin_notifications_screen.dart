@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/admin_colors.dart';
+import '../../../core/constants/modern_colors.dart';
+import '../../widgets/admin/admin_drawer.dart';
 
 // Notification Data Model
 class NotificationData {
@@ -356,33 +358,35 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: AdminColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Notifications',
           style: TextStyle(
-            color: AdminColors.textWhite,
+            color: theme.appBarTheme.foregroundColor,
             fontWeight: FontWeight.bold,
           ),
         ),
-        backgroundColor: AdminColors.primaryGreen,
+        backgroundColor: theme.appBarTheme.backgroundColor,
         elevation: 0,
-        iconTheme: const IconThemeData(color: AdminColors.textWhite),
+        iconTheme: IconThemeData(color: theme.appBarTheme.foregroundColor),
         actions: [
           if (_unreadCount > 0)
             TextButton(
               onPressed: _markAllAsRead,
-              child: const Text(
+              child: Text(
                 'Mark All Read',
                 style: TextStyle(
-                  color: AdminColors.textWhite,
+                  color: theme.appBarTheme.foregroundColor,
                   fontWeight: FontWeight.w500,
                 ),
               ),
             ),
         ],
       ),
+      drawer: const AdminDrawer(currentRoute: 'notifications'),
       body: Column(
         children: [
           // Unread count banner

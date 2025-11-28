@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/admin_colors.dart';
+import '../../../core/constants/modern_colors.dart';
 import '../../widgets/admin/admin_drawer.dart';
 import 'admin_collector_details_screen.dart';
 
@@ -555,29 +556,30 @@ class _AdminCollectorsScreenState extends State<AdminCollectorsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: AdminColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Collectors Management',
           style: TextStyle(
-            color: AdminColors.textWhite,
+            color: theme.appBarTheme.foregroundColor,
             fontWeight: FontWeight.bold,
           ),
         ),
-        backgroundColor: AdminColors.primaryGreen,
+        backgroundColor: theme.appBarTheme.backgroundColor,
         elevation: 0,
-        iconTheme: const IconThemeData(color: AdminColors.textWhite),
+        iconTheme: IconThemeData(color: theme.appBarTheme.foregroundColor),
         actions: [
           IconButton(
             icon: Icon(
               _isSearchVisible ? Icons.search_off : Icons.search,
-              color: AdminColors.textWhite,
+              color: theme.appBarTheme.foregroundColor,
             ),
             onPressed: _toggleSearch,
           ),
           PopupMenuButton<String>(
-            icon: const Icon(Icons.filter_list, color: AdminColors.textWhite),
+            icon: Icon(Icons.filter_list, color: theme.appBarTheme.foregroundColor),
             tooltip: 'Filter Collectors',
             offset: const Offset(0, 50),
             shape: RoundedRectangleBorder(
@@ -858,43 +860,58 @@ class _AdminCollectorsScreenState extends State<AdminCollectorsScreen> {
   }
 
   Widget _buildCollectorCard(CollectorData collector) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AdminColors.cardBackground,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: AdminColors.shadow.withOpacity(0.08),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+    return TweenAnimationBuilder<double>(
+      duration: const Duration(milliseconds: 300),
+      tween: Tween(begin: 0, end: 1),
+      builder: (context, value, child) {
+        return Opacity(
+          opacity: value,
+          child: Transform.translate(
+            offset: Offset(0, 15 * (1 - value)),
+            child: child,
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // TOP ROW: Avatar, Name, Rating Badge
-          Row(
-            children: [
-              // Avatar
-              Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: AdminColors.primaryGreen.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Center(
-                  child: Icon(
-                    Icons.local_shipping,
-                    color: AdminColors.primaryGreen,
-                    size: 24,
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 14),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey.withOpacity(0.1), width: 1),
+          boxShadow: ModernColors.softShadow,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // TOP ROW: Avatar, Name, Rating Badge
+            Row(
+              children: [
+                // Modern Avatar with gradient border
+                Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: const BoxDecoration(
+                    gradient: ModernColors.primaryGradient,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: AdminColors.primaryGreen.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        Icons.local_shipping,
+                        color: AdminColors.primaryGreen,
+                        size: 24,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
+                const SizedBox(width: 12),
 
               // Name and Status
               Expanded(
@@ -1054,6 +1071,7 @@ class _AdminCollectorsScreenState extends State<AdminCollectorsScreen> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

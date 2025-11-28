@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/admin_colors.dart';
+import '../../../core/constants/modern_colors.dart';
 import '../../widgets/admin/admin_drawer.dart';
 
 // OrderData Model
@@ -336,29 +337,30 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: AdminColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Orders Management',
           style: TextStyle(
-            color: AdminColors.textWhite,
+            color: theme.appBarTheme.foregroundColor,
             fontWeight: FontWeight.bold,
           ),
         ),
-        backgroundColor: AdminColors.primaryGreen,
+        backgroundColor: theme.appBarTheme.backgroundColor,
         elevation: 0,
-        iconTheme: const IconThemeData(color: AdminColors.textWhite),
+        iconTheme: IconThemeData(color: theme.appBarTheme.foregroundColor),
         actions: [
           IconButton(
             icon: Icon(
               _isSearchVisible ? Icons.search_off : Icons.search,
-              color: AdminColors.textWhite,
+              color: theme.appBarTheme.foregroundColor,
             ),
             onPressed: _toggleSearch,
           ),
           PopupMenuButton<String>(
-            icon: const Icon(Icons.filter_list, color: AdminColors.textWhite),
+            icon: Icon(Icons.filter_list, color: theme.appBarTheme.foregroundColor),
             tooltip: 'Filter Orders',
             offset: const Offset(0, 50),
             shape: RoundedRectangleBorder(
@@ -637,19 +639,26 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
     final statusColor = _getStatusColor(order.status);
     final materialColor = _getMaterialColor(order.materialType);
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: AdminColors.cardBackground,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: AdminColors.shadow.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
+    return TweenAnimationBuilder<double>(
+      duration: const Duration(milliseconds: 300),
+      tween: Tween(begin: 0, end: 1),
+      builder: (context, value, child) {
+        return Opacity(
+          opacity: value,
+          child: Transform.translate(
+            offset: Offset(0, 15 * (1 - value)),
+            child: child,
           ),
-        ],
-      ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey.withOpacity(0.1), width: 1),
+          boxShadow: ModernColors.softShadow,
+        ),
       child: Row(
         children: [
           // Left colored stripe
@@ -913,6 +922,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

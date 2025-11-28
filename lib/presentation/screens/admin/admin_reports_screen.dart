@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:fl_chart/fl_chart.dart';
 import '../../../core/constants/admin_colors.dart';
+import '../../../core/constants/modern_colors.dart';
+import '../../widgets/admin/admin_drawer.dart';
 
 // Conditional import for web
 import 'admin_reports_export_stub.dart'
@@ -654,21 +656,22 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: AdminColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Reports & Analytics',
           style: TextStyle(
-            color: Colors.white,
+            color: theme.appBarTheme.foregroundColor,
             fontWeight: FontWeight.bold,
           ),
         ),
-        backgroundColor: AdminColors.primaryGreen,
-        iconTheme: const IconThemeData(color: Colors.white),
+        backgroundColor: theme.appBarTheme.backgroundColor,
+        iconTheme: IconThemeData(color: theme.appBarTheme.foregroundColor),
         actions: [
           IconButton(
-            icon: const Icon(Icons.download_rounded, color: Colors.white),
+            icon: Icon(Icons.download_rounded, color: theme.appBarTheme.foregroundColor),
             tooltip: 'Export Report',
             onPressed: _showExportDialog,
           ),
@@ -689,6 +692,7 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
           ],
         ),
       ),
+      drawer: const AdminDrawer(currentRoute: 'reports'),
       body: TabBarView(
         controller: _tabController,
         children: [

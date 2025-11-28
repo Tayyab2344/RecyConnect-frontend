@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/admin_colors.dart';
+import '../../../core/constants/modern_colors.dart';
 import '../../screens/admin/admin_dashboard_screen.dart';
 import '../../screens/admin/admin_users_screen.dart';
 import '../../screens/admin/admin_collectors_screen.dart';
@@ -23,90 +24,136 @@ class AdminDrawer extends StatefulWidget {
   State<AdminDrawer> createState() => _AdminDrawerState();
 }
 
-class _AdminDrawerState extends State<AdminDrawer> {
+class _AdminDrawerState extends State<AdminDrawer>
+    with SingleTickerProviderStateMixin {
   String _selectedItem = 'dashboard';
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
     _selectedItem = widget.currentRoute;
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+    );
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 
   void _navigateTo(String route, Widget screen) {
     setState(() {
       _selectedItem = route;
     });
-    Navigator.pop(context); // Close drawer
+    Navigator.pop(context);
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => screen),
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) => screen,
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        transitionDuration: const Duration(milliseconds: 300),
+      ),
     );
   }
 
   void _showLogoutDialog() {
+    final theme = Theme.of(context);
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
+          backgroundColor: theme.cardColor,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(20),
           ),
-          title: const Row(
+          title: Row(
             children: [
-              Icon(Icons.logout, color: AdminColors.error),
-              SizedBox(width: 12),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: ModernColors.redGradient,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.logout, color: Colors.white, size: 20),
+              ),
+              const SizedBox(width: 12),
               Text(
                 'Confirm Logout',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AdminColors.textPrimary,
+                  color: theme.textTheme.bodyLarge?.color,
                 ),
               ),
             ],
           ),
-          content: const Text(
-            'Are you sure you want to logout?',
+          content: Text(
+            'Are you sure you want to logout from the admin panel?',
             style: TextStyle(
               fontSize: 14,
-              color: AdminColors.textSecondary,
+              color: theme.textTheme.bodyMedium?.color,
             ),
           ),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.pop(context); // Close dialog
-              },
-              child: const Text(
+              onPressed: () => Navigator.pop(dialogContext),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              ),
+              child: Text(
                 'Cancel',
                 style: TextStyle(
-                  color: AdminColors.textSecondary,
+                  color: theme.textTheme.bodyMedium?.color,
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context); // Close dialog
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const LoginScreen(),
+            Container(
+              decoration: BoxDecoration(
+                gradient: ModernColors.redGradient,
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: AdminColors.error.withOpacity(0.3),
+                    offset: const Offset(0, 4),
+                    blurRadius: 12,
                   ),
-                  (route) => false,
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AdminColors.error,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
+                ],
               ),
-              child: const Text(
-                'Logout',
-                style: TextStyle(
-                  color: AdminColors.textWhite,
-                  fontWeight: FontWeight.bold,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(dialogContext);
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => const LoginScreen()),
+                    (route) => false,
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: const Text(
+                  'Logout',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
@@ -119,190 +166,124 @@ class _AdminDrawerState extends State<AdminDrawer> {
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      child: Column(
-        children: [
-          // Header Section
-          _buildHeader(),
-
-          // Menu Items
-          Expanded(
-            child: ListView(
-              padding: EdgeInsets.zero,
-              children: [
-                const SizedBox(height: 10),
-                _buildMenuItem(
-                  icon: Icons.dashboard,
-                  title: 'Dashboard',
-                  route: 'dashboard',
-                  screen: const AdminDashboardScreen(),
-                ),
-                _buildMenuItem(
-                  icon: Icons.people,
-                  title: 'Users Management',
-                  route: 'users',
-                  screen: const AdminUsersScreen(),
-                ),
-                _buildMenuItem(
-                  icon: Icons.local_shipping,
-                  title: 'Collectors Management',
-                  route: 'collectors',
-                  screen: const AdminCollectorsScreen(),
-                ),
-                _buildMenuItem(
-                  icon: Icons.shopping_bag,
-                  title: 'Orders Management',
-                  route: 'orders',
-                  screen: const AdminOrdersScreen(),
-                ),
-                _buildMenuItem(
-                  icon: Icons.attach_money,
-                  title: 'Pricing Management',
-                  route: 'pricing',
-                  screen: const AdminPricingScreen(),
-                ),
-                _buildMenuItem(
-                  icon: Icons.history,
-                  title: 'Activity Logs',
-                  route: 'logs',
-                  screen: const AdminActivitiesScreen(),
-                ),
-                _buildMenuItem(
-                  icon: Icons.bar_chart,
-                  title: 'Reports & Analytics',
-                  route: 'reports',
-                  screen: const AdminReportsScreen(),
-                ),
-                _buildMenuItem(
-                  icon: Icons.notifications,
-                  title: 'Notifications',
-                  route: 'notifications',
-                  screen: const AdminNotificationsScreen(),
-                ),
-                _buildMenuItem(
-                  icon: Icons.settings,
-                  title: 'Settings',
-                  route: 'settings',
-                  screen: const AdminSettingsScreen(),
-                ),
-
-                const Divider(height: 30, thickness: 1),
-
-                // Logout Item
-                _buildLogoutItem(),
-              ],
-            ),
+      backgroundColor: Colors.transparent,
+      child: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF10B981),
+              Color(0xFF059669),
+              Color(0xFF047857),
+            ],
           ),
-
-          // Footer
-          _buildFooter(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Container(
-      height: 200,
-      width: double.infinity,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AdminColors.primaryGreen,
-            AdminColors.primaryGreenDark,
-          ],
         ),
-      ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
+        child: SafeArea(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Avatar
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: AdminColors.textWhite,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 10,
-                      spreadRadius: 2,
-                    ),
-                  ],
-                ),
-                child: const Center(
-                  child: Text(
-                    'AD',
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: AdminColors.primaryGreen,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
+              // Modern Header
+              _buildModernHeader(),
 
-              // Name with overflow handling
-              const SizedBox(
-                width: double.infinity,
-                child: Text(
-                  'Admin User',
-                  textAlign: TextAlign.center,
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AdminColors.textWhite,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 4),
-
-              // Email with overflow handling
-              const SizedBox(
-                width: double.infinity,
-                child: Text(
-                  'panel.quantix@gmail.com',
-                  textAlign: TextAlign.center,
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFFE0E0E0),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-
-              // Role Badge with FittedBox to prevent overflow
-              FittedBox(
-                fit: BoxFit.scaleDown,
+              // Menu Items Container
+              Expanded(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 4,
+                  margin: const EdgeInsets.only(top: 10),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(30),
+                      topRight: Radius.circular(30),
+                    ),
                   ),
-                  decoration: BoxDecoration(
-                    color: AdminColors.textWhite,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Text(
-                    'Administrator',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: AdminColors.primaryGreen,
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(30),
+                      topRight: Radius.circular(30),
+                    ),
+                    child: FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: ListView(
+                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        children: [
+                          _buildModernMenuItem(
+                            icon: Icons.dashboard_rounded,
+                            title: 'Dashboard',
+                            route: 'dashboard',
+                            screen: const AdminDashboardScreen(),
+                          ),
+                          _buildModernMenuItem(
+                            icon: Icons.people_rounded,
+                            title: 'Users Management',
+                            route: 'users',
+                            screen: const AdminUsersScreen(),
+                          ),
+                          _buildModernMenuItem(
+                            icon: Icons.local_shipping_rounded,
+                            title: 'Collectors',
+                            route: 'collectors',
+                            screen: const AdminCollectorsScreen(),
+                          ),
+                          _buildModernMenuItem(
+                            icon: Icons.shopping_bag_rounded,
+                            title: 'Orders',
+                            route: 'orders',
+                            screen: const AdminOrdersScreen(),
+                          ),
+                          _buildModernMenuItem(
+                            icon: Icons.attach_money_rounded,
+                            title: 'Pricing',
+                            route: 'pricing',
+                            screen: const AdminPricingScreen(),
+                          ),
+
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                            child: Divider(color: Colors.grey.withOpacity(0.2)),
+                          ),
+
+                          _buildModernMenuItem(
+                            icon: Icons.history_rounded,
+                            title: 'Activity Logs',
+                            route: 'logs',
+                            screen: const AdminActivitiesScreen(),
+                          ),
+                          _buildModernMenuItem(
+                            icon: Icons.bar_chart_rounded,
+                            title: 'Reports & Analytics',
+                            route: 'reports',
+                            screen: const AdminReportsScreen(),
+                          ),
+                          _buildModernMenuItem(
+                            icon: Icons.notifications_rounded,
+                            title: 'Notifications',
+                            route: 'notifications',
+                            screen: const AdminNotificationsScreen(),
+                            badge: '3',
+                          ),
+                          _buildModernMenuItem(
+                            icon: Icons.settings_rounded,
+                            title: 'Settings',
+                            route: 'settings',
+                            screen: const AdminSettingsScreen(),
+                          ),
+
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                            child: Divider(color: Colors.grey.withOpacity(0.2)),
+                          ),
+
+                          // Logout Item
+                          _buildLogoutItem(),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
+
+              // Footer
+              _buildModernFooter(),
             ],
           ),
         ),
@@ -310,48 +291,273 @@ class _AdminDrawerState extends State<AdminDrawer> {
     );
   }
 
-  Widget _buildMenuItem({
+  Widget _buildModernHeader() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
+      child: Column(
+        children: [
+          // Animated Avatar
+          TweenAnimationBuilder(
+            duration: const Duration(milliseconds: 600),
+            tween: Tween<double>(begin: 0, end: 1),
+            curve: Curves.elasticOut,
+            builder: (context, double value, child) {
+              return Transform.scale(
+                scale: value,
+                child: Stack(
+                  children: [
+                    Container(
+                      width: 90,
+                      height: 90,
+                      padding: const EdgeInsets.all(3),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.white.withOpacity(0.8),
+                            Colors.white.withOpacity(0.4),
+                          ],
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 20,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Center(
+                          child: Text(
+                            'AD',
+                            style: TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.bold,
+                              color: AdminColors.primaryGreen,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Online indicator
+                    Positioned(
+                      bottom: 5,
+                      right: 5,
+                      child: Container(
+                        width: 20,
+                        height: 20,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF22C55E),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 3),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF22C55E).withOpacity(0.5),
+                              blurRadius: 8,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 16),
+
+          // Name with animation
+          TweenAnimationBuilder(
+            duration: const Duration(milliseconds: 500),
+            tween: Tween<double>(begin: 0, end: 1),
+            builder: (context, double value, child) {
+              return Opacity(
+                opacity: value,
+                child: Transform.translate(
+                  offset: Offset(0, 10 * (1 - value)),
+                  child: const Text(
+                    'Admin User',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 4),
+
+          // Email
+          TweenAnimationBuilder(
+            duration: const Duration(milliseconds: 600),
+            tween: Tween<double>(begin: 0, end: 1),
+            builder: (context, double value, child) {
+              return Opacity(
+                opacity: value,
+                child: Text(
+                  'panel.quantix@gmail.com',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.white.withOpacity(0.8),
+                  ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+
+          // Role Badge
+          TweenAnimationBuilder(
+            duration: const Duration(milliseconds: 700),
+            tween: Tween<double>(begin: 0, end: 1),
+            builder: (context, double value, child) {
+              return Opacity(
+                opacity: value,
+                child: Transform.scale(
+                  scale: value,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.3),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.verified,
+                          size: 14,
+                          color: Colors.white.withOpacity(0.9),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Administrator',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white.withOpacity(0.9),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModernMenuItem({
     required IconData icon,
     required String title,
     required String route,
     required Widget screen,
+    String? badge,
   }) {
     final isSelected = _selectedItem == route;
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: isSelected
-            ? AdminColors.primaryGreen.withOpacity(0.1)
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
+        gradient: isSelected ? ModernColors.primaryGradient : null,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: isSelected
+            ? [
+                BoxShadow(
+                  color: AdminColors.primaryGreen.withOpacity(0.3),
+                  offset: const Offset(0, 4),
+                  blurRadius: 12,
+                ),
+              ]
+            : null,
       ),
-      child: ListTile(
-        leading: Icon(
-          icon,
-          size: 22,
-          color: isSelected
-              ? AdminColors.primaryGreen
-              : AdminColors.textSecondary,
-        ),
-        title: Text(
-          title,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-            color: isSelected
-                ? AdminColors.primaryGreen
-                : AdminColors.textPrimary,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _navigateTo(route, screen),
+          borderRadius: BorderRadius.circular(14),
+          splashColor: isSelected
+              ? Colors.white.withOpacity(0.2)
+              : AdminColors.primaryGreen.withOpacity(0.1),
+          highlightColor: Colors.transparent,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
+              children: [
+                // Icon with animation
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: EdgeInsets.all(isSelected ? 10 : 8),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? Colors.white.withOpacity(0.2)
+                        : AdminColors.primaryGreen.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    icon,
+                    size: 20,
+                    color: isSelected ? Colors.white : AdminColors.primaryGreen,
+                  ),
+                ),
+                const SizedBox(width: 14),
+
+                // Title
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                      color: isSelected ? Colors.white : AdminColors.textPrimary,
+                    ),
+                  ),
+                ),
+
+                // Badge (if any)
+                if (badge != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      gradient: isSelected
+                          ? null
+                          : ModernColors.redGradient,
+                      color: isSelected ? Colors.white.withOpacity(0.3) : null,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      badge,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+
+                // Arrow indicator for selected
+                if (isSelected)
+                  const Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 14,
+                    color: Colors.white,
+                  ),
+              ],
+            ),
           ),
-        ),
-        onTap: () => _navigateTo(route, screen),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
-        hoverColor: AdminColors.surfaceLight,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 20,
-          vertical: 4,
         ),
       ),
     );
@@ -359,62 +565,102 @@ class _AdminDrawerState extends State<AdminDrawer> {
 
   Widget _buildLogoutItem() {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      child: ListTile(
-        leading: const Icon(
-          Icons.logout,
-          size: 22,
-          color: AdminColors.error,
-        ),
-        title: const Text(
-          'Logout',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: AdminColors.error,
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _showLogoutDialog,
+          borderRadius: BorderRadius.circular(14),
+          splashColor: AdminColors.error.withOpacity(0.1),
+          highlightColor: Colors.transparent,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AdminColors.error.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.logout_rounded,
+                    size: 20,
+                    color: AdminColors.error,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                const Text(
+                  'Logout',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AdminColors.error,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-        onTap: _showLogoutDialog,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
-        hoverColor: AdminColors.error.withOpacity(0.1),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 20,
-          vertical: 4,
         ),
       ),
     );
   }
 
-  Widget _buildFooter() {
-    return Column(
-      children: [
-        const Divider(height: 1, thickness: 1),
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
+  Widget _buildModernFooter() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            offset: const Offset(0, -4),
+            blurRadius: 10,
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              gradient: ModernColors.primaryGradient,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(
+              Icons.recycling,
+              size: 16,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
               const Text(
                 'RecyConnect Admin',
                 style: TextStyle(
-                  fontSize: 10,
-                  color: AdminColors.textLight,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: AdminColors.textPrimary,
                 ),
               ),
-              const SizedBox(height: 2),
-              const Text(
-                'v1.0.0',
+              Text(
+                'Version 1.0.0',
                 style: TextStyle(
                   fontSize: 10,
-                  color: AdminColors.textLight,
+                  color: AdminColors.textSecondary,
                 ),
               ),
             ],
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

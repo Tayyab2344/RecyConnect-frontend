@@ -47,6 +47,11 @@ dependencies:
   pdf: ^3.11.0
   printing: ^5.13.1
 
+  # Animations & Modern UI
+  flutter_animate: ^4.5.0
+  shimmer: ^3.0.0
+  animated_text_kit: ^4.2.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

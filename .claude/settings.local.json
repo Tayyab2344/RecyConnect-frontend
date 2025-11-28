@@ -3,7 +3,12 @@
     "allow": [
       "Bash(flutter pub get:*)",
       "Bash(tree:*)",
-      "Bash(flutter analyze:*)"
+      "Bash(flutter analyze:*)",
+      "Bash(nul)",
+      "Bash(dir:*)",
+      "Bash(powershell -Command \"(Get-Content ''lib\\presentation\\screens\\admin\\admin_users_screen.dart'' | Select-Object -First 1395) | Set-Content ''lib\\presentation\\screens\\admin\\admin_users_screen.dart''\")",
+      "Bash(git checkout:*)",
+      "Bash(flutter build:*)"
     ],
     "deny": [],
     "ask": []

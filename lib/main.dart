@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/services/auth_service.dart';
 import 'core/services/admin_service.dart';
+import 'core/providers/theme_provider.dart';
 import 'core/theme/app_theme.dart';
 import 'presentation/screens/auth/login_screen.dart';
 import 'presentation/screens/dashboard/dashboard_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 
@@ -19,12 +21,19 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthService()),
         ChangeNotifierProvider(create: (_) => AdminService()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()..initialize()),
       ],
-      child: MaterialApp(
-        title: 'Waste Management App',
-        theme: AppTheme.lightTheme,
-        home: const AuthWrapper(),
-        debugShowCheckedModeBanner: false,
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, child) {
+          return MaterialApp(
+            title: 'Waste Management App',
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: themeProvider.themeMode,
+            home: const AuthWrapper(),
+            debugShowCheckedModeBanner: false,
+          );
+        },
       ),
     );
   }
@@ -46,5 +55,3 @@ class AuthWrapper extends StatelessWidget {
     );
   }
 }
-
-

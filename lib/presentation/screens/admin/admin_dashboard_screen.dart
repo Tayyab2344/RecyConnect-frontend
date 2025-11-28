@@ -1,138 +1,190 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../core/constants/admin_colors.dart';
+import '../../../core/constants/modern_colors.dart';
 import '../../widgets/admin/admin_drawer.dart';
+import '../../widgets/admin/modern_widgets.dart';
 
-class AdminDashboardScreen extends StatelessWidget {
+class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
 
   @override
+  State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
+}
+
+class _AdminDashboardScreenState extends State<AdminDashboardScreen>
+    with TickerProviderStateMixin {
+  late AnimationController _fadeController;
+  late Animation<double> _fadeAnimation;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _fadeController, curve: Curves.easeOut),
+    );
+
+    // Simulate loading
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        _fadeController.forward();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _fadeController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 600;
     final isTablet = screenWidth >= 600 && screenWidth < 900;
 
     return Scaffold(
-      backgroundColor: AdminColors.background,
-      appBar: AppBar(
-        title: Text(
-          'Admin Dashboard',
-          style: TextStyle(
-            color: AdminColors.textWhite,
-            fontWeight: FontWeight.bold,
-            fontSize: isMobile ? 18 : 20,
-          ),
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: _buildModernAppBar(theme, isMobile),
+      drawer: const AdminDrawer(currentRoute: 'dashboard'),
+      body: _isLoading
+          ? _buildLoadingState()
+          : FadeTransition(
+              opacity: _fadeAnimation,
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(isMobile ? 16 : 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Animated Welcome Section
+                    AnimatedWelcomeHeader(
+                      title: 'Welcome back, Admin! ',
+                      subtitle: "Here's what's happening with RecyConnect today",
+                      isMobile: isMobile,
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Modern Stats Cards
+                    _buildModernStatsCards(screenWidth, isMobile, isTablet),
+                    const SizedBox(height: 24),
+
+                    // Charts Section
+                    _buildModernCharts(context, isMobile),
+                    const SizedBox(height: 24),
+
+                    // Quick Actions Section
+                    _buildModernQuickActions(context, screenWidth, isMobile, isTablet),
+                    const SizedBox(height: 24),
+
+                    // Recent Activities
+                    _buildModernRecentActivities(context, isMobile),
+                    const SizedBox(height: 20),
+                  ],
+                ),
+              ),
+            ),
+    );
+  }
+
+  PreferredSizeWidget _buildModernAppBar(ThemeData theme, bool isMobile) {
+    return AppBar(
+      title: Text(
+        'Admin Dashboard',
+        style: TextStyle(
+          color: theme.appBarTheme.foregroundColor,
+          fontWeight: FontWeight.bold,
+          fontSize: isMobile ? 18 : 20,
         ),
-        backgroundColor: AdminColors.primaryGreen,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: AdminColors.textWhite),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined, color: AdminColors.textWhite),
-            onPressed: () {},
-          ),
-          if (!isMobile)
+      ),
+      backgroundColor: theme.appBarTheme.backgroundColor,
+      elevation: 0,
+      iconTheme: IconThemeData(color: theme.appBarTheme.foregroundColor),
+      actions: [
+        // Notification button with badge
+        Stack(
+          children: [
             IconButton(
-              icon: const Icon(Icons.account_circle, color: AdminColors.textWhite),
+              icon: Icon(
+                Icons.notifications_outlined,
+                color: theme.appBarTheme.foregroundColor,
+              ),
               onPressed: () {},
             ),
-        ],
-      ),
-      drawer: const AdminDrawer(currentRoute: 'dashboard'),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(isMobile ? 16 : 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Welcome Section
-            _buildWelcomeSection(isMobile),
-            const SizedBox(height: 24),
-
-            // Stats Cards - Responsive Grid
-            _buildResponsiveStatsCards(screenWidth, isMobile, isTablet),
-            const SizedBox(height: 24),
-
-            // Charts - Responsive Layout
-            _buildResponsiveCharts(isMobile),
-            const SizedBox(height: 24),
-
-            // Quick Actions Section
-            _buildResponsiveQuickActions(screenWidth, isMobile, isTablet),
-            const SizedBox(height: 24),
-
-            // Recent Activities
-            _buildRecentActivities(isMobile),
+            Positioned(
+              right: 8,
+              top: 8,
+              child: Container(
+                width: 18,
+                height: 18,
+                decoration: const BoxDecoration(
+                  gradient: ModernColors.redGradient,
+                  shape: BoxShape.circle,
+                ),
+                child: const Center(
+                  child: Text(
+                    '3',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
-      ),
+        if (!isMobile)
+          Container(
+            margin: const EdgeInsets.only(right: 12),
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              gradient: ModernColors.primaryGradient,
+              shape: BoxShape.circle,
+            ),
+            child: CircleAvatar(
+              radius: 16,
+              backgroundColor: Colors.white,
+              child: const Text(
+                'AD',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: AdminColors.primaryGreen,
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 
-  Widget _buildWelcomeSection(bool isMobile) {
-    return Container(
-      padding: EdgeInsets.all(isMobile ? 16 : 20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AdminColors.primaryGreen, AdminColors.primaryGreenDark],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: AdminColors.primaryGreen.withOpacity(0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
+  Widget _buildLoadingState() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Welcome back, Admin! 👋',
-                  style: TextStyle(
-                    fontSize: isMobile ? 18 : 24,
-                    fontWeight: FontWeight.bold,
-                    color: AdminColors.textWhite,
-                  ),
-                ),
-                SizedBox(height: isMobile ? 4 : 8),
-                Text(
-                  'Here\'s what\'s happening with RecyConnect today',
-                  style: TextStyle(
-                    fontSize: isMobile ? 12 : 14,
-                    color: const Color(0xFFE0E0E0),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (!isMobile)
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.recycling,
-                size: 40,
-                color: AdminColors.textWhite,
-              ),
-            ),
+          ShimmerLoading(itemCount: 1, itemHeight: 100),
+          const SizedBox(height: 20),
+          ShimmerStatsGrid(count: 4, crossAxisCount: 2),
+          const SizedBox(height: 20),
+          ShimmerLoading(itemCount: 2, itemHeight: 250),
         ],
       ),
     );
   }
 
-  Widget _buildResponsiveStatsCards(double screenWidth, bool isMobile, bool isTablet) {
-    // Mobile: 2x2 grid, Tablet: 2x2 or 4x1, Desktop: 4x1
+  Widget _buildModernStatsCards(double screenWidth, bool isMobile, bool isTablet) {
     int crossAxisCount = isMobile ? 2 : (isTablet ? 2 : 4);
-    double childAspectRatio = isMobile ? 1.3 : (isTablet ? 1.5 : 1.4);
+    double childAspectRatio = isMobile ? 1.1 : (isTablet ? 1.3 : 1.2);
 
     return GridView.count(
       crossAxisCount: crossAxisCount,
@@ -142,182 +194,109 @@ class AdminDashboardScreen extends StatelessWidget {
       mainAxisSpacing: isMobile ? 12 : 16,
       childAspectRatio: childAspectRatio,
       children: [
-        _buildStatCard(
-          icon: Icons.people,
+        ModernStatCard(
+          icon: Icons.people_rounded,
           title: 'Total Users',
           value: '1,234',
-          change: '+12%',
+          trend: '+12%',
           isPositive: true,
           color: AdminColors.accentBlue,
-          isMobile: isMobile,
         ),
-        _buildStatCard(
-          icon: Icons.local_shipping,
+        ModernStatCard(
+          icon: Icons.local_shipping_rounded,
           title: 'Collectors',
           value: '89',
-          change: '+8%',
+          trend: '+8%',
           isPositive: true,
           color: AdminColors.accentOrange,
-          isMobile: isMobile,
         ),
-        _buildStatCard(
-          icon: Icons.shopping_bag,
+        ModernStatCard(
+          icon: Icons.shopping_bag_rounded,
           title: 'Orders',
           value: '567',
-          change: '+23%',
+          trend: '+23%',
           isPositive: true,
           color: AdminColors.accentPurple,
-          isMobile: isMobile,
         ),
-        _buildStatCard(
-          icon: Icons.attach_money,
+        ModernStatCard(
+          icon: Icons.attach_money_rounded,
           title: 'Revenue',
           value: '\$12.5K',
-          change: '+15%',
+          trend: '+15%',
           isPositive: true,
           color: AdminColors.success,
-          isMobile: isMobile,
         ),
       ],
     );
   }
 
-  Widget _buildStatCard({
-    required IconData icon,
-    required String title,
-    required String value,
-    required String change,
-    required bool isPositive,
-    required Color color,
-    required bool isMobile,
-  }) {
-    return Container(
-      padding: EdgeInsets.all(isMobile ? 12 : 16),
-      decoration: BoxDecoration(
-        color: AdminColors.cardBackground,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: AdminColors.shadow.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: EdgeInsets.all(isMobile ? 8 : 10),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(icon, color: color, size: isMobile ? 20 : 24),
-              ),
-              Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: isMobile ? 6 : 8,
-                  vertical: isMobile ? 3 : 4,
-                ),
-                decoration: BoxDecoration(
-                  color: isPositive
-                      ? AdminColors.success.withOpacity(0.1)
-                      : AdminColors.error.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      isPositive ? Icons.trending_up : Icons.trending_down,
-                      size: isMobile ? 12 : 14,
-                      color: isPositive ? AdminColors.success : AdminColors.error,
-                    ),
-                    SizedBox(width: isMobile ? 2 : 4),
-                    Text(
-                      change,
-                      style: TextStyle(
-                        fontSize: isMobile ? 10 : 12,
-                        fontWeight: FontWeight.bold,
-                        color: isPositive ? AdminColors.success : AdminColors.error,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: isMobile ? 20 : 24,
-              fontWeight: FontWeight.bold,
-              color: AdminColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: isMobile ? 11 : 13,
-              color: AdminColors.textSecondary,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildResponsiveCharts(bool isMobile) {
+  Widget _buildModernCharts(BuildContext context, bool isMobile) {
     if (isMobile) {
-      // Stack charts vertically on mobile
       return Column(
         children: [
-          _buildWasteCollectionChart(isMobile),
-          const SizedBox(height: 16),
-          _buildRevenueChart(isMobile),
-        ],
-      );
-    } else {
-      // Side by side on tablet/desktop
-      return Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            flex: 1,
-            child: _buildWasteCollectionChart(isMobile),
+          _buildGlassChartCard(
+            context: context,
+            title: 'Waste Collection',
+            subtitle: 'Last 7 days',
+            isMobile: isMobile,
+            child: _buildBarChart(isMobile),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            flex: 1,
-            child: _buildRevenueChart(isMobile),
+          const SizedBox(height: 16),
+          _buildGlassChartCard(
+            context: context,
+            title: 'Revenue Trend',
+            subtitle: 'Monthly overview',
+            isMobile: isMobile,
+            child: _buildLineChart(isMobile),
           ),
         ],
       );
     }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: _buildGlassChartCard(
+            context: context,
+            title: 'Waste Collection',
+            subtitle: 'Last 7 days',
+            isMobile: isMobile,
+            child: _buildBarChart(isMobile),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: _buildGlassChartCard(
+            context: context,
+            title: 'Revenue Trend',
+            subtitle: 'Monthly overview',
+            isMobile: isMobile,
+            child: _buildLineChart(isMobile),
+          ),
+        ),
+      ],
+    );
   }
 
-  Widget _buildWasteCollectionChart(bool isMobile) {
+  Widget _buildGlassChartCard({
+    required BuildContext context,
+    required String title,
+    required String subtitle,
+    required bool isMobile,
+    required Widget child,
+  }) {
+    final theme = Theme.of(context);
     return Container(
       padding: EdgeInsets.all(isMobile ? 16 : 20),
       decoration: BoxDecoration(
-        color: AdminColors.cardBackground,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: AdminColors.shadow.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: ModernColors.softShadowMedium,
+        border: Border.all(
+          color: Colors.grey.withOpacity(0.1),
+          width: 1,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -329,239 +308,225 @@ class AdminDashboardScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Waste Collection',
+                    title,
                     style: TextStyle(
                       fontSize: isMobile ? 16 : 18,
                       fontWeight: FontWeight.bold,
-                      color: AdminColors.textPrimary,
+                      color: theme.textTheme.bodyLarge?.color,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Last 7 days',
+                    subtitle,
                     style: TextStyle(
                       fontSize: isMobile ? 11 : 12,
-                      color: AdminColors.textSecondary,
+                      color: theme.textTheme.bodyMedium?.color,
                     ),
                   ),
                 ],
               ),
-              const Icon(Icons.more_vert, color: AdminColors.textLight, size: 20),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AdminColors.primaryGreen.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.more_horiz,
+                  color: AdminColors.primaryGreen,
+                  size: 20,
+                ),
+              ),
             ],
           ),
           SizedBox(height: isMobile ? 16 : 24),
           SizedBox(
             height: isMobile ? 180 : 200,
-            child: BarChart(
-              BarChartData(
-                alignment: BarChartAlignment.spaceAround,
-                maxY: 100,
-                barTouchData: BarTouchData(enabled: true),
-                titlesData: FlTitlesData(
-                  show: true,
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      getTitlesWidget: (value, meta) {
-                        const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Text(
-                            days[value.toInt()],
-                            style: TextStyle(
-                              fontSize: isMobile ? 10 : 12,
-                              color: AdminColors.textSecondary,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  leftTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                ),
-                gridData: const FlGridData(show: false),
-                borderData: FlBorderData(show: false),
-                barGroups: [
-                  _buildBarGroup(0, 65, isMobile),
-                  _buildBarGroup(1, 80, isMobile),
-                  _buildBarGroup(2, 45, isMobile),
-                  _buildBarGroup(3, 90, isMobile),
-                  _buildBarGroup(4, 70, isMobile),
-                  _buildBarGroup(5, 55, isMobile),
-                  _buildBarGroup(6, 85, isMobile),
-                ],
-              ),
-            ),
+            child: child,
           ),
         ],
       ),
     );
   }
 
-  BarChartGroupData _buildBarGroup(int x, double y, bool isMobile) {
+  Widget _buildBarChart(bool isMobile) {
+    return BarChart(
+      BarChartData(
+        alignment: BarChartAlignment.spaceAround,
+        maxY: 100,
+        barTouchData: BarTouchData(
+          enabled: true,
+          touchTooltipData: BarTouchTooltipData(
+            getTooltipColor: (_) => AdminColors.primaryGreenDark,
+            getTooltipItem: (group, groupIndex, rod, rodIndex) {
+              return BarTooltipItem(
+                '${rod.toY.toInt()} kg',
+                const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              );
+            },
+          ),
+        ),
+        titlesData: FlTitlesData(
+          show: true,
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              getTitlesWidget: (value, meta) {
+                const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                return Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    days[value.toInt()],
+                    style: TextStyle(
+                      fontSize: isMobile ? 10 : 12,
+                      color: AdminColors.textSecondary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        ),
+        gridData: const FlGridData(show: false),
+        borderData: FlBorderData(show: false),
+        barGroups: [
+          _buildAnimatedBarGroup(0, 65, isMobile),
+          _buildAnimatedBarGroup(1, 80, isMobile),
+          _buildAnimatedBarGroup(2, 45, isMobile),
+          _buildAnimatedBarGroup(3, 90, isMobile),
+          _buildAnimatedBarGroup(4, 70, isMobile),
+          _buildAnimatedBarGroup(5, 55, isMobile),
+          _buildAnimatedBarGroup(6, 85, isMobile),
+        ],
+      ),
+    );
+  }
+
+  BarChartGroupData _buildAnimatedBarGroup(int x, double y, bool isMobile) {
     return BarChartGroupData(
       x: x,
       barRods: [
         BarChartRodData(
           toY: y,
           gradient: const LinearGradient(
-            colors: [AdminColors.primaryGreen, AdminColors.primaryGreenDark],
+            colors: [Color(0xFF10B981), Color(0xFF059669)],
             begin: Alignment.bottomCenter,
             end: Alignment.topCenter,
           ),
-          width: isMobile ? 16 : 20,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+          width: isMobile ? 18 : 24,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
         ),
       ],
     );
   }
 
-  Widget _buildRevenueChart(bool isMobile) {
-    return Container(
-      padding: EdgeInsets.all(isMobile ? 16 : 20),
-      decoration: BoxDecoration(
-        color: AdminColors.cardBackground,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: AdminColors.shadow.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Revenue Trend',
-                    style: TextStyle(
-                      fontSize: isMobile ? 16 : 18,
-                      fontWeight: FontWeight.bold,
-                      color: AdminColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Monthly overview',
-                    style: TextStyle(
-                      fontSize: isMobile ? 11 : 12,
-                      color: AdminColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-              const Icon(Icons.more_vert, color: AdminColors.textLight, size: 20),
-            ],
-          ),
-          SizedBox(height: isMobile ? 16 : 24),
-          SizedBox(
-            height: isMobile ? 180 : 200,
-            child: LineChart(
-              LineChartData(
-                gridData: FlGridData(
-                  show: true,
-                  drawVerticalLine: false,
-                  horizontalInterval: 20,
-                  getDrawingHorizontalLine: (value) {
-                    return FlLine(
-                      color: AdminColors.border,
-                      strokeWidth: 1,
-                    );
-                  },
-                ),
-                titlesData: FlTitlesData(
-                  show: true,
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      getTitlesWidget: (value, meta) {
-                        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-                        if (value.toInt() >= 0 && value.toInt() < months.length) {
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 8),
-                            child: Text(
-                              months[value.toInt()],
-                              style: TextStyle(
-                                fontSize: isMobile ? 10 : 12,
-                                color: AdminColors.textSecondary,
-                              ),
-                            ),
-                          );
-                        }
-                        return const Text('');
-                      },
-                    ),
-                  ),
-                  leftTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                ),
-                borderData: FlBorderData(show: false),
-                minX: 0,
-                maxX: 5,
-                minY: 0,
-                maxY: 100,
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: const [
-                      FlSpot(0, 40),
-                      FlSpot(1, 55),
-                      FlSpot(2, 45),
-                      FlSpot(3, 70),
-                      FlSpot(4, 60),
-                      FlSpot(5, 85),
-                    ],
-                    isCurved: true,
-                    gradient: const LinearGradient(
-                      colors: [AdminColors.accentBlue, AdminColors.accentPurple],
-                    ),
-                    barWidth: isMobile ? 2.5 : 3,
-                    isStrokeCapRound: true,
-                    dotData: FlDotData(
-                      show: true,
-                      getDotPainter: (spot, percent, barData, index) {
-                        return FlDotCirclePainter(
-                          radius: isMobile ? 3 : 4,
-                          color: AdminColors.cardBackground,
-                          strokeWidth: 2,
-                          strokeColor: AdminColors.accentBlue,
-                        );
-                      },
-                    ),
-                    belowBarData: BarAreaData(
-                      show: true,
-                      gradient: LinearGradient(
-                        colors: [
-                          AdminColors.accentBlue.withOpacity(0.2),
-                          AdminColors.accentBlue.withOpacity(0.0),
-                        ],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
+  Widget _buildLineChart(bool isMobile) {
+    return LineChart(
+      LineChartData(
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          horizontalInterval: 20,
+          getDrawingHorizontalLine: (value) {
+            return FlLine(
+              color: Colors.grey.withOpacity(0.1),
+              strokeWidth: 1,
+            );
+          },
+        ),
+        titlesData: FlTitlesData(
+          show: true,
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              getTitlesWidget: (value, meta) {
+                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+                if (value.toInt() >= 0 && value.toInt() < months.length) {
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      months[value.toInt()],
+                      style: TextStyle(
+                        fontSize: isMobile ? 10 : 12,
+                        color: AdminColors.textSecondary,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
+                  );
+                }
+                return const Text('');
+              },
+            ),
+          ),
+          leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        ),
+        borderData: FlBorderData(show: false),
+        minX: 0,
+        maxX: 5,
+        minY: 0,
+        maxY: 100,
+        lineTouchData: LineTouchData(
+          enabled: true,
+          touchTooltipData: LineTouchTooltipData(
+            getTooltipColor: (_) => AdminColors.accentBlue,
+            getTooltipItems: (touchedSpots) {
+              return touchedSpots.map((spot) {
+                return LineTooltipItem(
+                  '\$${spot.y.toInt()}K',
+                  const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
                   ),
+                );
+              }).toList();
+            },
+          ),
+        ),
+        lineBarsData: [
+          LineChartBarData(
+            spots: const [
+              FlSpot(0, 40),
+              FlSpot(1, 55),
+              FlSpot(2, 45),
+              FlSpot(3, 70),
+              FlSpot(4, 60),
+              FlSpot(5, 85),
+            ],
+            isCurved: true,
+            gradient: const LinearGradient(
+              colors: [Color(0xFF3B82F6), Color(0xFF8B5CF6)],
+            ),
+            barWidth: 3,
+            isStrokeCapRound: true,
+            dotData: FlDotData(
+              show: true,
+              getDotPainter: (spot, percent, barData, index) {
+                return FlDotCirclePainter(
+                  radius: 5,
+                  color: Colors.white,
+                  strokeWidth: 3,
+                  strokeColor: const Color(0xFF3B82F6),
+                );
+              },
+            ),
+            belowBarData: BarAreaData(
+              show: true,
+              gradient: LinearGradient(
+                colors: [
+                  const Color(0xFF3B82F6).withOpacity(0.3),
+                  const Color(0xFF3B82F6).withOpacity(0.0),
                 ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
               ),
             ),
           ),
@@ -570,19 +535,56 @@ class AdminDashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildResponsiveQuickActions(double screenWidth, bool isMobile, bool isTablet) {
+  Widget _buildModernQuickActions(
+    BuildContext context,
+    double screenWidth,
+    bool isMobile,
+    bool isTablet,
+  ) {
+    final theme = Theme.of(context);
     int crossAxisCount = isMobile ? 2 : (isTablet ? 2 : 4);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Quick Actions',
-          style: TextStyle(
-            fontSize: isMobile ? 16 : 18,
-            fontWeight: FontWeight.bold,
-            color: AdminColors.textPrimary,
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Quick Actions',
+              style: TextStyle(
+                fontSize: isMobile ? 18 : 20,
+                fontWeight: FontWeight.bold,
+                color: theme.textTheme.bodyLarge?.color,
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: AdminColors.primaryGreen.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.bolt,
+                    size: 16,
+                    color: AdminColors.primaryGreen,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Fast Access',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AdminColors.primaryGreen,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 16),
         GridView.count(
@@ -591,35 +593,31 @@ class AdminDashboardScreen extends StatelessWidget {
           physics: const NeverScrollableScrollPhysics(),
           crossAxisSpacing: 12,
           mainAxisSpacing: 12,
-          childAspectRatio: isMobile ? 1.2 : 1.3,
+          childAspectRatio: isMobile ? 1.1 : 1.2,
           children: [
-            _buildQuickActionCard(
-              icon: Icons.person_add,
+            ModernQuickActionCard(
+              icon: Icons.person_add_rounded,
               title: 'Add User',
               color: AdminColors.accentBlue,
               onTap: () {},
-              isMobile: isMobile,
             ),
-            _buildQuickActionCard(
-              icon: Icons.add_box,
+            ModernQuickActionCard(
+              icon: Icons.add_shopping_cart_rounded,
               title: 'New Order',
               color: AdminColors.accentOrange,
               onTap: () {},
-              isMobile: isMobile,
             ),
-            _buildQuickActionCard(
-              icon: Icons.local_shipping,
+            ModernQuickActionCard(
+              icon: Icons.local_shipping_rounded,
               title: 'Add Collector',
               color: AdminColors.accentPurple,
               onTap: () {},
-              isMobile: isMobile,
             ),
-            _buildQuickActionCard(
-              icon: Icons.analytics,
+            ModernQuickActionCard(
+              icon: Icons.analytics_rounded,
               title: 'View Reports',
               color: AdminColors.success,
               onTap: () {},
-              isMobile: isMobile,
             ),
           ],
         ),
@@ -627,65 +625,18 @@ class AdminDashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildQuickActionCard({
-    required IconData icon,
-    required String title,
-    required Color color,
-    required VoidCallback onTap,
-    required bool isMobile,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: EdgeInsets.all(isMobile ? 12 : 16),
-        decoration: BoxDecoration(
-          color: AdminColors.cardBackground,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AdminColors.border),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: EdgeInsets.all(isMobile ? 10 : 12),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: color, size: isMobile ? 24 : 28),
-            ),
-            SizedBox(height: isMobile ? 6 : 8),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: isMobile ? 12 : 13,
-                fontWeight: FontWeight.w600,
-                color: AdminColors.textPrimary,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRecentActivities(bool isMobile) {
+  Widget _buildModernRecentActivities(BuildContext context, bool isMobile) {
+    final theme = Theme.of(context);
     return Container(
       padding: EdgeInsets.all(isMobile ? 16 : 20),
       decoration: BoxDecoration(
-        color: AdminColors.cardBackground,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: AdminColors.shadow.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: ModernColors.softShadowMedium,
+        border: Border.all(
+          color: Colors.grey.withOpacity(0.1),
+          width: 1,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -693,109 +644,83 @@ class AdminDashboardScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Recent Activities',
-                style: TextStyle(
-                  fontSize: isMobile ? 16 : 18,
-                  fontWeight: FontWeight.bold,
-                  color: AdminColors.textPrimary,
-                ),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      gradient: ModernColors.primaryGradient,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.history,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Recent Activities',
+                    style: TextStyle(
+                      fontSize: isMobile ? 16 : 18,
+                      fontWeight: FontWeight.bold,
+                      color: theme.textTheme.bodyLarge?.color,
+                    ),
+                  ),
+                ],
               ),
-              Text(
-                'View All',
-                style: TextStyle(
-                  fontSize: isMobile ? 12 : 14,
-                  fontWeight: FontWeight.w600,
+              TextButton.icon(
+                onPressed: () {},
+                icon: Text(
+                  'View All',
+                  style: TextStyle(
+                    fontSize: isMobile ? 12 : 14,
+                    fontWeight: FontWeight.w600,
+                    color: AdminColors.primaryGreen,
+                  ),
+                ),
+                label: Icon(
+                  Icons.arrow_forward_ios,
+                  size: 12,
                   color: AdminColors.primaryGreen,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 16),
-          _buildActivityItem(
-            icon: Icons.person_add,
+          ModernActivityItem(
+            icon: Icons.person_add_rounded,
             title: 'New user registered',
             subtitle: 'John Doe joined the platform',
             time: '5 min ago',
             color: AdminColors.accentBlue,
-            isMobile: isMobile,
           ),
-          const Divider(height: 24),
-          _buildActivityItem(
-            icon: Icons.shopping_bag,
+          Divider(height: 8, color: Colors.grey.withOpacity(0.1)),
+          ModernActivityItem(
+            icon: Icons.shopping_bag_rounded,
             title: 'New order placed',
             subtitle: 'Order #1234 - Plastic waste collection',
             time: '15 min ago',
             color: AdminColors.accentOrange,
-            isMobile: isMobile,
           ),
-          const Divider(height: 24),
-          _buildActivityItem(
-            icon: Icons.check_circle,
+          Divider(height: 8, color: Colors.grey.withOpacity(0.1)),
+          ModernActivityItem(
+            icon: Icons.check_circle_rounded,
             title: 'Collection completed',
             subtitle: 'Collector completed 5 pickups today',
             time: '1 hour ago',
             color: AdminColors.success,
-            isMobile: isMobile,
+          ),
+          Divider(height: 8, color: Colors.grey.withOpacity(0.1)),
+          ModernActivityItem(
+            icon: Icons.star_rounded,
+            title: 'New 5-star rating',
+            subtitle: 'Ahmed Khan received excellent review',
+            time: '2 hours ago',
+            color: const Color(0xFFFBBF24),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildActivityItem({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required String time,
-    required Color color,
-    required bool isMobile,
-  }) {
-    return Row(
-      children: [
-        Container(
-          padding: EdgeInsets.all(isMobile ? 8 : 10),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(icon, color: color, size: isMobile ? 20 : 24),
-        ),
-        SizedBox(width: isMobile ? 10 : 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: isMobile ? 13 : 14,
-                  fontWeight: FontWeight.w600,
-                  color: AdminColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                style: TextStyle(
-                  fontSize: isMobile ? 11 : 12,
-                  color: AdminColors.textSecondary,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-        SizedBox(width: isMobile ? 8 : 12),
-        Text(
-          time,
-          style: TextStyle(
-            fontSize: isMobile ? 10 : 12,
-            color: AdminColors.textLight,
-          ),
-        ),
-      ],
     );
   }
 }
