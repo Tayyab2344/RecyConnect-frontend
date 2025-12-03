@@ -440,7 +440,7 @@ class _AdminLogsScreenState extends State<AdminLogsScreen>
               child: Row(
                 children: [
                   if (selectedValue == option)
-                    Icon(Icons.check_rounded,
+                    const Icon(Icons.check_rounded,
                         size: 18, color: AppTheme.primaryGreen)
                   else
                     const SizedBox(width: 18),

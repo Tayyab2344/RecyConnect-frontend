@@ -130,10 +130,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: AppTheme.skyBlue.withOpacity(0.3)),
                   ),
-                  child: Row(
+                  child: const Row(
                     children: [
                       Icon(Icons.info_outline, color: AppTheme.skyBlue, size: 20),
-                      const SizedBox(width: 12),
+                      SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           'Password must be at least 8 characters long',

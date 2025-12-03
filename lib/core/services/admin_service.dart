@@ -2,9 +2,11 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import '../constants/api_constants.dart';
 
 class AdminService extends ChangeNotifier {
-  static const String baseUrl = 'http://localhost:5000/api';
+  // Update the baseUrl in lib/core/constants/api_constants.dart
+  // For physical device, use your computer's WiFi IP: 192.168.1.31
   
   List<Map<String, dynamic>> _logs = [];
   bool _isLoading = false;
@@ -78,7 +80,7 @@ class AdminService extends ChangeNotifier {
       if (from != null) queryParams['from'] = from.toIso8601String();
       if (to != null) queryParams['to'] = to.toIso8601String();
 
-      final uri = Uri.parse('$baseUrl/admin/logs').replace(queryParameters: queryParams);
+      final uri = Uri.parse('${ApiConstants.baseUrl}/admin/logs').replace(queryParameters: queryParams);
 
       final response = await http.get(
         uri,
@@ -124,7 +126,7 @@ class AdminService extends ChangeNotifier {
       }
 
       final response = await http.get(
-        Uri.parse('$baseUrl/admin/logs/$id'),
+        Uri.parse('${ApiConstants.baseUrl}/admin/logs/$id'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $_token',
@@ -154,5 +156,73 @@ class AdminService extends ChangeNotifier {
     _totalLogs = 0;
     _error = null;
     notifyListeners();
+  }
+
+  Future<List<dynamic>> getUsers() async {
+    try {
+      if (_token == null) await _loadToken();
+      
+      final response = await http.get(
+        Uri.parse('${ApiConstants.baseUrl}/admin/users'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_token',
+        },
+      );
+
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200 && data['success']) {
+        return data['data'];
+      } else {
+        throw Exception(data['error']?['message'] ?? 'Failed to fetch users');
+      }
+    } catch (e) {
+      throw Exception('Error fetching users: ${e.toString()}');
+    }
+  }
+
+  Future<void> suspendUser(int userId, bool suspend) async {
+    try {
+      if (_token == null) await _loadToken();
+      
+      final response = await http.put(
+        Uri.parse('${ApiConstants.baseUrl}/admin/users/$userId/suspend'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_token',
+        },
+        body: jsonEncode({'suspend': suspend}),
+      );
+
+      final data = jsonDecode(response.body);
+      if (response.statusCode != 200 || !data['success']) {
+        throw Exception(data['error']?['message'] ?? 'Failed to suspend user');
+      }
+    } catch (e) {
+      throw Exception('Error suspending user: ${e.toString()}');
+    }
+  }
+
+  Future<Map<String, dynamic>> getDashboardStats() async {
+    try {
+      if (_token == null) await _loadToken();
+      
+      final response = await http.get(
+        Uri.parse('${ApiConstants.baseUrl}/admin/dashboard'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_token',
+        },
+      );
+
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200 && data['success']) {
+        return data['data'];
+      } else {
+        throw Exception(data['error']?['message'] ?? 'Failed to fetch stats');
+      }
+    } catch (e) {
+      throw Exception('Error fetching stats: ${e.toString()}');
+    }
   }
 }

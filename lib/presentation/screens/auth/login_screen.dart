@@ -4,6 +4,9 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../core/utils/validators.dart';
 import '../dashboard/dashboard_screen.dart';
+import '../seller/seller_dashboard.dart';
+import '../admin/admin_dashboard.dart';
+import '../marketplace/buyer_dashboard.dart';
 import 'role_selection_screen.dart';
 import 'forgot_password_screen.dart';
 
@@ -23,45 +26,31 @@ class _LoginScreenState extends State<LoginScreen>
 
   late AnimationController _fadeController;
   late AnimationController _slideController;
-  late AnimationController _pulseController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
-  late Animation<double> _pulseAnimation;
 
   @override
   void initState() {
     super.initState();
 
-    // Fade animation
     _fadeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    );
+
+    _slideController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
     );
 
-    // Slide animation
-    _slideController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 600),
-    );
-
-    // Pulse animation for eco icon
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2000),
-    )..repeat(reverse: true);
-
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _fadeController, curve: Curves.easeIn),
+      CurvedAnimation(parent: _fadeController, curve: Curves.easeOut),
     );
 
     _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
+      begin: const Offset(0, 0.1),
       end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _slideController, curve: Curves.easeOut));
-
-    _pulseAnimation = Tween<double>(begin: 0.95, end: 1.05).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-    );
+    ).animate(CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic));
 
     _fadeController.forward();
     _slideController.forward();
@@ -73,7 +62,6 @@ class _LoginScreenState extends State<LoginScreen>
     _passwordController.dispose();
     _fadeController.dispose();
     _slideController.dispose();
-    _pulseController.dispose();
     super.dispose();
   }
 
@@ -89,512 +77,507 @@ class _LoginScreenState extends State<LoginScreen>
 
     if (mounted) {
       if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Row(
-              children: [
-                Icon(Icons.check_circle_rounded, color: Colors.white),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Welcome back! Login successful',
-                    style: TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                ),
-              ],
+        final user = authService.currentUser;
+        final status = user?['verificationStatus'];
+        final role = user?['role'];
+
+        if (status == 'PENDING' && role != 'individual') {
+          _showStatusDialog(
+            title: 'Account Pending',
+            content: 'Your account is under review. You will be notified once verified.',
+            icon: Icons.hourglass_top_rounded,
+            color: AppTheme.warningOrange,
+            authService: authService,
+          );
+        } else if (status == 'REJECTED') {
+          _showStatusDialog(
+            title: 'Account Rejected',
+            content: 'Reason: ${user?['rejectionReason'] ?? 'Verification failed.'}',
+            icon: Icons.cancel_rounded,
+            color: AppTheme.errorRed,
+            authService: authService,
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Welcome back! Login successful'),
+              backgroundColor: AppTheme.primaryGreen,
             ),
-            backgroundColor: AppTheme.primaryGreen,
-            behavior: SnackBarBehavior.floating,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            margin: const EdgeInsets.all(16),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const DashboardScreen()),
-        );
+          );
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const DashboardScreen()),
+          );
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.error_outline_rounded, color: Colors.white),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    authService.error ?? 'Login failed',
-                    style: const TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                ),
-              ],
-            ),
+            content: Text(authService.error ?? 'Login failed'),
             backgroundColor: AppTheme.errorRed,
-            behavior: SnackBarBehavior.floating,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            margin: const EdgeInsets.all(16),
-            duration: const Duration(seconds: 3),
           ),
         );
       }
     }
   }
 
+  void _showStatusDialog({
+    required String title,
+    required String content,
+    required IconData icon,
+    required Color color,
+    required AuthService authService,
+  }) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(icon, color: color),
+            const SizedBox(width: 10),
+            Text(title, style: AppTheme.subHeadingStyle.copyWith(fontSize: 18)),
+          ],
+        ),
+        content: Text(content, style: AppTheme.bodyStyle),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              authService.logout();
+            },
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    final isWeb = size.width > 800;
-
+    final theme = Theme.of(context);
+    // Force light theme
+    const isDark = false;
+    
     return Scaffold(
+      backgroundColor: Colors.white,
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              AppTheme.primaryGreen.withOpacity(0.12),
+              AppTheme.primaryGreen.withOpacity(0.1),
               Colors.white,
-              AppTheme.primaryGreen.withOpacity(0.08),
+              AppTheme.primaryGreen.withOpacity(0.05),
             ],
           ),
         ),
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
-              padding: EdgeInsets.all(isWeb ? 48 : 24),
-              child: ConstrainedBox(
-                constraints:
-                    BoxConstraints(maxWidth: isWeb ? 500 : double.infinity),
-                child: FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: SlideTransition(
-                    position: _slideAnimation,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // Logo and Header
-                        _buildHeader(isWeb),
-                        SizedBox(height: isWeb ? 48 : 40),
-
-                        // Login Card
-                        _buildLoginCard(isWeb),
-
-                        const SizedBox(height: 24),
-
-                        // Sign Up Prompt
-                        _buildSignUpPrompt(),
-
-                        const SizedBox(height: 24),
-
-                        // Environmental Impact Message
-                        _buildEnvironmentalBanner(),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader(bool isWeb) {
-    return Column(
-      children: [
-        // Animated Recycling Icon
-        ScaleTransition(
-          scale: _pulseAnimation,
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  AppTheme.primaryGreen,
-                  AppTheme.primaryGreen.withOpacity(0.7),
-                ],
-              ),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.primaryGreen.withOpacity(0.4),
-                  blurRadius: 24,
-                  spreadRadius: 4,
-                ),
-              ],
-            ),
-            child: const Icon(
-              Icons.recycling_rounded,
-              size: 56,
-              color: Colors.white,
-            ),
-          ),
-        ),
-        const SizedBox(height: 24),
-
-        // Title
-        Text(
-          'Welcome Back!',
-          style: TextStyle(
-            fontSize: isWeb ? 38 : 34,
-            fontWeight: FontWeight.bold,
-            color: AppTheme.textDark,
-            letterSpacing: -1,
-          ),
-        ),
-        const SizedBox(height: 8),
-
-        // Subtitle
-        Text(
-          'Continue your journey towards a cleaner planet',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: isWeb ? 16 : 15,
-            color: AppTheme.textLight,
-            height: 1.5,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildLoginCard(bool isWeb) {
-    return Container(
-      padding: EdgeInsets.all(isWeb ? 40 : 28),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 32,
-            offset: const Offset(0, 8),
-            spreadRadius: 0,
-          ),
-        ],
-      ),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Email/Collector ID Field
-            _buildEnhancedTextField(
-              controller: _emailController,
-              label: 'Email or Collector ID',
-              hint: 'Enter your email or ID',
-              icon: Icons.person_outline_rounded,
-              keyboardType: TextInputType.emailAddress,
-              validator: (value) =>
-                  Validators.required(value, 'Email or Collector ID'),
-            ),
-            const SizedBox(height: 20),
-
-            // Password Field
-            _buildEnhancedTextField(
-              controller: _passwordController,
-              label: 'Password',
-              hint: 'Enter your password',
-              icon: Icons.lock_outline_rounded,
-              obscureText: _obscurePassword,
-              validator: (value) => Validators.required(value, 'Password'),
-              suffixIcon: IconButton(
-                icon: Icon(
-                  _obscurePassword
-                      ? Icons.visibility_off_outlined
-                      : Icons.visibility_outlined,
-                  color: AppTheme.textLight,
-                  size: 22,
-                ),
-                onPressed: () =>
-                    setState(() => _obscurePassword = !_obscurePassword),
-                tooltip: _obscurePassword ? 'Show password' : 'Hide password',
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Forgot Password
-            Align(
-              alignment: Alignment.centerRight,
-              child: InkWell(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ForgotPasswordScreen(),
-                    ),
-                  );
-                },
-                borderRadius: BorderRadius.circular(8),
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: SlideTransition(
+                  position: _slideAnimation,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        Icons.help_outline_rounded,
-                        size: 16,
-                        color: AppTheme.primaryGreen,
-                      ),
-                      SizedBox(width: 4),
-                      Text(
-                        'Forgot Password?',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppTheme.primaryGreen,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                      // Logo Section
+                      _buildLogoSection(),
+                      const SizedBox(height: 48),
+
+                      // Login Card
+                      _buildLoginCard(),
+
+                      const SizedBox(height: 24),
+
+                      // Footer
+                      _buildFooter(),
                     ],
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 28),
-
-            // Login Button
-            Consumer<AuthService>(
-              builder: (context, authService, child) {
-                return SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: authService.isLoading ? null : _handleLogin,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryGreen,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      disabledBackgroundColor:
-                          AppTheme.primaryGreen.withOpacity(0.6),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    child: authService.isLoading
-                        ? const SizedBox(
-                            height: 24,
-                            width: 24,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2.5,
-                            ),
-                          )
-                        : const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                'Sign In',
-                                style: TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 0.3,
-                                ),
-                              ),
-                              SizedBox(width: 8),
-                              Icon(Icons.arrow_forward_rounded, size: 20),
-                            ],
-                          ),
-                  ),
-                );
-              },
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildEnhancedTextField({
-    required TextEditingController controller,
-    required String label,
-    required String hint,
-    required IconData icon,
-    bool obscureText = false,
-    TextInputType? keyboardType,
-    String? Function(String?)? validator,
-    Widget? suffixIcon,
-  }) {
+  Widget _buildLogoSection() {
+    final theme = Theme.of(context);
+    // Force light theme
+    const isDark = false;
+    
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 8),
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: AppTheme.textDark,
-            ),
-          ),
-        ),
-        TextFormField(
-          controller: controller,
-          obscureText: obscureText,
-          keyboardType: keyboardType,
-          validator: validator,
-          style: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w500,
-          ),
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: TextStyle(
-              color: AppTheme.textLight.withOpacity(0.5),
-              fontWeight: FontWeight.w400,
-            ),
-            prefixIcon: Padding(
-              padding: const EdgeInsets.only(left: 16, right: 12),
-              child: Icon(icon, color: AppTheme.primaryGreen, size: 22),
-            ),
-            prefixIconConstraints: const BoxConstraints(minWidth: 50),
-            suffixIcon: suffixIcon,
-            filled: true,
-            fillColor: AppTheme.backgroundLight,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide.none,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide(
-                color: Colors.grey.shade200,
-                width: 1.5,
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(
-                color: AppTheme.primaryGreen,
-                width: 2,
-              ),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(
-                color: AppTheme.errorRed,
-                width: 1.5,
-              ),
-            ),
-            focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(
-                color: AppTheme.errorRed,
-                width: 2,
-              ),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 18,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSignUpPrompt() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        const Text(
-          "Don't have an account? ",
-          style: TextStyle(
-            color: AppTheme.textLight,
-            fontSize: 15,
-          ),
-        ),
-        InkWell(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const RoleSelectionScreen(),
-              ),
-            );
-          },
-          borderRadius: BorderRadius.circular(4),
-          child: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-            child: Text(
-              'Sign Up',
-              style: TextStyle(
-                color: AppTheme.primaryGreen,
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
-                decoration: TextDecoration.underline,
-                decorationColor: AppTheme.primaryGreen,
-                decorationThickness: 2,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildEnvironmentalBanner() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.primaryGreen.withOpacity(0.15),
-            AppTheme.primaryGreen.withOpacity(0.08),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppTheme.primaryGreen.withOpacity(0.2),
-          width: 1.5,
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppTheme.primaryGreen.withOpacity(0.2),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.eco_rounded,
-              color: AppTheme.primaryGreen,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 16),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Making an Impact Together',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.textDark,
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  'Join 10,000+ users trading recyclables and saving our planet',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppTheme.textLight,
-                    height: 1.4,
-                  ),
-                ),
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppTheme.primaryGreen,
+                AppTheme.primaryGreen.withOpacity(0.8),
               ],
             ),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: isDark
+                    ? AppTheme.darkPrimaryGreen.withOpacity(0.3)
+                    : AppTheme.primaryGreen.withOpacity(0.3),
+                blurRadius: 20,
+                spreadRadius: 2,
+              ),
+            ],
+          ),
+          child: Icon(
+            Icons.recycling_rounded,
+            size: 56,
+            color: isDark ? AppTheme.darkBackground : Colors.white,
+          ),
+        ),
+        const SizedBox(height: 24),
+        Text(
+          'Welcome Back!',
+          style: isDark
+              ? theme.textTheme.displayLarge?.copyWith(fontSize: 32)
+              : AppTheme.headingStyle.copyWith(fontSize: 32),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Sign in to continue your eco journey',
+          style: TextStyle(
+            color: isDark ? AppTheme.darkTextSecondary : AppTheme.textLight,
+            fontSize: 15,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLoginCard() {
+    final theme = Theme.of(context);
+    // Force light theme
+    const isDark = false;
+    
+    return Container(
+      padding: const EdgeInsets.all(28),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: null,
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withOpacity(0.3)
+                : Colors.black.withOpacity(0.08),
+            blurRadius: 30,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
+      child: _buildLoginForm(),
+    );
+  }
+
+  Widget _buildLoginForm() {
+    final theme = Theme.of(context);
+    // Force light theme
+    const isDark = false;
+    
+    return Form(
+      key: _formKey,
+      child: Column(
+        children: [
+          // Email Field
+          TextFormField(
+            controller: _emailController,
+            keyboardType: TextInputType.emailAddress,
+            style: TextStyle(
+              fontSize: 15,
+              color: isDark ? AppTheme.darkTextPrimary : AppTheme.textDark,
+            ),
+            decoration: InputDecoration(
+              labelText: 'Email or Collector ID',
+              hintText: 'Enter your email or ID',
+              prefixIcon: Icon(
+                Icons.person_outline_rounded,
+                color: isDark ? AppTheme.darkSecondaryGreen : AppTheme.primaryGreen,
+              ),
+              filled: true,
+              fillColor: isDark ? AppTheme.darkSurface : AppTheme.backgroundLight,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(
+                  color: isDark ? AppTheme.darkBorderGreen : Colors.grey.shade200,
+                  width: 1,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(
+                  color: isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen,
+                  width: 2,
+                ),
+              ),
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(color: AppTheme.errorRed, width: 1),
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(color: AppTheme.errorRed, width: 2),
+              ),
+              labelStyle: TextStyle(
+                color: isDark ? AppTheme.darkTextSecondary : AppTheme.textLight,
+              ),
+              hintStyle: TextStyle(
+                color: isDark ? AppTheme.darkTextSecondary.withOpacity(0.5) : AppTheme.textLight.withOpacity(0.5),
+              ),
+            ),
+            validator: (value) => Validators.required(value, 'Email or ID'),
+          ),
+          const SizedBox(height: 20),
+
+          // Password Field
+          TextFormField(
+            controller: _passwordController,
+            obscureText: _obscurePassword,
+            style: TextStyle(
+              fontSize: 15,
+              color: isDark ? AppTheme.darkTextPrimary : AppTheme.textDark,
+            ),
+            decoration: InputDecoration(
+              labelText: 'Password',
+              hintText: 'Enter your password',
+              prefixIcon: Icon(
+                Icons.lock_outline_rounded,
+                color: isDark ? AppTheme.darkSecondaryGreen : AppTheme.primaryGreen,
+              ),
+              filled: true,
+              fillColor: isDark ? AppTheme.darkSurface : AppTheme.backgroundLight,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(
+                  color: isDark ? AppTheme.darkBorderGreen : Colors.grey.shade200,
+                  width: 1,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(
+                  color: isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen,
+                  width: 2,
+                ),
+              ),
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(color: AppTheme.errorRed, width: 1),
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(color: AppTheme.errorRed, width: 2),
+              ),
+              labelStyle: TextStyle(
+                color: isDark ? AppTheme.darkTextSecondary : AppTheme.textLight,
+              ),
+              hintStyle: TextStyle(
+                color: isDark ? AppTheme.darkTextSecondary.withOpacity(0.5) : AppTheme.textLight.withOpacity(0.5),
+              ),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                  color: isDark ? AppTheme.darkSecondaryGreen : AppTheme.textLight,
+                ),
+                onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+              ),
+            ),
+            validator: (value) => Validators.required(value, 'Password'),
+          ),
+          const SizedBox(height: 12),
+
+          // Forgot Password
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ForgotPasswordScreen()),
+                );
+              },
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              ),
+              child: const Text(
+                'Forgot Password?',
+                style: TextStyle(
+                  color: AppTheme.primaryGreen,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 28),
+
+          // Login Button
+          Consumer<AuthService>(
+            builder: (context, authService, child) {
+              return SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: authService.isLoading ? null : _handleLogin,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryGreen,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shadowColor: AppTheme.primaryGreen.withOpacity(0.3),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    disabledBackgroundColor: AppTheme.primaryGreen.withOpacity(0.6),
+                  ),
+                  child: authService.isLoading
+                      ? const SizedBox(
+                          height: 24,
+                          width: 24,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2.5,
+                          ),
+                        )
+                      : const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Sign In',
+                              style: TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            SizedBox(width: 8),
+                            Icon(Icons.arrow_forward_rounded, size: 20),
+                          ],
+                        ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFooter() {
+    final theme = Theme.of(context);
+    // Force light theme
+    const isDark = false;
+
+    return Column(
+      children: [
+        // Sign Up Prompt
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              "Don't have an account? ",
+              style: AppTheme.bodyStyle.copyWith(
+                color: AppTheme.textLight,
+                fontSize: 15,
+              ),
+            ),
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const RoleSelectionScreen()),
+                );
+              },
+              child: Text(
+                'Sign Up',
+                style: AppTheme.bodyStyle.copyWith(
+                  color: AppTheme.primaryGreen,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                  decoration: TextDecoration.underline,
+                  decorationColor: AppTheme.primaryGreen,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+
+        // Environmental Message
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: isDark
+                  ? [
+                      AppTheme.darkCardSurface,
+                      AppTheme.darkSurface,
+                    ]
+                  : [
+                      AppTheme.primaryGreen.withOpacity(0.1),
+                      AppTheme.primaryGreen.withOpacity(0.05),
+                    ],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isDark
+                  ? AppTheme.darkBorderGreen
+                  : AppTheme.primaryGreen.withOpacity(0.2),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryGreen.withOpacity(0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.eco_rounded,
+                  color: AppTheme.primaryGreen,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Join 10,000+ users making an impact',
+                  style: AppTheme.bodyStyle.copyWith(
+                    color: AppTheme.textDark,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

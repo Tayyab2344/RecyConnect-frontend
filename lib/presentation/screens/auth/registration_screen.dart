@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -6,6 +7,9 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../core/utils/validators.dart';
+import '../../../core/utils/validators.dart';
+import '../../../core/utils/pakistan_locations.dart';
+import '../../widgets/city_area_selector.dart';
 import 'otp_verification_screen.dart';
 
 class RegistrationScreen extends StatefulWidget {
@@ -22,22 +26,42 @@ class _RegistrationScreenState extends State<RegistrationScreen>
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   final _nameController = TextEditingController();
   final _businessNameController = TextEditingController();
   final _companyNameController = TextEditingController();
   final _cnicController = TextEditingController();
   final _ntnController = TextEditingController();
-  final _addressController = TextEditingController();
+
+  final _addressController = TextEditingController(); // This will now be street address
   final _contactNoController = TextEditingController();
 
-  File? _profileImage;
-  File? _cnicImage;
-  File? _utilityImage;
-  File? _ntnImage;
+  String? _selectedCity;
+  String? _selectedArea;
+
+  XFile? _profileImage;
+  XFile? _cnicImage;
+  XFile? _utilityImage;
+  XFile? _ntnImage;
+
+  String? _extractedCnicNumber;
+  String? _extractedUtilityBillNumber;
+  String? _extractedNtnNumber;
 
   bool _isLoading = false;
   bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
+  double _passwordStrength = 0.0;
+  String _passwordStrengthText = '';
+  Color _passwordStrengthColor = Colors.grey;
   int _currentStep = 0;
+  
+  
+  bool _hasMinLength = false;
+  bool _hasUppercase = false;
+  bool _hasLowercase = false;
+  bool _hasNumber = false;
+  bool _hasSpecialChar = false;
 
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
@@ -55,10 +79,58 @@ class _RegistrationScreenState extends State<RegistrationScreen>
     _fadeController.forward();
   }
 
+  Future<void> _analyzeDocument(XFile file, String docType) async {
+    final authService = Provider.of<AuthService>(context, listen: false);
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Analyzing document... please wait')),
+    );
+
+    final result = await authService.analyzeDocument(file);
+
+    if (result['success'] == true) {
+      final data = result['data'];
+      final extracted = data['extracted'];
+      
+      setState(() {
+        if (docType == 'CNIC') {
+          if (extracted['cnic'] != null) {
+             _cnicController.text = extracted['cnic'];
+             _extractedCnicNumber = extracted['cnic'];
+          }
+        } else if (docType == 'NTN') {
+          if (extracted['ntn'] != null) {
+            _ntnController.text = extracted['ntn'];
+            _extractedNtnNumber = extracted['ntn'];
+          }
+        }
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Document analyzed. Extracted: ${extracted['cnic'] ?? extracted['ntn'] ?? "No specific data found"}'),
+            backgroundColor: AppTheme.primaryGreen,
+          ),
+        );
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Analysis failed: ${result['message']}'),
+            backgroundColor: AppTheme.errorRed,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     _nameController.dispose();
     _businessNameController.dispose();
     _companyNameController.dispose();
@@ -68,6 +140,66 @@ class _RegistrationScreenState extends State<RegistrationScreen>
     _contactNoController.dispose();
     _fadeController.dispose();
     super.dispose();
+  }
+
+  void _checkPasswordStrength(String password) {
+    double strength = 0.0;
+    String strengthText = '';
+
+    // Track individual requirements
+    _hasMinLength = password.length >= 8;
+    _hasUppercase = RegExp(r'[A-Z]').hasMatch(password);
+    _hasLowercase = RegExp(r'[a-z]').hasMatch(password);
+    _hasNumber = RegExp(r'\d').hasMatch(password);
+    _hasSpecialChar = RegExp(r'[!@#$%^\&*(),.?":{}|<>]').hasMatch(password);
+
+    if (password.isEmpty) {
+      strength = 0.0;
+      strengthText = '';
+    } else if (password.length < 8) {
+      strength = 0.2;
+      strengthText = 'Weak';
+    } else {
+      // Base strength for length
+      strength = 0.3;
+      
+      // Has lowercase
+      if (_hasLowercase) strength += 0.15;
+      
+      // Has uppercase
+      if (_hasUppercase) strength += 0.15;
+      
+      // Has number
+      if (_hasNumber) strength += 0.15;
+      
+      // Has special character
+      if (_hasSpecialChar) strength += 0.15;
+      
+      // Length bonus
+      if (password.length >= 12) strength += 0.1;
+
+      if (strength <= 0.4) {
+        strengthText = 'Weak';
+      } else if (strength <= 0.6) {
+        strengthText = 'Medium';
+      } else if (strength <= 0.8) {
+        strengthText = 'Strong';
+      } else {
+        strengthText = 'Very Strong';
+      }
+    }
+
+    setState(() {
+      _passwordStrength = strength;
+      _passwordStrengthText = strengthText;
+      _passwordStrengthColor = strength <= 0.4
+          ? Colors.red
+          : strength <= 0.6
+              ? Colors.orange
+              : strength <= 0.8
+                  ? Colors.lightGreen
+                  : Colors.green;
+    });
   }
 
   Future<ImageSource?> _showImageSourceDialog() async {
@@ -113,7 +245,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
       if (image != null) {
         setState(() {
-          _profileImage = File(image.path);
+          _profileImage = image;
         });
       }
     } catch (e) {
@@ -136,7 +268,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
       if (image != null) {
         setState(() {
-          _cnicImage = File(image.path);
+          _cnicImage = image;
         });
         await _onCnicImageSelected(_cnicImage);
       }
@@ -160,8 +292,9 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
       if (image != null) {
         setState(() {
-          _utilityImage = File(image.path);
+          _utilityImage = image;
         });
+        await _onUtilityImageSelected(_utilityImage);
       }
     } catch (e) {
       _showSnackBar('Error picking image: $e', isError: true);
@@ -183,7 +316,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
       if (image != null) {
         setState(() {
-          _ntnImage = File(image.path);
+          _ntnImage = image;
         });
         await _onNtnImageSelected(_ntnImage);
       }
@@ -198,7 +331,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
     final isWeb = size.width > 800;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.backgroundLight,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -206,8 +339,15 @@ class _RegistrationScreenState extends State<RegistrationScreen>
           icon: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppTheme.backgroundLight,
+              color: Colors.white,
               borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: const Icon(Icons.arrow_back_ios_new, size: 18),
           ),
@@ -216,21 +356,18 @@ class _RegistrationScreenState extends State<RegistrationScreen>
         ),
         title: Text(
           '${_getRoleDisplayName()} Registration',
-          style: const TextStyle(
-            color: AppTheme.textDark,
-            fontWeight: FontWeight.w600,
-          ),
+          style: AppTheme.headingStyle.copyWith(fontSize: 20),
         ),
+        centerTitle: true,
       ),
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
             colors: [
-              AppTheme.primaryGreen.withOpacity(0.05),
+              AppTheme.backgroundLight,
               Colors.white,
-              AppTheme.primaryGreen.withOpacity(0.03),
             ],
           ),
         ),
@@ -238,22 +375,45 @@ class _RegistrationScreenState extends State<RegistrationScreen>
           child: Center(
             child: ConstrainedBox(
               constraints:
-                  BoxConstraints(maxWidth: isWeb ? 600 : double.infinity),
+                  BoxConstraints(maxWidth: isWeb ? 800 : double.infinity),
               child: FadeTransition(
                 opacity: _fadeAnimation,
                 child: Form(
                   key: _formKey,
-                  child: ListView(
-                    padding: EdgeInsets.all(isWeb ? 48 : 24),
+                  child: Column(
                     children: [
-                      _buildHeader(),
-                      const SizedBox(height: 32),
-                      _buildProgressIndicator(),
-                      const SizedBox(height: 32),
-                      _buildStepContent(),
-                      const SizedBox(height: 32),
+                      Expanded(
+                        child: ListView(
+                          padding: EdgeInsets.all(isWeb ? 40 : 24),
+                          children: [
+                            _buildHeader(),
+                            const SizedBox(height: 32),
+                            _buildProgressIndicator(),
+                            const SizedBox(height: 32),
+                            AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 500),
+                              transitionBuilder: (child, animation) {
+                                return FadeTransition(
+                                  opacity: animation,
+                                  child: SlideTransition(
+                                    position: Tween<Offset>(
+                                      begin: const Offset(0.05, 0),
+                                      end: Offset.zero,
+                                    ).animate(animation),
+                                    child: child,
+                                  ),
+                                );
+                              },
+                              child: KeyedSubtree(
+                                key: ValueKey<int>(_currentStep),
+                                child: _buildStepContent(),
+                              ),
+                            ),
+                            const SizedBox(height: 32),
+                          ],
+                        ),
+                      ),
                       _buildNavigationButtons(),
-                      const SizedBox(height: 24),
                     ],
                   ),
                 ),
@@ -266,113 +426,87 @@ class _RegistrationScreenState extends State<RegistrationScreen>
   }
 
   Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.all(28),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.primaryGreen.withOpacity(0.1),
-            AppTheme.primaryGreen.withOpacity(0.05),
-          ],
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: AppTheme.primaryGreen.withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            _getRoleIcon(),
+            size: 48,
+            color: AppTheme.primaryGreen,
+          ),
         ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppTheme.primaryGreen.withOpacity(0.2),
-          width: 1.5,
+        const SizedBox(height: 24),
+        Text(
+          'Create Account',
+          style: AppTheme.headingStyle,
+          textAlign: TextAlign.center,
         ),
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  AppTheme.primaryGreen,
-                  AppTheme.primaryGreen.withOpacity(0.8),
-                ],
-              ),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.primaryGreen.withOpacity(0.3),
-                  blurRadius: 15,
-                  spreadRadius: 3,
-                ),
-              ],
-            ),
-            child: Icon(
-              _getRoleIcon(),
-              size: 40,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            'Create ${_getRoleDisplayName()} Account',
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.textDark,
-              letterSpacing: -0.5,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _getRoleDescription(),
-            style: const TextStyle(
-              fontSize: 14,
-              color: AppTheme.textLight,
-              height: 1.5,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
+        const SizedBox(height: 8),
+        Text(
+          _getRoleDescription(),
+          style: AppTheme.bodyStyle.copyWith(color: AppTheme.textLight),
+          textAlign: TextAlign.center,
+        ),
+      ],
     );
   }
 
   Widget _buildProgressIndicator() {
     int totalSteps = _getTotalSteps();
-
-    return Column(
-      children: [
-        Row(
-          children: List.generate(totalSteps, (index) {
-            bool isCompleted = index < _currentStep;
-            bool isCurrent = index == _currentStep;
-
-            return Expanded(
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: isCompleted || isCurrent
-                            ? AppTheme.primaryGreen
-                            : Colors.grey.shade300,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
+        children: List.generate(totalSteps, (index) {
+          bool isCompleted = index < _currentStep;
+          bool isCurrent = index == _currentStep;
+          
+          return Expanded(
+            child: Row(
+              children: [
+                // Step Circle
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: isCompleted || isCurrent ? AppTheme.primaryGreen : Colors.white,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isCompleted || isCurrent ? AppTheme.primaryGreen : Colors.grey.shade300,
+                      width: 2,
                     ),
                   ),
-                  if (index < totalSteps - 1) const SizedBox(width: 8),
-                ],
-              ),
-            );
-          }),
-        ),
-        const SizedBox(height: 16),
-        Text(
-          'Step ${_currentStep + 1} of $totalSteps',
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: AppTheme.primaryGreen,
-          ),
-        ),
-      ],
+                  child: Center(
+                    child: isCompleted
+                        ? const Icon(Icons.check, size: 16, color: Colors.white)
+                        : Text(
+                            '${index + 1}',
+                            style: TextStyle(
+                              color: isCurrent ? Colors.white : Colors.grey.shade400,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                  ),
+                ),
+                
+                // Connector Line
+                if (index < totalSteps - 1)
+                  Expanded(
+                    child: Container(
+                      height: 2,
+                      color: isCompleted ? AppTheme.primaryGreen : Colors.grey.shade300,
+                    ),
+                  ),
+              ],
+            ),
+          );
+        }),
+      ),
     );
   }
 
@@ -391,47 +525,31 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
   Widget _buildBasicInfoStep() {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryGreen.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.person_outline_rounded,
-                  color: AppTheme.primaryGreen,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Text(
-                'Basic Information',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.textDark,
-                ),
-              ),
-            ],
+          Text(
+            'Basic Information',
+            style: AppTheme.subHeadingStyle,
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 8),
+          Text(
+            'Please enter your personal details',
+            style: AppTheme.bodyStyle.copyWith(color: AppTheme.textLight),
+          ),
+          const SizedBox(height: 32),
 
           // Profile Image
           Center(
@@ -443,12 +561,14 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: AppTheme.primaryGreen.withOpacity(0.3),
-                      width: 3,
+                      color: AppTheme.primaryGreen.withOpacity(0.2),
+                      width: 4,
                     ),
                     image: _profileImage != null
                         ? DecorationImage(
-                            image: FileImage(_profileImage!),
+                            image: kIsWeb 
+                                ? NetworkImage(_profileImage!.path) 
+                                : FileImage(File(_profileImage!.path)) as ImageProvider,
                             fit: BoxFit.cover,
                           )
                         : null,
@@ -456,8 +576,8 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                   ),
                   child: _profileImage == null
                       ? const Icon(
-                          Icons.person,
-                          size: 50,
+                          Icons.person_rounded,
+                          size: 64,
                           color: AppTheme.textLight,
                         )
                       : null,
@@ -468,15 +588,16 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                   child: GestureDetector(
                     onTap: _pickProfileImage,
                     child: Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
                         color: AppTheme.primaryGreen,
                         shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 3),
                         boxShadow: [
                           BoxShadow(
-                            color: AppTheme.primaryGreen.withOpacity(0.3),
+                            color: AppTheme.primaryGreen.withOpacity(0.4),
                             blurRadius: 8,
-                            spreadRadius: 2,
+                            offset: const Offset(0, 4),
                           ),
                         ],
                       ),
@@ -491,20 +612,21 @@ class _RegistrationScreenState extends State<RegistrationScreen>
               ],
             ),
           ),
+          const SizedBox(height: 32),
+
+          // Name field (Always shown for all roles now)
+          _buildEnhancedTextField(
+            controller: _nameController,
+            label: 'Full Name',
+            hint: 'Enter your full name',
+            icon: Icons.person_outline_rounded,
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z\s]')),
+            ],
+            validator: Validators.name,
+          ),
           const SizedBox(height: 24),
 
-          // Name field based on role
-          if (widget.role == 'individual')
-            _buildEnhancedTextField(
-              controller: _nameController,
-              label: 'Full Name',
-              hint: 'Enter your full name',
-              icon: Icons.person_outline_rounded,
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z\s]')),
-              ],
-              validator: Validators.name,
-            ),
           if (widget.role == 'warehouse')
             _buildEnhancedTextField(
               controller: _businessNameController,
@@ -521,7 +643,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
               icon: Icons.corporate_fare_outlined,
               validator: Validators.companyName,
             ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
 
           _buildEnhancedTextField(
             controller: _emailController,
@@ -531,7 +653,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
             keyboardType: TextInputType.emailAddress,
             validator: Validators.email,
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
 
           _buildEnhancedTextField(
             controller: _contactNoController,
@@ -545,18 +667,43 @@ class _RegistrationScreenState extends State<RegistrationScreen>
               LengthLimitingTextInputFormatter(11),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
+
+          const SizedBox(height: 24),
+
+          // City & Area Selector
+          CityAreaSelector(
+            selectedCity: _selectedCity,
+            selectedArea: _selectedArea,
+            onCityChanged: (city) {
+              setState(() {
+                _selectedCity = city;
+                _selectedArea = null; // Reset area when city changes
+              });
+            },
+            onAreaChanged: (area) {
+              setState(() {
+                _selectedArea = area;
+              });
+            },
+          ),
+          const SizedBox(height: 24),
 
           _buildEnhancedTextField(
             controller: _addressController,
-            label: 'Address',
-            hint: 'Enter your complete address',
+            label: 'Street Address',
+            hint: 'House No, Street No, etc.',
             icon: Icons.location_on_outlined,
             keyboardType: TextInputType.streetAddress,
-            validator: Validators.address,
-            maxLines: 3,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter street address';
+              }
+              return null;
+            },
+            maxLines: 2,
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
 
           _buildEnhancedTextField(
             controller: _passwordController,
@@ -565,6 +712,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
             icon: Icons.lock_outline_rounded,
             obscureText: _obscurePassword,
             validator: Validators.password,
+            onChanged: (value) => _checkPasswordStrength(value),
             suffixIcon: IconButton(
               icon: Icon(
                 _obscurePassword
@@ -578,23 +726,152 @@ class _RegistrationScreenState extends State<RegistrationScreen>
             ),
           ),
 
+          // Password Strength Indicator
+          if (_passwordController.text.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: _passwordStrength,
+                      backgroundColor: Colors.grey[200],
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        _passwordStrength <= 0.4
+                            ? Colors.red
+                            : _passwordStrength <= 0.6
+                                ? Colors.orange
+                                : _passwordStrength <= 0.8
+                                    ? Colors.lightGreen
+                                    : Colors.green,
+                      ),
+                      minHeight: 6,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  _passwordStrengthText,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: _passwordStrength <= 0.4
+                        ? Colors.red
+                        : _passwordStrength <= 0.6
+                            ? Colors.orange
+                            : _passwordStrength <= 0.8
+                                ? Colors.lightGreen
+                                : Colors.green,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            // Password Requirements Checklist
+            _buildRequirementItem('At least 8 characters', _hasMinLength),
+            _buildRequirementItem('One uppercase letter', _hasUppercase),
+            _buildRequirementItem('One lowercase letter', _hasLowercase),
+            _buildRequirementItem('One number', _hasNumber),
+            _buildRequirementItem('One special character', _hasSpecialChar),
+          ],
+
+          const SizedBox(height: 24),
+
+          // Confirm Password Field
+          _buildEnhancedTextField(
+            controller: _confirmPasswordController,
+            label: 'Confirm Password',
+            hint: 'Re-enter your password',
+            icon: Icons.lock_outline_rounded,
+            obscureText: _obscureConfirmPassword,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please confirm your password';
+              }
+              if (value != _passwordController.text) {
+                return 'Passwords do not match';
+              }
+              return null;
+            },
+            suffixIcon: IconButton(
+              icon: Icon(
+                _obscureConfirmPassword
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
+                color: AppTheme.textLight,
+                size: 22,
+              ),
+              onPressed: () =>
+                  setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+            ),
+          ),
+
+          // Password Match Indicator
+          if (_confirmPasswordController.text.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: (_confirmPasswordController.text == _passwordController.text
+                        ? AppTheme.primaryGreen
+                        : AppTheme.errorRed)
+                    .withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: (_confirmPasswordController.text == _passwordController.text
+                          ? AppTheme.primaryGreen
+                          : AppTheme.errorRed)
+                      .withOpacity(0.3),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    _confirmPasswordController.text == _passwordController.text
+                        ? Icons.check_circle_rounded
+                        : Icons.cancel_rounded,
+                    size: 20,
+                    color: _confirmPasswordController.text == _passwordController.text
+                        ? AppTheme.primaryGreen
+                        : AppTheme.errorRed,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      _confirmPasswordController.text == _passwordController.text
+                          ? 'Passwords match'
+                          : 'Passwords do not match',
+                      style: AppTheme.captionStyle.copyWith(
+                        color: _confirmPasswordController.text == _passwordController.text
+                            ? AppTheme.primaryGreen
+                            : AppTheme.errorRed,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
           const SizedBox(height: 16),
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.blue.shade50,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Colors.blue.shade100),
+              color: AppTheme.infoBlue.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppTheme.infoBlue.withOpacity(0.1)),
             ),
             child: Row(
               children: [
-                Icon(Icons.info_outline_rounded,
-                    size: 18, color: Colors.blue.shade700),
-                const SizedBox(width: 8),
+                const Icon(Icons.info_outline_rounded,
+                    size: 20, color: AppTheme.infoBlue),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Password must be at least 8 characters',
-                    style: TextStyle(fontSize: 12, color: Colors.blue.shade900),
+                    'Create a strong password with a mix of letters, numbers, and symbols',
+                    style: AppTheme.captionStyle.copyWith(color: AppTheme.infoBlue),
                   ),
                 ),
               ],
@@ -607,47 +884,32 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
   Widget _buildDocumentsStep() {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryGreen.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.description_outlined,
-                  color: AppTheme.primaryGreen,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Text(
-                'Document Verification',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.textDark,
-                ),
-              ),
-            ],
+          Text(
+            'Document Verification',
+            style: AppTheme.subHeadingStyle,
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 8),
+          Text(
+            'Upload clear images of your documents for verification',
+            style: AppTheme.bodyStyle.copyWith(color: AppTheme.textLight),
+          ),
+          const SizedBox(height: 32),
+
           if (widget.role == 'warehouse' || widget.role == 'company') ...[
             _buildDocumentUploadCard(
               title: 'CNIC Verification',
@@ -656,41 +918,53 @@ class _RegistrationScreenState extends State<RegistrationScreen>
               image: _cnicImage,
               onTap: _pickCnicImage,
             ),
-            if (_cnicController.text.isNotEmpty) ...[
+            
+            // Manual CNIC entry field (always show after upload)
+            if (_cnicImage != null) ...[
               const SizedBox(height: 16),
+              _buildEnhancedTextField(
+                controller: _cnicController,
+                label: 'CNIC Number',
+                hint: '12345-1234567-1',
+                icon: Icons.credit_card_rounded,
+                keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[0-9-]')),
+                  LengthLimitingTextInputFormatter(15),
+                ],
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter CNIC number';
+                  }
+                  // Remove hyphens and check if 13 digits
+                  final digits = value.replaceAll('-', '');
+                  if (digits.length != 13) {
+                    return 'CNIC must be 13 digits';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 8),
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryGreen.withOpacity(0.1),
+                  color: AppTheme.infoBlue.withOpacity(0.05),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: AppTheme.primaryGreen.withOpacity(0.3),
-                  ),
+                  border: Border.all(color: AppTheme.infoBlue.withOpacity(0.1)),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.check_circle_rounded,
-                        color: AppTheme.primaryGreen),
+                    const Icon(Icons.info_outline_rounded, size: 18, color: AppTheme.infoBlue),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'CNIC Extracted',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.textDark,
-                            ),
-                          ),
-                          Text(
-                            _cnicController.text,
-                            style: const TextStyle(
-                              color: AppTheme.textLight,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
+                      child: Text(
+                        _cnicController.text.isEmpty 
+                          ? 'OCR couldn\'t extract CNIC. Please enter manually.'
+                          : 'OCR extracted CNIC. Please verify and correct if needed.',
+                        style: AppTheme.captionStyle.copyWith(
+                          color: AppTheme.infoBlue,
+                          fontSize: 12,
+                        ),
                       ),
                     ),
                   ],
@@ -699,7 +973,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
             ],
           ],
           if (widget.role == 'company') ...[
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
             _buildDocumentUploadCard(
               title: 'Utility Bill',
               description: 'Recent electricity or gas bill',
@@ -707,7 +981,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
               image: _utilityImage,
               onTap: _pickUtilityImage,
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
             _buildDocumentUploadCard(
               title: 'NTN Certificate',
               description: 'National Tax Number certificate',
@@ -720,34 +994,38 @@ class _RegistrationScreenState extends State<RegistrationScreen>
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryGreen.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  color: AppTheme.primaryGreen.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: AppTheme.primaryGreen.withOpacity(0.3),
+                    color: AppTheme.primaryGreen.withOpacity(0.2),
                   ),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.check_circle_rounded,
-                        color: AppTheme.primaryGreen),
-                    const SizedBox(width: 12),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: const BoxDecoration(
+                        color: AppTheme.primaryGreen,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.check, color: Colors.white, size: 16),
+                    ),
+                    const SizedBox(width: 16),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'NTN Extracted',
-                            style: TextStyle(
+                          Text(
+                            'NTN Number Extracted',
+                            style: AppTheme.captionStyle.copyWith(
                               fontWeight: FontWeight.w600,
-                              color: AppTheme.textDark,
+                              color: AppTheme.primaryGreen,
                             ),
                           ),
+                          const SizedBox(height: 4),
                           Text(
                             _ntnController.text,
-                            style: const TextStyle(
-                              color: AppTheme.textLight,
-                              fontSize: 13,
-                            ),
+                            style: AppTheme.subHeadingStyle.copyWith(fontSize: 18),
                           ),
                         ],
                       ),
@@ -761,27 +1039,27 @@ class _RegistrationScreenState extends State<RegistrationScreen>
             Center(
               child: Column(
                 children: [
-                  Icon(
-                    Icons.verified_user_rounded,
-                    size: 80,
-                    color: AppTheme.primaryGreen.withOpacity(0.3),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'No documents required',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.textDark,
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryGreen.withOpacity(0.05),
+                      shape: BoxShape.circle,
                     ),
+                    child: Icon(
+                      Icons.verified_user_rounded,
+                      size: 64,
+                      color: AppTheme.primaryGreen.withOpacity(0.5),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'No Documents Required',
+                    style: AppTheme.subHeadingStyle,
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'Individual accounts don\'t require document verification',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: AppTheme.textLight,
-                    ),
+                  Text(
+                    'Individual accounts don\'t require document verification.\nYou can proceed to the next step.',
+                    style: AppTheme.bodyStyle.copyWith(color: AppTheme.textLight),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -795,15 +1073,15 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
   Widget _buildVerificationStep() {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -817,29 +1095,23 @@ class _RegistrationScreenState extends State<RegistrationScreen>
             ),
             child: const Icon(
               Icons.check_circle_rounded,
-              size: 60,
+              size: 64,
               color: AppTheme.primaryGreen,
             ),
           ),
           const SizedBox(height: 24),
-          const Text(
+          Text(
             'Review & Submit',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.textDark,
-            ),
+            style: AppTheme.headingStyle,
           ),
-          const SizedBox(height: 12),
-          const Text(
+          const SizedBox(height: 8),
+          Text(
             'Please review your information before submitting',
-            style: TextStyle(
-              fontSize: 14,
-              color: AppTheme.textLight,
-            ),
+            style: AppTheme.bodyStyle.copyWith(color: AppTheme.textLight),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 32),
+          
           _buildReviewItem(
             'Role',
             _getRoleDisplayName(),
@@ -885,17 +1157,81 @@ class _RegistrationScreenState extends State<RegistrationScreen>
               _ntnController.text,
               Icons.receipt_long_rounded,
             ),
+
+          // Document Upload Status Section
+          if (_cnicImage != null ||
+              _utilityImage != null ||
+              _ntnImage != null) ...[
+            const SizedBox(height: 24),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryGreen.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: AppTheme.primaryGreen.withOpacity(0.2),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.auto_awesome,
+                        size: 20,
+                        color: AppTheme.primaryGreen,
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Automatic Document Processing',
+                        style: AppTheme.subHeadingStyle.copyWith(fontSize: 16),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Your documents will be automatically processed after email verification. Document numbers (CNIC, NTN, etc.) will be extracted using OCR and saved to your profile.',
+                    style: AppTheme.captionStyle.copyWith(height: 1.5),
+                  ),
+                  const SizedBox(height: 20),
+                  if (_cnicImage != null)
+                    _buildExtractedDataItem(
+                      'CNIC Document',
+                      '✓ Uploaded - Ready for processing',
+                      Icons.credit_card_rounded,
+                    ),
+                  if (_utilityImage != null)
+                    _buildExtractedDataItem(
+                      'Utility Bill',
+                      '✓ Uploaded - Ready for processing',
+                      Icons.receipt_long_rounded,
+                    ),
+                  if (_ntnImage != null)
+                    _buildExtractedDataItem(
+                      'NTN Certificate',
+                      '✓ Uploaded - Ready for processing',
+                      Icons.account_balance_rounded,
+                    ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildReviewItem(String label, String value, IconData icon) {
+  Widget _buildExtractedDataItem(
+    String label,
+    String value,
+    IconData icon,
+  ) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppTheme.backgroundLight,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey.shade200),
       ),
@@ -907,7 +1243,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
               color: AppTheme.primaryGreen.withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(icon, size: 20, color: AppTheme.primaryGreen),
+            child: Icon(icon, size: 18, color: AppTheme.primaryGreen),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -916,18 +1252,69 @@ class _RegistrationScreenState extends State<RegistrationScreen>
               children: [
                 Text(
                   label,
-                  style: const TextStyle(
-                    fontSize: 12,
+                  style: AppTheme.captionStyle.copyWith(
+                    fontWeight: FontWeight.w600,
                     color: AppTheme.textLight,
-                    fontWeight: FontWeight.w500,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   value,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    color: AppTheme.textDark,
+                  style: AppTheme.bodyStyle.copyWith(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Icon(Icons.check_circle, size: 20, color: AppTheme.primaryGreen),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReviewItem(String label, String value, IconData icon) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.backgroundLight,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 4,
+                ),
+              ],
+            ),
+            child: Icon(icon, size: 20, color: AppTheme.primaryGreen),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: AppTheme.captionStyle.copyWith(
+                    fontWeight: FontWeight.w500,
+                    color: AppTheme.textLight,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: AppTheme.bodyStyle.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -943,7 +1330,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
     required String title,
     required String description,
     required IconData icon,
-    required File? image,
+    required XFile? image,
     required VoidCallback onTap,
   }) {
     bool hasImage = image != null;
@@ -951,66 +1338,99 @@ class _RegistrationScreenState extends State<RegistrationScreen>
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(20),
+        height: 100,
         decoration: BoxDecoration(
-          color: hasImage
-              ? AppTheme.primaryGreen.withOpacity(0.05)
-              : AppTheme.backgroundLight,
+          color: hasImage ? AppTheme.primaryGreen.withOpacity(0.05) : AppTheme.backgroundLight,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: hasImage
-                ? AppTheme.primaryGreen.withOpacity(0.3)
-                : Colors.grey.shade300,
-            width: 2,
+            color: hasImage ? AppTheme.primaryGreen : Colors.grey.shade300,
+            width: hasImage ? 2 : 1,
             style: hasImage ? BorderStyle.solid : BorderStyle.none,
           ),
         ),
         child: Row(
           children: [
+            // Icon or Image Preview
             Container(
-              padding: const EdgeInsets.all(12),
+              width: 100,
               decoration: BoxDecoration(
-                color: hasImage
-                    ? AppTheme.primaryGreen
-                    : AppTheme.primaryGreen.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
+                color: hasImage ? Colors.white : Colors.grey.shade200,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  bottomLeft: Radius.circular(16),
+                ),
+                image: hasImage
+                    ? DecorationImage(
+                        image: kIsWeb 
+                            ? NetworkImage(image.path) 
+                            : FileImage(File(image.path)) as ImageProvider,
+                        fit: BoxFit.cover,
+                      )
+                    : null,
               ),
-              child: Icon(
-                hasImage ? Icons.check_circle_rounded : icon,
-                color: hasImage ? Colors.white : AppTheme.primaryGreen,
-                size: 28,
-              ),
+              child: !hasImage
+                  ? Center(
+                      child: Icon(
+                        icon,
+                        color: AppTheme.textLight.withOpacity(0.5),
+                        size: 32,
+                      ),
+                    )
+                  : null,
             ),
-            const SizedBox(width: 16),
+            
+            // Content
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.textDark,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      title,
+                      style: AppTheme.bodyStyle.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: hasImage ? AppTheme.primaryGreen : AppTheme.textDark,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    hasImage ? 'Document uploaded' : description,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color:
-                          hasImage ? AppTheme.primaryGreen : AppTheme.textLight,
-                      fontWeight:
-                          hasImage ? FontWeight.w500 : FontWeight.normal,
+                    const SizedBox(height: 4),
+                    Text(
+                      hasImage ? 'Tap to change' : description,
+                      style: AppTheme.captionStyle.copyWith(
+                        fontSize: 12,
+                        color: hasImage ? AppTheme.primaryGreen : AppTheme.textLight,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-            Icon(
-              hasImage ? Icons.edit_rounded : Icons.upload_file_rounded,
-              color: hasImage ? AppTheme.primaryGreen : AppTheme.textLight,
+
+            // Action Icon
+            Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: hasImage ? AppTheme.primaryGreen : Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    if (!hasImage)
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 4,
+                      ),
+                  ],
+                ),
+                child: Icon(
+                  hasImage ? Icons.edit : Icons.add_a_photo_rounded,
+                  color: hasImage ? Colors.white : AppTheme.primaryGreen,
+                  size: 20,
+                ),
+              ),
             ),
           ],
         ),
@@ -1029,6 +1449,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
     String? Function(String?)? validator,
     Widget? suffixIcon,
     int? maxLines,
+    void Function(String)? onChanged,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1037,8 +1458,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
           padding: const EdgeInsets.only(left: 4, bottom: 8),
           child: Text(
             label,
-            style: const TextStyle(
-              fontSize: 14,
+            style: AppTheme.captionStyle.copyWith(
               fontWeight: FontWeight.w600,
               color: AppTheme.textDark,
             ),
@@ -1051,12 +1471,12 @@ class _RegistrationScreenState extends State<RegistrationScreen>
           inputFormatters: inputFormatters,
           validator: validator,
           maxLines: maxLines ?? 1,
-          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+          onChanged: onChanged,
+          style: AppTheme.bodyStyle.copyWith(fontWeight: FontWeight.w500),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: TextStyle(
+            hintStyle: AppTheme.bodyStyle.copyWith(
               color: AppTheme.textLight.withOpacity(0.5),
-              fontWeight: FontWeight.w400,
             ),
             prefixIcon: Padding(
               padding: const EdgeInsets.only(left: 16, right: 12),
@@ -1067,27 +1487,26 @@ class _RegistrationScreenState extends State<RegistrationScreen>
             filled: true,
             fillColor: AppTheme.backgroundLight,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide.none,
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide(color: Colors.grey.shade200, width: 1.5),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide(color: AppTheme.primaryGreen, width: 2),
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 2),
             ),
             errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide(color: AppTheme.errorRed, width: 1.5),
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: AppTheme.errorRed, width: 1.5),
             ),
             focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide(color: AppTheme.errorRed, width: 2),
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: AppTheme.errorRed, width: 2),
             ),
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
           ),
         ),
       ],
@@ -1098,89 +1517,56 @@ class _RegistrationScreenState extends State<RegistrationScreen>
     int totalSteps = _getTotalSteps();
     bool isLastStep = _currentStep == totalSteps - 1;
 
-    return Row(
-      children: [
-        if (_currentStep > 0)
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 20,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          if (_currentStep > 0)
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => setState(() => _currentStep--),
+                child: const Text('Previous'),
+              ),
+            ),
+          if (_currentStep > 0) const SizedBox(width: 16),
           Expanded(
-            child: OutlinedButton(
-              onPressed: () => setState(() => _currentStep--),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppTheme.primaryGreen,
-                side: BorderSide(color: AppTheme.primaryGreen, width: 2),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.arrow_back_rounded, size: 20),
-                  SizedBox(width: 8),
-                  Text(
-                    'Previous',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        if (_currentStep > 0) const SizedBox(width: 16),
-        Expanded(
-          flex: 2,
-          child: ElevatedButton(
-            onPressed: _isLoading
-                ? null
-                : () {
-                    if (isLastStep) {
-                      _handleRegister();
-                    } else {
-                      if (_validateCurrentStep()) {
-                        setState(() => _currentStep++);
+            flex: 2,
+            child: ElevatedButton(
+              onPressed: _isLoading
+                  ? null
+                  : () {
+                      if (isLastStep) {
+                        _handleRegister();
+                      } else {
+                        if (_validateCurrentStep()) {
+                          setState(() => _currentStep++);
+                        }
                       }
-                    }
-                  },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primaryGreen,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              disabledBackgroundColor: AppTheme.primaryGreen.withOpacity(0.6),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
-              ),
-              padding: const EdgeInsets.symmetric(vertical: 16),
+                    },
+              child: _isLoading
+                  ? const SizedBox(
+                      height: 24,
+                      width: 24,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2.5,
+                      ),
+                    )
+                  : Text(isLastStep ? 'Create Account' : 'Continue'),
             ),
-            child: _isLoading
-                ? const SizedBox(
-                    height: 24,
-                    width: 24,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2.5,
-                    ),
-                  )
-                : Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        isLastStep ? 'Create Account' : 'Continue',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Icon(
-                        isLastStep
-                            ? Icons.check_circle_rounded
-                            : Icons.arrow_forward_rounded,
-                        size: 20,
-                      ),
-                    ],
-                  ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -1188,8 +1574,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
     switch (_currentStep) {
       case 0:
         // Validate basic info
-        if (widget.role == 'individual' &&
-            _nameController.text.trim().isEmpty) {
+        if (_nameController.text.trim().isEmpty) {
           _showSnackBar('Please enter your name', isError: true);
           return false;
         }
@@ -1215,13 +1600,27 @@ class _RegistrationScreenState extends State<RegistrationScreen>
           _showSnackBar('Please enter contact number', isError: true);
           return false;
         }
-        if (_addressController.text.trim().isEmpty) {
-          _showSnackBar('Please enter address', isError: true);
+        if (_contactNoController.text.trim().isEmpty) {
+          _showSnackBar('Please enter contact number', isError: true);
           return false;
         }
+        if (_selectedCity == null || _selectedArea == null) {
+          _showSnackBar('Please select city and area', isError: true);
+          return false;
+        }
+        if (_addressController.text.trim().isEmpty) {
+          _showSnackBar('Please enter street address', isError: true);
+          return false;
+        }
+        
+        // Profile image validation
+        if (widget.role != 'individual' && _profileImage == null) {
+           _showSnackBar('Profile picture is required for ${widget.role}', isError: true);
+           return false;
+        }
+
         return _formKey.currentState?.validate() ?? false;
       case 1:
-        // Validate documents
         if (widget.role == 'warehouse' || widget.role == 'company') {
           if (_cnicImage == null) {
             _showSnackBar('Please upload CNIC document', isError: true);
@@ -1253,29 +1652,32 @@ class _RegistrationScreenState extends State<RegistrationScreen>
   }
 
   Future<void> _onCnicImageSelected(dynamic imageData) async {
-    setState(() => _cnicImage = imageData ?? File(''));
+    if (imageData == null) return;
 
-    // Show loading indicator
-    _showSnackBar('Extracting CNIC data...', isError: false);
+    setState(() => _cnicImage = imageData);
 
-    // Simulate OCR extraction
-    await Future.delayed(const Duration(seconds: 2));
-    setState(() => _cnicController.text = '12345-6789012-3');
+    // Analyze document immediately to extract CNIC
+    await _analyzeDocument(imageData, 'CNIC');
+  }
 
-    _showSnackBar('CNIC data extracted successfully!', isError: false);
+  Future<void> _onUtilityImageSelected(dynamic imageData) async {
+    if (imageData == null) return;
+
+    setState(() => _utilityImage = imageData);
+
+    // Show success message
+    _showSnackBar(
+        'Utility bill uploaded! Will be processed after verification.',
+        isError: false);
   }
 
   Future<void> _onNtnImageSelected(dynamic imageData) async {
-    setState(() => _ntnImage = imageData ?? File(''));
+    if (imageData == null) return;
 
-    // Show loading indicator
-    _showSnackBar('Extracting NTN data...', isError: false);
+    setState(() => _ntnImage = imageData);
 
-    // Simulate OCR extraction
-    await Future.delayed(const Duration(seconds: 2));
-    setState(() => _ntnController.text = 'NTN-123456789');
-
-    _showSnackBar('NTN data extracted successfully!', isError: false);
+    // Analyze document immediately to extract NTN
+    await _analyzeDocument(imageData, 'NTN');
   }
 
   Future<void> _handleRegister() async {
@@ -1290,19 +1692,28 @@ class _RegistrationScreenState extends State<RegistrationScreen>
         'role': widget.role,
         'email': _emailController.text.trim(),
         'password': _passwordController.text,
-        'address': _addressController.text.trim(),
+        'address': '${_addressController.text.trim()}, $_selectedArea, $_selectedCity', // Combine for backend
+        'city': _selectedCity,
+        'area': _selectedArea,
+        'streetAddress': _addressController.text.trim(),
         'contactNo': _contactNoController.text.trim(),
+        'name': _nameController.text.trim(), // Always include name
       };
 
-      if (widget.role == 'individual') {
-        userData['name'] = _nameController.text.trim();
-      } else if (widget.role == 'warehouse') {
+      if (widget.role == 'warehouse') {
         userData['businessName'] = _businessNameController.text.trim();
       } else if (widget.role == 'company') {
         userData['companyName'] = _companyNameController.text.trim();
       }
+      
+      // Prepare files map
+      final Map<String, XFile> files = {};
+      if (_profileImage != null) files['profileImage'] = _profileImage!;
+      if (_cnicImage != null) files['cnic'] = _cnicImage!;
+      if (_utilityImage != null) files['utility'] = _utilityImage!;
+      if (_ntnImage != null) files['ntn'] = _ntnImage!;
 
-      final response = await authService.register(userData);
+      final response = await authService.register(userData, files);
 
       if (mounted) {
         if (response['success'] == true) {
@@ -1337,6 +1748,62 @@ class _RegistrationScreenState extends State<RegistrationScreen>
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  Widget _buildPasswordRequirement(String text, bool isMet) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: isMet ? AppTheme.primaryGreen.withOpacity(0.1) : Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: isMet ? AppTheme.primaryGreen.withOpacity(0.3) : Colors.grey.shade300,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isMet ? Icons.check_circle : Icons.circle_outlined,
+            size: 14,
+            color: isMet ? AppTheme.primaryGreen : Colors.grey.shade400,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: AppTheme.captionStyle.copyWith(
+              fontSize: 11,
+              color: isMet ? AppTheme.primaryGreen : Colors.grey.shade600,
+              fontWeight: isMet ? FontWeight.w600 : FontWeight.normal,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRequirementItem(String text, bool isMet) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        children: [
+          Icon(
+            isMet ? Icons.check_circle : Icons.cancel,
+            size: 16,
+            color: isMet ? Colors.green : Colors.grey[400],
+          ),
+          const SizedBox(width: 8),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 12,
+              color: isMet ? AppTheme.textDark : AppTheme.textLight,
+              decoration: isMet ? TextDecoration.lineThrough : null,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showSnackBar(String message, {bool isError = false}) {
