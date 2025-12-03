@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../../../core/constants/admin_colors.dart';
 import '../../../core/constants/modern_colors.dart';
@@ -34,6 +35,7 @@ class _AdminDrawerState extends State<AdminDrawer>
   // Admin info from preferences
   String _adminName = 'Admin User';
   String _adminEmail = 'panel.quantix@gmail.com';
+  String? _profileImageBase64;
 
   @override
   void initState() {
@@ -58,6 +60,14 @@ class _AdminDrawerState extends State<AdminDrawer>
       setState(() {
         _adminName = name;
         _adminEmail = email;
+      });
+    }
+
+    // Load profile image separately to avoid blocking
+    final image = await PreferencesService.getProfileImage();
+    if (mounted && image != null) {
+      setState(() {
+        _profileImageBase64 = image;
       });
     }
   }
@@ -267,12 +277,6 @@ class _AdminDrawerState extends State<AdminDrawer>
                             route: 'pricing',
                             screen: const AdminPricingScreen(),
                           ),
-
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                            child: Divider(color: Colors.grey.withOpacity(0.2)),
-                          ),
-
                           _buildModernMenuItem(
                             icon: Icons.history_rounded,
                             title: 'Activity Logs',
@@ -362,16 +366,37 @@ class _AdminDrawerState extends State<AdminDrawer>
                           color: Colors.white,
                           shape: BoxShape.circle,
                         ),
-                        child: Center(
-                          child: Text(
-                            _getInitials(),
-                            style: const TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                              color: AdminColors.primaryGreen,
-                            ),
-                          ),
-                        ),
+                        child: _profileImageBase64 != null
+                            ? ClipOval(
+                                child: Image.memory(
+                                  base64Decode(_profileImageBase64!),
+                                  fit: BoxFit.cover,
+                                  width: 90,
+                                  height: 90,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Center(
+                                      child: Text(
+                                        _getInitials(),
+                                        style: const TextStyle(
+                                          fontSize: 32,
+                                          fontWeight: FontWeight.bold,
+                                          color: AdminColors.primaryGreen,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              )
+                            : Center(
+                                child: Text(
+                                  _getInitials(),
+                                  style: const TextStyle(
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.bold,
+                                    color: AdminColors.primaryGreen,
+                                  ),
+                                ),
+                              ),
                       ),
                     ),
                     // Online indicator
