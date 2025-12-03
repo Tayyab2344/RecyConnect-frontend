@@ -618,37 +618,38 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
   @override
   Widget build(BuildContext context) {
     final filteredUsers = _getFilteredUsers();
+    final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: AdminColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Users Management',
           style: TextStyle(
-            color: AdminColors.textWhite,
+            color: theme.appBarTheme.foregroundColor,
             fontWeight: FontWeight.bold,
           ),
         ),
-        backgroundColor: AdminColors.primaryGreen,
+        backgroundColor: theme.appBarTheme.backgroundColor,
         elevation: 0,
-        iconTheme: const IconThemeData(color: AdminColors.textWhite),
+        iconTheme: IconThemeData(color: theme.appBarTheme.foregroundColor),
         actions: [
           IconButton(
             icon: Icon(
               _isSearchVisible ? Icons.search_off : Icons.search,
-              color: AdminColors.textWhite,
+              color: theme.appBarTheme.foregroundColor,
             ),
             onPressed: _toggleSearch,
           ),
           PopupMenuButton<String>(
-            icon: const Icon(Icons.filter_list, color: AdminColors.textWhite),
+            icon: Icon(Icons.filter_list, color: theme.appBarTheme.foregroundColor),
             tooltip: 'Filter Users',
             offset: const Offset(0, 50),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
             elevation: 8,
-            color: Colors.white,
+            color: theme.cardColor,
             onSelected: (value) {
               if (value == 'reset') {
                 _resetSort();
@@ -656,33 +657,35 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
                 _applySort(value);
               }
             },
-            itemBuilder: (BuildContext context) => [
+            itemBuilder: (BuildContext context) {
+              final menuTheme = Theme.of(context);
+              return [
               // Header
-              const PopupMenuItem<String>(
+              PopupMenuItem<String>(
                 enabled: false,
                 child: Text(
                   'Sort Users By',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
-                    color: AdminColors.textPrimary,
+                    color: menuTheme.textTheme.bodyLarge?.color,
                   ),
                 ),
               ),
               const PopupMenuDivider(),
 
               // SALES Section
-              const PopupMenuItem<String>(
+              PopupMenuItem<String>(
                 enabled: false,
                 child: Row(
                   children: [
-                    Icon(Icons.attach_money,
+                    const Icon(Icons.attach_money,
                         size: 16, color: AdminColors.primaryGreen),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Text('Sales',
                         style: TextStyle(
                             fontSize: 12,
-                            color: AdminColors.textSecondary,
+                            color: menuTheme.textTheme.bodyMedium?.color,
                             fontWeight: FontWeight.bold)),
                   ],
                 ),
@@ -718,17 +721,17 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
               const PopupMenuDivider(),
 
               // PURCHASES Section
-              const PopupMenuItem<String>(
+              PopupMenuItem<String>(
                 enabled: false,
                 child: Row(
                   children: [
-                    Icon(Icons.shopping_cart,
+                    const Icon(Icons.shopping_cart,
                         size: 16, color: AdminColors.accentBlue),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Text('Purchases',
                         style: TextStyle(
                             fontSize: 12,
-                            color: AdminColors.textSecondary,
+                            color: menuTheme.textTheme.bodyMedium?.color,
                             fontWeight: FontWeight.bold)),
                   ],
                 ),
@@ -764,17 +767,17 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
               const PopupMenuDivider(),
 
               // DATE Section
-              const PopupMenuItem<String>(
+              PopupMenuItem<String>(
                 enabled: false,
                 child: Row(
                   children: [
-                    Icon(Icons.calendar_today,
+                    const Icon(Icons.calendar_today,
                         size: 16, color: AdminColors.accentPurple),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Text('Join Date',
                         style: TextStyle(
                             fontSize: 12,
-                            color: AdminColors.textSecondary,
+                            color: menuTheme.textTheme.bodyMedium?.color,
                             fontWeight: FontWeight.bold)),
                   ],
                 ),
@@ -825,20 +828,21 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
                   ],
                 ),
               ),
-            ],
+            ];
+            },
           ),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
           child: Container(
-            color: AdminColors.cardBackground,
+            color: theme.cardColor,
             child: TabBar(
               controller: _tabController,
               onTap: (index) {
                 setState(() {}); // Refresh to apply filter
               },
               labelColor: AdminColors.primaryGreen,
-              unselectedLabelColor: AdminColors.textSecondary,
+              unselectedLabelColor: theme.textTheme.bodyMedium?.color,
               labelStyle: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
@@ -865,7 +869,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
           // Search Bar (toggleable)
           if (_isSearchVisible)
             Container(
-              color: AdminColors.cardBackground,
+              color: theme.cardColor,
               padding: const EdgeInsets.all(16),
               child: TextField(
                 controller: _searchController,
@@ -876,8 +880,8 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
                 },
                 decoration: InputDecoration(
                   hintText: 'Search by name, email, or contact...',
-                  hintStyle: const TextStyle(
-                    color: AdminColors.textLight,
+                  hintStyle: TextStyle(
+                    color: theme.textTheme.bodySmall?.color,
                     fontSize: 14,
                   ),
                   prefixIcon: const Icon(
@@ -886,9 +890,9 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
                   ),
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.clear,
-                            color: AdminColors.textLight,
+                            color: theme.textTheme.bodySmall?.color,
                           ),
                           onPressed: () {
                             setState(() {
@@ -930,13 +934,15 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            color: AdminColors.surfaceLight,
+            color: theme.brightness == Brightness.dark
+                ? const Color(0xFF1E293B)
+                : AdminColors.surfaceLight,
             child: Text(
               '${filteredUsers.length} ${filteredUsers.length == 1 ? 'User' : 'Users'} Found',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: AdminColors.textSecondary,
+                color: theme.textTheme.bodyMedium?.color,
               ),
             ),
           ),
@@ -998,24 +1004,13 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showAddUserDialog,
-        backgroundColor: AdminColors.primaryGreen,
-        icon: const Icon(Icons.person_add, color: AdminColors.textWhite),
-        label: const Text(
-          'Add User',
-          style: TextStyle(
-            color: AdminColors.textWhite,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
     );
   }
 
   Widget _buildUserCard(Map<String, dynamic> user) {
     final isSuspended = user['isSuspended'] ?? false;
     final typeColor = _getUserTypeColor(user['type']);
+    final cardTheme = Theme.of(context);
 
     return TweenAnimationBuilder<double>(
       duration: const Duration(milliseconds: 300),
@@ -1033,7 +1028,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
         margin: const EdgeInsets.only(bottom: 14),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: cardTheme.cardColor,
           borderRadius: BorderRadius.circular(16),
           border: isSuspended
               ? Border.all(color: Colors.red.withOpacity(0.3), width: 1.5)
@@ -1086,10 +1081,10 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
                           Flexible(
                             child: Text(
                               user['name'],
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color: AdminColors.textPrimary,
+                                color: cardTheme.colorScheme.onSurface,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -1135,9 +1130,9 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
                     const SizedBox(height: 4),
                     Text(
                       user['email'],
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
-                        color: AdminColors.textSecondary,
+                        color: cardTheme.textTheme.bodyMedium?.color,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -1145,17 +1140,17 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
                     const SizedBox(height: 2),
                     Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.phone,
                           size: 12,
-                          color: AdminColors.textLight,
+                          color: cardTheme.textTheme.bodySmall?.color,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           user['contact'],
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
-                            color: AdminColors.textLight,
+                            color: cardTheme.textTheme.bodySmall?.color,
                           ),
                         ),
                       ],
@@ -1180,11 +1175,11 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Sales',
                         style: TextStyle(
                           fontSize: 11,
-                          color: AdminColors.textSecondary,
+                          color: cardTheme.textTheme.bodyMedium?.color,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -1212,11 +1207,11 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Purchases',
                         style: TextStyle(
                           fontSize: 11,
-                          color: AdminColors.textSecondary,
+                          color: cardTheme.textTheme.bodyMedium?.color,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -1330,6 +1325,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
   }
 
   Widget _buildEmptyState() {
+    final emptyTheme = Theme.of(context);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -1337,23 +1333,23 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
           Icon(
             Icons.person_off_outlined,
             size: 80,
-            color: AdminColors.textLight.withOpacity(0.5),
+            color: emptyTheme.textTheme.bodySmall?.color?.withOpacity(0.5),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'No Users Found',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: AdminColors.textSecondary,
+              color: emptyTheme.textTheme.bodyMedium?.color,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Try adjusting your search or filters',
             style: TextStyle(
               fontSize: 14,
-              color: AdminColors.textLight,
+              color: emptyTheme.textTheme.bodySmall?.color,
             ),
           ),
         ],
@@ -1366,509 +1362,5 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
       return NumberFormat('#,###').format(value);
     }
     return value.toString();
-  }
-
-  void _showAddUserDialog() {
-    final formKey = GlobalKey<FormState>();
-    final nameController = TextEditingController();
-    final emailController = TextEditingController();
-    final contactController = TextEditingController();
-    final addressController = TextEditingController();
-    final salesController = TextEditingController(text: '0');
-    final purchasesController = TextEditingController(text: '0');
-    String selectedType = 'Individual';
-
-    bool isNameValid = false;
-    bool isEmailValid = false;
-    bool isContactValid = false;
-    bool isAddressValid = false;
-
-    String? validateEmail(String? value) {
-      if (value == null || value.isEmpty) {
-        return 'Email is required';
-      }
-
-      // Remove spaces and convert to lowercase
-      value = value.trim().toLowerCase();
-
-      // Check if contains @
-      if (!value.contains('@')) {
-        return 'Email must contain @ symbol';
-      }
-
-      // Check for spaces
-      if (value.contains(' ')) {
-        return 'Email cannot contain spaces';
-      }
-
-      // Split by @
-      final parts = value.split('@');
-
-      // Check if has text before @
-      if (parts[0].isEmpty) {
-        return 'Email must have characters before @';
-      }
-
-      // Check if more than one @
-      if (parts.length != 2) {
-        return 'Email must contain exactly one @ symbol';
-      }
-
-      // Check if has domain after @
-      if (parts[1].isEmpty) {
-        return 'Email must have a domain (e.g., @gmail.com)';
-      }
-
-      // Check if domain has a dot
-      if (!parts[1].contains('.')) {
-        return 'Email domain must include a dot (e.g., gmail.com)';
-      }
-
-      // Check if domain extension exists
-      final domainParts = parts[1].split('.');
-      if (domainParts.last.length < 2) {
-        return 'Invalid email domain extension';
-      }
-
-      // Email regex pattern for complete validation
-      final emailRegex = RegExp(
-        r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
-      );
-
-      if (!emailRegex.hasMatch(value)) {
-        return 'Please enter a valid email address';
-      }
-
-      // Check for duplicate email
-      final lowercaseEmail = value.toLowerCase();
-      final emailExists = _allUsers.any(
-        (user) {
-          final userEmail = user['email'];
-          if (userEmail == null) return false;
-          return userEmail.toString().toLowerCase() == lowercaseEmail;
-        },
-      );
-
-      if (emailExists) {
-        return 'This email is already registered';
-      }
-
-      return null; // Valid email
-    }
-
-    String? validateName(String? value) {
-      if (value == null || value.isEmpty) {
-        return 'Name is required';
-      }
-
-      if (value.length < 3) {
-        return 'Name must be at least 3 characters';
-      }
-
-      if (value.length > 50) {
-        return 'Name must not exceed 50 characters';
-      }
-
-      // Check for numbers and special characters (allow spaces)
-      if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(value)) {
-        return 'Name must contain only letters and spaces';
-      }
-
-      return null;
-    }
-
-    String? validateContact(String? value) {
-      if (value == null || value.isEmpty) {
-        return 'Contact number is required';
-      }
-
-      // Remove spaces and dashes for validation
-      final cleaned = value.replaceAll(RegExp(r'[\s\-]'), '');
-
-      // Check if it's a Pakistani number
-      if (cleaned.startsWith('+92')) {
-        // Format: +92-3XX-XXXXXXX (total 13 chars with +92)
-        if (cleaned.length != 13) {
-          return 'Pakistani number must be in format: +92-3XX-XXXXXXX';
-        }
-      } else if (cleaned.startsWith('0')) {
-        // Format: 03XXXXXXXXX (11 digits)
-        if (cleaned.length != 11) {
-          return 'Number must be 11 digits starting with 0';
-        }
-      } else if (cleaned.startsWith('3')) {
-        // Format: 3XXXXXXXXXX (10 digits without 0)
-        if (cleaned.length != 10) {
-          return 'Number must be 10 digits';
-        }
-      } else {
-        return 'Enter valid Pakistani phone number (+92-XXX-XXXXXXX or 03XXXXXXXXX)';
-      }
-
-      // Check if only contains valid characters
-      if (!RegExp(r'^[\d\+\-\s]+$').hasMatch(value)) {
-        return 'Contact can only contain numbers, +, and -';
-      }
-
-      return null;
-    }
-
-    String? validateAddress(String? value) {
-      if (value == null || value.isEmpty) {
-        return 'Address is required';
-      }
-
-      if (value.length < 10) {
-        return 'Address must be at least 10 characters';
-      }
-
-      if (value.length > 200) {
-        return 'Address must not exceed 200 characters';
-      }
-
-      return null;
-    }
-
-    String? validateAmount(String? value) {
-      if (value == null || value.isEmpty) {
-        return null; // Optional field
-      }
-
-      final amount = int.tryParse(value);
-      if (amount == null) {
-        return 'Please enter a valid number';
-      }
-
-      if (amount < 0) {
-        return 'Amount cannot be negative';
-      }
-
-      return null;
-    }
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: const Text(
-                'Add New User',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: AdminColors.textPrimary,
-                ),
-              ),
-              content: SingleChildScrollView(
-                child: Form(
-                  key: formKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Name Field
-                      TextFormField(
-                        controller: nameController,
-                        decoration: InputDecoration(
-                          labelText: 'Full Name *',
-                          hintText: 'Ahmed Khan',
-                          helperText: 'Letters and spaces only (3-50 characters)',
-                          helperStyle: const TextStyle(fontSize: 11),
-                          prefixIcon: const Icon(Icons.person),
-                          suffixIcon: isNameValid
-                              ? const Icon(Icons.check_circle, color: Colors.green)
-                              : null,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                              color: isNameValid ? Colors.green : AdminColors.border,
-                              width: isNameValid ? 2 : 1,
-                            ),
-                          ),
-                        ),
-                        validator: validateName,
-                        onChanged: (value) {
-                          setDialogState(() {
-                            isNameValid = validateName(value) == null;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      // Email Field
-                      TextFormField(
-                        controller: emailController,
-                        decoration: InputDecoration(
-                          labelText: 'Email Address *',
-                          hintText: 'example@gmail.com',
-                          helperText: 'e.g., @gmail.com, @yahoo.com, @outlook.com',
-                          helperStyle: const TextStyle(fontSize: 11),
-                          prefixIcon: const Icon(Icons.email),
-                          suffixIcon: isEmailValid
-                              ? const Icon(Icons.check_circle, color: Colors.green)
-                              : null,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                              color: isEmailValid ? Colors.green : AdminColors.border,
-                              width: isEmailValid ? 2 : 1,
-                            ),
-                          ),
-                        ),
-                        keyboardType: TextInputType.emailAddress,
-                        validator: validateEmail,
-                        onChanged: (value) {
-                          // Auto-convert to lowercase
-                          final cursorPos = emailController.selection.start;
-                          emailController.value = emailController.value.copyWith(
-                            text: value.toLowerCase(),
-                            selection: TextSelection.collapsed(offset: cursorPos),
-                          );
-                          setDialogState(() {
-                            isEmailValid = validateEmail(value.toLowerCase()) == null;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      // Contact Field
-                      TextFormField(
-                        controller: contactController,
-                        decoration: InputDecoration(
-                          labelText: 'Contact Number *',
-                          hintText: '+92-300-1234567',
-                          helperText: 'Pakistani phone number',
-                          helperStyle: const TextStyle(fontSize: 11),
-                          prefixIcon: const Icon(Icons.phone),
-                          suffixIcon: isContactValid
-                              ? const Icon(Icons.check_circle, color: Colors.green)
-                              : null,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                              color: isContactValid ? Colors.green : AdminColors.border,
-                              width: isContactValid ? 2 : 1,
-                            ),
-                          ),
-                        ),
-                        keyboardType: TextInputType.phone,
-                        validator: validateContact,
-                        onChanged: (value) {
-                          setDialogState(() {
-                            isContactValid = validateContact(value) == null;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      // Address Field
-                      TextFormField(
-                        controller: addressController,
-                        decoration: InputDecoration(
-                          labelText: 'Address *',
-                          hintText: 'Street, Block, Area, City',
-                          helperText: 'Complete address (10-200 characters)',
-                          helperStyle: const TextStyle(fontSize: 11),
-                          prefixIcon: const Icon(Icons.location_on),
-                          suffixIcon: isAddressValid
-                              ? const Icon(Icons.check_circle, color: Colors.green)
-                              : null,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                              color: isAddressValid ? Colors.green : AdminColors.border,
-                              width: isAddressValid ? 2 : 1,
-                            ),
-                          ),
-                        ),
-                        maxLines: 2,
-                        validator: validateAddress,
-                        onChanged: (value) {
-                          setDialogState(() {
-                            isAddressValid = validateAddress(value) == null;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      // User Type Dropdown
-                      DropdownButtonFormField<String>(
-                        value: selectedType,
-                        decoration: InputDecoration(
-                          labelText: 'User Type *',
-                          helperText: 'Select user category',
-                          helperStyle: const TextStyle(fontSize: 11),
-                          prefixIcon: const Icon(Icons.category),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        items: ['Individual', 'Warehouse', 'Company']
-                            .map((type) => DropdownMenuItem(
-                                  value: type,
-                                  child: Text(type),
-                                ))
-                            .toList(),
-                        onChanged: (value) {
-                          setDialogState(() {
-                            selectedType = value!;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      // Sales Amount Field
-                      TextFormField(
-                        controller: salesController,
-                        decoration: InputDecoration(
-                          labelText: 'Sales Amount (PKR)',
-                          hintText: '0',
-                          helperText: 'Total sales (optional, must be ≥ 0)',
-                          helperStyle: const TextStyle(fontSize: 11),
-                          prefixIcon: const Icon(Icons.attach_money),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        keyboardType: TextInputType.number,
-                        validator: validateAmount,
-                      ),
-                      const SizedBox(height: 12),
-                      // Purchases Amount Field
-                      TextFormField(
-                        controller: purchasesController,
-                        decoration: InputDecoration(
-                          labelText: 'Purchases Amount (PKR)',
-                          hintText: '0',
-                          helperText: 'Total purchases (optional, must be ≥ 0)',
-                          helperStyle: const TextStyle(fontSize: 11),
-                          prefixIcon: const Icon(Icons.shopping_cart),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        keyboardType: TextInputType.number,
-                        validator: validateAmount,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              actions: [
-                OutlinedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: AdminColors.border),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 14,
-                    ),
-                  ),
-                  child: const Text(
-                    'Cancel',
-                    style: TextStyle(fontSize: 15),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    if (formKey.currentState!.validate()) {
-                      // Generate initials
-                      final nameParts = nameController.text.trim().split(' ');
-                      final initials = nameParts.length >= 2
-                          ? '${nameParts[0][0]}${nameParts[1][0]}'.toUpperCase()
-                          : nameController.text[0].toUpperCase();
-
-                      // Create new user with validated data
-                      final newUser = {
-                        'name': nameController.text.trim(),
-                        'email': emailController.text.trim().toLowerCase(),
-                        'contact': contactController.text.trim(),
-                        'type': selectedType,
-                        'sales': int.tryParse(salesController.text) ?? 0,
-                        'purchases': int.tryParse(purchasesController.text) ?? 0,
-                        'initials': initials,
-                        'isSuspended': false,
-                        'joinedDate': DateTime.now(),
-                      };
-
-                      setState(() {
-                        _allUsers.insert(0, newUser); // Add at beginning
-                      });
-
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Row(
-                            children: [
-                              const Icon(Icons.check_circle, color: Colors.white),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  '${nameController.text} added successfully!',
-                                  style: const TextStyle(fontSize: 15),
-                                ),
-                              ),
-                            ],
-                          ),
-                          backgroundColor: Colors.green,
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          duration: const Duration(seconds: 3),
-                        ),
-                      );
-                    } else {
-                      // Show error snackbar if validation fails
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: const Row(
-                            children: [
-                              Icon(Icons.error_outline, color: Colors.white),
-                              SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  'Please fix all errors before submitting',
-                                  style: TextStyle(fontSize: 15),
-                                ),
-                              ),
-                            ],
-                          ),
-                          backgroundColor: Colors.red,
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                      );
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AdminColors.primaryGreen,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 14,
-                    ),
-                  ),
-                  icon: const Icon(Icons.person_add),
-                  label: const Text(
-                    'Add User',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
   }
 }

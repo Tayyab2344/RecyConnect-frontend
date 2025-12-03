@@ -58,7 +58,7 @@ class _IndividualDashboardState extends State<IndividualDashboard>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFB),
+      backgroundColor: const Color.fromARGB(255, 58, 141, 182),
       body: PageView(
         controller: _pageController,
         physics: const BouncingScrollPhysics(),

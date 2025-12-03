@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/admin_colors.dart';
 import '../../../core/constants/modern_colors.dart';
+import '../../../core/services/preferences_service.dart';
 import '../../screens/admin/admin_dashboard_screen.dart';
 import '../../screens/admin/admin_users_screen.dart';
 import '../../screens/admin/admin_collectors_screen.dart';
@@ -30,6 +31,10 @@ class _AdminDrawerState extends State<AdminDrawer>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
+  // Admin info from preferences
+  String _adminName = 'Admin User';
+  String _adminEmail = 'panel.quantix@gmail.com';
+
   @override
   void initState() {
     super.initState();
@@ -42,6 +47,31 @@ class _AdminDrawerState extends State<AdminDrawer>
       CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
     _animationController.forward();
+    _loadAdminInfo();
+  }
+
+  Future<void> _loadAdminInfo() async {
+    final name = await PreferencesService.getAdminName();
+    final email = await PreferencesService.getAdminEmail();
+
+    if (mounted) {
+      setState(() {
+        _adminName = name;
+        _adminEmail = email;
+      });
+    }
+  }
+
+  String _getInitials() {
+    if (_adminName.isEmpty) return 'AD';
+
+    final words = _adminName.trim().split(' ');
+    if (words.length >= 2) {
+      return '${words[0][0]}${words[1][0]}'.toUpperCase();
+    } else if (words.length == 1 && words[0].isNotEmpty) {
+      return words[0].substring(0, words[0].length >= 2 ? 2 : 1).toUpperCase();
+    }
+    return 'AD';
   }
 
   @override
@@ -165,6 +195,7 @@ class _AdminDrawerState extends State<AdminDrawer>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Drawer(
       backgroundColor: Colors.transparent,
       child: Container(
@@ -189,9 +220,9 @@ class _AdminDrawerState extends State<AdminDrawer>
               Expanded(
                 child: Container(
                   margin: const EdgeInsets.only(top: 10),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.only(
+                  decoration: BoxDecoration(
+                    color: theme.cardColor,
+                    borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(30),
                       topRight: Radius.circular(30),
                     ),
@@ -331,10 +362,10 @@ class _AdminDrawerState extends State<AdminDrawer>
                           color: Colors.white,
                           shape: BoxShape.circle,
                         ),
-                        child: const Center(
+                        child: Center(
                           child: Text(
-                            'AD',
-                            style: TextStyle(
+                            _getInitials(),
+                            style: const TextStyle(
                               fontSize: 32,
                               fontWeight: FontWeight.bold,
                               color: AdminColors.primaryGreen,
@@ -379,9 +410,9 @@ class _AdminDrawerState extends State<AdminDrawer>
                 opacity: value,
                 child: Transform.translate(
                   offset: Offset(0, 10 * (1 - value)),
-                  child: const Text(
-                    'Admin User',
-                    style: TextStyle(
+                  child: Text(
+                    _adminName,
+                    style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
@@ -401,7 +432,7 @@ class _AdminDrawerState extends State<AdminDrawer>
               return Opacity(
                 opacity: value,
                 child: Text(
-                  'panel.quantix@gmail.com',
+                  _adminEmail,
                   style: TextStyle(
                     fontSize: 13,
                     color: Colors.white.withOpacity(0.8),
@@ -467,6 +498,7 @@ class _AdminDrawerState extends State<AdminDrawer>
     String? badge,
   }) {
     final isSelected = _selectedItem == route;
+    final theme = Theme.of(context);
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
@@ -522,7 +554,7 @@ class _AdminDrawerState extends State<AdminDrawer>
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                      color: isSelected ? Colors.white : AdminColors.textPrimary,
+                      color: isSelected ? Colors.white : theme.textTheme.bodyLarge?.color,
                     ),
                   ),
                 ),
@@ -610,10 +642,11 @@ class _AdminDrawerState extends State<AdminDrawer>
   }
 
   Widget _buildModernFooter() {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -642,19 +675,19 @@ class _AdminDrawerState extends State<AdminDrawer>
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
+              Text(
                 'RecyConnect Admin',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: AdminColors.textPrimary,
+                  color: theme.textTheme.bodyLarge?.color,
                 ),
               ),
               Text(
                 'Version 1.0.0',
                 style: TextStyle(
                   fontSize: 10,
-                  color: AdminColors.textSecondary,
+                  color: theme.textTheme.bodyMedium?.color,
                 ),
               ),
             ],

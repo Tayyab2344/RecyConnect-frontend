@@ -586,7 +586,7 @@ class _AdminCollectorsScreenState extends State<AdminCollectorsScreen> {
               borderRadius: BorderRadius.circular(12),
             ),
             elevation: 8,
-            color: Colors.white,
+            color: theme.cardColor,
             onSelected: (value) {
               if (value == 'reset') {
                 _resetSort();
@@ -720,7 +720,7 @@ class _AdminCollectorsScreenState extends State<AdminCollectorsScreen> {
           // Search Bar (toggleable)
           if (_isSearchVisible)
             Container(
-              color: AdminColors.cardBackground,
+              color: theme.cardColor,
               padding: const EdgeInsets.all(16),
               child: TextField(
                 controller: _searchController,
@@ -851,15 +851,11 @@ class _AdminCollectorsScreenState extends State<AdminCollectorsScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showAddCollectorDialog,
-        backgroundColor: AdminColors.primaryGreen,
-        child: const Icon(Icons.add, color: AdminColors.textWhite),
-      ),
     );
   }
 
   Widget _buildCollectorCard(CollectorData collector) {
+    final theme = Theme.of(context);
     return TweenAnimationBuilder<double>(
       duration: const Duration(milliseconds: 300),
       tween: Tween(begin: 0, end: 1),
@@ -876,7 +872,7 @@ class _AdminCollectorsScreenState extends State<AdminCollectorsScreen> {
         margin: const EdgeInsets.only(bottom: 14),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: theme.cardColor,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: Colors.grey.withOpacity(0.1), width: 1),
           boxShadow: ModernColors.softShadow,
@@ -1179,348 +1175,5 @@ class _AdminCollectorsScreenState extends State<AdminCollectorsScreen> {
       ),
     );
   }
-
-  void _showAddCollectorDialog() {
-    final formKey = GlobalKey<FormState>();
-    final nameController = TextEditingController();
-    final contactController = TextEditingController();
-    final warehouseController = TextEditingController();
-    final areaController = TextEditingController();
-    String selectedStatus = 'active';
-
-    bool isNameValid = false;
-    bool isContactValid = false;
-    bool isWarehouseValid = false;
-    bool isAreaValid = false;
-
-    String? validateName(String? value) {
-      if (value == null || value.isEmpty) {
-        return 'Name is required';
-      }
-      if (value.length < 3) {
-        return 'Name must be at least 3 characters';
-      }
-      if (value.length > 50) {
-        return 'Name must not exceed 50 characters';
-      }
-      if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(value)) {
-        return 'Name must contain only letters and spaces';
-      }
-      return null;
-    }
-
-    String? validateContact(String? value) {
-      if (value == null || value.isEmpty) {
-        return 'Contact number is required';
-      }
-      final cleaned = value.replaceAll(RegExp(r'[\s\-]'), '');
-      if (cleaned.startsWith('+92')) {
-        if (cleaned.length != 13) {
-          return 'Pakistani number must be in format: +92-3XX-XXXXXXX';
-        }
-      } else if (cleaned.startsWith('0')) {
-        if (cleaned.length != 11) {
-          return 'Number must be 11 digits starting with 0';
-        }
-      } else if (cleaned.startsWith('3')) {
-        if (cleaned.length != 10) {
-          return 'Number must be 10 digits';
-        }
-      } else {
-        return 'Enter valid Pakistani phone number';
-      }
-      if (!RegExp(r'^[\d\+\-\s]+$').hasMatch(value)) {
-        return 'Contact can only contain numbers, +, and -';
-      }
-      return null;
-    }
-
-    String? validateWarehouse(String? value) {
-      if (value == null || value.isEmpty) {
-        return 'Warehouse is required';
-      }
-      if (value.length < 3) {
-        return 'Warehouse name must be at least 3 characters';
-      }
-      return null;
-    }
-
-    String? validateArea(String? value) {
-      if (value == null || value.isEmpty) {
-        return 'Area is required';
-      }
-      if (value.length < 3) {
-        return 'Area name must be at least 3 characters';
-      }
-      return null;
-    }
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: const Text(
-                'Add New Collector',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: AdminColors.textPrimary,
-                ),
-              ),
-              content: SingleChildScrollView(
-                child: Form(
-                  key: formKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Name Field
-                      TextFormField(
-                        controller: nameController,
-                        decoration: InputDecoration(
-                          labelText: 'Full Name *',
-                          hintText: 'Ahmed Khan',
-                          prefixIcon: const Icon(Icons.person),
-                          suffixIcon: isNameValid
-                              ? const Icon(Icons.check_circle, color: Colors.green)
-                              : null,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                              color: isNameValid ? Colors.green : AdminColors.border,
-                              width: isNameValid ? 2 : 1,
-                            ),
-                          ),
-                        ),
-                        validator: validateName,
-                        onChanged: (value) {
-                          setDialogState(() {
-                            isNameValid = validateName(value) == null;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 12),
-
-                      // Contact Field
-                      TextFormField(
-                        controller: contactController,
-                        decoration: InputDecoration(
-                          labelText: 'Contact Number *',
-                          hintText: '+92-300-1234567',
-                          prefixIcon: const Icon(Icons.phone),
-                          suffixIcon: isContactValid
-                              ? const Icon(Icons.check_circle, color: Colors.green)
-                              : null,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                              color: isContactValid ? Colors.green : AdminColors.border,
-                              width: isContactValid ? 2 : 1,
-                            ),
-                          ),
-                        ),
-                        keyboardType: TextInputType.phone,
-                        validator: validateContact,
-                        onChanged: (value) {
-                          setDialogState(() {
-                            isContactValid = validateContact(value) == null;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 12),
-
-                      // Warehouse Field
-                      TextFormField(
-                        controller: warehouseController,
-                        decoration: InputDecoration(
-                          labelText: 'Warehouse Name *',
-                          hintText: 'Green Warehouse',
-                          prefixIcon: const Icon(Icons.warehouse),
-                          suffixIcon: isWarehouseValid
-                              ? const Icon(Icons.check_circle, color: Colors.green)
-                              : null,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                              color: isWarehouseValid ? Colors.green : AdminColors.border,
-                              width: isWarehouseValid ? 2 : 1,
-                            ),
-                          ),
-                        ),
-                        validator: validateWarehouse,
-                        onChanged: (value) {
-                          setDialogState(() {
-                            isWarehouseValid = validateWarehouse(value) == null;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 12),
-
-                      // Area Field
-                      TextFormField(
-                        controller: areaController,
-                        decoration: InputDecoration(
-                          labelText: 'Area *',
-                          hintText: 'Downtown',
-                          prefixIcon: const Icon(Icons.location_on),
-                          suffixIcon: isAreaValid
-                              ? const Icon(Icons.check_circle, color: Colors.green)
-                              : null,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                              color: isAreaValid ? Colors.green : AdminColors.border,
-                              width: isAreaValid ? 2 : 1,
-                            ),
-                          ),
-                        ),
-                        validator: validateArea,
-                        onChanged: (value) {
-                          setDialogState(() {
-                            isAreaValid = validateArea(value) == null;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 12),
-
-                      // Status Dropdown
-                      DropdownButtonFormField<String>(
-                        initialValue: selectedStatus,
-                        decoration: InputDecoration(
-                          labelText: 'Status *',
-                          prefixIcon: const Icon(Icons.toggle_on),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        items: const [
-                          DropdownMenuItem(value: 'active', child: Text('Active')),
-                          DropdownMenuItem(value: 'inactive', child: Text('Inactive')),
-                          DropdownMenuItem(value: 'on_leave', child: Text('On Leave')),
-                        ],
-                        onChanged: (value) {
-                          setDialogState(() {
-                            selectedStatus = value!;
-                          });
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              actions: [
-                OutlinedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: AdminColors.border),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 14,
-                    ),
-                  ),
-                  child: const Text('Cancel', style: TextStyle(fontSize: 15)),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    if (formKey.currentState!.validate()) {
-                      // Generate new collector
-                      final newCollector = CollectorData(
-                        id: 'COL${DateTime.now().millisecondsSinceEpoch}',
-                        name: nameController.text.trim(),
-                        contact: contactController.text.trim(),
-                        warehouseName: warehouseController.text.trim(),
-                        area: areaController.text.trim(),
-                        rating: 0.0,
-                        totalPickups: 0,
-                        performancePercent: 0,
-                        status: selectedStatus,
-                        joinedDate: DateTime.now(),
-                      );
-
-                      setState(() {
-                        _allCollectors.insert(0, newCollector);
-                        _applyFilters();
-                      });
-
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Row(
-                            children: [
-                              const Icon(Icons.check_circle, color: Colors.white),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  '${nameController.text} added successfully!',
-                                  style: const TextStyle(fontSize: 15),
-                                ),
-                              ),
-                            ],
-                          ),
-                          backgroundColor: Colors.green,
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          duration: const Duration(seconds: 3),
-                        ),
-                      );
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: const Row(
-                            children: [
-                              Icon(Icons.error_outline, color: Colors.white),
-                              SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  'Please fix all errors before submitting',
-                                  style: TextStyle(fontSize: 15),
-                                ),
-                              ),
-                            ],
-                          ),
-                          backgroundColor: Colors.red,
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                      );
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AdminColors.primaryGreen,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 14,
-                    ),
-                  ),
-                  icon: const Icon(Icons.person_add),
-                  label: const Text(
-                    'Add Collector',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
 }
+                                                                              

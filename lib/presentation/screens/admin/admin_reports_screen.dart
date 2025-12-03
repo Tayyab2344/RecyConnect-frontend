@@ -777,11 +777,12 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
     required String trend,
     required bool trendPositive,
   }) {
+    final theme = Theme.of(context);
     return Container(
       width: 180,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -846,10 +847,11 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
   }
 
   Widget _buildRevenueChartCard() {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -1015,6 +1017,7 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
   }
 
   Widget _buildRevenueByMaterialCard() {
+    final theme = Theme.of(context);
     final total = revenueByMaterial.values.reduce((a, b) => a + b);
     final colors = [
       AdminColors.accentBlue,
@@ -1026,7 +1029,7 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -1190,11 +1193,12 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
       ),
       itemCount: materials.length,
       itemBuilder: (context, index) {
+        final theme = Theme.of(context);
         final material = materials[index];
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: theme.cardColor,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
@@ -1275,6 +1279,7 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
   }
 
   Widget _buildPieChartCard() {
+    final theme = Theme.of(context);
     final colors = [
       AdminColors.accentBlue,
       AdminColors.primaryGreen,
@@ -1287,7 +1292,7 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -1366,6 +1371,7 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
   }
 
   Widget _buildStackedBarChartCard() {
+    final theme = Theme.of(context);
     // Monthly collection data for stacked bar chart
     final monthlyCollectionData = [
       [1200.0, 900.0, 500.0, 300.0], // Jan
@@ -1386,7 +1392,7 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -1623,9 +1629,10 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
   }
 
   Widget _buildTopUsersTable() {
+    final theme = Theme.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -1802,6 +1809,7 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
   }
 
   Widget _buildUserTypeDistributionCard() {
+    final theme = Theme.of(context);
     final maxValue = userTypeDistribution.values.reduce((a, b) => a > b ? a : b);
     final colors = [
       AdminColors.primaryGreen,
@@ -1812,7 +1820,7 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -1959,9 +1967,10 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
   }
 
   Widget _buildTopCollectorsTable() {
+    final theme = Theme.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -2125,6 +2134,7 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
   }
 
   Widget _buildCollectorRatingDistribution() {
+    final theme = Theme.of(context);
     final ratingColors = {
       5: const Color(0xFFFFD700), // Gold
       4: AdminColors.primaryGreen,
@@ -2138,7 +2148,7 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(

@@ -240,7 +240,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
             onPressed: () => Navigator.pop(context),
             child: Text(
               'Cancel',
-              style: TextStyle(color: AdminColors.textSecondary),
+              style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
             ),
           ),
           ElevatedButton(
@@ -287,7 +287,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
             onPressed: () => Navigator.pop(context),
             child: Text(
               'Cancel',
-              style: TextStyle(color: AdminColors.textSecondary),
+              style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
             ),
           ),
           ElevatedButton(
@@ -447,6 +447,9 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
 
   // Notification card widget
   Widget _buildNotificationCard(NotificationData notification) {
+    final cardTheme = Theme.of(context);
+    final isDark = cardTheme.brightness == Brightness.dark;
+
     return GestureDetector(
       onTap: () {
         if (!notification.isRead) {
@@ -458,12 +461,16 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
         margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         decoration: BoxDecoration(
           color: notification.isRead
-              ? AdminColors.surfaceLight
-              : AdminColors.cardBackground,
+              ? cardTheme.cardColor
+              : isDark
+                  ? const Color(0xFF1E3A5F) // Dark blue tint for unread in dark mode
+                  : AdminColors.accentBlue.withOpacity(0.05), // Light blue tint for unread
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: AdminColors.shadow,
+              color: isDark
+                  ? Colors.black.withOpacity(0.3)
+                  : Colors.black.withOpacity(0.05),
               blurRadius: notification.isRead ? 2 : 4,
               offset: const Offset(0, 2),
             ),
@@ -478,7 +485,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                 width: 4,
                 decoration: BoxDecoration(
                   color: notification.isRead
-                      ? AdminColors.textLight
+                      ? (isDark ? const Color(0xFF475569) : AdminColors.textLight)
                       : AdminColors.accentBlue,
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(12),
@@ -523,7 +530,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                                         ? FontWeight.w500
                                         : FontWeight.bold,
                                     fontSize: 16,
-                                    color: AdminColors.textPrimary,
+                                    color: cardTheme.colorScheme.onSurface,
                                   ),
                                 ),
                                 const SizedBox(height: 6),
@@ -531,7 +538,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                                   notification.message,
                                   style: TextStyle(
                                     fontSize: 14,
-                                    color: AdminColors.textSecondary,
+                                    color: cardTheme.textTheme.bodyMedium?.color,
                                     height: 1.4,
                                   ),
                                 ),
@@ -561,14 +568,14 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                               Icon(
                                 Icons.access_time,
                                 size: 14,
-                                color: AdminColors.textLight,
+                                color: cardTheme.textTheme.bodySmall?.color,
                               ),
                               const SizedBox(width: 4),
                               Text(
                                 _formatTimestamp(notification.timestamp),
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: AdminColors.textLight,
+                                  color: cardTheme.textTheme.bodySmall?.color,
                                 ),
                               ),
                             ],
@@ -600,6 +607,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
 
   // Empty state widget
   Widget _buildEmptyState() {
+    final emptyTheme = Theme.of(context);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -607,7 +615,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
           Icon(
             Icons.notifications_none,
             size: 80,
-            color: AdminColors.textLight,
+            color: emptyTheme.textTheme.bodyMedium?.color?.withOpacity(0.5),
           ),
           const SizedBox(height: 16),
           Text(
@@ -615,7 +623,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: AdminColors.textSecondary,
+              color: emptyTheme.textTheme.bodyMedium?.color,
             ),
           ),
           const SizedBox(height: 8),
@@ -623,7 +631,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
             "You're all caught up!",
             style: TextStyle(
               fontSize: 14,
-              color: AdminColors.textLight,
+              color: emptyTheme.textTheme.bodySmall?.color,
             ),
           ),
         ],

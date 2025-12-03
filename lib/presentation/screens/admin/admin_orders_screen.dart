@@ -367,7 +367,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
               borderRadius: BorderRadius.circular(12),
             ),
             elevation: 8,
-            color: Colors.white,
+            color: theme.cardColor,
             onSelected: (value) {
               if (value == 'reset') {
                 _resetFilter();
@@ -501,7 +501,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
           // Search Bar (toggleable)
           if (_isSearchVisible)
             Container(
-              color: AdminColors.cardBackground,
+              color: theme.cardColor,
               padding: const EdgeInsets.all(16),
               child: TextField(
                 controller: _searchController,
@@ -638,6 +638,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
   Widget _buildOrderCard(OrderData order) {
     final statusColor = _getStatusColor(order.status);
     final materialColor = _getMaterialColor(order.materialType);
+    final theme = Theme.of(context);
 
     return TweenAnimationBuilder<double>(
       duration: const Duration(milliseconds: 300),
@@ -654,7 +655,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
       child: Container(
         margin: const EdgeInsets.only(bottom: 14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: theme.cardColor,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: Colors.grey.withOpacity(0.1), width: 1),
           boxShadow: ModernColors.softShadow,
@@ -766,9 +767,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                     ],
                   ),
 
-                  const SizedBox(height: 12),
-                  const Divider(height: 1),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
 
                   // ORDER DETAILS ROW (3 columns)
                   Row(
@@ -966,11 +965,12 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) => StatefulBuilder(
         builder: (context, setSheetState) {
+          final theme = Theme.of(context);
           return Container(
             height: MediaQuery.of(context).size.height * 0.75,
-            decoration: const BoxDecoration(
-              color: AdminColors.cardBackground,
-              borderRadius: BorderRadius.only(
+            decoration: BoxDecoration(
+              color: theme.cardColor,
+              borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(24),
                 topRight: Radius.circular(24),
               ),
@@ -1039,9 +1039,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                           ],
                         ),
 
-                        const SizedBox(height: 20),
-                        const Divider(),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 24),
 
                         // Customer Information
                         _buildSectionTitle('Customer Information'),

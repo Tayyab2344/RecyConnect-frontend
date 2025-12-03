@@ -254,24 +254,10 @@ class _AdminUserProfileScreenState extends State<AdminUserProfileScreen> {
       ),
       backgroundColor: AdminColors.primaryGreen,
       actions: [
-        IconButton(
-          icon: const Icon(Icons.edit, color: Colors.white),
-          onPressed: () => _showEditUserDialog(context),
-        ),
         PopupMenuButton<String>(
           icon: const Icon(Icons.more_vert, color: Colors.white),
           onSelected: (value) => _handleMenuAction(context, value),
           itemBuilder: (BuildContext context) => [
-            const PopupMenuItem(
-              value: 'edit',
-              child: Row(
-                children: [
-                  Icon(Icons.edit, size: 20),
-                  SizedBox(width: 8),
-                  Text('Edit Profile'),
-                ],
-              ),
-            ),
             PopupMenuItem(
               value: 'suspend',
               child: Row(
@@ -316,9 +302,6 @@ class _AdminUserProfileScreenState extends State<AdminUserProfileScreen> {
 
   void _handleMenuAction(BuildContext context, String value) {
     switch (value) {
-      case 'edit':
-        _showEditUserDialog(context);
-        break;
       case 'suspend':
         if (userProfile.isSuspended) {
           _showUnsuspendDialog(context);
@@ -1159,177 +1142,6 @@ class _AdminUserProfileScreenState extends State<AdminUserProfileScreen> {
                 foregroundColor: Colors.white,
               ),
               child: const Text('Send'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showEditUserDialog(BuildContext context) {
-    final nameController = TextEditingController(text: userProfile.name);
-    final emailController = TextEditingController(text: userProfile.email);
-    final contactController = TextEditingController(text: userProfile.contact);
-    final addressController = TextEditingController(text: userProfile.address);
-    final salesController =
-        TextEditingController(text: userProfile.totalSales.toString());
-    final purchasesController =
-        TextEditingController(text: userProfile.totalPurchases.toString());
-
-    final formKey = GlobalKey<FormState>();
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Edit User Profile'),
-          content: SingleChildScrollView(
-            child: Form(
-              key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextFormField(
-                    controller: nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Name',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.person),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter a name';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: emailController,
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.email),
-                    ),
-                    keyboardType: TextInputType.emailAddress,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter an email';
-                      }
-                      if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                          .hasMatch(value)) {
-                        return 'Please enter a valid email';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: contactController,
-                    decoration: const InputDecoration(
-                      labelText: 'Contact',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.phone),
-                    ),
-                    keyboardType: TextInputType.phone,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter a contact number';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: addressController,
-                    decoration: const InputDecoration(
-                      labelText: 'Address',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.location_on),
-                    ),
-                    maxLines: 2,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter an address';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: salesController,
-                    decoration: const InputDecoration(
-                      labelText: 'Total Sales (PKR)',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.attach_money),
-                    ),
-                    keyboardType: TextInputType.number,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter sales amount';
-                      }
-                      if (int.tryParse(value) == null) {
-                        return 'Please enter a valid number';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: purchasesController,
-                    decoration: const InputDecoration(
-                      labelText: 'Total Purchases (PKR)',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.shopping_cart),
-                    ),
-                    keyboardType: TextInputType.number,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter purchases amount';
-                      }
-                      if (int.tryParse(value) == null) {
-                        return 'Please enter a valid number';
-                      }
-                      return null;
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text(
-                'Cancel',
-                style: TextStyle(color: Colors.grey),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (formKey.currentState!.validate()) {
-                  setState(() {
-                    userProfile.email = emailController.text;
-                    userProfile.contact = contactController.text;
-                    userProfile.address = addressController.text;
-                    userProfile.totalSales = int.parse(salesController.text);
-                    userProfile.totalPurchases =
-                        int.parse(purchasesController.text);
-                  });
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('User updated successfully'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AdminColors.primaryGreen,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Save Changes'),
             ),
           ],
         );

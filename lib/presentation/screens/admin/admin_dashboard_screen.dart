@@ -4,6 +4,7 @@ import '../../../core/constants/admin_colors.dart';
 import '../../../core/constants/modern_colors.dart';
 import '../../widgets/admin/admin_drawer.dart';
 import '../../widgets/admin/modern_widgets.dart';
+import 'admin_activities_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -350,6 +351,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   }
 
   Widget _buildBarChart(bool isMobile) {
+    final theme = Theme.of(context);
     return BarChart(
       BarChartData(
         alignment: BarChartAlignment.spaceAround,
@@ -382,7 +384,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                     days[value.toInt()],
                     style: TextStyle(
                       fontSize: isMobile ? 10 : 12,
-                      color: AdminColors.textSecondary,
+                      color: theme.textTheme.bodyMedium?.color,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -428,6 +430,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   }
 
   Widget _buildLineChart(bool isMobile) {
+    final theme = Theme.of(context);
     return LineChart(
       LineChartData(
         gridData: FlGridData(
@@ -455,7 +458,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                       months[value.toInt()],
                       style: TextStyle(
                         fontSize: isMobile ? 10 : 12,
-                        color: AdminColors.textSecondary,
+                        color: theme.textTheme.bodyMedium?.color,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -596,21 +599,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           childAspectRatio: isMobile ? 1.1 : 1.2,
           children: [
             ModernQuickActionCard(
-              icon: Icons.person_add_rounded,
-              title: 'Add User',
-              color: AdminColors.accentBlue,
-              onTap: () {},
-            ),
-            ModernQuickActionCard(
               icon: Icons.add_shopping_cart_rounded,
               title: 'New Order',
               color: AdminColors.accentOrange,
-              onTap: () {},
-            ),
-            ModernQuickActionCard(
-              icon: Icons.local_shipping_rounded,
-              title: 'Add Collector',
-              color: AdminColors.accentPurple,
               onTap: () {},
             ),
             ModernQuickActionCard(
@@ -670,7 +661,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                 ],
               ),
               TextButton.icon(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AdminActivitiesScreen(),
+                    ),
+                  );
+                },
                 icon: Text(
                   'View All',
                   style: TextStyle(
@@ -705,11 +703,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           ),
           Divider(height: 8, color: Colors.grey.withOpacity(0.1)),
           ModernActivityItem(
-            icon: Icons.check_circle_rounded,
-            title: 'Collection completed',
-            subtitle: 'Collector completed 5 pickups today',
+            icon: Icons.trending_up_rounded,
+            title: 'Price updated',
+            subtitle: 'Plastic price updated to 110 PKR/kg',
             time: '1 hour ago',
-            color: AdminColors.success,
+            color: AdminColors.accentPurple,
           ),
           Divider(height: 8, color: Colors.grey.withOpacity(0.1)),
           ModernActivityItem(

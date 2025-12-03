@@ -1433,8 +1433,9 @@ class _AdminActivitiesScreenState extends State<AdminActivitiesScreen>
 
   // Admin filter section
   Widget _buildAdminFilterSection() {
+    final theme = Theme.of(context);
     return Container(
-      color: AdminColors.cardBackground,
+      color: theme.cardColor,
       padding: const EdgeInsets.all(12),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -1538,8 +1539,9 @@ class _AdminActivitiesScreenState extends State<AdminActivitiesScreen>
 
   // User filter section
   Widget _buildUserFilterSection() {
+    final theme = Theme.of(context);
     return Container(
-      color: AdminColors.cardBackground,
+      color: theme.cardColor,
       padding: const EdgeInsets.all(12),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -1642,10 +1644,11 @@ class _AdminActivitiesScreenState extends State<AdminActivitiesScreen>
 
   // User type chips
   Widget _buildUserTypeChips() {
+    final theme = Theme.of(context);
     final userTypes = ['all', 'Individual', 'Warehouse', 'Company'];
 
     return Container(
-      color: AdminColors.cardBackground,
+      color: theme.cardColor,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -1720,12 +1723,13 @@ class _AdminActivitiesScreenState extends State<AdminActivitiesScreen>
 
   // Admin activity card
   Widget _buildAdminActivityCard(AdminActivity activity) {
+    final theme = Theme.of(context);
     final isSuccess = activity.status.toLowerCase() == 'success';
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: AdminColors.cardBackground,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -1875,13 +1879,14 @@ class _AdminActivitiesScreenState extends State<AdminActivitiesScreen>
 
   // User activity card
   Widget _buildUserActivityCard(UserActivity activity) {
+    final theme = Theme.of(context);
     final isSuccess = activity.status.toLowerCase() == 'success';
     final userTypeColor = _getUserTypeColor(activity.userType);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: AdminColors.cardBackground,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
