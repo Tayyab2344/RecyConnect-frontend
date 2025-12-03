@@ -132,11 +132,31 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
               margin: const EdgeInsets.all(16),
             ),
           );
+          // Navigate to home/dashboard after successful verification
           Navigator.pushAndRemoveUntil(
             context,
-            MaterialPageRoute(builder: (_) => const LoginScreen()),
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
             (route) => false,
           );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(response['message'] ?? 'Verification failed'),
+              backgroundColor: AppTheme.errorRed,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              margin: const EdgeInsets.all(16),
+            ),
+          );
+
+          // Clear OTP fields on error
+          for (var controller in _otpControllers) {
+            controller.clear();
+          }
+          _focusNodes[0].requestFocus();
         }
       }
     } catch (e) {
@@ -563,26 +583,25 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.blue.shade50,
+        color: AppTheme.infoBlue.withOpacity(0.05),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Colors.blue.shade100,
+          color: AppTheme.infoBlue.withOpacity(0.1),
         ),
       ),
       child: Row(
         children: [
-          Icon(
+          const Icon(
             Icons.info_outline_rounded,
-            color: Colors.blue.shade700,
+            color: AppTheme.infoBlue,
             size: 20,
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               'Check your spam folder if you don\'t see the email',
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.blue.shade900,
+              style: AppTheme.captionStyle.copyWith(
+                color: AppTheme.infoBlue,
                 height: 1.4,
               ),
             ),
