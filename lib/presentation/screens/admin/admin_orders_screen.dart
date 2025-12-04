@@ -894,18 +894,16 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                   // View Details Button
                   SizedBox(
                     width: double.infinity,
-                    child: TextButton(
+                    child: ElevatedButton(
                       onPressed: () => _showOrderDetailsBottomSheet(order),
-                      style: TextButton.styleFrom(
-                        foregroundColor: AdminColors.primaryGreen,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AdminColors.primaryGreen,
+                        foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
-                          side: const BorderSide(
-                            color: AdminColors.primaryGreen,
-                            width: 1.5,
-                          ),
                         ),
+                        elevation: 0,
                       ),
                       child: const Text(
                         'View Details',

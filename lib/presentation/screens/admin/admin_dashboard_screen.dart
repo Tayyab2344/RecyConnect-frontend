@@ -185,7 +185,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
 
   Widget _buildModernStatsCards(double screenWidth, bool isMobile, bool isTablet) {
     int crossAxisCount = isMobile ? 2 : (isTablet ? 2 : 4);
-    double childAspectRatio = isMobile ? 1.1 : (isTablet ? 1.3 : 1.2);
+    double childAspectRatio = isMobile ? 1.1 : (isTablet ? 1.4 : 1.4);
 
     return GridView.count(
       crossAxisCount: crossAxisCount,
@@ -290,6 +290,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     final theme = Theme.of(context);
     return Container(
       padding: EdgeInsets.all(isMobile ? 16 : 20),
+      clipBehavior: Clip.hardEdge,
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(20),
@@ -305,27 +306,34 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: isMobile ? 16 : 18,
-                      fontWeight: FontWeight.bold,
-                      color: theme.textTheme.bodyLarge?.color,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: isMobile ? 16 : 18,
+                        fontWeight: FontWeight.bold,
+                        color: theme.textTheme.bodyLarge?.color,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: isMobile ? 11 : 12,
-                      color: theme.textTheme.bodyMedium?.color,
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: isMobile ? 11 : 12,
+                        color: theme.textTheme.bodyMedium?.color,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
@@ -553,14 +561,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              'Quick Actions',
-              style: TextStyle(
-                fontSize: isMobile ? 18 : 20,
-                fontWeight: FontWeight.bold,
-                color: theme.textTheme.bodyLarge?.color,
+            Expanded(
+              child: Text(
+                'Quick Actions',
+                style: TextStyle(
+                  fontSize: isMobile ? 18 : 20,
+                  fontWeight: FontWeight.bold,
+                  color: theme.textTheme.bodyLarge?.color,
+                ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
               ),
             ),
+            const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
@@ -583,6 +596,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                       fontWeight: FontWeight.w600,
                       color: AdminColors.primaryGreen,
                     ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
                   ),
                 ],
               ),
@@ -620,6 +635,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     final theme = Theme.of(context);
     return Container(
       padding: EdgeInsets.all(isMobile ? 16 : 20),
+      clipBehavior: Clip.hardEdge,
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(20),
@@ -635,31 +651,38 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      gradient: ModernColors.primaryGradient,
-                      borderRadius: BorderRadius.circular(10),
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        gradient: ModernColors.primaryGradient,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.history,
+                        color: Colors.white,
+                        size: 20,
+                      ),
                     ),
-                    child: const Icon(
-                      Icons.history,
-                      color: Colors.white,
-                      size: 20,
+                    const SizedBox(width: 12),
+                    Flexible(
+                      child: Text(
+                        'Recent Activities',
+                        style: TextStyle(
+                          fontSize: isMobile ? 16 : 18,
+                          fontWeight: FontWeight.bold,
+                          color: theme.textTheme.bodyLarge?.color,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    'Recent Activities',
-                    style: TextStyle(
-                      fontSize: isMobile ? 16 : 18,
-                      fontWeight: FontWeight.bold,
-                      color: theme.textTheme.bodyLarge?.color,
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               TextButton.icon(
                 onPressed: () {
                   Navigator.push(

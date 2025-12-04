@@ -1037,7 +1037,7 @@ class _AdminCollectorsScreenState extends State<AdminCollectorsScreen> {
           // View Details Button
           SizedBox(
             width: double.infinity,
-            child: TextButton(
+            child: ElevatedButton(
               onPressed: () {
                 Navigator.push(
                   context,
@@ -1046,16 +1046,14 @@ class _AdminCollectorsScreenState extends State<AdminCollectorsScreen> {
                   ),
                 );
               },
-              style: TextButton.styleFrom(
-                foregroundColor: AdminColors.primaryGreen,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AdminColors.primaryGreen,
+                foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
-                  side: const BorderSide(
-                    color: AdminColors.primaryGreen,
-                    width: 1.5,
-                  ),
                 ),
+                elevation: 0,
               ),
               child: const Text(
                 'View Details',

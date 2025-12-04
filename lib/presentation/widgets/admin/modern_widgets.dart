@@ -78,6 +78,7 @@ class _ModernStatCardState extends State<ModernStatCard>
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.all(20),
+                clipBehavior: Clip.hardEdge,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
@@ -98,104 +99,110 @@ class _ModernStatCardState extends State<ModernStatCard>
                     width: 2,
                   ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        // Animated icon with gradient
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: ModernColors.iconContainerDecoration(
-                            color: widget.color,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          // Animated icon with gradient
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: ModernColors.iconContainerDecoration(
+                              color: widget.color,
+                            ),
+                            child: Icon(
+                              widget.icon,
+                              color: Colors.white,
+                              size: 24,
+                            ),
                           ),
-                          child: Icon(
-                            widget.icon,
-                            color: Colors.white,
-                            size: 24,
-                          ),
-                        ),
-                        // Trend indicator
-                        TweenAnimationBuilder(
-                          duration: const Duration(milliseconds: 500),
-                          tween: Tween<double>(begin: 0, end: 1),
-                          builder: (context, double value, child) {
-                            return Opacity(
-                              opacity: value,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: widget.isPositive
-                                      ? AdminColors.success.withOpacity(0.1)
-                                      : AdminColors.error.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      widget.isPositive
-                                          ? Icons.trending_up
-                                          : Icons.trending_down,
-                                      color: widget.isPositive
-                                          ? AdminColors.success
-                                          : AdminColors.error,
-                                      size: 14,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      widget.trend,
-                                      style: TextStyle(
+                          const SizedBox(width: 8),
+                          // Trend indicator
+                          TweenAnimationBuilder(
+                            duration: const Duration(milliseconds: 500),
+                            tween: Tween<double>(begin: 0, end: 1),
+                            builder: (context, double value, child) {
+                              return Opacity(
+                                opacity: value,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: widget.isPositive
+                                        ? AdminColors.success.withOpacity(0.1)
+                                        : AdminColors.error.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        widget.isPositive
+                                            ? Icons.trending_up
+                                            : Icons.trending_down,
                                         color: widget.isPositive
                                             ? AdminColors.success
                                             : AdminColors.error,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
+                                        size: 14,
                                       ),
-                                    ),
-                                  ],
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        widget.trend,
+                                        style: TextStyle(
+                                          color: widget.isPositive
+                                              ? AdminColors.success
+                                              : AdminColors.error,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    // Animated counter
-                    TweenAnimationBuilder(
-                      duration: const Duration(milliseconds: 800),
-                      curve: Curves.easeOutCubic,
-                      tween: Tween<double>(
-                        begin: 0,
-                        end: _parseValue(widget.value),
-                      ),
-                      builder: (context, double value, child) {
-                        return Text(
-                          _formatValue(value, widget.value),
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: widget.color,
+                              );
+                            },
                           ),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      widget.title,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                        fontWeight: FontWeight.w500,
+                        ],
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 16),
+                      // Animated counter
+                      TweenAnimationBuilder(
+                        duration: const Duration(milliseconds: 800),
+                        curve: Curves.easeOutCubic,
+                        tween: Tween<double>(
+                          begin: 0,
+                          end: _parseValue(widget.value),
+                        ),
+                        builder: (context, double value, child) {
+                          return Text(
+                            _formatValue(value, widget.value),
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: widget.color,
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        widget.title,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );
@@ -645,6 +652,7 @@ class AnimatedWelcomeHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.all(isMobile ? 20 : 24),
+      clipBehavior: Clip.hardEdge,
       decoration: BoxDecoration(
         gradient: ModernColors.primaryGradientExtended,
         borderRadius: BorderRadius.circular(20),
@@ -689,6 +697,7 @@ class AnimatedWelcomeHeader extends StatelessWidget {
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     TweenAnimationBuilder(
                       duration: const Duration(milliseconds: 600),
@@ -706,6 +715,8 @@ class AnimatedWelcomeHeader extends StatelessWidget {
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
                               ),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
                             ),
                           ),
                         );
@@ -727,6 +738,9 @@ class AnimatedWelcomeHeader extends StatelessWidget {
                                 fontSize: isMobile ? 13 : 15,
                                 color: Colors.white.withOpacity(0.9),
                               ),
+                              overflow: TextOverflow.fade,
+                              maxLines: 2,
+                              softWrap: true,
                             ),
                           ),
                         );

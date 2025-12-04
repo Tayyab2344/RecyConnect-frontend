@@ -1836,34 +1836,45 @@ class _AdminActivitiesScreenState extends State<AdminActivitiesScreen>
                     ),
                     const SizedBox(height: 12),
                     // Bottom row
-                    Row(
+                    Wrap(
+                      spacing: 16,
+                      runSpacing: 8,
                       children: [
-                        Icon(
-                          Icons.person,
-                          size: 14,
-                          color: AdminColors.textLight,
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.person,
+                              size: 14,
+                              color: AdminColors.textLight,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Admin User',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AdminColors.textLight,
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Admin User',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AdminColors.textLight,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Icon(
-                          Icons.access_time,
-                          size: 14,
-                          color: AdminColors.textLight,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          _formatTimestamp(activity.timestamp),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AdminColors.textLight,
-                          ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.access_time,
+                              size: 14,
+                              color: AdminColors.textLight,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              _formatTimestamp(activity.timestamp),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AdminColors.textLight,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -1986,12 +1997,15 @@ class _AdminActivitiesScreenState extends State<AdminActivitiesScreen>
                     // User name with type badge
                     Row(
                       children: [
-                        Text(
-                          activity.userName,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                            color: AdminColors.textPrimary,
+                        Flexible(
+                          child: Text(
+                            activity.userName,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              color: AdminColors.textPrimary,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         const SizedBox(width: 8),
