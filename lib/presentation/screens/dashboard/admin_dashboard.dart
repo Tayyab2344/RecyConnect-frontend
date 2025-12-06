@@ -3,10 +3,10 @@ import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/auth_service.dart';
 import '../../widgets/dashboard_card.dart';
-import '../admin/admin_logs_screen.dart';
+import '../admin/admin_activities_screen.dart';
 
 class AdminDashboard extends StatelessWidget {
-  const AdminDashboard({super.key});
+      AdminDashboard({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +56,7 @@ class AdminDashboard extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const AdminLogsScreen(),
+                            builder: (context) => const AdminActivitiesScreen(),
                           ),
                         );
                       },

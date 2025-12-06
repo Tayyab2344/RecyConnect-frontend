@@ -7,8 +7,6 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../core/utils/validators.dart';
-import '../../../core/utils/validators.dart';
-import '../../../core/utils/pakistan_locations.dart';
 import '../../widgets/city_area_selector.dart';
 import 'otp_verification_screen.dart';
 

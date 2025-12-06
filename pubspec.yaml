@@ -23,10 +23,20 @@ dependencies:
   image_picker: ^1.1.2
   
   # OCR
-  google_mlkit_text_recognition: ^0.10.0
+  google_mlkit_commons: ^0.11.0
+  google_mlkit_text_recognition: ^0.15.0
   
   # UI & Icons
   cupertino_icons: ^1.0.6
+
+  # Charts & Graphs
+  fl_chart: ^0.69.0
+
+  # Fonts
+
+
+  # SVG Icons
+  flutter_svg: ^2.0.10
 
   # File handling
   path_provider: ^2.1.1
@@ -40,7 +50,7 @@ dependencies:
 
   
   # Charts & Data Visualization
-  fl_chart: ^0.66.0
+
   
   # Location & Permissions
   geolocator: ^10.1.0
@@ -52,6 +62,19 @@ dependencies:
   
   # Utilities
   url_launcher: ^6.2.4
+
+  # PDF Generation
+  pdf: ^3.11.0
+  printing: ^5.13.1
+
+  # Animations & Modern UI
+  flutter_animate: ^4.5.0
+  shimmer: ^3.0.0
+  animated_text_kit: ^4.2.2
+  lottie: ^3.1.0
+  flutter_staggered_animations: ^1.1.1
+  glassmorphism: ^3.0.0
+  blur: ^3.1.0
 
 dev_dependencies:
   flutter_test:
