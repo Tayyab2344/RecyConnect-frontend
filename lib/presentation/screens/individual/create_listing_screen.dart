@@ -100,13 +100,17 @@ class _CreateListingScreenState extends State<CreateListingScreen>
     final ImagePicker picker = ImagePicker();
     // FIX: Compression to prevent Payload Too Large error
     final List<XFile> images = await picker.pickMultiImage(
-      imageQuality: 70, // Compress quality
-      maxWidth: 1024,   // Resize large images
+      imageQuality: 50, // Reduced quality
+      maxWidth: 800,    // Reduced width
     );
 
     if (images.isNotEmpty) {
       setState(() {
-        _selectedImages = images.take(3).toList();
+        _selectedImages.addAll(images);
+        // Limit to 3 images total if needed, or handle in UI
+        if (_selectedImages.length > 3) {
+           _selectedImages = _selectedImages.take(3).toList();
+        }
       });
       // Trigger AI Analysis Simulation
       _simulateAIAnalysis();
@@ -244,13 +248,29 @@ class _CreateListingScreenState extends State<CreateListingScreen>
               text: 'DONE',
               onPressed: () {
                 Navigator.of(context).pop(); // Close dialog
-                Navigator.of(context).pop(); // Exit screen
+                if (Navigator.of(context).canPop()) {
+                  Navigator.of(context).pop(); // Exit screen
+                } else {
+                  _resetForm(); // Reset if used as tab
+                }
               },
             ),
           ],
         ),
       ),
     );
+  }
+
+  void _resetForm() {
+    setState(() {
+      _titleController.clear();
+      _descriptionController.clear();
+      _weightController.clear();
+      // Keep address if possible or clear
+      _selectedImages.clear();
+      _selectedMaterial = 'Plastic';
+      _requestCollector = false;
+    });
   }
 
   // --- UI Construction ---
@@ -346,16 +366,62 @@ class _CreateListingScreenState extends State<CreateListingScreen>
               onTap: _pickImages,
               child: DottedBorderPlaceholder(isDark: isDark, isAnalyzing: _isAnalyzing),
             )
-          : ListView.builder(
+          : SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              itemCount: _selectedImages.length + 1,
-              itemBuilder: (context, index) {
-                if (index == _selectedImages.length) {
-                  // Add more button
-                  return GestureDetector(
+              child: Row(
+                children: [
+                  ..._selectedImages.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    return Stack(
+                      children: [
+                        Container(
+                          width: 110,
+                          height: 110,
+                          margin: const EdgeInsets.only(right: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.file(
+                              File(_selectedImages[index].path),
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Center(
+                                  child: Icon(Icons.broken_image, 
+                                    color: Colors.grey, size: 30),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: 4,
+                          right: 12,
+                          child: CircleAvatar(
+                            radius: 10,
+                            backgroundColor: Colors.black54,
+                            child: IconButton(
+                              padding: EdgeInsets.zero,
+                              icon: const Icon(Icons.close,
+                                  size: 14, color: Colors.white),
+                              onPressed: () {
+                                setState(() {
+                                  _selectedImages.removeAt(index);
+                                });
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  }).toList(),
+                  GestureDetector(
                     onTap: _pickImages,
                     child: Container(
                       width: 100,
+                      height: 110,
                       margin: const EdgeInsets.only(left: 8),
                       decoration: BoxDecoration(
                         border: Border.all(
@@ -365,42 +431,9 @@ class _CreateListingScreenState extends State<CreateListingScreen>
                       child: Icon(Icons.add_a_photo,
                           color: isDark ? Colors.white54 : Colors.black45),
                     ),
-                  );
-                }
-                // Image Thumbnail
-                return Stack(
-                  children: [
-                    Container(
-                      width: 110,
-                      margin: const EdgeInsets.only(right: 8),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        image: DecorationImage(
-                          image: FileImage(File(_selectedImages[index].path)),
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      top: 4,
-                      right: 12,
-                      child: CircleAvatar(
-                        radius: 10,
-                        backgroundColor: Colors.black54,
-                        child: IconButton(
-                          padding: EdgeInsets.zero,
-                          icon: const Icon(Icons.close, size: 14, color: Colors.white),
-                          onPressed: () {
-                             setState(() {
-                               _selectedImages.removeAt(index);
-                             });
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
+                  ),
+                ],
+              ),
             ),
     );
   }
