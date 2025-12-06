@@ -240,7 +240,8 @@ class _RatingsReviewsDialogState extends State<RatingsReviewsDialog> {
   }
 }
 
-// Helper function to show the ratings dialog\nvoid showRatingsDialog(BuildContext context, int orderId, String sellerName) {
+// Helper function to show the ratings dialog
+void showRatingsDialog(BuildContext context, int orderId, String sellerName) {
   showDialog(
     context: context,
     barrierDismissible: false,

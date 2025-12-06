@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/design_tokens.dart';
 import '../../../core/services/auth_service.dart';
+import '../../widgets/curved/curved_card.dart';
+import '../../widgets/curved/organic_button.dart';
 import '../auth/login_screen.dart';
 import 'edit_profile_screen.dart';
 import 'change_password_screen.dart';
