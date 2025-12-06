@@ -4,9 +4,10 @@ import '../../../core/services/auth_service.dart';
 import 'warehouse_dashboard.dart';
 import 'company_dashboard.dart';
 import 'individual_dashboard.dart';
+import 'collector_dashboard.dart';
 import '../seller/seller_dashboard.dart';
 import '../marketplace/buyer_dashboard.dart';
-import '../admin/admin_dashboard.dart';
+import '../admin/admin_dashboard_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -27,7 +28,7 @@ class DashboardScreen extends StatelessWidget {
           case 'buyer':
             return const BuyerDashboard();
           case 'admin':
-            return const AdminDashboard();
+            return const AdminDashboardScreen();
           default:
             return const IndividualDashboard();
         }

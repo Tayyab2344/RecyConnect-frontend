@@ -3,9 +3,11 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../core/utils/validators.dart';
 import '../dashboard/dashboard_screen.dart';
+import '../admin/admin_dashboard_screen.dart';
 import 'role_selection_screen.dart';
 import 'forgot_password_screen.dart';
 
@@ -89,11 +91,46 @@ class _LoginScreenState extends State<LoginScreen>
     if (!_formKey.currentState!.validate()) return;
 
     final authService = Provider.of<AuthService>(context, listen: false);
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
 
-    final success = await authService.login(
-      _emailController.text.trim(),
-      _passwordController.text,
-    );
+    // Check for admin credentials FIRST (before API call)
+    if (email == 'panel.quantix@gmail.com' && password == 'Qx\$9mP#kL2vR@nT7wZ!4') {
+      // Admin login - navigate directly to Admin Dashboard
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Row(
+              children: [
+                Icon(Icons.check_circle_rounded, color: Colors.white),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Welcome Admin! Login successful',
+                    style: TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: AppTheme.primaryGreen,
+            behavior: SnackBarBehavior.floating,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            margin: const EdgeInsets.all(16),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+              builder: (context) => const AdminDashboardScreen()),
+        );
+      }
+      return;
+    }
+
+    // Regular user login - proceed with API call
+    final success = await authService.login(email, password);
 
     if (mounted) {
       if (success) {
