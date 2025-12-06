@@ -4,7 +4,7 @@ import 'core/services/auth_service.dart';
 import 'core/services/admin_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/providers/theme_provider.dart';
-import 'presentation/screens/onboarding/welcome_screen.dart';
+import 'presentation/screens/onboarding/welcome_story_screen.dart';
 import 'presentation/screens/dashboard/dashboard_screen.dart';
 
 void main() async {
@@ -52,7 +52,7 @@ class AuthWrapper extends StatelessWidget {
         if (authService.isAuthenticated) {
           return const DashboardScreen();
         } else {
-          return const WelcomeScreen();
+          return const AnimatedStoryWelcomeScreen();
         }
       },
     );
