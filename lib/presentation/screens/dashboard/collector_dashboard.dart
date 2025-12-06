@@ -193,7 +193,7 @@ class _CollectorDashboardState extends State<CollectorDashboard> with TickerProv
   }
 
   Widget _buildTodayStats() {
-    return Row(
+    return const Row(
       children: [
         Expanded(
           child: DashboardCard(
@@ -203,7 +203,7 @@ class _CollectorDashboardState extends State<CollectorDashboard> with TickerProv
             color: AppTheme.primaryGreen,
           ),
         ),
-        const SizedBox(width: 16),
+        SizedBox(width: 16),
         Expanded(
           child: DashboardCard(
             title: 'Total Weight',

@@ -33,7 +33,7 @@ dependencies:
   fl_chart: ^0.69.0
 
   # Fonts
-  google_fonts: ^6.2.1
+
 
   # SVG Icons
   flutter_svg: ^2.0.10
@@ -43,6 +43,25 @@ dependencies:
 
   # Internationalization & Date Formatting
   intl: ^0.19.0
+  google_fonts: ^6.3.2
+  
+
+  
+
+  
+  # Charts & Data Visualization
+
+  
+  # Location & Permissions
+  geolocator: ^10.1.0
+  geocoding: ^3.0.0
+  permission_handler: ^11.1.0
+  
+  # Data Export
+  csv: ^6.0.0
+  
+  # Utilities
+  url_launcher: ^6.2.4
 
   # PDF Generation
   pdf: ^3.11.0

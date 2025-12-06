@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-// Remove: import '../../../core/theme/app_theme.dart';
 import '../../../core/services/auth_service.dart';
-import 'individual_dashboard.dart';
 import 'warehouse_dashboard.dart';
 import 'company_dashboard.dart';
+import 'individual_dashboard.dart';
 import 'collector_dashboard.dart';
+import '../seller/seller_dashboard.dart';
+import '../marketplace/buyer_dashboard.dart';
 import '../admin/admin_dashboard_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
@@ -24,8 +25,8 @@ class DashboardScreen extends StatelessWidget {
             return const WarehouseDashboard();
           case 'company':
             return const CompanyDashboard();
-          case 'collector':
-            return const CollectorDashboard();
+          case 'buyer':
+            return const BuyerDashboard();
           case 'admin':
             return const AdminDashboardScreen();
           default:
@@ -35,6 +36,7 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 }
+
 
 
 

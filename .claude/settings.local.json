@@ -11,7 +11,11 @@
       "Bash(flutter build:*)",
       "WebSearch",
       "Bash(mkdir:*)",
-      "Bash(dart analyze:*)"
+      "Bash(dart analyze:*)",
+      "Bash(flutter clean:*)",
+      "Bash(flutter run:*)",
+      "Bash(flutter devices:*)",
+      "Bash(adb devices:*)"
     ],
     "deny": [],
     "ask": []
