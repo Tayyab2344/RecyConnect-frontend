@@ -16,6 +16,17 @@ subprojects {
     project.evaluationDependsOn(":app")
 }
 
+// Fix for packages missing namespace (required for AGP 8.0+)
+subprojects {
+    plugins.withId("com.android.library") {
+        val android = extensions.getByName("android") as com.android.build.gradle.LibraryExtension
+        if (android.namespace == null) {
+            android.namespace = project.group.toString()
+        }
+    }
+}
+
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }
+

@@ -5,6 +5,8 @@ import '../../../core/services/auth_service.dart';
 import '../../../core/services/listing_service.dart';
 import '../../../core/services/order_service.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../widgets/curved/curved_bottom_nav.dart';
+
 import '../individual/create_listing_screen.dart';
 import '../marketplace/marketplace_screen.dart';
 import '../individual/my_listings_screen.dart';
@@ -767,109 +769,45 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
   }
 
   Widget _buildBottomNavBar() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).bottomAppBarTheme.color ?? Theme.of(context).scaffoldBackgroundColor,
-        border: Border(
-          top: BorderSide(
-            color: Theme.of(context).dividerColor.withOpacity(0.1),
-            width: 1,
-          ),
-        ),
-      ),
-      child: SafeArea(
-        child: Container(
-          height: 70,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildNavItem(Icons.home_outlined, Icons.home, 'Home', 0),
-              _buildNavItem(Icons.storefront_outlined, Icons.storefront, 'Market', 1),
-              _buildCenterSellButton(),
-              _buildNavItem(Icons.receipt_long_outlined, Icons.receipt_long, 'Orders', 3),
-              _buildNavItem(Icons.person_outline, Icons.person, 'Profile', 4),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCenterSellButton() {
-    final isSelected = _selectedIndex == 2;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    
-    return GestureDetector(
-      onTap: () {
-        setState(() => _selectedIndex = 2);
-        _pageController.jumpToPage(2);
-      },
-      child: Container(
-        width: 56,
-        height: 56,
-        decoration: BoxDecoration(
-          color: isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen,
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: (isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen)
-                  .withOpacity(0.3),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-          border: isSelected
-              ? Border.all(
-                  color: isDark ? AppTheme.darkBackground : Colors.white,
-                  width: 3,
-                )
-              : null,
-        ),
-        child: const Icon(
-          Icons.add,
-          color: Colors.white,
-          size: 28,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNavItem(IconData icon, IconData activeIcon, String label, int index) {
-    final isSelected = _selectedIndex == index;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final activeColor = isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen;
-    final inactiveColor = (isDark ? AppTheme.darkTextSecondary : AppTheme.textLight)
-        .withOpacity(0.5);
-    
-    return GestureDetector(
-      onTap: () {
+    return CurvedBottomNav(
+      currentIndex: _selectedIndex,
+      onTap: (index) {
         setState(() => _selectedIndex = index);
         _pageController.jumpToPage(index);
       },
-      behavior: HitTestBehavior.opaque,
-      child: SizedBox(
-        width: 60,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              isSelected ? activeIcon : icon,
-              color: isSelected ? activeColor : inactiveColor,
-              size: 24,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                color: isSelected ? activeColor : inactiveColor,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-              ),
-            ),
-          ],
+      items: const [
+        CurvedBottomNavItem(
+          icon: Icons.home_outlined,
+          activeIcon: Icons.home,
+          label: 'Home',
         ),
+        CurvedBottomNavItem(
+          icon: Icons.storefront_outlined,
+          activeIcon: Icons.storefront,
+          label: 'Market',
+        ),
+        CurvedBottomNavItem.simple(
+          icon: Icons.add,
+          label: 'Sell',
+        ),
+        CurvedBottomNavItem(
+          icon: Icons.receipt_long_outlined,
+          activeIcon: Icons.receipt_long,
+          label: 'Orders',
+        ),
+        CurvedBottomNavItem(
+          icon: Icons.person_outline,
+          activeIcon: Icons.person,
+          label: 'Profile',
+        ),
+      ],
+      floatingButton: CurvedNavFAB(
+        icon: Icons.add,
+        isSelected: _selectedIndex == 2,
+        onTap: () {
+          setState(() => _selectedIndex = 2);
+          _pageController.jumpToPage(2);
+        },
       ),
     );
   }
