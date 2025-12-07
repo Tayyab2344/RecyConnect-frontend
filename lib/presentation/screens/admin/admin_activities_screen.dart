@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/admin_colors.dart';
-import '../../../core/constants/modern_colors.dart';
 import '../../widgets/admin/admin_drawer.dart';
 
-// Admin Activity Model
 class AdminActivity {
   final String id;
   final String type;
@@ -998,7 +996,8 @@ class _AdminActivitiesScreenState extends State<AdminActivitiesScreen>
       _filteredAdminActivities = _allAdminActivities.where((activity) {
         // Activity type filter
         if (_adminActivityTypeFilter != 'all' &&
-            activity.type.toLowerCase() != _adminActivityTypeFilter.toLowerCase()) {
+            activity.type.toLowerCase() !=
+                _adminActivityTypeFilter.toLowerCase()) {
           return false;
         }
 
@@ -1154,8 +1153,18 @@ class _AdminActivitiesScreenState extends State<AdminActivitiesScreen>
       return '${difference.inDays} days ago';
     } else {
       final months = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec'
       ];
       final hour = timestamp.hour > 12 ? timestamp.hour - 12 : timestamp.hour;
       final period = timestamp.hour >= 12 ? 'PM' : 'AM';
@@ -1203,7 +1212,8 @@ class _AdminActivitiesScreenState extends State<AdminActivitiesScreen>
         iconTheme: IconThemeData(color: theme.appBarTheme.foregroundColor),
         actions: [
           PopupMenuButton<String>(
-            icon: Icon(Icons.filter_list, color: theme.appBarTheme.foregroundColor),
+            icon: Icon(Icons.filter_list,
+                color: theme.appBarTheme.foregroundColor),
             onSelected: (value) {
               // Handle quick filter selection
             },
@@ -1450,7 +1460,8 @@ class _AdminActivitiesScreenState extends State<AdminActivitiesScreen>
                 DropdownMenuItem(value: 'all', child: Text('All Activities')),
                 DropdownMenuItem(value: 'login', child: Text('Login')),
                 DropdownMenuItem(value: 'logout', child: Text('Logout')),
-                DropdownMenuItem(value: 'update price', child: Text('Update Price')),
+                DropdownMenuItem(
+                    value: 'update price', child: Text('Update Price')),
                 DropdownMenuItem(
                     value: 'user management', child: Text('User Management')),
                 DropdownMenuItem(
@@ -1654,15 +1665,17 @@ class _AdminActivitiesScreenState extends State<AdminActivitiesScreen>
         scrollDirection: Axis.horizontal,
         child: Row(
           children: userTypes.map((type) {
-            final isSelected = _userTypeFilter.toLowerCase() == type.toLowerCase();
+            final isSelected =
+                _userTypeFilter.toLowerCase() == type.toLowerCase();
             return Padding(
               padding: const EdgeInsets.only(right: 8),
               child: FilterChip(
                 selected: isSelected,
                 label: Text(type == 'all' ? 'All Users' : type),
                 labelStyle: TextStyle(
-                  color:
-                      isSelected ? AdminColors.textWhite : AdminColors.textSecondary,
+                  color: isSelected
+                      ? AdminColors.textWhite
+                      : AdminColors.textSecondary,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                   fontSize: 13,
                 ),

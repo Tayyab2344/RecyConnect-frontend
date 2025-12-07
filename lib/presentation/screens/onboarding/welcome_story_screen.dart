@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 
 import '../auth/login_screen.dart';
 
-/// Light Mode Story Welcome Screen (Pivot)
-/// Narrative: Waste -> Recycled Particles -> Healed Earth -> RecyConnect Solution.
-/// Aesthetic: Soft Teal-Mint, Eye-friendly, No harsh flashes.
+/// RecyConnect Animated Splash Screen
+/// Story: Circuit nodes emerge → arrows sweep in → logo pulses → text reveals
+/// Aesthetic: Light mode with green/blue accents matching login
+
 class AnimatedStoryWelcomeScreen extends StatefulWidget {
   const AnimatedStoryWelcomeScreen({super.key});
 
@@ -15,89 +16,86 @@ class AnimatedStoryWelcomeScreen extends StatefulWidget {
 
 class _AnimatedStoryWelcomeScreenState extends State<AnimatedStoryWelcomeScreen>
     with TickerProviderStateMixin {
-  late AnimationController _storyController;
-
-  // Phase Animations
-  late Animation<double> _phase1IconsMove; // 0.0 -> 0.25 (Waste moves to center)
-  late Animation<double> _phase1IconsFade; // 0.20 -> 0.25 (Waste disappears)
-  late Animation<double> _phase2ParticleSwirl; // 0.20 -> 0.45 (Particles form globe)
-  late Animation<double> _phase3EarthScale; // 0.35 -> 0.55 (Earth appears)
-  late Animation<double> _phase4NatureGrow; // 0.50 -> 0.75 (Rings/Leaves appear)
-  late Animation<double> _phase5LogoReveal; // 0.75 -> 0.90 (Logo Fades In)
-  late Animation<double> _phase5EarthFade; // 0.75 -> 0.90 (Earth Fades Out for Logo)
-  late Animation<double> _phase6Exit; // 0.95 -> 1.00 (Fade to Login)
-
-  final List<IconData> _wasteIcons = const [
-    Icons.delete_outline_rounded, 
-    Icons.newspaper_rounded,      // Paper/Newspaper (Clearer than description)
-    Icons.water_drop_outlined,     
-    Icons.inventory_2_outlined,   
-  ];
-
+  late AnimationController _mainController;
+  
+  // Phase animations - compressed timing
+  late Animation<double> _phase1Background;    // 0.00 - 0.12 Background pulse
+  late Animation<double> _phase2Circuit;       // 0.08 - 0.35 Circuit nodes grow
+  late Animation<double> _phase3GreenArrow;    // 0.28 - 0.55 Green arrow sweeps
+  late Animation<double> _phase4BlueArrow;     // 0.45 - 0.72 Blue arrow sweeps
+  late Animation<double> _phase5LogoPulse;     // 0.65 - 0.82 Logo pulses/glows
+  late Animation<double> _phase6TextReveal;    // 0.75 - 0.92 Text fades in
+  late Animation<double> _phase7Exit;          // 0.90 - 1.00 Fade to next screen
+  
+  // Rotation for arrows
+  late Animation<double> _arrowRotation;
+  
   @override
   void initState() {
     super.initState();
-    _storyController = AnimationController(
+    
+    _mainController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 6), // 6 seconds for a relaxed pace
+      duration: const Duration(milliseconds: 2500), // 2.5 seconds total (fast)
     );
-
-    // Phase 1: Waste Moves to Center
-    _phase1IconsMove = Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
-      parent: _storyController,
-      curve: const Interval(0.0, 0.25, curve: Curves.easeInOutCubic),
+    
+    // Phase 1: Background pulse emerges
+    _phase1Background = Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
+      parent: _mainController,
+      curve: const Interval(0.0, 0.12, curve: Curves.easeOut),
     ));
-
-    // Phase 1b: Waste Fades Out
-    _phase1IconsFade = Tween(begin: 1.0, end: 0.0).animate(CurvedAnimation(
-      parent: _storyController,
-      curve: const Interval(0.20, 0.25, curve: Curves.easeIn),
+    
+    // Phase 2: Circuit nodes and lines grow outward
+    _phase2Circuit = Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
+      parent: _mainController,
+      curve: const Interval(0.08, 0.35, curve: Curves.easeOutCubic),
     ));
-
-    // Phase 2: Particles Swirl
-    _phase2ParticleSwirl = Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
-      parent: _storyController,
-      curve: const Interval(0.20, 0.45, curve: Curves.easeOut),
+    
+    // Phase 3: Green arrow sweeps in
+    _phase3GreenArrow = Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
+      parent: _mainController,
+      curve: const Interval(0.28, 0.55, curve: Curves.easeOutBack),
     ));
-
-    // Phase 3: Earth Forms/Scales Up
-    _phase3EarthScale = Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
-      parent: _storyController,
-      curve: const Interval(0.35, 0.55, curve: Curves.elasticOut),
+    
+    // Phase 4: Blue arrow sweeps in
+    _phase4BlueArrow = Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
+      parent: _mainController,
+      curve: const Interval(0.45, 0.72, curve: Curves.easeOutBack),
     ));
-
-    // Phase 4: Nature Elements (Rings/Leaves)
-    _phase4NatureGrow = Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
-      parent: _storyController,
-      curve: const Interval(0.50, 0.75, curve: Curves.easeOutBack),
+    
+    // Phase 5: Logo pulses with glow
+    _phase5LogoPulse = Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
+      parent: _mainController,
+      curve: const Interval(0.65, 0.82, curve: Curves.easeInOut),
     ));
-
-    // Phase 5: Logo Reveal (Earth fades slightly to background or out)
-    _phase5LogoReveal = Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
-      parent: _storyController,
-      curve: const Interval(0.75, 0.90, curve: Curves.easeOut),
+    
+    // Phase 6: Text reveals
+    _phase6TextReveal = Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
+      parent: _mainController,
+      curve: const Interval(0.75, 0.92, curve: Curves.easeOut),
     ));
-
-    _phase5EarthFade = Tween(begin: 1.0, end: 0.3).animate(CurvedAnimation(
-      parent: _storyController,
-      curve: const Interval(0.75, 0.90, curve: Curves.easeInOut),
+    
+    // Phase 7: Exit fade
+    _phase7Exit = Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
+      parent: _mainController,
+      curve: const Interval(0.90, 1.0, curve: Curves.easeIn),
     ));
-
-    // Phase 6: Exit
-    _phase6Exit = Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
-      parent: _storyController,
-      curve: const Interval(0.92, 1.0, curve: Curves.easeIn),
+    
+    // Continuous slow rotation for arrows
+    _arrowRotation = Tween(begin: 0.0, end: 0.08).animate(CurvedAnimation(
+      parent: _mainController,
+      curve: const Interval(0.55, 1.0, curve: Curves.linear),
     ));
-
-    _storyController.addStatusListener((status) {
+    
+    _mainController.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
         _navigateToLogin();
       }
     });
-
-    _storyController.forward();
+    
+    _mainController.forward();
   }
-
+  
   void _navigateToLogin() {
     Navigator.pushReplacement(
       context,
@@ -106,267 +104,454 @@ class _AnimatedStoryWelcomeScreenState extends State<AnimatedStoryWelcomeScreen>
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(opacity: animation, child: child);
         },
-        transitionDuration: const Duration(milliseconds: 800),
+        transitionDuration: const Duration(milliseconds: 600),
       ),
     );
   }
-
+  
   @override
   void dispose() {
-    _storyController.dispose();
+    _mainController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: AnimatedBuilder(
-        animation: _storyController,
+        animation: _mainController,
         builder: (context, child) {
-          return Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                   Color(0xFFE0F7FA), // Mint/Cyan 50 (Top Left)
-                   Color(0xFFE8F5E9), // Green 50 (Center)
-                   Color(0xFFB2DFDB), // Teal 100 (Bottom Right)
-                ],
-              ),
-            ),
-            child: Opacity(
-              opacity: (1.0 - _phase6Exit.value).clamp(0.0, 1.0),
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                   // Main Canvas (Earth, Particles, Rings)
-                   CustomPaint(
-                     painter: LightStoryPainter(
-                       particleProgress: _phase2ParticleSwirl.value,
-                       earthScale: _phase3EarthScale.value,
-                       natureProgress: _phase4NatureGrow.value,
-                       earthOpacity: _phase5EarthFade.value,
-                     ),
-                     size: MediaQuery.of(context).size,
-                   ),
-
-                   // Phase 1: Floating Icons
-                   if (_phase1IconsFade.value > 0)
-                     ...List.generate(_wasteIcons.length, (index) => _buildFloatingIcon(index)),
-
-                   // Phase 5: Logo (Widget Overlay for text quality)
-                   if (_phase5LogoReveal.value > 0)
-                     _buildLogo(),
-                ],
-              ),
+          return Opacity(
+            opacity: (1.0 - _phase7Exit.value).clamp(0.0, 1.0),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                // Gradient background (light)
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.white,
+                        const Color(0xFFF5F5F5),
+                        const Color(0xFFE8F5E9).withOpacity(0.5),
+                      ],
+                    ),
+                  ),
+                ),
+                
+                // Background pulse effect
+                _buildBackgroundPulse(),
+                
+                // Main logo canvas
+                CustomPaint(
+                  painter: RecyConnectLogoPainter(
+                    circuitProgress: _phase2Circuit.value,
+                    greenArrowProgress: _phase3GreenArrow.value,
+                    blueArrowProgress: _phase4BlueArrow.value,
+                    pulseProgress: _phase5LogoPulse.value,
+                    rotation: _arrowRotation.value,
+                  ),
+                  size: MediaQuery.of(context).size,
+                ),
+                
+                // Floating particles
+                if (_phase1Background.value > 0)
+                  ...List.generate(10, (i) => _buildParticle(i)),
+                
+                // Text at bottom
+                if (_phase6TextReveal.value > 0)
+                  _buildText(),
+              ],
             ),
           );
         },
       ),
     );
   }
-
-  Widget _buildFloatingIcon(int index) {
+  
+  Widget _buildBackgroundPulse() {
     final size = MediaQuery.of(context).size;
-    var centerX = size.width / 2;
-    var centerY = size.height / 2;
+    final pulseSize = size.width * 0.7 * _phase1Background.value;
     
-    // Start from different corners
-    final startPositions = [
-      Offset(size.width * 0.1, size.height * 0.1), // Top-Left
-      Offset(size.width * 0.9, size.height * 0.1), // Top-Right
-      Offset(size.width * 0.1, size.height * 0.9), // Bottom-Left
-      Offset(size.width * 0.9, size.height * 0.9), // Bottom-Right
-    ];
-
-    final currentPos = Offset.lerp(
-      startPositions[index],
-      Offset(centerX, centerY),
-      _phase1IconsMove.value,
-    )!;
-
-    return Positioned(
-      left: currentPos.dx - 24,
-      top: currentPos.dy - 24,
-      child: Transform.scale(
-        scale: 1.0 - (_phase1IconsMove.value * 0.5),
-        child: Opacity(
-          opacity: _phase1IconsFade.value,
-          child: Icon(
-            _wasteIcons[index],
-            size: 48,
-            color: Colors.teal.shade300,
+    return Center(
+      child: Container(
+        width: pulseSize,
+        height: pulseSize,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: RadialGradient(
+            colors: [
+              const Color(0xFF4CAF50).withOpacity(0.08 * _phase1Background.value),
+              const Color(0xFF4CAF50).withOpacity(0.03 * _phase1Background.value),
+              Colors.transparent,
+            ],
+            stops: const [0.0, 0.5, 1.0],
           ),
         ),
       ),
     );
   }
-
-  Widget _buildLogo() {
-     return Center(
-       child: Opacity(
-         opacity: _phase5LogoReveal.value,
-         child: Transform.translate(
-           offset: Offset(0, -50 + (50 * _phase5LogoReveal.value)), // Slide Up
-           child: Column(
-             mainAxisAlignment: MainAxisAlignment.center,
-             children: [
-                const SizedBox(height: 120), // Offset below earth center used to be
-                const Icon(
-                  Icons.eco_rounded,
-                  size: 64,
-                  color: Color(0xFF2E7D32), // Darker Green
-                ),
-                const SizedBox(height: 16),
-                const Text(
+  
+  Widget _buildParticle(int index) {
+    final random = math.Random(index * 42);
+    final size = MediaQuery.of(context).size;
+    
+    final angle = (index / 10) * 2 * math.pi;
+    final distance = 100 + random.nextDouble() * 80;
+    
+    final x = size.width / 2 + math.cos(angle) * distance * _phase2Circuit.value;
+    final y = size.height / 2 - 40 + math.sin(angle) * distance * _phase2Circuit.value;
+    
+    final particleSize = 4 + random.nextDouble() * 4;
+    
+    return Positioned(
+      left: x - particleSize / 2,
+      top: y - particleSize / 2,
+      child: Opacity(
+        opacity: (_phase2Circuit.value * 0.5).clamp(0.0, 1.0),
+        child: Container(
+          width: particleSize,
+          height: particleSize,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: index % 2 == 0 
+              ? const Color(0xFF4CAF50).withOpacity(0.6)
+              : const Color(0xFF42A5F5).withOpacity(0.6),
+          ),
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildText() {
+    return Positioned(
+      bottom: MediaQuery.of(context).size.height * 0.15,
+      left: 0,
+      right: 0,
+      child: Opacity(
+        opacity: _phase6TextReveal.value,
+        child: Transform.translate(
+          offset: Offset(0, 15 * (1 - _phase6TextReveal.value)),
+          child: Column(
+            children: [
+              // RecyConnect text with gradient
+              ShaderMask(
+                shaderCallback: (bounds) => const LinearGradient(
+                  colors: [
+                    Color(0xFF42A5F5), // Blue for "Recy"
+                    Color(0xFF333333), // Dark gray for "Connect"
+                  ],
+                  stops: [0.35, 0.35],
+                ).createShader(bounds),
+                child: const Text(
                   'RecyConnect',
                   style: TextStyle(
-                    fontSize: 32,
+                    fontSize: 34,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF00695C), // Teal 800
-                    letterSpacing: 1.1,
+                    color: Colors.white,
+                    letterSpacing: 1.2,
                   ),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'Transforming Waste to Life',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: const Color(0xFF004D40).withValues(alpha: 0.7),
-                  ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Connecting Waste to Worth',
+                style: TextStyle(
+                  fontSize: 15,
+                  color: Colors.grey.shade600,
+                  letterSpacing: 0.3,
                 ),
-             ],
-           ),
-         ),
-       ),
-     );
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
-class LightStoryPainter extends CustomPainter {
-  final double particleProgress; // 0.0 -> 1.0 (Swirl in)
-  final double earthScale;       // 0.0 -> 1.0 (Pop up)
-  final double natureProgress;   // 0.0 -> 1.0 (Rings/Leaves)
-  final double earthOpacity;     // 1.0 -> 0.3 (Fade out)
-
-  LightStoryPainter({
-    required this.particleProgress,
-    required this.earthScale,
-    required this.natureProgress,
-    required this.earthOpacity,
+/// Custom painter that draws the RecyConnect logo (light theme)
+class RecyConnectLogoPainter extends CustomPainter {
+  final double circuitProgress;
+  final double greenArrowProgress;
+  final double blueArrowProgress;
+  final double pulseProgress;
+  final double rotation;
+  
+  RecyConnectLogoPainter({
+    required this.circuitProgress,
+    required this.greenArrowProgress,
+    required this.blueArrowProgress,
+    required this.pulseProgress,
+    required this.rotation,
   });
-
+  
   @override
   void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final earthRadius = size.width * 0.25;
-
-    // 1. Draw Particles Swirling In
-    // They start spread out and spiraling, then become the globe
-    if (particleProgress > 0 && earthScale < 1.0) {
-      _drawSwirl(canvas, center, size.width);
-    }
-
-    // 2. Draw Holographic Earth
-    if (earthScale > 0) {
-      _drawEarth(canvas, center, earthRadius);
-    }
-
-    // 3. Draw Nature Rings & Leaves
-    if (natureProgress > 0) {
-      _drawNature(canvas, center, earthRadius);
-    }
-  }
-
-  void _drawSwirl(Canvas canvas, Offset center, double width) {
-    // 20 particles
-    final paint = Paint()..style = PaintingStyle.fill;
+    final center = Offset(size.width / 2, size.height / 2 - 40);
+    final logoRadius = size.width * 0.26;
     
-    for (int i = 0; i < 20; i++) {
-        double relativePos = i / 20.0;
-        // Spiral closer as progress increases
-        double r = (width * 0.4) * (1.0 - particleProgress); 
-        double angle = (particleProgress * 4 * math.pi) + (relativePos * 2 * math.pi);
-        
-        double x = center.dx + math.cos(angle) * r;
-        double y = center.dy + math.sin(angle) * r;
-
-        double opacity = (particleCurve(particleProgress) * earthOpacity).clamp(0.0, 1.0);
-        
-        paint.color = const Color(0xFF26A69A).withValues(alpha: opacity); // Teal 400
-        canvas.drawCircle(Offset(x, y), 3 + (2 * particleProgress), paint);
+    // Draw circuit board pattern first (behind arrows)
+    if (circuitProgress > 0) {
+      _drawCircuitBoard(canvas, center, logoRadius * 0.55);
+    }
+    
+    // Draw recycling arrows
+    canvas.save();
+    canvas.translate(center.dx, center.dy);
+    canvas.rotate(rotation);
+    canvas.translate(-center.dx, -center.dy);
+    
+    if (greenArrowProgress > 0) {
+      _drawGreenArrow(canvas, center, logoRadius);
+    }
+    
+    if (blueArrowProgress > 0) {
+      _drawBlueArrow(canvas, center, logoRadius);
+    }
+    
+    canvas.restore();
+    
+    // Draw center glow pulse
+    if (pulseProgress > 0) {
+      _drawCenterGlow(canvas, center);
     }
   }
   
-  // Custom simple curve for particle visibility
-  double particleCurve(double t) {
-      if (t < 0.2) return t * 5;
-      if (t > 0.8) return (1-t) * 5;
-      return 1.0;
-  }
-
-  void _drawEarth(Canvas canvas, Offset center, double baseRadius) {
-    final radius = baseRadius * earthScale;
-    
-    // Fade out earth when Logo appears
-    
-    
-    // 1. Wireframe/Base
-    final earthPaint = Paint()
-      ..color = const Color(0xFF4DB6AC).withValues(alpha: earthOpacity * 0.2) // Teal 300
+  void _drawCircuitBoard(Canvas canvas, Offset center, double radius) {
+    // Central core - teal color
+    final corePaint = Paint()
+      ..color = const Color(0xFF26A69A).withOpacity(circuitProgress * 0.9)
       ..style = PaintingStyle.fill;
     
-    canvas.drawCircle(center, radius, earthPaint);
+    final coreGlowPaint = Paint()
+      ..color = const Color(0xFF26A69A).withOpacity(circuitProgress * 0.2)
+      ..style = PaintingStyle.fill
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12);
     
-    // 2. Grid Lines (Lat/Long)
-    final gridPaint = Paint()
-      ..color = Colors.white.withValues(alpha: earthOpacity * 0.5)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
-
-    // Simple grid representation
-    canvas.drawCircle(center, radius, gridPaint); // Outline
-    canvas.drawOval(Rect.fromCenter(center: center, width: radius * 2, height: radius * 0.8), gridPaint); // Equator-ish
-    canvas.drawLine(Offset(center.dx, center.dy - radius), Offset(center.dx, center.dy + radius), gridPaint); // Prime meridian
-  }
-
-  void _drawNature(Canvas canvas, Offset center, double baseRadius) {
-    final radius = baseRadius * earthScale;
-    final ringRadius = radius * 1.4;
-
-    canvas.save();
-    canvas.translate(center.dx, center.dy);
-    canvas.rotate(natureProgress * 0.5); // Slow rotation
-
-    // 1. Energy Ring
+    // Glow
+    canvas.drawCircle(center, 22 * circuitProgress, coreGlowPaint);
+    
+    // Concentric circles
     final ringPaint = Paint()
+      ..color = const Color(0xFF26A69A).withOpacity(circuitProgress * 0.4)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2
-      ..color = const Color(0xFF66BB6A).withValues(alpha: earthOpacity * natureProgress); // Green 400
-      
-    // Draw dashed ring or partial arc
-    canvas.drawArc(
-        Rect.fromCenter(center: Offset.zero, width: ringRadius*2, height: ringRadius*2), 
-        0, math.pi * 1.5, false, ringPaint);
-
-    // 2. Tiny Leaves
-    final leafPaint = Paint()
-      ..color = const Color(0xFF43A047).withValues(alpha: earthOpacity * natureProgress) // Green 600
-      ..style = PaintingStyle.fill;
-
-    for(int i = 0; i < 5; i++) {
-        double angle = (2 * math.pi / 5) * i + (natureProgress * 2);
-        double lx = math.cos(angle) * ringRadius;
-        double ly = math.sin(angle) * ringRadius;
-        
-        // Leaf shape (simple oval)
-        canvas.drawOval(Rect.fromCenter(center: Offset(lx,ly), width: 8, height: 4), leafPaint);
+      ..strokeWidth = 1.2;
+    
+    for (int i = 1; i <= 3; i++) {
+      canvas.drawCircle(center, (12 + i * 10) * circuitProgress, ringPaint);
     }
-
-    canvas.restore();
+    
+    // Core center
+    canvas.drawCircle(center, 10 * circuitProgress, corePaint);
+    canvas.drawCircle(center, 5 * circuitProgress, Paint()..color = Colors.white);
+    
+    // Draw circuit lines emanating outward
+    final linePaint = Paint()
+      ..color = const Color(0xFF26A69A).withOpacity(circuitProgress * 0.6)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.8
+      ..strokeCap = StrokeCap.round;
+    
+    final nodeCount = 8;
+    for (int i = 0; i < nodeCount; i++) {
+      final angle = (i / nodeCount) * 2 * math.pi - math.pi / 2;
+      final lineLength = radius * circuitProgress;
+      
+      // Main line from center
+      final startOffset = 18.0;
+      final start = Offset(
+        center.dx + math.cos(angle) * startOffset,
+        center.dy + math.sin(angle) * startOffset,
+      );
+      final end = Offset(
+        center.dx + math.cos(angle) * lineLength,
+        center.dy + math.sin(angle) * lineLength,
+      );
+      
+      canvas.drawLine(start, end, linePaint);
+      
+      // Node at end
+      final nodePaint = Paint()
+        ..color = const Color(0xFF26A69A).withOpacity(circuitProgress)
+        ..style = PaintingStyle.fill;
+      
+      canvas.drawCircle(end, 3.5 * circuitProgress, nodePaint);
+      
+      // Branch lines for some nodes
+      if (i % 2 == 0) {
+        final branchAngle = angle + math.pi / 6;
+        final branchLength = lineLength * 0.35;
+        final branchStart = Offset(
+          center.dx + math.cos(angle) * (lineLength * 0.6),
+          center.dy + math.sin(angle) * (lineLength * 0.6),
+        );
+        final branchEnd = Offset(
+          branchStart.dx + math.cos(branchAngle) * branchLength,
+          branchStart.dy + math.sin(branchAngle) * branchLength,
+        );
+        
+        canvas.drawLine(branchStart, branchEnd, linePaint);
+        canvas.drawCircle(branchEnd, 2.5 * circuitProgress, nodePaint);
+      }
+    }
   }
-
+  
+  void _drawGreenArrow(Canvas canvas, Offset center, double radius) {
+    final progress = greenArrowProgress;
+    
+    // Green gradient arrow
+    final rect = Rect.fromCircle(center: center, radius: radius);
+    
+    final gradient = SweepGradient(
+      startAngle: -math.pi / 2,
+      endAngle: math.pi,
+      colors: const [
+        Color(0xFF81C784), // Light green
+        Color(0xFF4CAF50), // Primary green
+        Color(0xFF388E3C), // Dark green
+      ],
+    );
+    
+    final arrowPaint = Paint()
+      ..shader = gradient.createShader(rect)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 16
+      ..strokeCap = StrokeCap.round;
+    
+    // Subtle shadow
+    final shadowPaint = Paint()
+      ..color = const Color(0xFF4CAF50).withOpacity(0.15 * progress)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 22
+      ..strokeCap = StrokeCap.round
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+    
+    // Draw arc
+    final sweepAngle = math.pi * 0.82 * progress;
+    final startAngle = -math.pi / 2 - math.pi / 8;
+    
+    canvas.drawArc(rect, startAngle, sweepAngle, false, shadowPaint);
+    canvas.drawArc(rect, startAngle, sweepAngle, false, arrowPaint);
+    
+    // Arrowhead
+    if (progress > 0.8) {
+      final arrowheadProgress = (progress - 0.8) / 0.2;
+      _drawArrowhead(
+        canvas, 
+        center, 
+        radius, 
+        startAngle + sweepAngle, 
+        const Color(0xFF4CAF50),
+        arrowheadProgress,
+      );
+    }
+  }
+  
+  void _drawBlueArrow(Canvas canvas, Offset center, double radius) {
+    final progress = blueArrowProgress;
+    
+    // Blue gradient arrow
+    final rect = Rect.fromCircle(center: center, radius: radius);
+    
+    final gradient = SweepGradient(
+      startAngle: math.pi / 2,
+      endAngle: 2 * math.pi,
+      colors: const [
+        Color(0xFF90CAF9), // Light blue
+        Color(0xFF42A5F5), // Primary blue  
+        Color(0xFF1E88E5), // Dark blue
+      ],
+    );
+    
+    final arrowPaint = Paint()
+      ..shader = gradient.createShader(rect)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 16
+      ..strokeCap = StrokeCap.round;
+    
+    // Subtle shadow
+    final shadowPaint = Paint()
+      ..color = const Color(0xFF42A5F5).withOpacity(0.15 * progress)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 22
+      ..strokeCap = StrokeCap.round
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+    
+    // Draw arc
+    final sweepAngle = math.pi * 0.82 * progress;
+    final startAngle = math.pi / 2 - math.pi / 8;
+    
+    canvas.drawArc(rect, startAngle, sweepAngle, false, shadowPaint);
+    canvas.drawArc(rect, startAngle, sweepAngle, false, arrowPaint);
+    
+    // Arrowhead
+    if (progress > 0.8) {
+      final arrowheadProgress = (progress - 0.8) / 0.2;
+      _drawArrowhead(
+        canvas, 
+        center, 
+        radius, 
+        startAngle + sweepAngle, 
+        const Color(0xFF42A5F5),
+        arrowheadProgress,
+      );
+    }
+  }
+  
+  void _drawArrowhead(
+    Canvas canvas, 
+    Offset center, 
+    double radius, 
+    double angle, 
+    Color color,
+    double progress,
+  ) {
+    final tipX = center.dx + math.cos(angle) * radius;
+    final tipY = center.dy + math.sin(angle) * radius;
+    
+    final arrowSize = 18.0 * progress;
+    final backAngle = angle + math.pi;
+    
+    final path = Path();
+    path.moveTo(tipX, tipY);
+    path.lineTo(
+      tipX + math.cos(backAngle + 0.4) * arrowSize,
+      tipY + math.sin(backAngle + 0.4) * arrowSize,
+    );
+    path.lineTo(
+      tipX + math.cos(backAngle - 0.4) * arrowSize,
+      tipY + math.sin(backAngle - 0.4) * arrowSize,
+    );
+    path.close();
+    
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+    
+    canvas.drawPath(path, paint);
+  }
+  
+  void _drawCenterGlow(Canvas canvas, Offset center) {
+    final pulseFactor = 0.85 + 0.15 * math.sin(pulseProgress * math.pi * 2);
+    
+    final glowPaint = Paint()
+      ..color = const Color(0xFF26A69A).withOpacity(0.15 * pulseProgress * pulseFactor)
+      ..style = PaintingStyle.fill
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 18);
+    
+    canvas.drawCircle(center, 50 * pulseProgress * pulseFactor, glowPaint);
+  }
+  
   @override
-  bool shouldRepaint(covariant LightStoryPainter oldDelegate) => true;
+  bool shouldRepaint(covariant RecyConnectLogoPainter oldDelegate) {
+    return circuitProgress != oldDelegate.circuitProgress ||
+           greenArrowProgress != oldDelegate.greenArrowProgress ||
+           blueArrowProgress != oldDelegate.blueArrowProgress ||
+           pulseProgress != oldDelegate.pulseProgress ||
+           rotation != oldDelegate.rotation;
+  }
 }

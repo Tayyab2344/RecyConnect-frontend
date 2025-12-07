@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../../core/constants/admin_colors.dart';
-import '../../../core/constants/modern_colors.dart';
 import '../../widgets/admin/admin_drawer.dart';
 
 // Data model for material pricing
@@ -132,7 +130,8 @@ class _AdminPricingScreenState extends State<AdminPricingScreen> {
         return;
       }
       if (material.maxPrice <= material.minPrice) {
-        _showError('${material.name}: Max price must be greater than min price');
+        _showError(
+            '${material.name}: Max price must be greater than min price');
         return;
       }
     }
@@ -163,7 +162,8 @@ class _AdminPricingScreenState extends State<AdminPricingScreen> {
           ),
           backgroundColor: Colors.green,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
     }

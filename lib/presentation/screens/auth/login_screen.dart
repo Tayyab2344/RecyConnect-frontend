@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../core/utils/validators.dart';
+import '../../widgets/common/recyconnect_logo.dart';
 import '../dashboard/dashboard_screen.dart';
 import '../admin/admin_dashboard_screen.dart';
 import 'role_selection_screen.dart';
@@ -339,7 +340,7 @@ class _LoginScreenState extends State<LoginScreen>
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          // Eco Leaf Logo
+                          // RecyConnect Logo
                           _buildLogo(isDark),
                           const SizedBox(height: 40),
 
@@ -365,53 +366,31 @@ class _LoginScreenState extends State<LoginScreen>
 
   Widget _buildLogo(bool isDark) {
     final glowColor = isDark ? const Color(0xFF00D9A5) : const Color(0xFF1A8F3A);
-    final bgColor = isDark 
-        ? const Color(0xFF0A1628).withValues(alpha: 0.8)
-        : Colors.white.withValues(alpha: 0.9);
 
     return AnimatedBuilder(
       animation: _pulseAnimation,
       builder: (context, child) {
         return Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: RadialGradient(
               colors: [
-                glowColor.withValues(alpha: (isDark ? 0.2 : 0.15) * _pulseAnimation.value),
+                glowColor.withValues(alpha: (isDark ? 0.15 : 0.1) * _pulseAnimation.value),
                 Colors.transparent,
               ],
             ),
             boxShadow: [
               BoxShadow(
-                color: glowColor.withValues(alpha: (isDark ? 0.3 : 0.2) * _pulseAnimation.value),
-                blurRadius: isDark ? 30 : 25,
-                spreadRadius: isDark ? 5 : 3,
+                color: glowColor.withValues(alpha: (isDark ? 0.2 : 0.15) * _pulseAnimation.value),
+                blurRadius: isDark ? 25 : 20,
+                spreadRadius: isDark ? 3 : 2,
               ),
             ],
           ),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: bgColor,
-              border: Border.all(
-                color: glowColor.withValues(alpha: isDark ? 0.5 : 0.4),
-                width: 2,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: glowColor.withValues(alpha: isDark ? 0.2 : 0.15),
-                  blurRadius: 20,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-            child: Icon(
-              Icons.eco_rounded,
-              size: 40,
-              color: glowColor,
-            ),
+          child: const RecyConnectLogo(
+            size: 100,
+            showText: false,
           ),
         );
       },

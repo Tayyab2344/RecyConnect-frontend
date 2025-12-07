@@ -6,8 +6,7 @@ import '../../../core/constants/admin_colors.dart';
 import '../../widgets/admin/admin_drawer.dart';
 import 'admin_activities_screen.dart';
 
-/// Premium Admin Dashboard with Glassmorphism Design
-/// Features: Glass cards, animated backgrounds, neon accents (dark), soft pastels (light)
+
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
 
@@ -93,29 +92,29 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                     opacity: _fadeAnimation,
                     child: CustomScrollView(
                       slivers: [
-                        // Custom App Bar
+                       
                         SliverToBoxAdapter(
                           child: _buildCustomAppBar(isDark, isMobile),
                         ),
 
-                        // Content
+                       
                         SliverPadding(
                           padding: EdgeInsets.all(isMobile ? 16 : 24),
                           sliver: SliverList(
                             delegate: SliverChildListDelegate([
-                              // Welcome Header
+                             
                               _buildWelcomeHeader(isDark, isMobile),
                               const SizedBox(height: 24),
 
-                              // Stats Cards
+                             
                               _buildModernStatsCards(screenWidth, isMobile, isTablet, isDark),
                               const SizedBox(height: 24),
 
-                              // Charts Section
+                             
                               _buildModernCharts(isMobile, isDark),
                               const SizedBox(height: 24),
 
-                              // Quick Actions
+                            
                               _buildModernQuickActions(screenWidth, isMobile, isTablet, isDark),
                               const SizedBox(height: 24),
 

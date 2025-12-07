@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:fl_chart/fl_chart.dart';
 import '../../../core/constants/admin_colors.dart';
-import '../../../core/constants/modern_colors.dart';
 import '../../widgets/admin/admin_drawer.dart';
 
 // Conditional import for web
@@ -21,7 +20,14 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
   late TabController _tabController;
 
   // Dummy Data
-  final List<double> monthlyRevenue = [45000, 52000, 48000, 58000, 63000, 65000];
+  final List<double> monthlyRevenue = [
+    45000,
+    52000,
+    48000,
+    58000,
+    63000,
+    65000
+  ];
   final List<String> months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
 
   final Map<String, int> revenueByMaterial = {
@@ -39,29 +45,149 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
   };
 
   final List<Map<String, dynamic>> topUsers = [
-    {'rank': 1, 'name': 'Sarah Khan', 'type': 'Warehouse', 'sales': 85000, 'purchases': 45000},
-    {'rank': 2, 'name': 'Tech Corp', 'type': 'Company', 'sales': 78000, 'purchases': 52000},
-    {'rank': 3, 'name': 'John Doe', 'type': 'Individual', 'sales': 65000, 'purchases': 38000},
-    {'rank': 4, 'name': 'Green Solutions', 'type': 'Company', 'sales': 58000, 'purchases': 32000},
-    {'rank': 5, 'name': 'Ali Hassan', 'type': 'Individual', 'sales': 52000, 'purchases': 28000},
-    {'rank': 6, 'name': 'Metro Waste', 'type': 'Warehouse', 'sales': 48000, 'purchases': 25000},
-    {'rank': 7, 'name': 'Recyclo Inc', 'type': 'Company', 'sales': 45000, 'purchases': 22000},
-    {'rank': 8, 'name': 'Fatima Bibi', 'type': 'Individual', 'sales': 42000, 'purchases': 20000},
-    {'rank': 9, 'name': 'Eco Hub', 'type': 'Warehouse', 'sales': 38000, 'purchases': 18000},
-    {'rank': 10, 'name': 'Clean City', 'type': 'Company', 'sales': 35000, 'purchases': 15000},
+    {
+      'rank': 1,
+      'name': 'Sarah Khan',
+      'type': 'Warehouse',
+      'sales': 85000,
+      'purchases': 45000
+    },
+    {
+      'rank': 2,
+      'name': 'Tech Corp',
+      'type': 'Company',
+      'sales': 78000,
+      'purchases': 52000
+    },
+    {
+      'rank': 3,
+      'name': 'John Doe',
+      'type': 'Individual',
+      'sales': 65000,
+      'purchases': 38000
+    },
+    {
+      'rank': 4,
+      'name': 'Green Solutions',
+      'type': 'Company',
+      'sales': 58000,
+      'purchases': 32000
+    },
+    {
+      'rank': 5,
+      'name': 'Ali Hassan',
+      'type': 'Individual',
+      'sales': 52000,
+      'purchases': 28000
+    },
+    {
+      'rank': 6,
+      'name': 'Metro Waste',
+      'type': 'Warehouse',
+      'sales': 48000,
+      'purchases': 25000
+    },
+    {
+      'rank': 7,
+      'name': 'Recyclo Inc',
+      'type': 'Company',
+      'sales': 45000,
+      'purchases': 22000
+    },
+    {
+      'rank': 8,
+      'name': 'Fatima Bibi',
+      'type': 'Individual',
+      'sales': 42000,
+      'purchases': 20000
+    },
+    {
+      'rank': 9,
+      'name': 'Eco Hub',
+      'type': 'Warehouse',
+      'sales': 38000,
+      'purchases': 18000
+    },
+    {
+      'rank': 10,
+      'name': 'Clean City',
+      'type': 'Company',
+      'sales': 35000,
+      'purchases': 15000
+    },
   ];
 
   final List<Map<String, dynamic>> topCollectors = [
-    {'rank': 1, 'name': 'Ahmed Khan', 'rating': 4.9, 'pickups': 245, 'performance': 98},
-    {'rank': 2, 'name': 'Fatima Ali', 'rating': 4.8, 'pickups': 232, 'performance': 95},
-    {'rank': 3, 'name': 'Hassan Raza', 'rating': 4.7, 'pickups': 218, 'performance': 92},
-    {'rank': 4, 'name': 'Usman Sheikh', 'rating': 4.6, 'pickups': 205, 'performance': 89},
-    {'rank': 5, 'name': 'Bilal Ahmed', 'rating': 4.5, 'pickups': 192, 'performance': 86},
-    {'rank': 6, 'name': 'Zainab Malik', 'rating': 4.4, 'pickups': 180, 'performance': 83},
-    {'rank': 7, 'name': 'Imran Qureshi', 'rating': 4.3, 'pickups': 168, 'performance': 80},
-    {'rank': 8, 'name': 'Sana Tariq', 'rating': 4.2, 'pickups': 155, 'performance': 77},
-    {'rank': 9, 'name': 'Kamran Iqbal', 'rating': 4.1, 'pickups': 142, 'performance': 74},
-    {'rank': 10, 'name': 'Nadia Shah', 'rating': 4.0, 'pickups': 130, 'performance': 71},
+    {
+      'rank': 1,
+      'name': 'Ahmed Khan',
+      'rating': 4.9,
+      'pickups': 245,
+      'performance': 98
+    },
+    {
+      'rank': 2,
+      'name': 'Fatima Ali',
+      'rating': 4.8,
+      'pickups': 232,
+      'performance': 95
+    },
+    {
+      'rank': 3,
+      'name': 'Hassan Raza',
+      'rating': 4.7,
+      'pickups': 218,
+      'performance': 92
+    },
+    {
+      'rank': 4,
+      'name': 'Usman Sheikh',
+      'rating': 4.6,
+      'pickups': 205,
+      'performance': 89
+    },
+    {
+      'rank': 5,
+      'name': 'Bilal Ahmed',
+      'rating': 4.5,
+      'pickups': 192,
+      'performance': 86
+    },
+    {
+      'rank': 6,
+      'name': 'Zainab Malik',
+      'rating': 4.4,
+      'pickups': 180,
+      'performance': 83
+    },
+    {
+      'rank': 7,
+      'name': 'Imran Qureshi',
+      'rating': 4.3,
+      'pickups': 168,
+      'performance': 80
+    },
+    {
+      'rank': 8,
+      'name': 'Sana Tariq',
+      'rating': 4.2,
+      'pickups': 155,
+      'performance': 77
+    },
+    {
+      'rank': 9,
+      'name': 'Kamran Iqbal',
+      'rating': 4.1,
+      'pickups': 142,
+      'performance': 74
+    },
+    {
+      'rank': 10,
+      'name': 'Nadia Shah',
+      'rating': 4.0,
+      'pickups': 130,
+      'performance': 71
+    },
   ];
 
   final Map<int, int> collectorRatings = {
@@ -237,7 +363,8 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
               TextButton(
                 onPressed: () => Navigator.pop(context),
                 style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 ),
                 child: const Text(
                   'Cancel',
@@ -258,7 +385,8 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AdminColors.primaryGreen,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -291,9 +419,7 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
               : AdminColors.surfaceLight,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected
-                ? AdminColors.primaryGreen
-                : AdminColors.border,
+            color: isSelected ? AdminColors.primaryGreen : AdminColors.border,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -351,16 +477,21 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
     // Get data based on current tab
     switch (_tabController.index) {
       case 0:
-        data = format == 'csv' ? _generateRevenueCsv() : _generateRevenueReport();
+        data =
+            format == 'csv' ? _generateRevenueCsv() : _generateRevenueReport();
         break;
       case 1:
-        data = format == 'csv' ? _generateMaterialsCsv() : _generateMaterialsReport();
+        data = format == 'csv'
+            ? _generateMaterialsCsv()
+            : _generateMaterialsReport();
         break;
       case 2:
         data = format == 'csv' ? _generateUsersCsv() : _generateUsersReport();
         break;
       case 3:
-        data = format == 'csv' ? _generateCollectorsCsv() : _generateCollectorsReport();
+        data = format == 'csv'
+            ? _generateCollectorsCsv()
+            : _generateCollectorsReport();
         break;
     }
 
@@ -441,20 +572,24 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
     sb.writeln('═══════════════════════════════════════════════════════════');
     sb.writeln('                    REVENUE REPORT');
     sb.writeln('═══════════════════════════════════════════════════════════');
-    sb.writeln('Generated: ${now.day}/${now.month}/${now.year} ${now.hour}:${now.minute.toString().padLeft(2, '0')}');
+    sb.writeln(
+        'Generated: ${now.day}/${now.month}/${now.year} ${now.hour}:${now.minute.toString().padLeft(2, '0')}');
     sb.writeln('');
     sb.writeln('───────────────────────────────────────────────────────────');
     sb.writeln('SUMMARY');
     sb.writeln('───────────────────────────────────────────────────────────');
     sb.writeln('Total Revenue:    Rs ${_formatNumber(totalRevenue)}');
-    sb.writeln('This Month:       Rs ${_formatNumber(monthlyRevenue.last.toInt())}');
-    sb.writeln('Daily Average:    Rs ${_formatNumber((monthlyRevenue.last / 30).toInt())}');
+    sb.writeln(
+        'This Month:       Rs ${_formatNumber(monthlyRevenue.last.toInt())}');
+    sb.writeln(
+        'Daily Average:    Rs ${_formatNumber((monthlyRevenue.last / 30).toInt())}');
     sb.writeln('');
     sb.writeln('───────────────────────────────────────────────────────────');
     sb.writeln('MONTHLY BREAKDOWN');
     sb.writeln('───────────────────────────────────────────────────────────');
     for (int i = 0; i < months.length; i++) {
-      sb.writeln('${months[i].padRight(15)} Rs ${_formatNumber(monthlyRevenue[i].toInt())}');
+      sb.writeln(
+          '${months[i].padRight(15)} Rs ${_formatNumber(monthlyRevenue[i].toInt())}');
     }
     sb.writeln('');
     sb.writeln('───────────────────────────────────────────────────────────');
@@ -462,7 +597,8 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
     sb.writeln('───────────────────────────────────────────────────────────');
     revenueByMaterial.forEach((material, revenue) {
       final percentage = (revenue / totalRevenue * 100).round();
-      sb.writeln('${material.padRight(15)} Rs ${_formatNumber(revenue).padRight(10)} ($percentage%)');
+      sb.writeln(
+          '${material.padRight(15)} Rs ${_formatNumber(revenue).padRight(10)} ($percentage%)');
     });
     sb.writeln('');
     sb.writeln('═══════════════════════════════════════════════════════════');
@@ -474,20 +610,26 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
 
   String _generateMaterialsReport() {
     final now = DateTime.now();
-    final totalWeight = collectionData.values.map((e) => e['weight'] as int).reduce((a, b) => a + b);
-    final totalRevenue = collectionData.values.map((e) => e['revenue'] as int).reduce((a, b) => a + b);
+    final totalWeight = collectionData.values
+        .map((e) => e['weight'] as int)
+        .reduce((a, b) => a + b);
+    final totalRevenue = collectionData.values
+        .map((e) => e['revenue'] as int)
+        .reduce((a, b) => a + b);
 
     StringBuffer sb = StringBuffer();
     sb.writeln('═══════════════════════════════════════════════════════════');
     sb.writeln('              MATERIALS COLLECTION REPORT');
     sb.writeln('═══════════════════════════════════════════════════════════');
-    sb.writeln('Generated: ${now.day}/${now.month}/${now.year} ${now.hour}:${now.minute.toString().padLeft(2, '0')}');
+    sb.writeln(
+        'Generated: ${now.day}/${now.month}/${now.year} ${now.hour}:${now.minute.toString().padLeft(2, '0')}');
     sb.writeln('');
     sb.writeln('───────────────────────────────────────────────────────────');
     sb.writeln('COLLECTION SUMMARY');
     sb.writeln('───────────────────────────────────────────────────────────');
     collectionData.forEach((material, data) {
-      sb.writeln('${material.padRight(12)} ${_formatNumber(data['weight'] as int).padRight(8)} kg   Rs ${_formatNumber(data['revenue'] as int).padRight(10)} (${data['percentage']}%)');
+      sb.writeln(
+          '${material.padRight(12)} ${_formatNumber(data['weight'] as int).padRight(8)} kg   Rs ${_formatNumber(data['revenue'] as int).padRight(10)} (${data['percentage']}%)');
     });
     sb.writeln('');
     sb.writeln('───────────────────────────────────────────────────────────');
@@ -510,14 +652,16 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
     sb.writeln('═══════════════════════════════════════════════════════════');
     sb.writeln('              USER PERFORMANCE REPORT');
     sb.writeln('═══════════════════════════════════════════════════════════');
-    sb.writeln('Generated: ${now.day}/${now.month}/${now.year} ${now.hour}:${now.minute.toString().padLeft(2, '0')}');
+    sb.writeln(
+        'Generated: ${now.day}/${now.month}/${now.year} ${now.hour}:${now.minute.toString().padLeft(2, '0')}');
     sb.writeln('');
     sb.writeln('───────────────────────────────────────────────────────────');
     sb.writeln('SUMMARY');
     sb.writeln('───────────────────────────────────────────────────────────');
     sb.writeln('Total Users:      1,234');
     sb.writeln('Growth:           +12% this month');
-    sb.writeln('Top Seller:       ${topUsers[0]['name']} - Rs ${_formatNumber(topUsers[0]['sales'] as int)}');
+    sb.writeln(
+        'Top Seller:       ${topUsers[0]['name']} - Rs ${_formatNumber(topUsers[0]['sales'] as int)}');
     sb.writeln('');
     sb.writeln('───────────────────────────────────────────────────────────');
     sb.writeln('USER TYPE DISTRIBUTION');
@@ -530,9 +674,11 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
     sb.writeln('TOP 10 USERS');
     sb.writeln('───────────────────────────────────────────────────────────');
     sb.writeln('Rank  Name                 Type         Sales       Purchases');
-    sb.writeln('────  ───────────────────  ───────────  ──────────  ──────────');
+    sb.writeln(
+        '────  ───────────────────  ───────────  ──────────  ──────────');
     for (var user in topUsers) {
-      sb.writeln('${user['rank'].toString().padRight(6)}${(user['name'] as String).padRight(21)}${(user['type'] as String).padRight(13)}Rs ${_formatNumber(user['sales'] as int).padRight(8)}Rs ${_formatNumber(user['purchases'] as int)}');
+      sb.writeln(
+          '${user['rank'].toString().padRight(6)}${(user['name'] as String).padRight(21)}${(user['type'] as String).padRight(13)}Rs ${_formatNumber(user['sales'] as int).padRight(8)}Rs ${_formatNumber(user['purchases'] as int)}');
     }
     sb.writeln('');
     sb.writeln('═══════════════════════════════════════════════════════════');
@@ -549,14 +695,16 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
     sb.writeln('═══════════════════════════════════════════════════════════');
     sb.writeln('            COLLECTOR PERFORMANCE REPORT');
     sb.writeln('═══════════════════════════════════════════════════════════');
-    sb.writeln('Generated: ${now.day}/${now.month}/${now.year} ${now.hour}:${now.minute.toString().padLeft(2, '0')}');
+    sb.writeln(
+        'Generated: ${now.day}/${now.month}/${now.year} ${now.hour}:${now.minute.toString().padLeft(2, '0')}');
     sb.writeln('');
     sb.writeln('───────────────────────────────────────────────────────────');
     sb.writeln('SUMMARY');
     sb.writeln('───────────────────────────────────────────────────────────');
     sb.writeln('Total Collectors: 87');
     sb.writeln('Growth:           +5% this month');
-    sb.writeln('Top Performer:    ${topCollectors[0]['name']} - ${topCollectors[0]['pickups']} pickups');
+    sb.writeln(
+        'Top Performer:    ${topCollectors[0]['name']} - ${topCollectors[0]['pickups']} pickups');
     sb.writeln('');
     sb.writeln('───────────────────────────────────────────────────────────');
     sb.writeln('RATING DISTRIBUTION');
@@ -571,7 +719,8 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
     sb.writeln('Rank  Name                 Rating   Pickups   Performance');
     sb.writeln('────  ───────────────────  ───────  ────────  ───────────');
     for (var collector in topCollectors) {
-      sb.writeln('${collector['rank'].toString().padRight(6)}${(collector['name'] as String).padRight(21)}${collector['rating'].toString().padRight(9)}${collector['pickups'].toString().padRight(10)}${collector['performance']}%');
+      sb.writeln(
+          '${collector['rank'].toString().padRight(6)}${(collector['name'] as String).padRight(21)}${collector['rating'].toString().padRight(9)}${collector['pickups'].toString().padRight(10)}${collector['performance']}%');
     }
     sb.writeln('');
     sb.writeln('═══════════════════════════════════════════════════════════');
@@ -611,7 +760,8 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
     sb.writeln('');
     sb.writeln('Material,Weight (kg),Revenue (Rs),Percentage');
     collectionData.forEach((material, data) {
-      sb.writeln('$material,${data['weight']},${data['revenue']},${data['percentage']}%');
+      sb.writeln(
+          '$material,${data['weight']},${data['revenue']},${data['percentage']}%');
     });
     return sb.toString();
   }
@@ -624,7 +774,8 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
     sb.writeln('TOP USERS');
     sb.writeln('Rank,Name,Type,Sales (Rs),Purchases (Rs)');
     for (var user in topUsers) {
-      sb.writeln('${user['rank']},${user['name']},${user['type']},${user['sales']},${user['purchases']}');
+      sb.writeln(
+          '${user['rank']},${user['name']},${user['type']},${user['sales']},${user['purchases']}');
     }
     sb.writeln('');
     sb.writeln('USER TYPE DISTRIBUTION');
@@ -643,7 +794,8 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
     sb.writeln('TOP COLLECTORS');
     sb.writeln('Rank,Name,Rating,Pickups,Performance (%)');
     for (var collector in topCollectors) {
-      sb.writeln('${collector['rank']},${collector['name']},${collector['rating']},${collector['pickups']},${collector['performance']}');
+      sb.writeln(
+          '${collector['rank']},${collector['name']},${collector['rating']},${collector['pickups']},${collector['performance']}');
     }
     sb.writeln('');
     sb.writeln('RATING DISTRIBUTION');
@@ -671,7 +823,8 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
         iconTheme: IconThemeData(color: theme.appBarTheme.foregroundColor),
         actions: [
           IconButton(
-            icon: Icon(Icons.download_rounded, color: theme.appBarTheme.foregroundColor),
+            icon: Icon(Icons.download_rounded,
+                color: theme.appBarTheme.foregroundColor),
             tooltip: 'Export Report',
             onPressed: _showExportDialog,
           ),
@@ -682,7 +835,8 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
           indicatorWeight: 3,
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white70,
-          labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+          labelStyle:
+              const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
           unselectedLabelStyle: const TextStyle(fontSize: 12),
           tabs: const [
             Tab(icon: Icon(Icons.bar_chart, size: 20), text: 'Revenue'),
@@ -784,11 +938,11 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
             color: AdminColors.shadow,
             blurRadius: 10,
-            offset: const Offset(0, 4),
+            offset: Offset(0, 4),
           ),
         ],
       ),
@@ -833,7 +987,8 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
                 child: Text(
                   trend,
                   style: TextStyle(
-                    color: trendPositive ? AdminColors.success : AdminColors.error,
+                    color:
+                        trendPositive ? AdminColors.success : AdminColors.error,
                     fontSize: 11,
                   ),
                   overflow: TextOverflow.ellipsis,
@@ -901,7 +1056,7 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
                   drawVerticalLine: false,
                   horizontalInterval: 20000,
                   getDrawingHorizontalLine: (value) {
-                    return FlLine(
+                    return const FlLine(
                       color: AdminColors.border,
                       strokeWidth: 1,
                     );
@@ -946,8 +1101,10 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
                       },
                     ),
                   ),
-                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
                 ),
                 borderData: FlBorderData(show: false),
                 minX: 0,
@@ -958,12 +1115,16 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
                   LineChartBarData(
                     spots: List.generate(
                       monthlyRevenue.length,
-                      (index) => FlSpot(index.toDouble(), monthlyRevenue[index]),
+                      (index) =>
+                          FlSpot(index.toDouble(), monthlyRevenue[index]),
                     ),
                     isCurved: true,
                     curveSmoothness: 0.3,
                     gradient: const LinearGradient(
-                      colors: [AdminColors.primaryGreen, AdminColors.primaryGreenDark],
+                      colors: [
+                        AdminColors.primaryGreen,
+                        AdminColors.primaryGreenDark
+                      ],
                     ),
                     barWidth: 3,
                     isStrokeCapRound: true,
@@ -1031,11 +1192,11 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
             color: AdminColors.shadow,
             blurRadius: 10,
-            offset: const Offset(0, 4),
+            offset: Offset(0, 4),
           ),
         ],
       ),
@@ -1200,11 +1361,11 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
           decoration: BoxDecoration(
             color: theme.cardColor,
             borderRadius: BorderRadius.circular(16),
-            boxShadow: [
+            boxShadow: const [
               BoxShadow(
                 color: AdminColors.shadow,
                 blurRadius: 10,
-                offset: const Offset(0, 4),
+                offset: Offset(0, 4),
               ),
             ],
           ),
@@ -1255,9 +1416,11 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
                   ),
                   const SizedBox(height: 4),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: (material['color'] as Color).withValues(alpha: 0.1),
+                      color:
+                          (material['color'] as Color).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -1433,8 +1596,14 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
                     getTooltipColor: (group) => AdminColors.textPrimary,
                     tooltipRoundedRadius: 8,
                     getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                      final materials = ['Plastic', 'Paper', 'Metal', 'E-Waste'];
-                      final total = monthlyCollectionData[groupIndex].reduce((a, b) => a + b);
+                      final materials = [
+                        'Plastic',
+                        'Paper',
+                        'Metal',
+                        'E-Waste'
+                      ];
+                      final total = monthlyCollectionData[groupIndex]
+                          .reduce((a, b) => a + b);
                       return BarTooltipItem(
                         '${months[groupIndex]}\nTotal: ${total.toInt()} kg',
                         const TextStyle(
@@ -1484,8 +1653,10 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
                       },
                     ),
                   ),
-                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
                 ),
                 borderData: FlBorderData(show: false),
                 gridData: FlGridData(
@@ -1504,18 +1675,23 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
                     x: index,
                     barRods: [
                       BarChartRodData(
-                        toY: monthlyCollectionData[index].reduce((a, b) => a + b),
+                        toY: monthlyCollectionData[index]
+                            .reduce((a, b) => a + b),
                         width: 20,
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+                        borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(6)),
                         rodStackItems: [
-                          BarChartRodStackItem(0, monthlyCollectionData[index][0], colors[0]),
+                          BarChartRodStackItem(
+                              0, monthlyCollectionData[index][0], colors[0]),
                           BarChartRodStackItem(
                             monthlyCollectionData[index][0],
-                            monthlyCollectionData[index][0] + monthlyCollectionData[index][1],
+                            monthlyCollectionData[index][0] +
+                                monthlyCollectionData[index][1],
                             colors[1],
                           ),
                           BarChartRodStackItem(
-                            monthlyCollectionData[index][0] + monthlyCollectionData[index][1],
+                            monthlyCollectionData[index][0] +
+                                monthlyCollectionData[index][1],
                             monthlyCollectionData[index][0] +
                                 monthlyCollectionData[index][1] +
                                 monthlyCollectionData[index][2],
@@ -1525,7 +1701,8 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
                             monthlyCollectionData[index][0] +
                                 monthlyCollectionData[index][1] +
                                 monthlyCollectionData[index][2],
-                            monthlyCollectionData[index].reduce((a, b) => a + b),
+                            monthlyCollectionData[index]
+                                .reduce((a, b) => a + b),
                             colors[3],
                           ),
                         ],
@@ -1672,14 +1849,16 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
               final user = topUsers[index];
               return Container(
                 color: index % 2 == 0 ? Colors.white : AdminColors.surfaceLight,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Row(
                   children: [
                     _buildRankBadge(user['rank'] as int),
                     const SizedBox(width: 12),
                     CircleAvatar(
                       radius: 20,
-                      backgroundColor: _getTypeColor(user['type'] as String).withValues(alpha: 0.2),
+                      backgroundColor: _getTypeColor(user['type'] as String)
+                          .withValues(alpha: 0.2),
                       child: Text(
                         (user['name'] as String).substring(0, 1),
                         style: TextStyle(
@@ -1702,9 +1881,11 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
                           ),
                           const SizedBox(height: 4),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
-                              color: _getTypeColor(user['type'] as String).withValues(alpha: 0.1),
+                              color: _getTypeColor(user['type'] as String)
+                                  .withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
@@ -1776,7 +1957,9 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
       width: 32,
       height: 32,
       decoration: BoxDecoration(
-        color: rank <= 3 ? badgeColor.withValues(alpha: 0.2) : AdminColors.surfaceLight,
+        color: rank <= 3
+            ? badgeColor.withValues(alpha: 0.2)
+            : AdminColors.surfaceLight,
         shape: BoxShape.circle,
         border: Border.all(color: badgeColor, width: 2),
       ),
@@ -1810,7 +1993,8 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
 
   Widget _buildUserTypeDistributionCard() {
     final theme = Theme.of(context);
-    final maxValue = userTypeDistribution.values.reduce((a, b) => a > b ? a : b);
+    final maxValue =
+        userTypeDistribution.values.reduce((a, b) => a > b ? a : b);
     final colors = [
       AdminColors.primaryGreen,
       AdminColors.accentBlue,
@@ -2010,14 +2194,16 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
               final collector = topCollectors[index];
               return Container(
                 color: index % 2 == 0 ? Colors.white : AdminColors.surfaceLight,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Row(
                   children: [
                     _buildRankBadge(collector['rank'] as int),
                     const SizedBox(width: 12),
                     CircleAvatar(
                       radius: 20,
-                      backgroundColor: AdminColors.primaryGreen.withValues(alpha: 0.2),
+                      backgroundColor:
+                          AdminColors.primaryGreen.withValues(alpha: 0.2),
                       child: Text(
                         (collector['name'] as String).substring(0, 1),
                         style: const TextStyle(
@@ -2046,7 +2232,9 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
                                 return Icon(
                                   i < rating.floor()
                                       ? Icons.star
-                                      : (i < rating ? Icons.star_half : Icons.star_border),
+                                      : (i < rating
+                                          ? Icons.star_half
+                                          : Icons.star_border),
                                   size: 14,
                                   color: AdminColors.accentOrange,
                                 );
@@ -2096,10 +2284,12 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
                           ),
                           child: FractionallySizedBox(
                             alignment: Alignment.centerLeft,
-                            widthFactor: (collector['performance'] as int) / 100,
+                            widthFactor:
+                                (collector['performance'] as int) / 100,
                             child: Container(
                               decoration: BoxDecoration(
-                                color: _getPerformanceColor(collector['performance'] as int),
+                                color: _getPerformanceColor(
+                                    collector['performance'] as int),
                                 borderRadius: BorderRadius.circular(3),
                               ),
                             ),
@@ -2110,7 +2300,8 @@ class _AdminReportsScreenState extends State<AdminReportsScreen>
                           '${collector['performance']}%',
                           style: TextStyle(
                             fontSize: 11,
-                            color: _getPerformanceColor(collector['performance'] as int),
+                            color: _getPerformanceColor(
+                                collector['performance'] as int),
                             fontWeight: FontWeight.w600,
                           ),
                         ),
