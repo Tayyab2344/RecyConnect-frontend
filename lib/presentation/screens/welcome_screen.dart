@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
+import '../widgets/common/recyconnect_logo.dart';
 import 'auth/login_screen.dart';
 
 class WelcomeScreen extends StatelessWidget {
@@ -22,19 +23,9 @@ class WelcomeScreen extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
-                  Icons.recycling,
-                  size: 120,
-                  color: Colors.white,
-                ),
-                const SizedBox(height: 32),
-                const Text(
-                  'RecyConnect',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+                const RecyConnectLogo(
+                  size: 140,
+                  showText: true,
                 ),
                 const SizedBox(height: 16),
                 const Text(

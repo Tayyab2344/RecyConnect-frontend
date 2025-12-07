@@ -18,7 +18,7 @@ subprojects {
 
 // Fix for packages missing namespace (required for AGP 8.0+)
 subprojects {
-    afterEvaluate {
+    val configureNamespace = {
         if (project.hasProperty("android")) {
             val android = project.extensions.getByName("android")
             if (android is com.android.build.gradle.LibraryExtension) {
@@ -26,6 +26,14 @@ subprojects {
                     android.namespace = project.group.toString()
                 }
             }
+        }
+    }
+
+    if (project.state.executed) {
+        configureNamespace()
+    } else {
+        afterEvaluate {
+            configureNamespace()
         }
     }
 }
