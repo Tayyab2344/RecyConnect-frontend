@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../widgets/curved/curved_bottom_nav.dart';
+
 import '../company/bulk_buy_screen.dart';
 import '../company/bulk_sell_screen.dart';
 import '../company/contracts_screen.dart';
@@ -739,66 +742,40 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   }
 
   Widget _buildBottomNavBar() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).bottomAppBarTheme.color ?? Theme.of(context).scaffoldBackgroundColor,
-        border: Border(
-          top: BorderSide(
-            color: Theme.of(context).dividerColor.withOpacity(0.1),
-            width: 1,
-          ),
-        ),
-      ),
-      child: SafeArea(
-        child: Container(
-          height: 70,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildNavItem(Icons.dashboard_outlined, Icons.dashboard, 'Dashboard', 0),
-              _buildNavItem(Icons.shopping_cart_outlined, Icons.shopping_cart, 'Buy', 1),
-              _buildNavItem(Icons.sell_outlined, Icons.sell, 'Sell', 2),
-              _buildNavItem(Icons.account_balance_wallet_outlined, Icons.account_balance_wallet, 'Wallet', 3),
-              _buildNavItem(Icons.person_outline, Icons.person, 'Profile', 4),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNavItem(IconData icon, IconData activeIcon, String label, int index) {
-    final isSelected = _selectedIndex == index;
-    return GestureDetector(
-      onTap: () {
+    return CurvedBottomNav(
+      currentIndex: _selectedIndex,
+      onTap: (index) {
         setState(() => _selectedIndex = index);
         _pageController.jumpToPage(index);
       },
-      behavior: HitTestBehavior.opaque,
-      child: SizedBox(
-        width: 60,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              isSelected ? activeIcon : icon,
-              color: isSelected ? const Color(0xFF2196F3) : Theme.of(context).iconTheme.color?.withOpacity(0.5),
-              size: 24,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                color: isSelected ? const Color(0xFF2196F3) : Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.5),
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-              ),
-            ),
-          ],
+      activeColor: AppColors.roleCompany,
+      items: const [
+        CurvedBottomNavItem(
+          icon: Icons.dashboard_outlined,
+          activeIcon: Icons.dashboard,
+          label: 'Dashboard',
         ),
-      ),
+        CurvedBottomNavItem(
+          icon: Icons.shopping_cart_outlined,
+          activeIcon: Icons.shopping_cart,
+          label: 'Buy',
+        ),
+        CurvedBottomNavItem(
+          icon: Icons.sell_outlined,
+          activeIcon: Icons.sell,
+          label: 'Sell',
+        ),
+        CurvedBottomNavItem(
+          icon: Icons.account_balance_wallet_outlined,
+          activeIcon: Icons.account_balance_wallet,
+          label: 'Wallet',
+        ),
+        CurvedBottomNavItem(
+          icon: Icons.person_outline,
+          activeIcon: Icons.person,
+          label: 'Profile',
+        ),
+      ],
     );
   }
 }

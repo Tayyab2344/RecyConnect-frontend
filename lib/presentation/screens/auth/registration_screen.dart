@@ -1,14 +1,14 @@
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../core/utils/validators.dart';
-import '../../../core/utils/validators.dart';
-import '../../../core/utils/pakistan_locations.dart';
 import '../../widgets/city_area_selector.dart';
 import 'otp_verification_screen.dart';
 
@@ -329,47 +329,36 @@ class _RegistrationScreenState extends State<RegistrationScreen>
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final isWeb = size.width > 800;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: AppTheme.backgroundLight,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: const Icon(Icons.arrow_back_ios_new, size: 18),
-          ),
-          onPressed: () => Navigator.pop(context),
-          color: AppTheme.textDark,
-        ),
-        title: Text(
-          '${_getRoleDisplayName()} Registration',
-          style: AppTheme.headingStyle.copyWith(fontSize: 20),
-        ),
-        centerTitle: true,
-      ),
       body: Container(
+        width: size.width,
+        height: size.height,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              AppTheme.backgroundLight,
-              Colors.white,
-            ],
-          ),
+          gradient: isDark
+              ? const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFF0A1628),
+                    Color(0xFF0D2137),
+                    Color(0xFF0F2847),
+                    Color(0xFF0A1E35),
+                  ],
+                  stops: [0.0, 0.3, 0.7, 1.0],
+                )
+              : const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0xFFFFFFFF),
+                    Color(0xFFF0F9F7),
+                    Color(0xFFE8F5F2),
+                    Color(0xFFDFF2ED),
+                  ],
+                  stops: [0.0, 0.3, 0.7, 1.0],
+                ),
         ),
         child: SafeArea(
           child: Center(
@@ -382,6 +371,9 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                   key: _formKey,
                   child: Column(
                     children: [
+                      // Custom App Bar
+                      _buildGlassAppBar(isDark),
+                      
                       Expanded(
                         child: ListView(
                           padding: EdgeInsets.all(isWeb ? 40 : 24),
@@ -421,6 +413,60 @@ class _RegistrationScreenState extends State<RegistrationScreen>
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildGlassAppBar(bool isDark) {
+    final textColor = isDark ? Colors.white : const Color(0xFF1A1A1A);
+    
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          // Back button
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.white.withOpacity(0.1)
+                    : Colors.white.withOpacity(0.9),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withOpacity(0.15)
+                      : Colors.black.withOpacity(0.05),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(isDark ? 0.2 : 0.08),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Icon(
+                Icons.arrow_back_ios_new_rounded,
+                size: 18,
+                color: isDark ? Colors.white : const Color(0xFF333333),
+              ),
+            ),
+          ),
+          const Spacer(),
+          // Title
+          Text(
+            '${_getRoleDisplayName()} Registration',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: textColor,
+            ),
+          ),
+          const Spacer(),
+          const SizedBox(width: 40), // Balance the back button
+        ],
       ),
     );
   }
@@ -524,19 +570,43 @@ class _RegistrationScreenState extends State<RegistrationScreen>
   }
 
   Widget _buildBasicInfoStep() {
-    return Container(
-      padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+        child: Container(
+          padding: const EdgeInsets.all(28),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isDark
+                  ? [
+                      Colors.white.withOpacity(0.12),
+                      Colors.white.withOpacity(0.05),
+                    ]
+                  : [
+                      Colors.white.withOpacity(0.85),
+                      Colors.white.withOpacity(0.65),
+                    ],
+            ),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withOpacity(0.15)
+                  : Colors.white.withOpacity(0.6),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(isDark ? 0.2 : 0.08),
+                blurRadius: 25,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
-        ],
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -879,23 +949,49 @@ class _RegistrationScreenState extends State<RegistrationScreen>
           ),
         ],
       ),
+    ),
+      ),
     );
   }
 
   Widget _buildDocumentsStep() {
-    return Container(
-      padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+        child: Container(
+          padding: const EdgeInsets.all(28),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isDark
+                  ? [
+                      Colors.white.withOpacity(0.12),
+                      Colors.white.withOpacity(0.05),
+                    ]
+                  : [
+                      Colors.white.withOpacity(0.85),
+                      Colors.white.withOpacity(0.65),
+                    ],
+            ),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withOpacity(0.15)
+                  : Colors.white.withOpacity(0.6),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(isDark ? 0.2 : 0.08),
+                blurRadius: 25,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
-        ],
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1068,31 +1164,57 @@ class _RegistrationScreenState extends State<RegistrationScreen>
           ],
         ],
       ),
+    ),
+      ),
     );
   }
 
   Widget _buildVerificationStep() {
-    return Container(
-      padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: AppTheme.primaryGreen.withOpacity(0.1),
-              shape: BoxShape.circle,
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+        child: Container(
+          padding: const EdgeInsets.all(28),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isDark
+                  ? [
+                      Colors.white.withOpacity(0.12),
+                      Colors.white.withOpacity(0.05),
+                    ]
+                  : [
+                      Colors.white.withOpacity(0.85),
+                      Colors.white.withOpacity(0.65),
+                    ],
             ),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withOpacity(0.15)
+                  : Colors.white.withOpacity(0.6),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(isDark ? 0.2 : 0.08),
+                blurRadius: 25,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryGreen.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
             child: const Icon(
               Icons.check_circle_rounded,
               size: 64,
@@ -1218,6 +1340,8 @@ class _RegistrationScreenState extends State<RegistrationScreen>
             ),
           ],
         ],
+      ),
+    ),
       ),
     );
   }

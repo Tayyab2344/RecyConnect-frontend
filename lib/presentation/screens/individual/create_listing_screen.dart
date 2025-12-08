@@ -1,14 +1,16 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:geolocator/geolocator.dart';
-import 'dart:io';
-import 'dart:convert';
-import '../../../core/theme/app_theme.dart';
-import '../../../core/services/location_service.dart';
-import '../../../core/services/listing_service.dart';
-import '../../../core/services/auth_service.dart';
-import '../../../core/models/listing_model.dart';
-
+import 'package:recyconnect/core/models/listing_model.dart';
+import 'package:recyconnect/core/services/auth_service.dart';
+import 'package:recyconnect/core/services/listing_service.dart';
+import 'package:recyconnect/core/theme/marketplace_theme.dart';
+import 'package:recyconnect/presentation/widgets/marketplace/glass_card.dart';
+import 'package:recyconnect/presentation/widgets/marketplace/neon_button.dart';
 
 class CreateListingScreen extends StatefulWidget {
   const CreateListingScreen({Key? key}) : super(key: key);
@@ -17,1261 +19,808 @@ class CreateListingScreen extends StatefulWidget {
   State<CreateListingScreen> createState() => _CreateListingScreenState();
 }
 
-class _CreateListingScreenState extends State<CreateListingScreen> {
+class _CreateListingScreenState extends State<CreateListingScreen>
+    with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
-  final LocationService _locationService = LocationService();
+  final ListingService _listingService = ListingService();
   final AuthService _authService = AuthService();
-  
-  // Form Controllers
-  String _selectedMaterial = '';
-  final TextEditingController _weightController = TextEditingController();
+
+  // Scroll Controller
+  final ScrollController _scrollController = ScrollController();
+
+  // Controllers
+  final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _weightController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
-  final TextEditingController _cityController = TextEditingController();
-  final TextEditingController _landmarkController = TextEditingController();
-  
+
   // State Variables
   List<XFile> _selectedImages = [];
+  String _selectedMaterial = 'Plastic';
+  String _locationMethod = 'manual';
+  bool _requestCollector = false;
+  bool _isAnalyzing = false;
   bool _isSubmitting = false;
-  bool _aiSuggestionAccepted = false;
-  String _aiSuggestedMaterial = 'Paper';
-  
-  // Location State
-  bool _isLocationDetected = false;
-  bool _isDetectingLocation = false;
-  String _detectedLocation = '';
-  double? _latitude;
-  double? _longitude;
 
-  // Static Material Rates (Rs per kg)
-  final Map<String, Map<String, dynamic>> _materials = {
-    'Plastic': {
-      'icon': Icons.recycling,
-      'color': Color(0xFF2196F3),
-      'rate': 20,
-    },
-    'Paper': {
-      'icon': Icons.description,
-      'color': Color(0xFFFFA726),
-      'rate': 15,
-    },
-    'Metal': {
-      'icon': Icons.build,
-      'color': Color(0xFF757575),
-      'rate': 40,
-    },
-    'E-Waste': {
-      'icon': Icons.devices,
-      'color': Color(0xFF9C27B0),
-      'rate': 100,
-    },
+  // Animation for "AI Scanning"
+  late AnimationController _scanController;
+
+  // Material Rates (Mock Data)
+  final Map<String, double> _materialRates = {
+    'Plastic': 20.0,
+    'Paper': 15.0,
+    'Metal': 40.0,
+    'E-Waste': 100.0,
+    'Glass': 10.0,
   };
 
   @override
   void initState() {
     super.initState();
-    _loadUserLocation(); // Load location from user profile first
+    _scanController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    );
+    _loadUserLocation();
   }
 
   @override
   void dispose() {
-    _weightController.dispose();
+    _titleController.dispose();
     _descriptionController.dispose();
+    _weightController.dispose();
     _addressController.dispose();
-    _cityController.dispose();
-    _landmarkController.dispose();
+    _scanController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
-  /// Load location from user's profile (city, area, address)
+  // --- Logic Implementations ---
+
   Future<void> _loadUserLocation() async {
-    setState(() => _isDetectingLocation = true);
-    
     try {
       final response = await _authService.fetchProfile();
-      
       if (response['success'] == true) {
-        final userData = response['data']['data'];
+        final data = response['data']['data'];
+        final addressParts = <String>[];
+        if (data['address'] != null) addressParts.add(data['address']);
+        if (data['city'] != null) addressParts.add(data['city']);
         
-        // Build human-readable location from city and area
-        if (userData['city'] != null || userData['area'] != null || userData['address'] != null) {
-          final locationParts = <String>[];
-          if (userData['address'] != null) locationParts.add(userData['address']);
-          if (userData['area'] != null) locationParts.add(userData['area']);
-          if (userData['city'] != null) locationParts.add(userData['city']);
-          
-          if (locationParts.isNotEmpty) {
-            setState(() {
-              _isLocationDetected = true;
-              _latitude = userData['latitude']?.toDouble();
-              _longitude = userData['longitude']?.toDouble();
-              _detectedLocation = locationParts.join(', ');
-              
-              // Auto-fill manual entry fields as well
-              if (userData['address'] != null) {
-                _addressController.text = userData['address'];
-              }
-              if (userData['city'] != null) {
-                _cityController.text = userData['city'];
-              }
-            });
-          }
-        }
-      }
-    } catch (e) {
-      // Failed to load user profile location, continue without it
-    } finally {
-      setState(() => _isDetectingLocation = false);
-    }
-  }
-
-  /// Detect location using GPS (manual override)
-  Future<void> _detectLocation() async {
-    setState(() => _isDetectingLocation = true);
-    
-    try {
-      final hasPermission = await _locationService.requestLocationPermission();
-      
-      if (hasPermission) {
-        final position = await _locationService.getCurrentLocation();
-        if (position != null) {
+        if (addressParts.isNotEmpty) {
           setState(() {
-            _isLocationDetected = true;
-            _latitude = position['latitude'];
-            _longitude = position['longitude'];
-            // Show coordinates if GPS is used (fallback)
-            _detectedLocation = '${position['latitude']!.toStringAsFixed(4)}, ${position['longitude']!.toStringAsFixed(4)}';
+            _addressController.text = addressParts.join(', ');
+            _locationMethod = 'auto';
           });
         }
       }
-    } catch (e) {
-      // Location detection failed, user will enter manually
-    } finally {
-      setState(() => _isDetectingLocation = false);
-    }
+    } catch (_) {}
   }
 
   Future<void> _pickImages() async {
-    if (_selectedImages.length >= 3) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Maximum 3 images allowed')),
-      );
-      return;
-    }
-
     final ImagePicker picker = ImagePicker();
-    final List<XFile> images = await picker.pickMultiImage();
-    
+    // FIX: Compression to prevent Payload Too Large error
+    final List<XFile> images = await picker.pickMultiImage(
+      imageQuality: 50, // Reduced quality
+      maxWidth: 800,    // Reduced width
+    );
+
     if (images.isNotEmpty) {
       setState(() {
-        final remaining = 3 - _selectedImages.length;
-        _selectedImages.addAll(
-          images.take(remaining).toList()
+        _selectedImages.addAll(images);
+        // Limit to 3 images total if needed, or handle in UI
+        if (_selectedImages.length > 3) {
+           _selectedImages = _selectedImages.take(3).toList();
+        }
+      });
+      // Trigger AI Analysis Simulation
+      _simulateAIAnalysis();
+    }
+  }
+
+  void _simulateAIAnalysis() {
+    setState(() => _isAnalyzing = true);
+    _scanController.repeat(reverse: true);
+
+    // Simulate 2 seconds of "processing"
+    Timer(const Duration(seconds: 2), () {
+      if (!mounted) return;
+      setState(() {
+        _isAnalyzing = false;
+        _scanController.stop();
+        _scanController.reset();
+
+        // Mock AI Results
+        _selectedMaterial = 'Plastic'; // AI detected Plastic
+        _titleController.text = 'Batch of Recyclable Plastic Bottles';
+        _descriptionController.text =
+            'Assortment of PET bottles and containers. Clean and ready for recycling.';
+        
+        // Visual feedback
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: const [
+                 Icon(Icons.auto_awesome, color: Colors.white),
+                 SizedBox(width: 8),
+                 Text('AI Analysis Complete! Details Auto-filled.'),
+              ],
+            ),
+            backgroundColor: MarketplaceTheme.lightAccent,
+            duration: const Duration(seconds: 2),
+          ),
         );
       });
-    }
+    });
   }
 
   double get _estimatedValue {
     final weight = double.tryParse(_weightController.text) ?? 0;
-    final rate = _selectedMaterial.isNotEmpty 
-        ? (_materials[_selectedMaterial]?['rate'] ?? 0) 
-        : 0;
+    final rate = _materialRates[_selectedMaterial] ?? 0;
     return weight * rate;
   }
 
-  bool get _isFormValid {
-    return _selectedMaterial.isNotEmpty &&
-           _weightController.text.isNotEmpty &&
-           (double.tryParse(_weightController.text) ?? 0) > 0 &&
-           (double.tryParse(_weightController.text) ?? 0) <= 10 &&
-           _selectedImages.isNotEmpty && // NEW: Require at least one image
-           (_isLocationDetected || 
-            (_addressController.text.isNotEmpty && _cityController.text.isNotEmpty));
-  }
-
-  Future<void> _submitListing() async {
+  Future<void> _publishListing() async {
     if (!_formKey.currentState!.validate()) {
-      return;
+       // Scroll to top to show errors if needed, or rely on field error text
+       return;
     }
-
-    // Validate images
     if (_selectedImages.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please add at least one photo of your recyclable items'),
-          backgroundColor: AppTheme.errorRed,
-        ),
+        const SnackBar(content: Text('Please upload at least one image.')),
       );
       return;
     }
 
-    if (!_isFormValid) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please fill all required fields'),
-          backgroundColor: AppTheme.errorRed,
-        ),
-      );
-      return;
-    }
-    
     setState(() => _isSubmitting = true);
-    
+
     try {
-      // Prepare pickup address
-      final pickupAddress = _isLocationDetected 
-          ? _detectedLocation
-          : '${_addressController.text}, ${_cityController.text}${_landmarkController.text.isNotEmpty ? ', ${_landmarkController.text}' : ''}';
-      
-      // Convert images to base64
-      List<String> imageBase64List = [];
-      try {
-        print('DEBUG: Starting image conversion, total images: ${_selectedImages.length}');
-        for (var i = 0; i < _selectedImages.length; i++) {
-          final imageFile = _selectedImages[i];
-          print('DEBUG: Reading image $i from path: ${imageFile.path}');
-          final bytes = await imageFile.readAsBytes();
-          print('DEBUG: Image $i bytes length: ${bytes.length}');
-          final base64Image = base64Encode(bytes);
-          print('DEBUG: Image $i base64 length: ${base64Image.length}');
-          imageBase64List.add(base64Image);
-        }
-        print('DEBUG: Successfully converted all images to base64');
-      } catch (e, stackTrace) {
-        print('ERROR converting images: $e');
-        print('Stack trace: $stackTrace');
-        throw Exception('Failed to process images: $e');
+      // 1. Convert Images to Base64
+      List<String> base64Images = [];
+      for (var img in _selectedImages) {
+        final bytes = await img.readAsBytes();
+        base64Images.add(base64Encode(bytes));
       }
-      
-      // Create listing object
-      print('DEBUG: Creating Listing object...');
+
+      // 2. Create Listing Object
       final listing = Listing(
-        id: 0, // Will be set by backend
-        userId: 0, // Will be set by backend
+        id: 0,
+        userId: 0, // Backend sets this
         materialType: _selectedMaterial.toLowerCase(),
         estimatedWeight: double.parse(_weightController.text),
-        pickupAddress: pickupAddress,
-        latitude: null, // Location coordinates would be set by backend/geocoding
-        longitude: null,
-        locationMethod: _isLocationDetected ? 'auto' : 'manual',
-        notes: _descriptionController.text.isNotEmpty ? _descriptionController.text : null,
+        pickupAddress: _addressController.text,
+        locationMethod: _locationMethod,
+        notes: _descriptionController.text, // Mapping Description to Notes
         status: 'PENDING',
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
-        images: imageBase64List, // Include base64 encoded images
+        images: base64Images,
       );
-      print('DEBUG: Listing object created successfully');
 
-      
-      // Call API to create listing
-      final _listingService = ListingService();
-      print('DEBUG: Calling API to create listing...');
-      final createdListing = await _listingService.createListing(listing);
-      
+      // 3. API Call
+      await _listingService.createListing(listing);
+
       if (mounted) {
-        setState(() => _isSubmitting = false);
-        
-        // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Listing created successfully!'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
-          ),
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => _buildSuccessDialog(ctx),
         );
-        
-        // Navigate back after a short delay
-        await Future.delayed(const Duration(milliseconds: 500));
-        if (mounted) {
-          Navigator.pop(context);
-        }
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _isSubmitting = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to create listing: ${e.toString()}'),
-            backgroundColor: AppTheme.errorRed,
-            duration: const Duration(seconds: 3),
-          ),
+          SnackBar(content: Text('Error: ${e.toString()}')),
         );
       }
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
-  void _showSuccessDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: const [
-            Icon(Icons.check_circle, color: AppTheme.primaryGreen, size: 28),
-            SizedBox(width: 12),
-            Text('Success!'),
+  Widget _buildSuccessDialog(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: Colors.transparent,
+      contentPadding: EdgeInsets.zero,
+      content: GlassCard(
+        borderRadius: 20,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.check_circle_outline,
+                color: MarketplaceTheme.lightAccent, size: 64),
+            const SizedBox(height: 16),
+            const Text(
+              'Listing Published!',
+              style: TextStyle(
+                fontSize: 20, 
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Your item is now live on the marketplace.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white70),
+            ),
+            const SizedBox(height: 24),
+            NeonButton(
+              text: 'DONE',
+              onPressed: () {
+                Navigator.of(context).pop(); // Close dialog
+                if (Navigator.of(context).canPop()) {
+                  Navigator.of(context).pop(); // Exit screen
+                } else {
+                  _resetForm(); // Reset if used as tab
+                }
+              },
+            ),
           ],
         ),
-        content: const Text('Your listing has been created successfully!'),
-        actions: [
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pop(); // Close dialog
-              Navigator.of(context).pop(); // Go back to previous screen
-            },
-            child: const Text('OK'),
-          ),
-        ],
       ),
     );
   }
+
+  void _resetForm() {
+    setState(() {
+      _titleController.clear();
+      _descriptionController.clear();
+      _weightController.clear();
+      // Keep address if possible or clear
+      _selectedImages.clear();
+      _selectedMaterial = 'Plastic';
+      _requestCollector = false;
+    });
+  }
+
+  // --- UI Construction ---
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final size = MediaQuery.of(context).size;
+
     return Scaffold(
-      backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.backgroundLight,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('Create Listing'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.help_outline),
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text('Weight Limit'),
-                  content: const Text(
-                    'For individual listings, the maximum weight allowed is 10 kg. If you have more waste to recycle, please create multiple listings or contact a warehouse directly.',
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Got it'),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-      body: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // AI Suggestion Section
-              if (!_aiSuggestionAccepted) _buildAISuggestionCard(isDark),
-              if (!_aiSuggestionAccepted) const SizedBox(height: 20),
-
-              // Material Type Section
-              _buildSectionTitle('Select Material Type', isDark, required: true),
-              const SizedBox(height: 12),
-              _buildMaterialSelector(isDark),
-              const SizedBox(height: 20),
-
-              // Static Rate Display
-              if (_selectedMaterial.isNotEmpty) ...[
-                _buildRateDisplay(isDark),
-                const SizedBox(height: 20),
-              ],
-
-              // Upload Images Section
-              _buildSectionTitle('Upload / Capture Images', isDark, required: true),
-              const SizedBox(height: 8),
-              Text(
-                'Add 1-3 images of your recyclable items',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: isDark ? AppTheme.darkTextSecondary : AppTheme.textLight,
-                ),
-              ),
-              const SizedBox(height: 12),
-              _buildPhotoSection(isDark),
-              const SizedBox(height: 20),
-
-              // Estimated Weight Section
-              _buildSectionTitle('Estimated Weight (KG)', isDark, required: true),
-              const SizedBox(height: 12),
-              _buildWeightInput(isDark),
-              const SizedBox(height: 20),
-
-              // Auto Price Estimate
-              if (_selectedMaterial.isNotEmpty && _weightController.text.isNotEmpty)
-                _buildPriceEstimateCard(isDark),
-              if (_selectedMaterial.isNotEmpty && _weightController.text.isNotEmpty)
-                const SizedBox(height: 20),
-
-              // Location Section
-              _buildSectionTitle('Pickup Location', isDark, required: true),
-              const SizedBox(height: 12),
-              _buildLocationSection(isDark),
-              const SizedBox(height: 20),
-
-              // Notes / Description
-              _buildSectionTitle('Notes / Description', isDark),
-              const SizedBox(height: 12),
-              _buildDescriptionField(isDark),
-              const SizedBox(height: 24),
-
-              // Listing Summary Card (Live Preview)
-              _buildListingSummaryCard(isDark),
-              const SizedBox(height: 32),
-
-              // Submit Button
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: _isFormValid && !_isSubmitting ? _submitListing : null,
-                  child: _isSubmitting
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
-                        )
-                      : const Text(
-                          'Create Listing',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                ),
-              ),
-              const SizedBox(height: 24),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(String title, bool isDark, {bool required = false}) {
-    return Row(
-      children: [
-        Container(
-          width: 4,
-          height: 20,
-          decoration: BoxDecoration(
-            color: isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen,
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          title,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: Text(
+          'New Listing',
           style: TextStyle(
-            fontSize: 16,
+            color: isDark ? MarketplaceTheme.darkTextPrimary : MarketplaceTheme.lightTextPrimary,
             fontWeight: FontWeight.bold,
-            color: isDark ? AppTheme.darkTextPrimary : AppTheme.textDark,
           ),
         ),
-        if (required) ...[
-          const SizedBox(width: 4),
-          const Text(
-            '*',
-            style: TextStyle(
-              color: AppTheme.errorRed,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildAISuggestionCard(bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark 
-            ? AppTheme.darkPrimaryGreen.withOpacity(0.1)
-            : const Color(0xFFE8F5E9),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDark 
-              ? AppTheme.darkPrimaryGreen.withOpacity(0.3)
-              : AppTheme.primaryGreen.withOpacity(0.3),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios,
+              color: isDark ? MarketplaceTheme.darkTextPrimary : MarketplaceTheme.lightTextPrimary),
+          onPressed: () => Navigator.pop(context),
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: MarketplaceTheme.getBackgroundGradient(isDark),
+        ),
+        child: SafeArea(
+          child: Column(
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: (isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen)
-                      .withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  Icons.auto_awesome,
-                  color: isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
+              // Scrollable Form
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'AI Suggestion',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen,
-                      ),
+                child: SingleChildScrollView(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.all(16),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionHeader('Upload Media', isDark),
+                        _buildMediaUploadSection(isDark),
+                        const SizedBox(height: 24),
+
+                        _buildSectionHeader('Item Details', isDark),
+                        _buildDetailsSection(isDark),
+                        const SizedBox(height: 24),
+
+                        _buildSectionHeader('Pricing & Logistics', isDark),
+                        _buildPricingSection(isDark),
+                        const SizedBox(height: 32),
+                      ],
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Based on your history, we suggest: $_aiSuggestedMaterial',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: isDark ? AppTheme.darkTextSecondary : AppTheme.textDark,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
+              
+              // Live Preview & Action Bar (Fixed at bottom)
+              _buildLivePreviewBar(isDark),
             ],
           ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              TextButton(
-                onPressed: () {
-                  setState(() {
-                    _aiSuggestionAccepted = true;
-                  });
-                },
-                child: const Text('Reject', style: TextStyle(fontSize: 13)),
-              ),
-              const SizedBox(width: 8),
-              ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    _selectedMaterial = _aiSuggestedMaterial;
-                    _aiSuggestionAccepted = true;
-                  });
-                },
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                ),
-                child: const Text('Accept', style: TextStyle(fontSize: 13)),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMaterialSelector(bool isDark) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 1.3,
-      ),
-      itemCount: _materials.length,
-      itemBuilder: (context, index) {
-        final materialName = _materials.keys.elementAt(index);
-        final material = _materials[materialName]!;
-        final isSelected = _selectedMaterial == materialName;
-        
-        return GestureDetector(
-          onTap: () => setState(() => _selectedMaterial = materialName),
-          child: Container(
-            decoration: BoxDecoration(
-              color: isSelected 
-                  ? (material['color'] as Color).withOpacity(0.1)
-                  : (isDark ? AppTheme.darkCardSurface : Colors.white),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isSelected 
-                    ? (material['color'] as Color)
-                    : (isDark 
-                        ? AppTheme.darkSecondaryGreen.withOpacity(0.3) 
-                        : AppTheme.lightGray),
-                width: isSelected ? 2 : 1,
-              ),
-              boxShadow: isSelected
-                  ? [
-                      BoxShadow(
-                        color: (material['color'] as Color).withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ]
-                  : null,
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  material['icon'] as IconData,
-                  size: 36,
-                  color: material['color'] as Color,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  materialName,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                    color: isDark ? AppTheme.darkTextPrimary : AppTheme.textDark,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildRateDisplay(bool isDark) {
-    final material = _materials[_selectedMaterial]!;
-    final rate = material['rate'];
-    
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: (material['color'] as Color).withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: (material['color'] as Color).withOpacity(0.3),
         ),
       ),
-      child: Row(
-        children: [
-          Icon(
-            material['icon'] as IconData,
-            color: material['color'] as Color,
-            size: 24,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Current Rate for $_selectedMaterial',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isDark ? AppTheme.darkTextSecondary : AppTheme.textLight,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Rs $rate per kg',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: material['color'] as Color,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+    );
+  }
+
+  Widget _buildSectionHeader(String title, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Text(
+        title.toUpperCase(),
+        style: TextStyle(
+          color: isDark ? MarketplaceTheme.darkAccentCyan : MarketplaceTheme.lightAccent,
+          fontWeight: FontWeight.bold,
+          fontSize: 12,
+          letterSpacing: 1.5,
+        ),
       ),
     );
   }
 
-  Widget _buildPhotoSection(bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? AppTheme.darkCardSurface : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDark 
-              ? AppTheme.darkSecondaryGreen.withOpacity(0.3)
-              : AppTheme.lightGray,
-        ),
-      ),
-      child: Column(
-        children: [
-          if (_selectedImages.isEmpty)
-            GestureDetector(
+  Widget _buildMediaUploadSection(bool isDark) {
+    return GlassCard(
+      height: 140,
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      child: _selectedImages.isEmpty
+          ? GestureDetector(
               onTap: _pickImages,
-              child: Container(
-                height: 120,
-                decoration: BoxDecoration(
-                  color: isDark 
-                      ? AppTheme.darkSurface
-                      : AppTheme.primaryGreen.withOpacity(0.05),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: (isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen)
-                        .withOpacity(0.3),
-                  ),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.add_photo_alternate_outlined,
-                      size: 40,
-                      color: (isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen)
-                          .withOpacity(0.6),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Tap to add photos (1-3 images)',
-                      style: TextStyle(
-                        color: (isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen)
-                            .withOpacity(0.8),
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              child: DottedBorderPlaceholder(isDark: isDark, isAnalyzing: _isAnalyzing),
             )
-          else
-            Column(
-              children: [
-                SizedBox(
-                  height: 100,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: _selectedImages.length + (_selectedImages.length < 3 ? 1 : 0),
-                    itemBuilder: (context, index) {
-                      if (index == _selectedImages.length) {
-                        return GestureDetector(
-                          onTap: _pickImages,
-                          child: Container(
-                            width: 100,
-                            margin: const EdgeInsets.only(left: 8),
-                            decoration: BoxDecoration(
-                              color: (isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen)
-                                  .withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: (isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen)
-                                    .withOpacity(0.3),
-                              ),
-                            ),
-                            child: Icon(
-                              Icons.add,
-                              color: isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen,
-                            ),
-                          ),
-                        );
-                      }
-                      
-                      return Container(
-                        width: 100,
-                        margin: EdgeInsets.only(right: 8),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8),
-                          image: DecorationImage(
-                            image: FileImage(File(_selectedImages[index].path)),
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                        child: Stack(
-                          children: [
-                            Positioned(
-                              top: 4,
-                              right: 4,
-                              child: GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    _selectedImages.removeAt(index);
-                                  });
-                                },
-                                child: Container(
-                                  padding: const EdgeInsets.all(4),
-                                  decoration: const BoxDecoration(
-                                    color: AppTheme.errorRed,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(
-                                    Icons.close,
-                                    size: 16,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildWeightInput(bool isDark) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TextFormField(
-          controller: _weightController,
-          keyboardType: TextInputType.number,
-          onChanged: (value) => setState(() {}),
-          decoration: InputDecoration(
-            hintText: 'Enter weight',
-            suffixText: 'kg',
-            suffixStyle: TextStyle(
-              color: isDark ? AppTheme.darkTextSecondary : AppTheme.textLight,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Please enter weight';
-            }
-            final weight = double.tryParse(value);
-            if (weight == null) {
-              return 'Please enter a valid number';
-            }
-            if (weight <= 0) {
-              return 'Weight must be greater than 0';
-            }
-            if (weight > 10) {
-              return 'Individuals cannot list more than 10 kg';
-            }
-            return null;
-          },
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Weight must be between 0.1 kg and 10 kg',
-          style: TextStyle(
-            fontSize: 12,
-            color: isDark ? AppTheme.darkTextSecondary : AppTheme.textLight,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPriceEstimateCard(bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: isDark
-              ? [AppTheme.darkPrimaryGreen, AppTheme.darkSecondaryGreen]
-              : [Color(0xFF00BFA5), Color(0xFF00897B)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: (isDark ? AppTheme.darkPrimaryGreen : Color(0xFF00BFA5))
-                .withOpacity(0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Estimated Value',
-                  style: TextStyle(
-                    color: isDark ? AppTheme.darkBackground : Colors.white70,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Rs ${_estimatedValue.toStringAsFixed(0)}',
-                  style: TextStyle(
-                    color: isDark ? AppTheme.darkBackground : Colors.white,
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${_weightController.text} kg × Rs ${_materials[_selectedMaterial]?['rate']}/kg',
-                  style: TextStyle(
-                    color: isDark ? AppTheme.darkBackground.withOpacity(0.8) : Colors.white70,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: (isDark ? AppTheme.darkBackground : Colors.white).withOpacity(0.2),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.arrow_forward,
-              color: isDark ? AppTheme.darkBackground : Colors.white,
-              size: 24,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLocationSection(bool isDark) {
-    if (_isDetectingLocation) {
-      return Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: isDark ? AppTheme.darkCardSurface : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isDark 
-                ? AppTheme.darkSecondaryGreen.withOpacity(0.3)
-                : AppTheme.lightGray,
-          ),
-        ),
-        child: Row(
-          children: [
-            const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-            const SizedBox(width: 16),
-            Text(
-              'Detecting location...',
-              style: TextStyle(
-                color: isDark ? AppTheme.darkTextSecondary : AppTheme.textLight,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (_isLocationDetected) {
-      return Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isDark ? AppTheme.darkCardSurface : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: (isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen)
-                .withOpacity(0.3),
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.location_on,
-                  color: isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Location detected automatically',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? AppTheme.darkTextPrimary : AppTheme.textDark,
-                    ),
-                  ),
-                ),
-                TextButton(
-                  onPressed: () {
-                    setState(() => _isLocationDetected = false);
-                  },
-                  child: const Text('Change', style: TextStyle(fontSize: 12)),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _detectedLocation,
-              style: TextStyle(
-                fontSize: 13,
-                color: isDark ? AppTheme.darkTextSecondary : AppTheme.textLight,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: (isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen)
-                    .withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
+          : SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
               child: Row(
-                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    Icons.check_circle,
-                    size: 14,
-                    color: isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    'GPS Enabled',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen,
-                      fontWeight: FontWeight.w600,
+                  ..._selectedImages.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    return Stack(
+                      children: [
+                        Container(
+                          width: 110,
+                          height: 110,
+                          margin: const EdgeInsets.only(right: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.file(
+                              File(_selectedImages[index].path),
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Center(
+                                  child: Icon(Icons.broken_image, 
+                                    color: Colors.grey, size: 30),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: 4,
+                          right: 12,
+                          child: CircleAvatar(
+                            radius: 10,
+                            backgroundColor: Colors.black54,
+                            child: IconButton(
+                              padding: EdgeInsets.zero,
+                              icon: const Icon(Icons.close,
+                                  size: 14, color: Colors.white),
+                              onPressed: () {
+                                setState(() {
+                                  _selectedImages.removeAt(index);
+                                });
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  }).toList(),
+                  GestureDetector(
+                    onTap: _pickImages,
+                    child: Container(
+                      width: 100,
+                      height: 110,
+                      margin: const EdgeInsets.only(left: 8),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                            color: isDark ? Colors.white24 : Colors.black12),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(Icons.add_a_photo,
+                          color: isDark ? Colors.white54 : Colors.black45),
                     ),
                   ),
                 ],
               ),
             ),
+    );
+  }
+
+  Widget _buildDetailsSection(bool isDark) {
+    return Column(
+      children: [
+        // AI Detected Material Badge
+        if (_isAnalyzing)
+           const LinearProgressIndicator(
+             backgroundColor: Colors.transparent,
+             color: MarketplaceTheme.darkAccentCyan,
+           ),
+        
+        // Material Dropdown
+        GlassCard(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: _selectedMaterial,
+              isExpanded: true,
+              dropdownColor: isDark ? MarketplaceTheme.darkBackgroundEnd : Colors.white,
+              style: TextStyle(
+                color: isDark ? Colors.white : Colors.black87,
+                fontSize: 16,
+              ),
+              items: _materialRates.keys.map((String value) {
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Row(
+                    children: [
+                      Icon(_getMaterialIcon(value), 
+                          color: isDark ? MarketplaceTheme.darkAccentGreen : MarketplaceTheme.lightAccent, size: 20),
+                      const SizedBox(width: 12),
+                      Text(value),
+                    ],
+                  ),
+                );
+              }).toList(),
+              onChanged: (newValue) {
+                setState(() {
+                  _selectedMaterial = newValue!;
+                });
+              },
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // Title Field
+        _buildTextField(
+          controller: _titleController,
+          label: 'Listing Title',
+          hint: 'e.g. 5kg of Copper Wires',
+          icon: Icons.title,
+          isDark: isDark,
+          validator: (v) => v!.isEmpty ? 'Title is required' : null,
+        ),
+        const SizedBox(height: 12),
+
+        // Description Field
+        _buildTextField(
+          controller: _descriptionController,
+          label: 'Description',
+          hint: 'Condition, details, etc.',
+          icon: Icons.description_outlined,
+          isDark: isDark,
+          maxLines: 3,
+        ),
+        const SizedBox(height: 12),
+
+        // Weight Field
+        Row(
+          children: [
+            Expanded(
+              flex: 2,
+              child: _buildTextField(
+                controller: _weightController,
+                label: 'Weight (kg)',
+                hint: '0.0',
+                icon: Icons.scale_outlined,
+                isDark: isDark,
+                keyboardType: TextInputType.number,
+                onChanged: (val) => setState(() {}), // Trigger total recalc
+                validator: (v) {
+                  if (v == null || v.isEmpty) return 'Required';
+                  final n = double.tryParse(v);
+                  if (n == null || n <= 0) return 'Invalid';
+                  if (n > 10) return 'Max 10kg';
+                  return null;
+                },
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              flex: 1,
+              child: GlassCard(
+                height: 60,
+                child: Center(
+                  child: Text(
+                    'KG',
+                    style: TextStyle(
+                      color: isDark ? Colors.white70 : Colors.black54,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
-      );
-    }
+      ],
+    );
+  }
 
-    // Manual Location Entry
+  Widget _buildPricingSection(bool isDark) {
+    return Column(
+      children: [
+        // Rate Card
+        Container(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+          decoration: BoxDecoration(
+            color: (isDark ? MarketplaceTheme.darkAccentGreen : MarketplaceTheme.lightAccent).withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: (isDark ? MarketplaceTheme.darkAccentGreen : MarketplaceTheme.lightAccent).withOpacity(0.3),
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Current Market Rate',
+                style: TextStyle(
+                  color: isDark ? Colors.white70 : Colors.black54,
+                  fontSize: 14,
+                ),
+              ),
+              Text(
+                'Rs ${_materialRates[_selectedMaterial]}/kg',
+                style: TextStyle(
+                  color: isDark ? MarketplaceTheme.darkAccentGreen : MarketplaceTheme.lightAccent,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Pickup Address
+        _buildTextField(
+          controller: _addressController,
+          label: 'Pickup Location',
+          hint: 'Full Address',
+          icon: Icons.location_on_outlined,
+          isDark: isDark,
+          validator: (v) => v!.isEmpty ? 'Address is required' : null,
+        ),
+        const SizedBox(height: 12),
+
+        // Collector Toggle
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(
+            'Request Collector Pickup',
+            style: TextStyle(
+               color: isDark ? Colors.white : Colors.black87,
+               fontWeight: FontWeight.w500,
+            ),
+          ),
+          activeColor: isDark ? MarketplaceTheme.darkAccentCyan : MarketplaceTheme.lightAccent,
+          value: _requestCollector,
+          onChanged: (val) => setState(() => _requestCollector = val),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLivePreviewBar(bool isDark) {
+    final double safeAreaBottom = MediaQuery.of(context).padding.bottom;
+    
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + safeAreaBottom),
       decoration: BoxDecoration(
-        color: isDark ? AppTheme.darkCardSurface : Colors.white,
+        color: isDark ? const Color(0xFF0F172A).withOpacity(0.9) : Colors.white.withOpacity(0.9),
+        border: Border(top: BorderSide(color: isDark ? Colors.white10 : Colors.black12)),
+        boxShadow: [
+          BoxShadow(
+             color: Colors.black.withOpacity(0.1),
+             blurRadius: 10,
+             offset: const Offset(0, -4),
+          )
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Live Preview Card (Mini)
+          Row(
+            children: [
+               Container(
+                 width: 50, height: 50,
+                 decoration: BoxDecoration(
+                   color: Colors.grey[300],
+                   borderRadius: BorderRadius.circular(8),
+                   image: _selectedImages.isNotEmpty 
+                     ? DecorationImage(
+                         image: FileImage(File(_selectedImages.first.path)),
+                         fit: BoxFit.cover,
+                       )
+                     : null,
+                 ),
+                 child: _selectedImages.isEmpty 
+                     ? const Icon(Icons.image, color: Colors.grey)
+                     : null,
+               ),
+               const SizedBox(width: 12),
+               Expanded(
+                 child: Column(
+                   crossAxisAlignment: CrossAxisAlignment.start,
+                   children: [
+                     Text(
+                       _titleController.text.isEmpty ? 'Listing Preview' : _titleController.text,
+                       maxLines: 1,
+                       overflow: TextOverflow.ellipsis,
+                       style: TextStyle(
+                         color: isDark ? Colors.white : Colors.black87,
+                         fontWeight: FontWeight.bold,
+                       ),
+                     ),
+                     Text(
+                       '${_weightController.text.isEmpty ? '0' : _weightController.text} kg ● $_selectedMaterial',
+                       style: TextStyle(
+                         color: isDark ? Colors.white54 : Colors.black54,
+                         fontSize: 12,
+                       ),
+                     ),
+                   ],
+                 ),
+               ),
+               Column(
+                 crossAxisAlignment: CrossAxisAlignment.end,
+                 children: [
+                    Text(
+                      'EST. VALUE',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: isDark ? Colors.white38 : Colors.black38,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                       'Rs ${_estimatedValue.toStringAsFixed(0)}',
+                       style: TextStyle(
+                         color: isDark ? MarketplaceTheme.darkAccentCyan : MarketplaceTheme.lightAccent,
+                         fontWeight: FontWeight.bold,
+                         fontSize: 18,
+                       ),
+                    ),
+                 ],
+               ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          
+          // Publish Button
+          SizedBox(
+            width: double.infinity,
+            child: NeonButton(
+              text: 'PUBLISH LISTING',
+              isLoading: _isSubmitting,
+              onPressed: _publishListing,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Helper Widgets
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    required bool isDark,
+    int maxLines = 1,
+    TextInputType? keyboardType,
+    String? Function(String?)? validator,
+    void Function(String)? onChanged,
+  }) {
+    return GlassCard(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: TextFormField(
+        controller: controller,
+        maxLines: maxLines,
+        keyboardType: keyboardType,
+        onChanged: onChanged,
+        validator: validator,
+        style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+        decoration: InputDecoration(
+          border: InputBorder.none,
+          labelText: label,
+          hintText: hint,
+          labelStyle: TextStyle(color: isDark ? Colors.white60 : Colors.black45),
+          hintStyle: TextStyle(color: isDark ? Colors.white24 : Colors.black12),
+          icon: Icon(icon, color: isDark ? Colors.white54 : Colors.black38),
+        ),
+      ),
+    );
+  }
+
+  IconData _getMaterialIcon(String type) {
+    switch (type) {
+      case 'Plastic': return Icons.local_drink;
+      case 'Paper': return Icons.description;
+      case 'Metal': return Icons.build;
+      case 'E-Waste': return Icons.computer;
+      case 'Glass': return Icons.wine_bar;
+      default: return Icons.recycling;
+    }
+  }
+}
+
+class DottedBorderPlaceholder extends StatelessWidget {
+  final bool isDark;
+  final bool isAnalyzing;
+
+  const DottedBorderPlaceholder(
+      {Key? key, required this.isDark, required this.isAnalyzing})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.02),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDark 
-              ? AppTheme.darkSecondaryGreen.withOpacity(0.3)
-              : AppTheme.lightGray,
+          color: isDark ? Colors.white24 : Colors.black26, 
+          style: BorderStyle.solid, // Simple border for now
+          width: 1,
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.edit_location_alt,
-                color: isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen,
-                size: 20,
+      child: Center(
+        child: isAnalyzing
+            ? Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 8),
+                  Text(
+                    'AI Analyzing...',
+                    style: TextStyle(
+                      color: isDark ? MarketplaceTheme.darkAccentCyan : MarketplaceTheme.lightAccent,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              )
+            : Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.add_a_photo_outlined,
+                      size: 40,
+                      color: isDark ? Colors.white54 : Colors.black45),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Tap to Upload',
+                    style: TextStyle(
+                      color: isDark ? Colors.white54 : Colors.black45,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    'AI will auto-detect details',
+                    style: TextStyle(
+                      color: isDark ? Colors.white24 : Colors.black26,
+                      fontSize: 10,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 8),
-              Text(
-                'Enter Location Manually',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? AppTheme.darkTextPrimary : AppTheme.textDark,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          TextFormField(
-            controller: _addressController,
-            decoration: const InputDecoration(
-              labelText: 'Address',
-              hintText: 'Enter your street address',
-            ),
-            onChanged: (value) {
-              // Schedule setState for next frame to avoid "setState during build" error
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (mounted) setState(() {});
-              });
-            },
-            validator: (value) {
-              if (!_isLocationDetected && (value == null || value.isEmpty)) {
-                return 'Address is required';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: _cityController,
-            decoration: const InputDecoration(
-              labelText: 'City',
-              hintText: 'Enter your city',
-            ),
-            onChanged: (value) {
-              // Schedule setState for next frame to avoid "setState during build" error
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (mounted) setState(() {});
-              });
-            },
-            validator: (value) {
-              if (!_isLocationDetected && (value == null || value.isEmpty)) {
-                return 'City is required';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: _landmarkController,
-            decoration: const InputDecoration(
-              labelText: 'Nearby Landmark (Optional)',
-              hintText: 'e.g., Near City Mall',
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextButton.icon(
-            onPressed: _detectLocation,
-            icon: const Icon(Icons.my_location, size: 18),
-            label: const Text('Try Auto-Detect Again'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDescriptionField(bool isDark) {
-    return TextFormField(
-      controller: _descriptionController,
-      maxLines: 4,
-      decoration: const InputDecoration(
-        hintText: 'Add any extra details about your recyclable item...',
-      ),
-    );
-  }
-
-  Widget _buildListingSummaryCard(bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: isDark 
-            ? AppTheme.darkCardSurface
-            : AppTheme.primaryGreen.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: (isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen)
-              .withOpacity(0.3),
-          width: 2,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.preview,
-                color: isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen,
-                size: 24,
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'Listing Summary (Live Preview)',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: isDark ? AppTheme.darkTextPrimary : AppTheme.textDark,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _buildSummaryRow(
-            'Material',
-            _selectedMaterial,
-            isDark,
-            isComplete: true,
-          ),
-          _buildSummaryRow(
-            'Weight',
-            _weightController.text.isNotEmpty ? '${_weightController.text} kg' : 'Not entered',
-            isDark,
-            isComplete: _weightController.text.isNotEmpty,
-          ),
-          _buildSummaryRow(
-            'Estimated Value',
-            _estimatedValue > 0 
-                ? 'Rs ${_estimatedValue.toStringAsFixed(0)}' 
-                : 'Rs 0',
-            isDark,
-            isComplete: _estimatedValue > 0,
-          ),
-          _buildSummaryRow(
-            'Pickup Location',
-            _isLocationDetected 
-                ? 'Auto-detected' 
-                : (_addressController.text.isNotEmpty ? 'Manual Entry' : 'Not provided'),
-            isDark,
-            isComplete: _isLocationDetected || _addressController.text.isNotEmpty,
-          ),
-          _buildSummaryRow(
-            'Images',
-            '${_selectedImages.length} photo${_selectedImages.length != 1 ? 's' : ''}',
-            isDark,
-            isComplete: _selectedImages.isNotEmpty,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSummaryRow(String label, String value, bool isDark, {bool isComplete = false}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Icon(
-                isComplete ? Icons.check_circle : Icons.radio_button_unchecked,
-                size: 16,
-                color: isComplete 
-                    ? (isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen)
-                    : (isDark ? AppTheme.darkTextSecondary : AppTheme.textLight),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: isDark ? AppTheme.darkTextSecondary : AppTheme.textLight,
-                ),
-              ),
-            ],
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: isComplete
-                  ? (isDark ? AppTheme.darkTextPrimary : AppTheme.textDark)
-                  : (isDark ? AppTheme.darkTextSecondary : AppTheme.textLight),
-            ),
-          ),
-        ],
       ),
     );
   }

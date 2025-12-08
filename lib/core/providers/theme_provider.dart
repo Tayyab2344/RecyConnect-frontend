@@ -25,10 +25,14 @@ class ThemeProvider extends ChangeNotifier {
       _isInitialized = true;
       notifyListeners();
     } catch (e) {
-      debugPrint('Error loading theme mode: $e');
+
       _isInitialized = true;
       notifyListeners();
     }
+  }
+
+  Future<void> initialize() async {
+    await _loadThemeMode();
   }
 
   Future<void> toggleTheme() async {
@@ -45,12 +49,17 @@ class ThemeProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> setDarkMode(bool isDark) async {
+    final mode = isDark ? ThemeMode.dark : ThemeMode.light;
+    await setThemeMode(mode);
+  }
+
   Future<void> _saveThemeMode() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(_themeKey, isDarkMode);
     } catch (e) {
-      debugPrint('Error saving theme mode: $e');
+
     }
   }
 }

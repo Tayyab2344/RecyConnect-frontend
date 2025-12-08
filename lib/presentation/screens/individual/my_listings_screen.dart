@@ -108,7 +108,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Listings'),
+        title: const Text('My Listings (DEBUG MODE)'),
         actions: [
           IconButton(
             icon: const Icon(Icons.filter_list),
