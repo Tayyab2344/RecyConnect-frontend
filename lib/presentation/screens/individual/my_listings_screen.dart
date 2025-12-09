@@ -1,8 +1,11 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../core/models/listing_model.dart';
 import '../../../core/services/listing_service.dart';
 import '../../../core/utils/static_data.dart';
+import '../../widgets/marketplace/glass_card.dart';
+import '../../../core/theme/marketplace_theme.dart';
 import 'create_listing_screen.dart';
 
 class MyListingsScreen extends StatefulWidget {
@@ -37,7 +40,6 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
     setState(() => _isLoading = true);
     
     try {
-      // Load listings with filters
       final result = await _listingService.getListings(
         material: _filterMaterial,
         status: _filterStatus,
@@ -46,7 +48,6 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
         limit: _itemsPerPage,
       );
 
-      // Load stats
       final stats = await _listingService.getListingStats();
 
       setState(() {
@@ -70,6 +71,8 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: Theme.of(context).cardColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Delete Listing'),
         content: const Text('Are you sure you want to delete this listing?'),
         actions: [
@@ -106,38 +109,69 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('My Listings (DEBUG MODE)'),
+        title: const Text('My Listings'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+        flexibleSpace: ClipRRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(color: Colors.transparent),
+          ),
+        ),
+        leading: Navigator.canPop(context) ? IconButton(
+          icon: Icon(Icons.arrow_back_ios_new, color: isDark ? Colors.white : Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ) : null,
         actions: [
           IconButton(
-            icon: const Icon(Icons.filter_list),
+            icon: Icon(Icons.filter_list, color: isDark ? Colors.white : Colors.black),
             onPressed: _showFilterDialog,
-          ),
-          IconButton(
-            icon: const Icon(Icons.download),
-            onPressed: _showExportDialog,
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: _loadListings,
-        child: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : Column(
-                children: [
-                  _buildStatsCard(),
-                  _buildSearchBar(),
-                  if (_filterMaterial != null || _filterStatus != null)
-                    _buildActiveFilters(),
-                  Expanded(
-                    child: _listings.isEmpty
-                        ? _buildEmptyState()
-                        : _buildListingsList(),
-                  ),
-                  if (_totalPages > 1) _buildPagination(),
-                ],
+      body: Stack(
+        children: [
+          // Gradient Background
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isDark
+                    ? [const Color(0xFF0F1F19), const Color(0xFF1B3A2F)]
+                    : [const Color(0xFFF0FCF4), const Color(0xFFE0F5E9)],
               ),
+            ),
+          ),
+          
+          SafeArea(
+            child: RefreshIndicator(
+              onRefresh: _loadListings,
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : Column(
+                      children: [
+                        _buildStatsCard(isDark),
+                        _buildSearchBar(isDark),
+                        if (_filterMaterial != null || _filterStatus != null)
+                          _buildActiveFilters(isDark),
+                        Expanded(
+                          child: _listings.isEmpty
+                              ? _buildEmptyState(isDark)
+                              : _buildListingsGrid(isDark),
+                        ),
+                        if (_totalPages > 1) _buildPagination(isDark),
+                      ],
+                    ),
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
@@ -145,217 +179,308 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
             context,
             MaterialPageRoute(builder: (context) => const CreateListingScreen()),
           );
-          // Refresh listings if a new listing was created
           if (result == true) {
             _loadListings();
           }
         },
-        icon: const Icon(Icons.add),
-        label: const Text('New Listing'),
+        backgroundColor: const Color(0xFF4CAF50),
+        icon: const Icon(Icons.add, color: Colors.white),
+        label: const Text('New Listing', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
     );
   }
 
-  Widget _buildStatsCard() {
+  Widget _buildStatsCard(bool isDark) {
     if (_stats == null) return const SizedBox.shrink();
 
-    return Card(
-      margin: const EdgeInsets.all(16),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
+    return GlassCard(
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          _buildStatItem('Total', '${_stats!['totalListings'] ?? 0}', Icons.inventory_2_outlined, isDark),
+          Container(width: 1, height: 40, color: isDark ? Colors.white24 : Colors.black12),
+          _buildStatItem('Pending', '${_stats!['pendingCount'] ?? 0}', Icons.hourglass_empty, isDark),
+          Container(width: 1, height: 40, color: isDark ? Colors.white24 : Colors.black12),
+          _buildStatItem('Sold (kg)', '${(_stats!['totalWeight'] ?? 0).toStringAsFixed(1)}', Icons.scale_outlined, isDark),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatItem(String label, String value, IconData icon, bool isDark) {
+    return Column(
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            _buildStatItem(
-              'Total',
-              '${_stats!['totalListings'] ?? 0}',
-              Icons.list_alt,
-            ),
-            _buildStatItem(
-              'Pending',
-              '${_stats!['pendingCount'] ?? 0}',
-              Icons.pending,
-            ),
-            _buildStatItem(
-              'Weight Sold',
-              '${(_stats!['totalWeight'] ?? 0).toStringAsFixed(1)} kg',
-              Icons.scale,
+            Icon(icon, size: 16, color: const Color(0xFF4CAF50)),
+            const SizedBox(width: 6),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : const Color(0xFF2C3E50),
+              ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildStatItem(String label, String value, IconData icon) {
-    return Column(
-      children: [
-        Icon(icon, size: 24, color: Colors.green),
         const SizedBox(height: 4),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
         Text(
           label,
           style: TextStyle(
             fontSize: 12,
-            color: Colors.grey[600],
+            color: isDark ? Colors.white60 : Colors.black54,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildSearchBar() {
+  Widget _buildSearchBar(bool isDark) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: TextField(
-        decoration: InputDecoration(
-          hintText: 'Search listings...',
-          prefixIcon: const Icon(Icons.search),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: GlassCard(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: TextField(
+          style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+          decoration: InputDecoration(
+            hintText: 'Search your listings...',
+            hintStyle: TextStyle(color: isDark ? Colors.white54 : Colors.black38),
+            icon: Icon(Icons.search, color: isDark ? Colors.white54 : Colors.black38),
+            border: InputBorder.none,
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          onChanged: (value) => setState(() => _searchQuery = value),
+          onSubmitted: (_) => _loadListings(),
         ),
-        onChanged: (value) {
-          setState(() => _searchQuery = value);
-        },
-        onSubmitted: (_) => _loadListings(),
       ),
     );
   }
 
-  Widget _buildActiveFilters() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Wrap(
-        spacing: 8,
+  Widget _buildActiveFilters(bool isDark) {
+    return SizedBox(
+      height: 40,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         children: [
           if (_filterMaterial != null)
-            Chip(
-              label: Text('Material: ${_filterMaterial!.toUpperCase()}'),
-              onDeleted: () {
-                setState(() => _filterMaterial = null);
-                _loadListings();
-              },
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Chip(
+                backgroundColor: const Color(0xFF4CAF50).withOpacity(0.2),
+                label: Text(
+                  'Material: ${_filterMaterial!.toUpperCase()}', 
+                  style: TextStyle(color: isDark ? Colors.white : const Color(0xFF2E7D32)),
+                ),
+                deleteIcon: Icon(Icons.close, size: 18, color: isDark ? Colors.white70 : const Color(0xFF2E7D32)),
+                onDeleted: () {
+                  setState(() => _filterMaterial = null);
+                  _loadListings();
+                },
+              ),
             ),
           if (_filterStatus != null)
-            Chip(
-              label: Text('Status: $_filterStatus'),
-              onDeleted: () {
-                setState(() => _filterStatus = null);
-                _loadListings();
-              },
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Chip(
+                backgroundColor: Colors.blue.withOpacity(0.2),
+                label: Text(
+                  'Status: $_filterStatus', 
+                  style: TextStyle(color: isDark ? Colors.white : Colors.blue[800]),
+                ),
+                deleteIcon: Icon(Icons.close, size: 18, color: isDark ? Colors.white70 : Colors.blue[800]),
+                onDeleted: () {
+                  setState(() => _filterStatus = null);
+                  _loadListings();
+                },
+              ),
             ),
         ],
       ),
     );
   }
 
-  Widget _buildListingsList() {
-    return ListView.builder(
+  Widget _buildListingsGrid(bool isDark) {
+    return GridView.builder(
       padding: const EdgeInsets.all(16),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 0.75,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+      ),
       itemCount: _listings.length,
       itemBuilder: (context, index) {
         final listing = _listings[index];
-        return _buildListingCard(listing);
+        return _buildListingCard(listing, isDark);
       },
     );
   }
 
-  Widget _buildListingCard(Listing listing) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: _getMaterialColor(listing.materialType),
-          child: Text(StaticDataHelper.getMaterialIcon(listing.materialType)),
-        ),
-        title: Text(
-          '${listing.materialTypeDisplay} - ${listing.estimatedWeight} kg',
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildListingCard(Listing listing, bool isDark) {
+    return GestureDetector(
+      onTap: () => _showListingDetails(listing),
+      child: GlassCard(
+        padding: EdgeInsets.zero,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const SizedBox(height: 4),
-            Text(listing.pickupAddress),
-            const SizedBox(height: 4),
-            Text(
-              DateFormat('MMM dd, yyyy - HH:mm').format(listing.createdAt),
-              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-            ),
-          ],
-        ),
-        trailing: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Chip(
-              label: Text(
-                listing.statusDisplay,
-                style: const TextStyle(fontSize: 11),
+            // Status Badge
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: _getStatusColor(listing.status).withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: _getStatusColor(listing.status).withOpacity(0.5)),
+                    ),
+                    child: Text(
+                      listing.statusDisplay,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: _getStatusColor(listing.status),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              backgroundColor: _getStatusColor(listing.status),
-              labelPadding: const EdgeInsets.symmetric(horizontal: 8),
+            ),
+            
+            // Icon
+            Expanded(
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: [
+                        _getMaterialColor(listing.materialType).withOpacity(0.3),
+                        _getMaterialColor(listing.materialType).withOpacity(0.1),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
+                  child: Text(
+                    StaticDataHelper.getMaterialIcon(listing.materialType),
+                    style: const TextStyle(fontSize: 40),
+                  ),
+                ),
+              ),
+            ),
+            
+            // Details
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    listing.materialTypeDisplay,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : const Color(0xFF2C3E50),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(Icons.scale, size: 14, color: isDark ? Colors.white60 : Colors.grey),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${listing.estimatedWeight} kg',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: isDark ? Colors.white70 : Colors.grey[700],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(Icons.calendar_today, size: 14, color: isDark ? Colors.white60 : Colors.grey),
+                      const SizedBox(width: 4),
+                      Text(
+                        DateFormat('MMM dd').format(listing.createdAt),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDark ? Colors.white54 : Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ],
         ),
-        onTap: () => _showListingDetails(listing),
       ),
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(bool isDark) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.list_alt, size: 64, color: Colors.grey[400]),
+          Icon(
+            Icons.inventory_2_outlined, 
+            size: 80, 
+            color: isDark ? Colors.white24 : Colors.black12
+          ),
           const SizedBox(height: 16),
           Text(
-            'No listings yet',
-            style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+            'No listings found',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: isDark ? Colors.white70 : Colors.grey[600],
+            ),
           ),
           const SizedBox(height: 8),
           Text(
-            'Create your first listing to get started',
-            style: TextStyle(color: Colors.grey[500]),
+            'Add your first item to start selling!',
+            style: TextStyle(
+              color: isDark ? Colors.white54 : Colors.grey[500],
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildPagination() {
-    return Container(
+  Widget _buildPagination(bool isDark) {
+    return Padding(
       padding: const EdgeInsets.all(16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           IconButton(
-            icon: const Icon(Icons.chevron_left),
-            onPressed: _currentPage > 1
-                ? () {
-                    setState(() => _currentPage--);
-                    _loadListings();
-                  }
-                : null,
+            icon: Icon(Icons.arrow_back_ios, size: 16, color: isDark ? Colors.white70 : Colors.black54),
+            onPressed: _currentPage > 1 ? () => setState(() { _currentPage--; _loadListings(); }) : null,
           ),
-          Text('Page $_currentPage of $_totalPages'),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              'Page $_currentPage of $_totalPages',
+              style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+            ),
+          ),
           IconButton(
-            icon: const Icon(Icons.chevron_right),
-            onPressed: _currentPage < _totalPages
-                ? () {
-                    setState(() => _currentPage++);
-                    _loadListings();
-                  }
-                : null,
+            icon: Icon(Icons.arrow_forward_ios, size: 16, color: isDark ? Colors.white70 : Colors.black54),
+            onPressed: _currentPage < _totalPages ? () => setState(() { _currentPage++; _loadListings(); }) : null,
           ),
         ],
       ),
@@ -363,9 +488,13 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
   }
 
   void _showFilterDialog() {
+    // Keep existing implementation but styled better if needed
+    // For brevity, reusing standard dialog but could be GlassDialog
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: Theme.of(context).cardColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Filter Listings'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -405,7 +534,8 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
             },
             child: const Text('Clear'),
           ),
-          TextButton(
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF4CAF50), foregroundColor: Colors.white),
             onPressed: () {
               Navigator.pop(context);
               _loadListings();
@@ -417,41 +547,19 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
     );
   }
 
-  void _showExportDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Export to CSV'),
-        content: const Text('Export your listings to a CSV file?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              final url = _listingService.getExportUrl(
-                material: _filterMaterial,
-                status: _filterStatus,
-              );
-              // In a real app, use url_launcher or download package
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Export feature: use url_launcher package')),
-              );
-              Navigator.pop(context);
-            },
-            child: const Text('Export'),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _showListingDetails(Listing listing) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('${listing.materialTypeDisplay} Listing'),
+        backgroundColor: Theme.of(context).cardColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+             Text(StaticDataHelper.getMaterialIcon(listing.materialType), style: const TextStyle(fontSize: 24)),
+             const SizedBox(width: 8),
+             Expanded(child: Text('${listing.materialTypeDisplay} Listing')),
+          ],
+        ),
         content: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -460,15 +568,13 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
               _buildDetailRow('Weight', '${listing.estimatedWeight} kg'),
               _buildDetailRow('Status', listing.statusDisplay),
               _buildDetailRow('Address', listing.pickupAddress),
-              if (listing.latitude != null)
-                _buildDetailRow('Location', '${listing.latitude!.toStringAsFixed(4)}, ${listing.longitude!.toStringAsFixed(4)}'),
               _buildDetailRow('Created', DateFormat('MMM dd, yyyy').format(listing.createdAt)),
               if (listing.notes != null && listing.notes!.isNotEmpty)
                 _buildDetailRow('Notes', listing.notes!),
             ],
           ),
         ),
-        actions: [
+         actions: [
           if (listing.status == 'PENDING')
             TextButton(
               onPressed: () {
@@ -477,7 +583,8 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
               },
               child: const Text('Delete', style: TextStyle(color: Colors.red)),
             ),
-          TextButton(
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF4CAF50), foregroundColor: Colors.white),
             onPressed: () => Navigator.pop(context),
             child: const Text('Close'),
           ),
@@ -488,18 +595,13 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
 
   Widget _buildDetailRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 80,
-            child: Text(
-              '$label:',
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-          Expanded(child: Text(value)),
+          Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey)),
+          Text(value, style: const TextStyle(fontSize: 15)),
+          const Divider(),
         ],
       ),
     );
@@ -507,31 +609,22 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
 
   Color _getMaterialColor(String material) {
     switch (material.toLowerCase()) {
-      case 'plastic':
-        return Colors.green.shade100;
-      case 'paper':
-        return Colors.orange.shade100;
-      case 'metal':
-        return Colors.grey.shade200;
-      case 'e-waste':
-        return Colors.blue.shade100;
-      default:
-        return Colors.grey.shade100;
+      case 'plastic': return Colors.orange;
+      case 'paper': return Colors.blue;
+      case 'metal': return Colors.grey;
+      case 'e-waste': return Colors.purple;
+      case 'glass': return Colors.cyan;
+      default: return Colors.green;
     }
   }
 
   Color _getStatusColor(String status) {
     switch (status) {
-      case 'PENDING':
-        return Colors.orange.shade100;
-      case 'COLLECTED':
-        return Colors.blue.shade100;
-      case 'COMPLETED':
-        return Colors.green.shade100;
-      case 'CANCELLED':
-        return Colors.red.shade100;
-      default:
-        return Colors.grey.shade100;
+      case 'PENDING': return Colors.orange;
+      case 'COLLECTED': return Colors.blue;
+      case 'COMPLETED': return Colors.green;
+      case 'CANCELLED': return Colors.red;
+      default: return Colors.grey;
     }
   }
 }

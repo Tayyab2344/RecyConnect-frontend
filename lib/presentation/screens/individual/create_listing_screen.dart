@@ -5,6 +5,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 import 'package:recyconnect/core/models/listing_model.dart';
 import 'package:recyconnect/core/services/auth_service.dart';
 import 'package:recyconnect/core/services/listing_service.dart';
@@ -23,7 +24,8 @@ class _CreateListingScreenState extends State<CreateListingScreen>
     with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final ListingService _listingService = ListingService();
-  final AuthService _authService = AuthService();
+  // Using Provider for AuthService instead of local instance
+
 
   // Scroll Controller
   final ScrollController _scrollController = ScrollController();
@@ -79,7 +81,8 @@ class _CreateListingScreenState extends State<CreateListingScreen>
 
   Future<void> _loadUserLocation() async {
     try {
-      final response = await _authService.fetchProfile();
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final response = await authService.fetchProfile();
       if (response['success'] == true) {
         final data = response['data']['data'];
         final addressParts = <String>[];
@@ -89,7 +92,8 @@ class _CreateListingScreenState extends State<CreateListingScreen>
         if (addressParts.isNotEmpty) {
           setState(() {
             _addressController.text = addressParts.join(', ');
-            _locationMethod = 'auto';
+            // Force manual so user can edit if they want, but it's pre-filled
+            _locationMethod = 'manual';
           });
         }
       }
@@ -522,7 +526,14 @@ class _CreateListingScreenState extends State<CreateListingScreen>
                   if (v == null || v.isEmpty) return 'Required';
                   final n = double.tryParse(v);
                   if (n == null || n <= 0) return 'Invalid';
-                  if (n > 10) return 'Max 10kg';
+                  
+                  // Role-based validation
+                  final authService = Provider.of<AuthService>(context, listen: false);
+                  final userRole = authService.userRole;
+                  // Fallback if role is not readily available synchronously
+                  if (userRole == 'individual' && n > 20) return 'Max 20kg for individuals';
+                  if ((userRole == 'warehouse' || userRole == 'company') && n < 10) return 'Min 10kg required';
+                  
                   return null;
                 },
               ),
