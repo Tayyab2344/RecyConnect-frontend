@@ -1672,9 +1672,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                       if (isLastStep) {
                         _handleRegister();
                       } else {
-                        if (_validateCurrentStep()) {
-                          setState(() => _currentStep++);
-                        }
+                        _handleNextStep();
                       }
                     },
               child: _isLoading
@@ -1694,7 +1692,14 @@ class _RegistrationScreenState extends State<RegistrationScreen>
     );
   }
 
-  bool _validateCurrentStep() {
+  Future<void> _handleNextStep() async {
+    final isValid = await _validateCurrentStep();
+    if (isValid && mounted) {
+      setState(() => _currentStep++);
+    }
+  }
+
+  Future<bool> _validateCurrentStep() async {
     switch (_currentStep) {
       case 0:
         // Validate basic info
@@ -1737,13 +1742,38 @@ class _RegistrationScreenState extends State<RegistrationScreen>
           return false;
         }
         
-        // Profile image validation
-        if (widget.role != 'individual' && _profileImage == null) {
-           _showSnackBar('Profile picture is required for ${widget.role}', isError: true);
-           return false;
-        }
+         if (widget.role != 'individual' && _profileImage == null) {
+            _showSnackBar('Profile picture is required for ${widget.role}', isError: true);
+            return false;
+         }
 
-        return _formKey.currentState?.validate() ?? false;
+         if (!(_formKey.currentState?.validate() ?? false)) {
+           return false;
+         }
+
+         // Check email existence asynchronously
+         setState(() => _isLoading = true);
+         try {
+           final authService = context.read<AuthService>();
+           final result = await authService.checkEmail(_emailController.text.trim());
+           if (result['success'] == true) {
+             final exists = result['data']['exists'] == true;
+             if (exists) {
+               _showSnackBar('Email already exists. Please login or use another email.', isError: true);
+               return false;
+             }
+           } else {
+             _showSnackBar('Failed to validate email: ${result['message']}', isError: true);
+             return false;
+           }
+         } catch (e) {
+           _showSnackBar('Error validating email', isError: true);
+           return false;
+         } finally {
+           if (mounted) setState(() => _isLoading = false);
+         }
+
+         return true;
       case 1:
         if (widget.role == 'warehouse' || widget.role == 'company') {
           if (_cnicImage == null) {
@@ -1821,8 +1851,13 @@ class _RegistrationScreenState extends State<RegistrationScreen>
         'area': _selectedArea,
         'streetAddress': _addressController.text.trim(),
         'contactNo': _contactNoController.text.trim(),
+        'contactNo': _contactNoController.text.trim(),
         'name': _nameController.text.trim(), // Always include name
       };
+
+      if (_cnicController.text.isNotEmpty) {
+        userData['cnic'] = _cnicController.text.trim();
+      }
 
       if (widget.role == 'warehouse') {
         userData['businessName'] = _businessNameController.text.trim();

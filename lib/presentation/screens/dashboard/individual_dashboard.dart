@@ -191,14 +191,28 @@ class _IndividualDashboardState extends State<IndividualDashboard> {
   }
 
   Widget _buildBrandingTitle() {
-    return Text(
-      'RecyConnect',
-      style: TextStyle(
-        color: Colors.white,
-        fontSize: 32,
-        fontWeight: FontWeight.bold,
-        letterSpacing: -0.5,
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'RecyConnect',
+          style: TextStyle(
+            color: Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF4CAF50),
+            fontSize: 32,
+            fontWeight: FontWeight.bold,
+            letterSpacing: -0.5,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Eco-friendly Marketplace',
+          style: TextStyle(
+            color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF1A1A1A)).withOpacity(0.7),
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
     );
   }
 
@@ -362,7 +376,7 @@ class _IndividualDashboardState extends State<IndividualDashboard> {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
               ),
             ),
             Container(
@@ -477,7 +491,7 @@ class _IndividualDashboardState extends State<IndividualDashboard> {
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: Theme.of(context).textTheme.bodyLarge?.color,
           ),
         ),
         const SizedBox(height: 16),

@@ -33,7 +33,9 @@ abstract class AppColors {
   static const Color lightGrey = Color(0xFFE0E0E0);
   static const Color mediumGrey = Color(0xFF9E9E9E);
   static const Color darkGrey = Color(0xFF616161);
+  static const Color textDarkGrey = Color(0xFF333333); // Added for Login Screen
   static const Color darkText = Color(0xFF1A1A1A);
+  static const Color textSecondary = Color(0xFF757575);
   static const Color black = Color(0xFF000000);
 
   // ============================================
@@ -113,14 +115,36 @@ abstract class AppColors {
   // Dark Mode Neon
   static const Color neonCyan = Color(0xFF00E5FF);
   static const Color neonGreen = Color(0xFF00E676);
+  static const Color neonTeal = Color(0xFF00D9A5); // Added for Login Screen
+  static const Color neonBlue = Color(0xFF0066FF); // Added for Login Screen
   static const Color neonPurple = Color(0xFFD500F9);
+  static const Color neonRed = Color(0xFFFF1744);
+  static const Color neonYellow = Color(0xFFFFEA00);
   static const Color darkGlassBorder = Color(0xFF00E5FF); // Cyan outline
+
+  // Dark Mode Accents
+  static const Color accentBlue = Color(0xFF3B82F6);
+  static const Color accentOrange = Color(0xFFF59E0B);
+  static const Color accentPurple = Color(0xFF8B5CF6);
+  static const Color accentRed = Color(0xFFEF4444);
+  static const Color accentYellow = Color(0xFFFBBF24);
 
   // Light Mode Pastel
   static const Color pastelMint = Color(0xFFE0F2F1);
   static const Color pastelGreen = Color(0xFFE8F5E9);
   static const Color pastelTeal = Color(0xFFB2DFDB);
   static const Color lightGlassBorder = Color(0xFFE0F2F1);
+
+  // ============================================
+  // LOGIN GRADIENT PALETTE
+  // ============================================
+  static const Color loginNavyDeep = Color(0xFF0A1628);
+  static const Color loginNavyDark = Color(0xFF0D2137);
+  static const Color loginNavyMedium = Color(0xFF0F2847);
+  static const Color loginNavyLight = Color(0xFF0A1E35);
+  static const Color loginWhiteSoft = Color(0xFFF0F9F7);
+  static const Color loginTealLight = Color(0xFFE8F5F2);
+  static const Color loginTealSoft = Color(0xFFDFF2ED);
 
 
   /// Get gradient for light mode backgrounds
@@ -131,12 +155,54 @@ abstract class AppColors {
       );
 
   /// Get gradient for primary button
-  static LinearGradient get primaryGradient => const LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [primaryGreen, ecoTeal],
-      );
+  static LinearGradient get darkBackgroundGradient => const LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [
+      loginNavyDeep,
+      loginNavyDark,
+      loginNavyMedium,
+      loginNavyLight,
+    ],
+    stops: [0.0, 0.3, 0.7, 1.0],
+  );
 
+  // Admin Gradients
+  static const LinearGradient neonGradient = LinearGradient(
+    colors: [neonGreen, neonCyan],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const LinearGradient primaryGradient = LinearGradient(
+    colors: [primaryGreen, Color(0xFF45A049)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const LinearGradient redGradient = LinearGradient(
+    colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static LinearGradient get lightCardGradient => LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [
+      Colors.white.withValues(alpha: 0.85),
+      Colors.white.withValues(alpha: 0.65),
+    ],
+  );
+
+  static LinearGradient get darkCardGradient => LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [
+      Colors.white.withValues(alpha: 0.12),
+      Colors.white.withValues(alpha: 0.05),
+    ],
+  );
   /// Get gradient for hero sections
   static LinearGradient get heroGradient => const LinearGradient(
         begin: Alignment.topLeft,

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
+// dart:ui import removed - BackdropFilter no longer used for performance
 import '../../../core/theme/marketplace_theme.dart';
 
 class Sidebar extends StatelessWidget {
@@ -30,29 +30,25 @@ class Sidebar extends StatelessWidget {
           ),
         ),
       ),
-      child: ClipRRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Column(
-            children: [
-              const SizedBox(height: 40),
-              // App Logo / Branding Icon
-              _buildLogo(),
-              const SizedBox(height: 40),
-              
-              // Navigation Items
-              _buildNavItem(0, Icons.home_rounded, 'Home'),
-              _buildNavItem(1, Icons.storefront_rounded, 'Market'),
-              _buildNavItem(2, Icons.add_circle_outline, 'Sell', isHighlight: true),
-              _buildNavItem(3, Icons.receipt_long_rounded, 'Orders'),
-              _buildNavItem(4, Icons.person_rounded, 'Profile'),
-              
-              const Spacer(),
-              _buildNavItem(5, Icons.settings_rounded, 'Settings'),
-              const SizedBox(height: 20),
-            ],
-          ),
-        ),
+      // Performance optimization: Removed BackdropFilter blur for low-end device support
+      child: Column(
+        children: [
+          const SizedBox(height: 40),
+          // App Logo / Branding Icon
+          _buildLogo(),
+          const SizedBox(height: 40),
+          
+          // Navigation Items
+          _buildNavItem(0, Icons.home_rounded, 'Home'),
+          _buildNavItem(1, Icons.storefront_rounded, 'Market'),
+          _buildNavItem(2, Icons.add_circle_outline, 'Sell', isHighlight: true),
+          _buildNavItem(3, Icons.receipt_long_rounded, 'Orders'),
+          _buildNavItem(4, Icons.person_rounded, 'Profile'),
+          
+          const Spacer(),
+          _buildNavItem(5, Icons.settings_rounded, 'Settings'),
+          const SizedBox(height: 20),
+        ],
       ),
     );
   }

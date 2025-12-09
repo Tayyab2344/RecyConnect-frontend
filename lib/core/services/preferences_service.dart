@@ -7,7 +7,7 @@ class PreferencesService {
   static const String _keyAdminEmail = 'admin_email';
   static const String _keyProfileImage = 'profile_image_base64';
   static const String _keyDarkMode = 'dark_mode';
-  static const String _keyAdminPassword = 'admin_password';
+  // Password handling removed - use backend authentication only
 
   // ═══════════════════════════════════════════════════════════
   // ADMIN NAME
@@ -48,7 +48,7 @@ class PreferencesService {
 
   static Future<String> getAdminEmail() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_keyAdminEmail) ?? 'panel.quantix@gmail.com';
+    return prefs.getString(_keyAdminEmail) ?? '';
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -85,24 +85,9 @@ class PreferencesService {
   }
 
   // ═══════════════════════════════════════════════════════════
-  // PASSWORD (Simple storage - in production use secure storage)
+  // PASSWORD - REMOVED FOR SECURITY
+  // All authentication should go through the backend API
   // ═══════════════════════════════════════════════════════════
-
-  static Future<void> saveAdminPassword(String password) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_keyAdminPassword, password);
-  }
-
-  static Future<String> getAdminPassword() async {
-    final prefs = await SharedPreferences.getInstance();
-    // Default password for first-time setup
-    return prefs.getString(_keyAdminPassword) ?? 'RecyAdmin@786';
-  }
-
-  static Future<bool> verifyPassword(String password) async {
-    final currentPassword = await getAdminPassword();
-    return password == currentPassword;
-  }
 
   // ═══════════════════════════════════════════════════════════
   // CLEAR ALL

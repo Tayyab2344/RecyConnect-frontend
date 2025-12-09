@@ -2,7 +2,7 @@
 
 A Flutter-based mobile application for the RecyConnect waste management and recycling platform.
 
-## 📋 Prerequisites
+## Prerequisites
 
 Before you begin, ensure you have the following installed:
 
@@ -13,7 +13,7 @@ Before you begin, ensure you have the following installed:
 - **Git**
 - **A code editor** (VS Code, Android Studio, or IntelliJ IDEA)
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Clone the Repository
 
@@ -73,7 +73,7 @@ flutter run -d <device-id>
 flutter run -d iphone
 ```
 
-## 🔨 Building the App
+## Building the App
 
 ### Android APK (Debug)
 
@@ -103,7 +103,7 @@ flutter build appbundle --release
 flutter build ios --release
 ```
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 RecyConnect-frontend/
@@ -133,7 +133,7 @@ RecyConnect-frontend/
 └── README.md
 ```
 
-## 🎨 Key Features
+## Key Features
 
 ### User Roles
 - **Individual Users:** Sell recyclables, browse marketplace
@@ -164,7 +164,7 @@ RecyConnect-frontend/
 - System analytics and reporting
 - Activity logs and monitoring
 
-## 📦 Key Dependencies
+## Key Dependencies
 
 | Package | Purpose |
 |---------|---------|
@@ -179,7 +179,7 @@ RecyConnect-frontend/
 | `glassmorphism` | Modern UI effects |
 | `intl` | Internationalization |
 
-## 🔧 Configuration
+## Configuration
 
 ### Connecting to Local Backend
 
@@ -211,7 +211,7 @@ Configure permissions in `ios/Runner/Info.plist`:
 - NSPhotoLibraryUsageDescription
 - NSLocationWhenInUseUsageDescription
 
-## 🧪 Testing
+## Testing
 
 ```bash
 # Run all tests
@@ -225,7 +225,7 @@ genhtml coverage/lcov.info -o coverage/html
 open coverage/html/index.html
 ```
 
-## 🎨 Themes
+## Themes
 
 The app supports both **Light** and **Dark** themes:
 
@@ -234,7 +234,7 @@ The app supports both **Light** and **Dark** themes:
 
 Toggle themes from the Profile → Settings screen.
 
-## 🌟 Special Features
+## Special Features
 
 ### Onboarding Experience
 First-time users see a 3-slide introduction explaining core features. This appears only once and is managed via `SharedPreferences`.
@@ -248,7 +248,7 @@ Different dashboards and features based on user role (Individual, Warehouse, Com
 ### Smart Location Detection
 Automatic location detection with manual fallback using Pakistan cities and areas.
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
@@ -284,7 +284,7 @@ flutter build apk
 flutter run
 ```
 
-## 📱 Running on Physical Device
+## Running on Physical Device
 
 ### Android
 
@@ -301,7 +301,7 @@ flutter run
 3. Trust the developer certificate on device
 4. Run from Xcode or use `flutter run`
 
-## 🚀 Deployment
+## Deployment
 
 ### Google Play Store (Android)
 
@@ -315,7 +315,7 @@ flutter run
 2. Configure signing and capabilities
 3. Archive and upload via Xcode
 
-## 📊 Performance Tips
+## Performance Tips
 
 - Use `const` constructors where possible
 - Implement pagination for large lists
@@ -323,21 +323,21 @@ flutter run
 - Use `ListView.builder` for long lists
 - Enable code shrinking in release builds
 
-## 🔐 Security
+## Security
 
 - All API calls use HTTPS in production
 - JWT tokens stored securely in SharedPreferences
 - Sensitive data never logged in release builds
 - Input validation on all forms
 
-## 📞 Support
+## Support
 
 For issues, questions, or contributions, please contact the development team.
 
-## 📄 License
+## License
 
 This project is licensed under the ISC License.
 
 ---
 
-**Built with ❤️ using Flutter**
+**Built with Flutter**

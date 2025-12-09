@@ -86,6 +86,7 @@ class AuthService extends ChangeNotifier {
 
         if (_token != null) {
           await _saveToken(_token!);
+          await _saveUserData(_user!);
         }
 
         _setLoading(false);
@@ -99,6 +100,26 @@ class AuthService extends ChangeNotifier {
       _setError('Network error: ${e.toString()}');
       _setLoading(false);
       return false;
+    }
+  }
+
+  Future<Map<String, dynamic>> checkEmail(String email) async {
+    try {
+      final response = await http.post(
+        Uri.parse(ApiConstants.checkEmail),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email}),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return {'success': true, 'data': data['data']};
+      } else {
+        return {'success': false, 'message': data['message']};
+      }
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
     }
   }
 
@@ -249,6 +270,7 @@ class AuthService extends ChangeNotifier {
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('auth_token');
+    await prefs.remove('user_data');
 
     notifyListeners();
   }
@@ -264,10 +286,32 @@ class AuthService extends ChangeNotifier {
     }
   }
 
+  Future<void> _saveUserData(Map<String, dynamic> userData) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('user_data', jsonEncode(userData));
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error saving user data: $e');
+      }
+    }
+  }
+
   Future<void> loadToken() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       _token = prefs.getString('auth_token');
+      
+      // Also load cached user data
+      final userDataStr = prefs.getString('user_data');
+      if (userDataStr != null) {
+        try {
+          _user = jsonDecode(userDataStr) as Map<String, dynamic>;
+        } catch (_) {
+          _user = null;
+        }
+      }
+      
       notifyListeners();
     } catch (e) {
       if (kDebugMode) {
@@ -350,8 +394,9 @@ class AuthService extends ChangeNotifier {
 
   Future<Map<String, dynamic>> fetchProfile() async {
     try {
-      _setLoading(true);
-      _setError(null);
+      // Set loading without notifying to prevent setState during build
+      _isLoading = true;
+      _error = null;
 
       final response = await http.get(
         Uri.parse('${ApiConstants.baseUrl}/auth/me'),
@@ -365,19 +410,25 @@ class AuthService extends ChangeNotifier {
 
       if (response.statusCode == 200) {
         _user = data['data'] as Map<String, dynamic>?;
-        notifyListeners();
-
-        _setLoading(false);
+        
+        // Save user data to persistent storage
+        if (_user != null) {
+          await _saveUserData(_user!);
+        }
+        
+        _isLoading = false;
+        notifyListeners();  // Notify once at the end
         return {'success': true, 'data': data};
       } else {
-        _setError(
-            data['message'] as String? ?? data['error']?['message'] as String? ?? 'Failed to fetch profile');
-        _setLoading(false);
+        _error = data['message'] as String? ?? data['error']?['message'] as String? ?? 'Failed to fetch profile';
+        _isLoading = false;
+        notifyListeners();  // Notify once at the end
         return {'success': false, 'message': data['message'] ?? data['error']?['message']};
       }
     } catch (e) {
-      _setError('Network error: ${e.toString()}');
-      _setLoading(false);
+      _error = 'Network error: ${e.toString()}';
+      _isLoading = false;
+      notifyListeners();  // Notify once at the end
       return {'success': false, 'message': e.toString()};
     }
   }

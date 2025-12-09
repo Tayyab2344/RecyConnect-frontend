@@ -2,7 +2,7 @@ import 'dart:ui';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../../../core/constants/admin_colors.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../widgets/admin/admin_drawer.dart';
 import 'admin_activities_screen.dart';
 
@@ -136,7 +136,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   Widget _buildBackground(bool isDark) {
     return Container(
       decoration: BoxDecoration(
-        gradient: AdminColors.getBackgroundGradient(isDark),
+        gradient: isDark 
+            ? AppColors.darkBackgroundGradient 
+            : AppColors.lightBackgroundGradient,
       ),
     );
   }
@@ -180,7 +182,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                   style: TextStyle(
                     fontSize: isMobile ? 22 : 28,
                     fontWeight: FontWeight.bold,
-                    color: AdminColors.getTextPrimary(isDark),
+                    color: Theme.of(context).textTheme.headlineSmall?.color,
                     letterSpacing: -0.5,
                   ),
                 ),
@@ -191,9 +193,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                       height: 8,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: AdminColors.success,
+                        color: AppColors.success,
                         boxShadow: isDark
-                            ? AdminColors.getGlowShadow(AdminColors.success, intensity: 0.5)
+                            ? [BoxShadow(color: AppColors.success.withValues(alpha: 0.5), blurRadius: 20, spreadRadius: 2)]
                             : null,
                       ),
                     ),
@@ -202,7 +204,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                       'All systems operational',
                       style: TextStyle(
                         fontSize: 12,
-                        color: AdminColors.getTextSecondary(isDark),
+                        color: Theme.of(context).textTheme.bodyMedium?.color,
                       ),
                     ),
                   ],
@@ -226,10 +228,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                 child: Container(
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
-                    gradient: AdminColors.redGradient,
+                    gradient: AppColors.redGradient,
                     shape: BoxShape.circle,
                     boxShadow: isDark
-                        ? AdminColors.getGlowShadow(AdminColors.error, intensity: 0.5)
+                        ? [BoxShadow(color: AppColors.error.withValues(alpha: 0.5), blurRadius: 20, spreadRadius: 2)]
                         : null,
                   ),
                   constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
@@ -267,24 +269,24 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(14),
               color: isDark
-                  ? Colors.white.withValues(alpha: 0.08)
-                  : Colors.white.withValues(alpha: 0.8),
+                  ? Theme.of(context).cardColor.withValues(alpha: 0.08)
+                  : Theme.of(context).cardColor.withValues(alpha: 0.8),
               border: Border.all(
                 color: isDark
-                    ? AdminColors.neonCyan.withValues(alpha: 0.3)
-                    : Colors.black.withValues(alpha: 0.05),
+                    ? AppColors.neonCyan.withValues(alpha: 0.3)
+                    : AppColors.darkText.withValues(alpha: 0.05),
               ),
               boxShadow: isDark
                   ? [
                       BoxShadow(
-                        color: AdminColors.neonCyan.withValues(alpha: 0.1 * _pulseAnimation.value),
+                        color: AppColors.neonCyan.withValues(alpha: 0.1 * _pulseAnimation.value),
                         blurRadius: 15,
                         spreadRadius: 1,
                       ),
                     ]
                   : [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
+                        color: AppColors.darkText.withValues(alpha: 0.08),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
@@ -292,7 +294,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
             ),
             child: Icon(
               icon,
-              color: isDark ? AdminColors.neonCyan : AdminColors.primaryGreen,
+              color: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
               size: 22,
             ),
           ),
@@ -304,7 +306,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   Widget _buildLoadingState(bool isDark) {
     return Center(
       child: CircularProgressIndicator(
-        color: isDark ? AdminColors.neonCyan : AdminColors.primaryGreen,
+        color: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
       ),
     );
   }
@@ -332,17 +334,20 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           gradient: isDark
-                              ? AdminColors.neonGradient
-                              : AdminColors.primaryGradient,
+                              ? AppColors.neonGradient
+                              : AppColors.primaryGradient,
                           borderRadius: BorderRadius.circular(16),
-                          boxShadow: AdminColors.getGlowShadow(
-                            isDark ? AdminColors.neonGreen : AdminColors.primaryGreen,
-                            intensity: 0.4,
-                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: (isDark ? AppColors.neonGreen : AppColors.primaryGreen).withValues(alpha: 0.4),
+                              blurRadius: 20,
+                              spreadRadius: 2,
+                            ),
+                          ],
                         ),
                         child: Icon(
                           Icons.waving_hand_rounded,
-                          color: isDark ? AdminColors.darkBackground : Colors.white,
+                          color: isDark ? AppColors.darkBackground : Colors.white,
                           size: 28,
                         ),
                       ),
@@ -359,7 +364,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                         style: TextStyle(
                           fontSize: isMobile ? 18 : 22,
                           fontWeight: FontWeight.bold,
-                          color: AdminColors.getTextPrimary(isDark),
+                          color: Theme.of(context).textTheme.headlineSmall?.color,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -367,7 +372,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                         "Here's what's happening with RecyConnect today",
                         style: TextStyle(
                           fontSize: 13,
-                          color: AdminColors.getTextSecondary(isDark),
+                          color: Theme.of(context).textTheme.bodyMedium?.color,
                         ),
                       ),
                     ],
@@ -386,10 +391,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     double childAspectRatio = isMobile ? 1.0 : (isTablet ? 1.2 : 1.15);
 
     final stats = [
-      {'icon': Icons.people_rounded, 'title': 'Total Users', 'value': '1,234', 'trend': '+12%', 'color': AdminColors.accentBlue},
-      {'icon': Icons.local_shipping_rounded, 'title': 'Collectors', 'value': '89', 'trend': '+8%', 'color': AdminColors.accentOrange},
-      {'icon': Icons.shopping_bag_rounded, 'title': 'Orders', 'value': '567', 'trend': '+23%', 'color': AdminColors.accentPurple},
-      {'icon': Icons.attach_money_rounded, 'title': 'Revenue', 'value': '\$12.5K', 'trend': '+15%', 'color': AdminColors.success},
+      {'icon': Icons.people_rounded, 'title': 'Total Users', 'value': '1,234', 'trend': '+12%', 'color': AppColors.accentBlue},
+      {'icon': Icons.local_shipping_rounded, 'title': 'Collectors', 'value': '89', 'trend': '+8%', 'color': AppColors.accentOrange},
+      {'icon': Icons.shopping_bag_rounded, 'title': 'Orders', 'value': '567', 'trend': '+23%', 'color': AppColors.accentPurple},
+      {'icon': Icons.attach_money_rounded, 'title': 'Revenue', 'value': '\$12.5K', 'trend': '+15%', 'color': AppColors.success},
     ];
 
     return GridView.count(
@@ -430,20 +435,20 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: AdminColors.success.withValues(alpha: 0.1),
+                            color: AppColors.success.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.trending_up, size: 12, color: AdminColors.success),
+                              Icon(Icons.trending_up, size: 12, color: AppColors.success),
                               const SizedBox(width: 4),
                               Text(
                                 stat['trend'] as String,
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
-                                  color: AdminColors.success,
+                                  color: AppColors.success,
                                 ),
                               ),
                             ],
@@ -459,7 +464,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                           style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
-                            color: AdminColors.getTextPrimary(isDark),
+                            color: Theme.of(context).textTheme.headlineSmall?.color,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -467,7 +472,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                           stat['title'] as String,
                           style: TextStyle(
                             fontSize: 13,
-                            color: AdminColors.getTextSecondary(isDark),
+                            color: Theme.of(context).textTheme.bodyMedium?.color,
                           ),
                         ),
                       ],
@@ -530,7 +535,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: AdminColors.getTextPrimary(isDark),
+                            color: Theme.of(context).textTheme.headlineSmall?.color,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -538,7 +543,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                           subtitle,
                           style: TextStyle(
                             fontSize: 12,
-                            color: AdminColors.getTextSecondary(isDark),
+                            color: Theme.of(context).textTheme.bodyMedium?.color,
                           ),
                         ),
                       ],
@@ -546,12 +551,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: (isDark ? AdminColors.neonCyan : AdminColors.primaryGreen).withValues(alpha: 0.1),
+                        color: (isDark ? AppColors.neonCyan : AppColors.primaryGreen).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
                         Icons.more_horiz,
-                        color: isDark ? AdminColors.neonCyan : AdminColors.primaryGreen,
+                        color: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
                         size: 20,
                       ),
                     ),
@@ -575,7 +580,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         barTouchData: BarTouchData(
           enabled: true,
           touchTooltipData: BarTouchTooltipData(
-            getTooltipColor: (_) => isDark ? AdminColors.neonGreen : AdminColors.primaryGreen,
+            getTooltipColor: (_) => isDark ? AppColors.neonGreen : AppColors.primaryGreen,
             getTooltipItem: (group, groupIndex, rod, rodIndex) {
               return BarTooltipItem(
                 '${rod.toY.toInt()} kg',
@@ -597,7 +602,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                     days[value.toInt()],
                     style: TextStyle(
                       fontSize: 10,
-                      color: AdminColors.getTextSecondary(isDark),
+                      color: Theme.of(context).textTheme.bodyMedium?.color,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -632,8 +637,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           toY: y,
           gradient: LinearGradient(
             colors: isDark
-                ? [AdminColors.neonGreen, AdminColors.neonCyan]
-                : [AdminColors.primaryGreen, const Color(0xFF45A049)],
+                ? [AppColors.neonGreen, AppColors.neonCyan]
+                : [AppColors.primaryGreen, const Color(0xFF45A049)],
             begin: Alignment.bottomCenter,
             end: Alignment.topCenter,
           ),
@@ -653,7 +658,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           horizontalInterval: 20,
           getDrawingHorizontalLine: (value) {
             return FlLine(
-              color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.withValues(alpha: 0.1),
+              color: isDark ? Theme.of(context).dividerColor.withValues(alpha: 0.05) : Theme.of(context).dividerColor.withValues(alpha: 0.1),
               strokeWidth: 1,
             );
           },
@@ -672,7 +677,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                       months[value.toInt()],
                       style: TextStyle(
                         fontSize: 10,
-                        color: AdminColors.getTextSecondary(isDark),
+                        color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -694,7 +699,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         lineTouchData: LineTouchData(
           enabled: true,
           touchTooltipData: LineTouchTooltipData(
-            getTooltipColor: (_) => AdminColors.accentBlue,
+            getTooltipColor: (_) => AppColors.accentBlue,
             getTooltipItems: (touchedSpots) {
               return touchedSpots.map((spot) {
                 return LineTooltipItem(
@@ -718,8 +723,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
             isCurved: true,
             gradient: LinearGradient(
               colors: isDark
-                  ? [AdminColors.neonCyan, AdminColors.accentBlue]
-                  : [AdminColors.accentBlue, const Color(0xFF1D4ED8)],
+                  ? [AppColors.neonCyan, AppColors.accentBlue]
+                  : [AppColors.accentBlue, const Color(0xFF1D4ED8)],
             ),
             barWidth: 3,
             isStrokeCapRound: true,
@@ -730,7 +735,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                   radius: 5,
                   color: Colors.white,
                   strokeWidth: 3,
-                  strokeColor: isDark ? AdminColors.neonCyan : AdminColors.accentBlue,
+                  strokeColor: isDark ? AppColors.neonCyan : AppColors.accentBlue,
                 );
               },
             ),
@@ -738,8 +743,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
               show: true,
               gradient: LinearGradient(
                 colors: [
-                  (isDark ? AdminColors.neonCyan : AdminColors.accentBlue).withValues(alpha: 0.3),
-                  (isDark ? AdminColors.neonCyan : AdminColors.accentBlue).withValues(alpha: 0.0),
+                  (isDark ? AppColors.neonCyan : AppColors.accentBlue).withValues(alpha: 0.3),
+                  (isDark ? AppColors.neonCyan : AppColors.accentBlue).withValues(alpha: 0.0),
                 ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
@@ -765,26 +770,26 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: AdminColors.getTextPrimary(isDark),
+                color: Theme.of(context).textTheme.headlineSmall?.color,
               ),
             ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                gradient: isDark ? AdminColors.neonGradient : AdminColors.primaryGradient,
+                gradient: isDark ? AppColors.neonGradient : AppColors.primaryGradient,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.bolt, size: 14, color: isDark ? AdminColors.darkBackground : Colors.white),
+                  Icon(Icons.bolt, size: 14, color: isDark ? AppColors.loginNavyDeep : Colors.white),
                   const SizedBox(width: 4),
                   Text(
                     'Fast Access',
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: isDark ? AdminColors.darkBackground : Colors.white,
+                      color: isDark ? AppColors.loginNavyDeep : Colors.white,
                     ),
                   ),
                 ],
@@ -801,8 +806,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           mainAxisSpacing: 12,
           childAspectRatio: isMobile ? 1.1 : 1.2,
           children: [
-            _buildQuickActionCard(Icons.add_shopping_cart_rounded, 'New Order', AdminColors.accentOrange, isDark),
-            _buildQuickActionCard(Icons.analytics_rounded, 'View Reports', AdminColors.success, isDark),
+            _buildQuickActionCard(Icons.add_shopping_cart_rounded, 'New Order', AppColors.accentOrange, isDark),
           ],
         ),
       ],
@@ -839,7 +843,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: AdminColors.getTextPrimary(isDark),
+                      color: Theme.of(context).textTheme.headlineSmall?.color,
                     ),
                   ),
                 ],
@@ -853,10 +857,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
 
   Widget _buildModernRecentActivities(bool isMobile, bool isDark) {
     final activities = [
-      {'icon': Icons.person_add_rounded, 'title': 'New user registered', 'subtitle': 'John Doe joined the platform', 'time': '5 min ago', 'color': AdminColors.accentBlue},
-      {'icon': Icons.shopping_bag_rounded, 'title': 'New order placed', 'subtitle': 'Order #1234 - Plastic waste collection', 'time': '15 min ago', 'color': AdminColors.accentOrange},
-      {'icon': Icons.trending_up_rounded, 'title': 'Price updated', 'subtitle': 'Plastic price updated to 110 PKR/kg', 'time': '1 hour ago', 'color': AdminColors.accentPurple},
-      {'icon': Icons.star_rounded, 'title': 'New 5-star rating', 'subtitle': 'Ahmed Khan received excellent review', 'time': '2 hours ago', 'color': AdminColors.accentYellow},
+      {'icon': Icons.person_add_rounded, 'title': 'New user registered', 'subtitle': 'John Doe joined the platform', 'time': '5 min ago', 'color': AppColors.accentBlue},
+      {'icon': Icons.shopping_bag_rounded, 'title': 'New order placed', 'subtitle': 'Order #1234 - Plastic waste collection', 'time': '15 min ago', 'color': AppColors.accentOrange},
+      {'icon': Icons.trending_up_rounded, 'title': 'Price updated', 'subtitle': 'Plastic price updated to 110 PKR/kg', 'time': '1 hour ago', 'color': AppColors.accentPurple},
+      {'icon': Icons.star_rounded, 'title': 'New 5-star rating', 'subtitle': 'Ahmed Khan received excellent review', 'time': '2 hours ago', 'color': AppColors.accentYellow},
     ];
 
     return AnimatedBuilder(
@@ -878,12 +882,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            gradient: isDark ? AdminColors.neonGradient : AdminColors.primaryGradient,
+                            gradient: isDark ? AppColors.neonGradient : AppColors.primaryGradient,
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Icon(
                             Icons.history,
-                            color: isDark ? AdminColors.darkBackground : Colors.white,
+                            color: isDark ? AppColors.loginNavyDeep : Colors.white,
                             size: 20,
                           ),
                         ),
@@ -893,7 +897,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: AdminColors.getTextPrimary(isDark),
+                            color: Theme.of(context).textTheme.headlineSmall?.color,
                           ),
                         ),
                       ],
@@ -910,13 +914,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: isDark ? AdminColors.neonCyan : AdminColors.primaryGreen,
+                          color: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
                         ),
                       ),
                       label: Icon(
                         Icons.arrow_forward_ios,
                         size: 12,
-                        color: isDark ? AdminColors.neonCyan : AdminColors.primaryGreen,
+                        color: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
                       ),
                     ),
                   ],
@@ -931,7 +935,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                       if (!isLast)
                         Divider(
                           height: 16,
-                          color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.1),
+                          color: isDark ? Theme.of(context).dividerColor.withValues(alpha: 0.1) : Theme.of(context).dividerColor.withValues(alpha: 0.1),
                         ),
                     ],
                   );
@@ -974,7 +978,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: AdminColors.getTextPrimary(isDark),
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -982,7 +986,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                   activity['subtitle'] as String,
                   style: TextStyle(
                     fontSize: 12,
-                    color: AdminColors.getTextSecondary(isDark),
+                    color: Theme.of(context).textTheme.bodyMedium?.color,
                   ),
                 ),
               ],
@@ -992,7 +996,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
             activity['time'] as String,
             style: TextStyle(
               fontSize: 11,
-              color: AdminColors.getTextSecondary(isDark),
+              color: Theme.of(context).textTheme.bodyMedium?.color,
             ),
           ),
         ],
@@ -1023,7 +1027,7 @@ class _GlassCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final radius = borderRadius ?? BorderRadius.circular(20);
-    final glow = glowColor ?? (isDark ? AdminColors.neonCyan : AdminColors.primaryGreen);
+    final glow = glowColor ?? (isDark ? AppColors.neonCyan : AppColors.primaryGreen);
 
     return ClipRRect(
       borderRadius: radius,
@@ -1032,11 +1036,11 @@ class _GlassCard extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: radius,
-            gradient: AdminColors.getCardGradient(isDark),
+            gradient: isDark ? AppColors.darkCardGradient : AppColors.lightCardGradient,
             border: Border.all(
               color: isDark
                   ? glow.withValues(alpha: 0.15 + 0.1 * pulseValue)
-                  : Colors.white.withValues(alpha: 0.6),
+                  : Theme.of(context).cardColor.withValues(alpha: 0.6),
               width: 1.5,
             ),
             boxShadow: isDark
@@ -1075,7 +1079,7 @@ class _ParticlesPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = AdminColors.neonCyan.withValues(alpha: 0.3)
+      ..color = AppColors.neonCyan.withValues(alpha: 0.3)
       ..style = PaintingStyle.fill;
 
     final random = math.Random(42);

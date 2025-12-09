@@ -38,7 +38,7 @@ class _PremiumAdminDrawerState extends State<PremiumAdminDrawer>
 
   // Admin info
   String _adminName = 'Admin User';
-  String _adminEmail = 'panel.quantix@gmail.com';
+  String _adminEmail = '';
 
   // Menu items data
   final List<Map<String, dynamic>> _menuItems = [

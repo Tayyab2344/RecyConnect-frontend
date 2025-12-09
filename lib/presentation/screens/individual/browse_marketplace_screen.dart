@@ -1,6 +1,8 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../../core/theme/marketplace_theme.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/error_message_helper.dart';
 import '../../../core/services/listing_service.dart';
 import '../../../core/services/order_service.dart';
@@ -155,43 +157,54 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen> {
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Column(
         children: [
-          // Search Bar
+          // Search Bar - Premium Glassmorphism Style
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: GlassCard(
-              borderRadius: 12,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              height: 50,
-              child: Row(
-                children: [
-                   Icon(Icons.search,
-                      color: isDark ? Colors.white70 : Colors.black54),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextField(
-                      decoration: const InputDecoration(
-                        hintText: 'Search items...',
-                        border: InputBorder.none,
-                        isDense: true,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                      style: TextStyle(
-                          color: isDark ? Colors.white : Colors.black87),
-                      onChanged: (val) {
-                        _searchQuery = val;
-                        // Add debounce in real app
-                        _loadItems();
-                      },
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.08)
+                        : Colors.white.withValues(alpha: 0.8),
+                    border: Border.all(
+                      color: isDark
+                          ? AppColors.neonCyan.withValues(alpha: 0.2)
+                          : Colors.black.withValues(alpha: 0.05),
                     ),
                   ),
-                ],
+                  child: TextField(
+                    style: TextStyle(
+                      color: isDark ? Colors.white : const Color(0xFF1A1A1A),
+                    ),
+                    decoration: InputDecoration(
+                      hintText: 'Search items...',
+                      hintStyle: TextStyle(
+                        color: isDark ? Colors.white54 : Colors.grey,
+                      ),
+                      prefixIcon: Icon(
+                        Icons.search,
+                        color: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
+                      ),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    ),
+                    onChanged: (val) {
+                      _searchQuery = val;
+                      _loadItems();
+                    },
+                  ),
+                ),
               ),
             ),
           ),
           const SizedBox(height: 12),
-          // Categories
+          // Categories - Premium Chips Style
           SizedBox(
-            height: 40,
+            height: 44,
             child: ListView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -212,8 +225,7 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen> {
   Widget _buildCategoryChip(String label, bool isDark) {
     final isSelected =
         _filterMaterial == label || (_filterMaterial == null && label == 'All');
-    final activeColor =
-        isDark ? MarketplaceTheme.darkAccentGreen : MarketplaceTheme.lightAccent;
+    final accentColor = isDark ? AppColors.neonCyan : AppColors.primaryGreen;
 
     return GestureDetector(
       onTap: () {
@@ -222,24 +234,45 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen> {
           _loadItems();
         });
       },
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         margin: const EdgeInsets.only(right: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
         decoration: BoxDecoration(
-          color:
-              isSelected ? activeColor : (isDark ? Colors.black26 : Colors.white),
+          gradient: isSelected
+              ? LinearGradient(
+                  colors: isDark
+                      ? [AppColors.neonGreen, AppColors.neonCyan]
+                      : [AppColors.primaryGreen, const Color(0xFF45A049)],
+                )
+              : null,
+          color: isSelected
+              ? null
+              : (isDark ? Colors.white.withValues(alpha: 0.08) : Colors.white.withValues(alpha: 0.8)),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? activeColor : Colors.transparent,
+            color: isSelected
+                ? Colors.transparent
+                : (isDark ? accentColor.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.1)),
           ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: accentColor.withValues(alpha: 0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : null,
         ),
         child: Text(
           label,
           style: TextStyle(
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            fontSize: 13,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
             color: isSelected
-                ? (isDark ? Colors.black : Colors.white)
-                : (isDark ? Colors.white70 : Colors.black87),
+                ? (isDark ? const Color(0xFF0A1628) : Colors.white)
+                : (isDark ? Colors.white : const Color(0xFF1A1A1A)),
           ),
         ),
       ),

@@ -42,7 +42,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
       title: 'Warehouse',
       description: 'For recycling facilities and warehouses',
       icon: Icons.warehouse_rounded,
-      color: const Color(0xFF5B9BD5),
+      color: AppColors.roleWarehouse,
       tooltip: 'Ideal for recycling facilities managing bulk operations.',
     ),
     _RoleData(
@@ -50,7 +50,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
       title: 'Company / Business',
       description: 'For businesses and corporate recycling',
       icon: Icons.business_rounded,
-      color: const Color(0xFFFF8A65),
+      color: AppColors.roleCompany,
       tooltip: 'Designed for businesses seeking recycling solutions.',
     ),
   ];
@@ -118,10 +118,10 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    Color(0xFF0A1628),
-                    Color(0xFF0D2137),
-                    Color(0xFF0F2847),
-                    Color(0xFF0A1E35),
+                    AppColors.loginNavyDeep,
+                    AppColors.loginNavyDark,
+                    AppColors.loginNavyMedium,
+                    AppColors.loginNavyLight,
                   ],
                   stops: [0.0, 0.3, 0.7, 1.0],
                 )
@@ -129,10 +129,10 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Color(0xFFFFFFFF),
-                    Color(0xFFF0F9F7),
-                    Color(0xFFE8F5F2),
-                    Color(0xFFDFF2ED),
+                    AppColors.white,
+                    AppColors.loginWhiteSoft,
+                    AppColors.loginTealLight,
+                    AppColors.loginTealSoft,
                   ],
                   stops: [0.0, 0.3, 0.7, 1.0],
                 ),
@@ -163,14 +163,14 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
                     radius: 1.2,
                     colors: isDark
                         ? [
-                            const Color(0xFF00D9A5).withOpacity(0.05),
+                            AppColors.neonTeal.withOpacity(0.05),
                             Colors.transparent,
-                            const Color(0xFF0066FF).withOpacity(0.03),
+                            AppColors.neonBlue.withOpacity(0.03),
                           ]
                         : [
-                            const Color(0xFF1A8F3A).withOpacity(0.03),
+                            AppColors.primaryGreen.withOpacity(0.03),
                             Colors.transparent,
-                            const Color(0xFF2AAE97).withOpacity(0.02),
+                            AppColors.ecoTeal.withOpacity(0.02),
                           ],
                     stops: const [0.0, 0.5, 1.0],
                   ),
@@ -269,7 +269,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
               child: Icon(
                 Icons.arrow_back_ios_new_rounded,
                 size: 20,
-                color: isDark ? Colors.white : const Color(0xFF333333),
+                color: isDark ? Colors.white : AppColors.textDarkGrey,
               ),
             ),
           ),
@@ -279,11 +279,11 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
   }
 
   Widget _buildHeader(bool isDark) {
-    final glowColor = isDark ? const Color(0xFF00D9A5) : const Color(0xFF1A8F3A);
-    final textColor = isDark ? Colors.white : const Color(0xFF1A1A1A);
+    final glowColor = isDark ? AppColors.neonTeal : AppColors.primaryGreen;
+    final textColor = isDark ? Colors.white : AppColors.darkText;
     final subtextColor = isDark
         ? Colors.white.withOpacity(0.7)
-        : const Color(0xFF666666);
+        : AppColors.darkGrey;
 
     return AnimatedBuilder(
       animation: _pulseAnimation,
@@ -346,7 +346,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
 
   Widget _buildRoleCard(_RoleData role, bool isDark) {
     final isSelected = _selectedRole == role.id;
-    final glowColor = isDark ? const Color(0xFF00D9A5) : const Color(0xFF1A8F3A);
+    final glowColor = isDark ? AppColors.neonTeal : AppColors.primaryGreen;
 
     return GestureDetector(
       onTap: () => setState(() => _selectedRole = role.id),
@@ -448,7 +448,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color: isDark ? Colors.white : const Color(0xFF1A1A1A),
+                                color: isDark ? Colors.white : AppColors.darkText,
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -458,7 +458,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
                                 fontSize: 13,
                                 color: isDark
                                     ? Colors.white.withOpacity(0.6)
-                                    : const Color(0xFF666666),
+                                    : AppColors.darkGrey,
                                 height: 1.3,
                               ),
                             ),
@@ -502,8 +502,8 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
 
   Widget _buildContinueButton(bool isDark) {
     final isEnabled = _selectedRole != null;
-    final buttonColor = isDark ? const Color(0xFF00D9A5) : const Color(0xFF1A8F3A);
-    final buttonTextColor = isDark ? const Color(0xFF0A1628) : Colors.white;
+    final buttonColor = isDark ? AppColors.neonTeal : AppColors.primaryGreen;
+    final buttonTextColor = isDark ? AppColors.loginNavyDeep : Colors.white;
     final roleText = _selectedRole != null
         ? _selectedRole![0].toUpperCase() + _selectedRole!.substring(1)
         : '';
@@ -512,7 +512,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: isDark
-            ? const Color(0xFF0A1628).withOpacity(0.9)
+            ? AppColors.loginNavyDeep.withOpacity(0.9)
             : Colors.white.withOpacity(0.95),
         border: Border(
           top: BorderSide(
@@ -662,8 +662,8 @@ class _RoleSelectionBackgroundPainter extends CustomPainter {
       final opacity = 0.3 + 0.2 * math.sin(animationValue * 2 * math.pi + i);
       
       dotPaint.color = isDark
-          ? const Color(0xFF00D9A5).withOpacity(opacity * 0.3)
-          : const Color(0xFF1A8F3A).withOpacity(opacity * 0.15);
+          ? AppColors.neonTeal.withOpacity(opacity * 0.3)
+          : AppColors.primaryGreen.withOpacity(opacity * 0.15);
       
       canvas.drawCircle(
         Offset(x, y + offset),

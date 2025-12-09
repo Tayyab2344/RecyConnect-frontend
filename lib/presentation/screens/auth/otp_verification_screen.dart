@@ -599,7 +599,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Check your spam folder if you don\'t see the email',
+              'Check your spam folder if you don\'t see the email.\nCode expires in 15 minutes.',
               style: AppTheme.captionStyle.copyWith(
                 color: AppTheme.infoBlue,
                 height: 1.4,
