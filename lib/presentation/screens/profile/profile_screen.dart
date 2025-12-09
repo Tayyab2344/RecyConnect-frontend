@@ -156,18 +156,16 @@ class _ProfileScreenState extends State<ProfileScreen>
                               ),
                             ),
 
-                            // Tab Content - using SliverToBoxAdapter with fixed height
-                            SliverToBoxAdapter(
-                              child: SizedBox(
-                                height: MediaQuery.of(context).size.height * 0.6,
-                                child: TabBarView(
-                                  controller: _tabController,
-                                  children: [
-                                    _buildPersonalTab(user, isDark, authService),
-                                    _buildStatsTab(isDark, authService),
-                                    _buildActivityTab(isDark, authService),
-                                  ],
-                                ),
+                            // Tab Content - SliverFillRemaining allows TabBarView to fill remaining space
+                            SliverFillRemaining(
+                              hasScrollBody: true,
+                              child: TabBarView(
+                                controller: _tabController,
+                                children: [
+                                  _buildPersonalTab(user, isDark, authService),
+                                  _buildStatsTab(isDark, authService),
+                                  _buildActivityTab(isDark, authService),
+                                ],
                               ),
                             ),
                           ],

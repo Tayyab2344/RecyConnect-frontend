@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/auth_service.dart';
+import '../../../core/utils/image_source_helper.dart';
 import '../../../core/services/location_service.dart';
 import '../../../core/utils/pakistan_locations.dart';
 import '../../widgets/city_area_selector.dart';
@@ -125,26 +126,11 @@ class _IndividualRegistrationScreenState extends State<IndividualRegistrationScr
   }
 
   Future<void> _pickImage() async {
-    try {
-      final XFile? image = await _imagePicker.pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 512,
-        maxHeight: 512,
-        imageQuality: 85,
-      );
-      
-      if (image != null) {
-        setState(() {
-          _profileImage = image;
-        });
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error picking image: $e'),
-          backgroundColor: AppTheme.errorRed,
-        ),
-      );
+    final image = await ImageSourceHelper.pickImage(context);
+    if (image != null) {
+      setState(() {
+        _profileImage = image;
+      });
     }
   }
 
@@ -404,15 +390,7 @@ class _IndividualRegistrationScreenState extends State<IndividualRegistrationScr
                   ),
                 ),
                 const SizedBox(height: 8),
-                Center(
-                  child: Text(
-                    'Optional - Tap to add photo',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppTheme.textLight,
-                    ),
-                  ),
-                ),
+                // Removed Optional text
                 const SizedBox(height: 24),
 
                 // Full Name
@@ -484,47 +462,7 @@ class _IndividualRegistrationScreenState extends State<IndividualRegistrationScr
                 ),
                 const SizedBox(height: 16),
 
-                // Detect Location Button
-                OutlinedButton.icon(
-                  onPressed: _isDetectingLocation ? null : _detectLocation,
-                  icon: _isDetectingLocation
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.my_location),
-                  label: Text(_isDetectingLocation ? 'Detecting...' : 'Detect My Location'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppTheme.primaryGreen,
-                    side: BorderSide(color: AppTheme.primaryGreen),
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                
-                // OR divider
-                Row(
-                  children: [
-                    const Expanded(child: Divider()),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(
-                        'OR',
-                        style: TextStyle(
-                          color: AppTheme.textLight,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                    const Expanded(child: Divider()),
-                  ],
-                ),
-                const SizedBox(height: 12),
+                // Removed Detect Location button and divider section
 
                 // City & Area Selector
                 CityAreaSelector(
@@ -777,6 +715,7 @@ class _IndividualRegistrationScreenState extends State<IndividualRegistrationScr
           inputFormatters: inputFormatters,
           obscureText: isPassword && !isPasswordVisible,
           onChanged: onChanged,
+          style: const TextStyle(color: Colors.black87), // Force dark text color
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(
