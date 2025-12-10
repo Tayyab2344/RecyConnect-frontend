@@ -85,9 +85,20 @@ class PreferencesService {
   }
 
   // ═══════════════════════════════════════════════════════════
-  // PASSWORD - REMOVED FOR SECURITY
-  // All authentication should go through the backend API
+  // PASSWORD (TEMPORARY FOR ADMIN SETTINGS)
   // ═══════════════════════════════════════════════════════════
+  static const String _keyAdminPassword = 'admin_password';
+
+  static Future<bool> verifyPassword(String inputPassword) async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedPassword = prefs.getString(_keyAdminPassword) ?? 'admin123';
+    return inputPassword == savedPassword;
+  }
+
+  static Future<void> saveAdminPassword(String newPassword) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyAdminPassword, newPassword);
+  }
 
   // ═══════════════════════════════════════════════════════════
   // CLEAR ALL

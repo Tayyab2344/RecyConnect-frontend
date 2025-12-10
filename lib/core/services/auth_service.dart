@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http_parser/http_parser.dart'; // Added for MediaType
 import '../constants/api_constants.dart';
 
 class AuthService extends ChangeNotifier {
@@ -37,6 +38,63 @@ class AuthService extends ChangeNotifier {
     notifyListeners();
   }
 
+  String _extractErrorMessage(dynamic body) {
+    try {
+      if (kDebugMode) {
+        print('Full API Response Error Body: $body');
+      }
+
+      if (body is Map<String, dynamic>) {
+        // PRIORITY 1: Check for "errors" array (detailed validation errors) - Express Validator style
+        if (body.containsKey('errors') && body['errors'] is List) {
+          final errors = body['errors'] as List;
+          if (errors.isNotEmpty) {
+            return errors.take(2).map((e) {
+              if (e is Map) {
+                return e['msg'] ?? e['message'] ?? e.toString();
+              }
+              return e.toString();
+            }).join('. ');
+          }
+        }
+
+        // PRIORITY 2: Check for "error" key which might be a List (found in user logs)
+        if (body.containsKey('error')) {
+          final error = body['error'];
+          
+          // Case A: "error" is a List of errors
+          if (error is List && error.isNotEmpty) {
+             return error.take(2).map((e) {
+              if (e is Map) {
+                return e['msg'] ?? e['message'] ?? e.toString();
+              }
+              return e.toString();
+            }).join('. ');
+          }
+
+          // Case B: "error" is a simple String
+          if (error is String) return error;
+
+          // Case C: "error" is an Object with message
+          if (error is Map && error.containsKey('message')) {
+            return error['message'].toString();
+          }
+        }
+        
+        // PRIORITY 3: Check for "message" string
+        if (body.containsKey('message') && body['message'] != null) {
+          return body['message'].toString();
+        }
+      }
+      return 'An unexpected error occurred';
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error parsing response exception: $e');
+      }
+      return 'Error parsing response: $e';
+    }
+  }
+
   Future<bool> login(String email, String password) async {
     try {
       _setLoading(true);
@@ -46,7 +104,7 @@ class AuthService extends ChangeNotifier {
         Uri.parse('${ApiConstants.baseUrl}/auth/login'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'identifier': email,
+          'identifier': email, // Changed from 'email' to 'identifier' to match backend
           'password': password,
         }),
       );
@@ -92,7 +150,7 @@ class AuthService extends ChangeNotifier {
         _setLoading(false);
         return true;
       } else {
-        _setError(data['message'] as String? ?? data['error']?['message'] as String? ?? 'Login failed');
+        _setError(_extractErrorMessage(data));
         _setLoading(false);
         return false;
       }
@@ -116,7 +174,7 @@ class AuthService extends ChangeNotifier {
       if (response.statusCode == 200) {
         return {'success': true, 'data': data['data']};
       } else {
-        return {'success': false, 'message': data['message']};
+        return {'success': false, 'message': _extractErrorMessage(data)};
       }
     } catch (e) {
       return {'success': false, 'message': e.toString()};
@@ -147,11 +205,18 @@ class AuthService extends ChangeNotifier {
           entry.key,
           bytes,
           filename: file.name,
+          contentType: MediaType('image', 'jpeg'), // Explicitly set content type
         );
         request.files.add(multipartFile);
       }
 
-      final streamedResponse = await request.send();
+      print('Sending registration request...'); 
+      final streamedResponse = await request.send().timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          throw 'Connection timed out. Please check your internet or try a smaller image.';
+        },
+      );
       final response = await http.Response.fromStream(streamedResponse);
       final data = jsonDecode(response.body);
 
@@ -159,9 +224,10 @@ class AuthService extends ChangeNotifier {
         _setLoading(false);
         return {'success': true, 'message': data['message'], 'userId': data['userId']};
       } else {
-        _setError(data['message'] as String? ?? data['error']?['message'] as String? ?? 'Registration failed');
+        final errorMessage = _extractErrorMessage(data);
+        _setError(errorMessage);
         _setLoading(false);
-        return {'success': false, 'message': data['message'] ?? 'Registration failed'};
+        return {'success': false, 'message': errorMessage};
       }
     } catch (e) {
       _setError('Network error: ${e.toString()}');
@@ -196,7 +262,7 @@ class AuthService extends ChangeNotifier {
       if (response.statusCode == 200 && data['success'] == true) {
         return {'success': true, 'data': data['data']};
       } else {
-        return {'success': false, 'message': data['message'] ?? data['error']?['message'] ?? 'Analysis failed'};
+        return {'success': false, 'message': _extractErrorMessage(data)};
       }
     } catch (e) {
       _setLoading(false);
@@ -224,9 +290,10 @@ class AuthService extends ChangeNotifier {
         _setLoading(false);
         return {'success': true, 'message': data['message']};
       } else {
-        _setError(data['message'] as String? ?? 'OTP verification failed');
+        final errorMessage = _extractErrorMessage(data);
+        _setError(errorMessage);
         _setLoading(false);
-        return {'success': false, 'message': data['message']};
+        return {'success': false, 'message': errorMessage};
       }
     } catch (e) {
       _setError('Network error: ${e.toString()}');
@@ -252,9 +319,10 @@ class AuthService extends ChangeNotifier {
         _setLoading(false);
         return {'success': true, 'data': data};
       } else {
-        _setError(data['message'] as String? ?? 'Failed to resend OTP');
+        final errorMessage = _extractErrorMessage(data);
+        _setError(errorMessage);
         _setLoading(false);
-        return {'success': false, 'message': data['message']};
+        return {'success': false, 'message': errorMessage};
       }
     } catch (e) {
       _setError('Network error: ${e.toString()}');
@@ -380,10 +448,10 @@ class AuthService extends ChangeNotifier {
         _setLoading(false);
         return {'success': true, 'data': data};
       } else {
-        _setError(
-            data['message'] as String? ?? data['error']?['message'] as String? ?? 'Profile update failed');
+        final errorMessage = _extractErrorMessage(data);
+        _setError(errorMessage);
         _setLoading(false);
-        return {'success': false, 'message': data['message'] ?? data['error']?['message']};
+        return {'success': false, 'message': errorMessage};
       }
     } catch (e) {
       _setError('Network error: ${e.toString()}');
@@ -420,10 +488,11 @@ class AuthService extends ChangeNotifier {
         notifyListeners();  // Notify once at the end
         return {'success': true, 'data': data};
       } else {
-        _error = data['message'] as String? ?? data['error']?['message'] as String? ?? 'Failed to fetch profile';
+        final errorMessage = _extractErrorMessage(data);
+        _error = errorMessage;
         _isLoading = false;
         notifyListeners();  // Notify once at the end
-        return {'success': false, 'message': data['message'] ?? data['error']?['message']};
+        return {'success': false, 'message': errorMessage};
       }
     } catch (e) {
       _error = 'Network error: ${e.toString()}';
@@ -450,9 +519,10 @@ class AuthService extends ChangeNotifier {
         _setLoading(false);
         return {'success': true, 'message': data['message']};
       } else {
-        _setError(data['message'] as String? ?? data['error']?['message'] ?? 'Failed to send reset email');
+        final errorMessage = _extractErrorMessage(data);
+        _setError(errorMessage);
         _setLoading(false);
-        return {'success': false, 'message': data['message'] ?? data['error']?['message']};
+        return {'success': false, 'message': errorMessage};
       }
     } catch (e) {
       _setError('Network error: ${e.toString()}');
@@ -483,9 +553,10 @@ class AuthService extends ChangeNotifier {
         _setLoading(false);
         return {'success': true, 'message': data['message']};
       } else {
-        _setError(data['message'] as String? ?? data['error']?['message'] ?? 'Password reset failed');
+        final errorMessage = _extractErrorMessage(data);
+        _setError(errorMessage);
         _setLoading(false);
-        return {'success': false, 'message': data['message'] ?? data['error']?['message']};
+        return {'success': false, 'message': errorMessage};
       }
     } catch (e) {
       _setError('Network error: ${e.toString()}');
@@ -518,9 +589,10 @@ class AuthService extends ChangeNotifier {
         _setLoading(false);
         return {'success': true, 'message': data['message']};
       } else {
-        _setError(data['message'] as String? ?? data['error']?['message'] ?? 'Password change failed');
+        final errorMessage = _extractErrorMessage(data);
+        _setError(errorMessage);
         _setLoading(false);
-        return {'success': false, 'message': data['message'] ?? data['error']?['message']};
+        return {'success': false, 'message': errorMessage};
       }
     } catch (e) {
       _setError('Network error: ${e.toString()}');
@@ -565,14 +637,12 @@ class AuthService extends ChangeNotifier {
         _setLoading(false);
         return {'success': true, 'message': data['message']};
       } else {
-        _setError(data['message'] as String? ??
-            data['error']?['message'] ??
-            data['message'] ??
-            'Collector registration failed');
+        final errorMessage = _extractErrorMessage(data);
+        _setError(errorMessage);
         _setLoading(false);
         return {
           'success': false,
-          'message': data['message'] ?? data['error']?['message'] ?? data['message']
+          'message': errorMessage
         };
       }
     } catch (e) {

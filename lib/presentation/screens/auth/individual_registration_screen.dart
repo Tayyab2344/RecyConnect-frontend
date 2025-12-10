@@ -99,6 +99,7 @@ class _IndividualRegistrationScreenState extends State<IndividualRegistrationScr
               MaterialPageRoute(
                 builder: (context) => OtpVerificationScreen(
                   email: _emailController.text.trim(),
+                  password: _passwordController.text,
                 ),
               ),
             );

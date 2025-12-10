@@ -88,7 +88,10 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen> {
     return Scaffold(
       extendBodyBehindAppBar: true, // For glass effect
       appBar: AppBar(
-        title: const Text('Marketplace'),
+        title: const Text(
+          'Marketplace',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,

@@ -250,7 +250,7 @@ class _CityAreaSelectorState extends State<CityAreaSelector> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: TextField(
-                      autofocus: true,
+                      autofocus: false,
                       onChanged: (value) {
                         setModalState(() => _citySearchQuery = value);
                       },
@@ -408,7 +408,7 @@ class _CityAreaSelectorState extends State<CityAreaSelector> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: TextField(
-                      autofocus: true,
+                      autofocus: false,
                       onChanged: (value) {
                         setModalState(() => _areaSearchQuery = value);
                       },

@@ -101,23 +101,66 @@ class _CreateListingScreenState extends State<CreateListingScreen>
   }
 
   Future<void> _pickImages() async {
-    final ImagePicker picker = ImagePicker();
-    // FIX: Compression to prevent Payload Too Large error
-    final List<XFile> images = await picker.pickMultiImage(
-      imageQuality: 50, // Reduced quality
-      maxWidth: 800,    // Reduced width
+    final source = await showDialog<ImageSource>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Add Photos'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt, color: MarketplaceTheme.lightAccent),
+              title: const Text('Take Photo'),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library, color: MarketplaceTheme.lightAccent),
+              title: const Text('Choose from Gallery'),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
     );
 
-    if (images.isNotEmpty) {
-      setState(() {
-        _selectedImages.addAll(images);
-        // Limit to 3 images total if needed, or handle in UI
-        if (_selectedImages.length > 3) {
-           _selectedImages = _selectedImages.take(3).toList();
-        }
-      });
-      // Trigger AI Analysis Simulation
-      _simulateAIAnalysis();
+    if (source == null) return;
+
+    final ImagePicker picker = ImagePicker();
+    List<XFile> newImages = [];
+
+    try {
+      if (source == ImageSource.camera) {
+        final XFile? image = await picker.pickImage(
+          source: ImageSource.camera,
+          imageQuality: 70,
+          maxWidth: 800,
+          maxHeight: 800,
+        );
+        if (image != null) newImages.add(image);
+      } else {
+        final List<XFile> images = await picker.pickMultiImage(
+          imageQuality: 70,
+          maxWidth: 800,
+          maxHeight: 800,
+        );
+        newImages.addAll(images);
+      }
+
+      if (newImages.isNotEmpty) {
+        setState(() {
+          _selectedImages.addAll(newImages);
+          // Limit to 3 images total if needed
+          if (_selectedImages.length > 3) {
+             _selectedImages = _selectedImages.take(3).toList();
+          }
+        });
+        // Trigger AI Analysis Simulation
+        _simulateAIAnalysis();
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error picking image: $e')),
+      );
     }
   }
 
