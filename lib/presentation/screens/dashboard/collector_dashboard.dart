@@ -50,11 +50,14 @@ class _CollectorDashboardState extends State<CollectorDashboard> with TickerProv
 
   Widget _buildHomeTab() {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [AppTheme.backgroundLight, Colors.white],
+          colors: [
+            Theme.of(context).scaffoldBackgroundColor,
+            Theme.of(context).scaffoldBackgroundColor,
+          ],
         ),
       ),
       child: SafeArea(
@@ -220,12 +223,12 @@ class _CollectorDashboardState extends State<CollectorDashboard> with TickerProv
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Quick Actions',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: AppTheme.textDark,
+            color: Theme.of(context).textTheme.headlineSmall?.color,
           ),
         ),
         const SizedBox(height: 16),
@@ -290,7 +293,7 @@ class _CollectorDashboardState extends State<CollectorDashboard> with TickerProv
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -314,10 +317,10 @@ class _CollectorDashboardState extends State<CollectorDashboard> with TickerProv
             const SizedBox(height: 12),
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: AppTheme.textDark,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
               ),
               textAlign: TextAlign.center,
             ),
@@ -331,18 +334,18 @@ class _CollectorDashboardState extends State<CollectorDashboard> with TickerProv
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Today\'s Route',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: AppTheme.textDark,
+            color: Theme.of(context).textTheme.headlineSmall?.color,
           ),
         ),
         const SizedBox(height: 16),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
@@ -406,10 +409,10 @@ class _CollectorDashboardState extends State<CollectorDashboard> with TickerProv
               children: [
                 Text(
                   name,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: AppTheme.textDark,
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
                   ),
                 ),
                 Text(
@@ -472,7 +475,7 @@ class _CollectorDashboardState extends State<CollectorDashboard> with TickerProv
   Widget _buildBottomNavBar() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),

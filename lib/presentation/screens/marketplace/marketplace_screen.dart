@@ -118,61 +118,51 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> with SingleTicker
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.end, // Align to bottom of header
+          mainAxisAlignment: MainAxisAlignment.end,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Row 1: Search Bar
-            Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: isDark ? Colors.black.withValues(alpha: 0.3) : Colors.white.withValues(alpha: 0.6),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isDark ? AppColors.neonCyan.withValues(alpha: 0.3) : Colors.transparent,
-                        width: 1,
-                      ),
-                    ),
-                    child: TextField(
-                      controller: _searchController,
-                      style: TextStyle(color: isDark ? Colors.white : AppColors.darkText),
-                      decoration: InputDecoration(
-                        hintText: 'Search items...',
-                        hintStyle: TextStyle(
-                            color: isDark ? Colors.white54 : AppColors.mediumGrey),
-                        prefixIcon: Icon(Icons.search,
-                            color: isDark ? AppColors.neonCyan : AppColors.primaryGreen),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                      onChanged: (val) {
-                         setState(() => _searchQuery = val);
-                         _loadItems();
-                      },
-                    ),
+            // Search Bar
+            Container(
+              height: 50,
+              decoration: BoxDecoration(
+                color: isDark ? Colors.white.withOpacity(0.1) : Colors.white.withOpacity(0.9),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
                   ),
+                ],
+              ),
+              child: TextField(
+                controller: _searchController,
+                style: TextStyle(
+                  color: isDark ? Colors.white : Colors.black87,
+                  fontSize: 16,
                 ),
-                const SizedBox(width: 12),
-                // AI/Filter Button
-                Container(
-                  height: 48,
-                  width: 48,
-                  decoration: BoxDecoration(
-                    color: isDark ? AppColors.neonGreen.withValues(alpha: 0.2) : AppColors.primaryGreen.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                       color: isDark ? AppColors.neonGreen : Colors.transparent,
-                    ),
+                decoration: InputDecoration(
+                  hintText: 'Search recyclables...',
+                  hintStyle: TextStyle(
+                    color: isDark ? Colors.white60 : Colors.black54,
+                    fontSize: 16,
                   ),
-                  child: Icon(Icons.auto_awesome, 
-                      color: isDark ? AppColors.neonGreen : AppColors.primaryGreen),
+                  prefixIcon: Icon(
+                    Icons.search_rounded,
+                    color: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
+                    size: 24,
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 16),
                 ),
-              ],
+                onChanged: (val) {
+                  setState(() => _searchQuery = val);
+                  _loadItems();
+                },
+              ),
             ),
-            const SizedBox(height: 16),
-            // Row 2: Categories
+            const SizedBox(height: 12),
+            // Categories
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(

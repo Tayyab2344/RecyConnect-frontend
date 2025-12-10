@@ -28,6 +28,7 @@ class _IndividualDashboardState extends State<IndividualDashboard> {
   final PageController _pageController = PageController();
 
   Map<String, dynamic>? _stats;
+  String _location = 'Loading...';
   bool _isLoading = true;
 
   @override
@@ -45,10 +46,34 @@ class _IndividualDashboardState extends State<IndividualDashboard> {
   Future<void> _loadDashboardStats() async {
     setState(() => _isLoading = true);
     try {
+      // Load user profile for location
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final profile = await authService.fetchProfile();
+      
+      String location = 'Unknown Location';
+      if (profile['success'] == true) {
+        final userData = profile['data']['data'];
+        final city = userData['city'];
+        final area = userData['area'] ?? userData['address'];
+        // Improved location logic
+        if (city != null && city.toString().isNotEmpty) {
+          location = (area != null && area.toString().isNotEmpty && !area.toString().contains(city))
+              ? '$area, $city'
+              : city;
+        } else if (area != null && area.toString().isNotEmpty) {
+           location = area;
+        } else if (userData['address'] != null && userData['address'].toString().isNotEmpty) {
+           location = userData['address'];
+        } else {
+           location = 'Set Location';
+        }
+      }
+
       final listingStats = await _listingService.getListingStats();
       final orderStats = await _orderService.getOrderStats();
       
       setState(() {
+        _location = location;
         _stats = {
           'listings': listingStats,
           'orders': orderStats,
@@ -132,7 +157,7 @@ class _IndividualDashboardState extends State<IndividualDashboard> {
             Icon(Icons.location_on, color: Theme.of(context).colorScheme.primary, size: 20),
             const SizedBox(width: 8),
             Text(
-              'New York, NY',
+              _location,
               style: TextStyle(
                 color: Theme.of(context).textTheme.bodyLarge?.color,
                 fontSize: 16,
@@ -166,14 +191,28 @@ class _IndividualDashboardState extends State<IndividualDashboard> {
   }
 
   Widget _buildBrandingTitle() {
-    return Text(
-      'RecyConnect',
-      style: TextStyle(
-        color: Colors.white,
-        fontSize: 32,
-        fontWeight: FontWeight.bold,
-        letterSpacing: -0.5,
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'RecyConnect',
+          style: TextStyle(
+            color: Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF4CAF50),
+            fontSize: 32,
+            fontWeight: FontWeight.bold,
+            letterSpacing: -0.5,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Eco-friendly Marketplace',
+          style: TextStyle(
+            color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF1A1A1A)).withOpacity(0.7),
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
     );
   }
 
@@ -337,7 +376,7 @@ class _IndividualDashboardState extends State<IndividualDashboard> {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
               ),
             ),
             Container(
@@ -452,7 +491,7 @@ class _IndividualDashboardState extends State<IndividualDashboard> {
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: Theme.of(context).textTheme.bodyLarge?.color,
           ),
         ),
         const SizedBox(height: 16),

@@ -24,11 +24,14 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
   late TabController _tabController;
   late AnimationController _pulseController;
   late AnimationController _bgAnimController;
   late Animation<double> _pulseAnimation;
+
+  @override
+  bool get wantKeepAlive => true; // Keep the profile screen alive
 
   @override
   void initState() {
@@ -51,7 +54,10 @@ class _ProfileScreenState extends State<ProfileScreen>
       duration: const Duration(seconds: 8),
     )..repeat();
 
-    _refreshProfile();
+    // Defer the profile fetch to avoid setState during build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _refreshProfile();
+    });
   }
 
   @override
@@ -80,6 +86,7 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -129,36 +136,29 @@ class _ProfileScreenState extends State<ProfileScreen>
                   );
                 }
 
-                // Use Column with TabBarView that takes proper height
+                // Simple Column layout with scrollable content
                 return Column(
                   children: [
                     // Custom App Bar
                     _buildCustomAppBar(isDark),
-
-                    // Scrollable header + Tab content
+                    
+                    // Scrollable content
                     Expanded(
                       child: RefreshIndicator(
                         onRefresh: _refreshProfile,
                         color: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
-                        child: CustomScrollView(
-                          slivers: [
-                            // Profile Header Card
-                            SliverToBoxAdapter(
-                              child: _buildProfileHeader(user, isDark),
-                            ),
-
-                            // Tab Bar (pinned)
-                            SliverPersistentHeader(
-                              pinned: true,
-                              delegate: _ProfileTabBarDelegate(
-                                child: _buildTabBar(isDark),
-                                isDark: isDark,
-                              ),
-                            ),
-
-                            // Tab Content - using SliverToBoxAdapter with fixed height
-                            SliverToBoxAdapter(
-                              child: SizedBox(
+                        child: SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: Column(
+                            children: [
+                              // Profile Header Card
+                              _buildProfileHeader(user, isDark),
+                              
+                              // Tab Bar
+                              _buildTabBar(isDark),
+                              
+                              // Tab Content - Fixed height container
+                              SizedBox(
                                 height: MediaQuery.of(context).size.height * 0.6,
                                 child: TabBarView(
                                   controller: _tabController,
@@ -169,8 +169,8 @@ class _ProfileScreenState extends State<ProfileScreen>
                                   ],
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),

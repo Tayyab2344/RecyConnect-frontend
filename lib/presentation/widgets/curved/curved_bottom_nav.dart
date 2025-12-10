@@ -25,7 +25,7 @@ class CurvedBottomNav extends StatelessWidget {
     this.backgroundColor,
     this.activeColor,
     this.inactiveColor,
-    this.hasBlur = true,
+    this.hasBlur = false, // Disabled for better performance on low-end devices
     this.floatingButton,
   });
 

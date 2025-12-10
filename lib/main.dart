@@ -6,6 +6,8 @@ import 'core/theme/app_theme.dart';
 import 'core/providers/theme_provider.dart';
 import 'presentation/screens/onboarding/welcome_story_screen.dart';
 import 'presentation/screens/dashboard/dashboard_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'presentation/screens/onboarding/onboarding_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,15 +44,61 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class AuthWrapper extends StatelessWidget {
+
+class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
 
   @override
+  State<AuthWrapper> createState() => _AuthWrapperState();
+}
+
+class _AuthWrapperState extends State<AuthWrapper> {
+  bool? _hasSeenOnboarding;
+  bool _isCheckingAuth = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeApp();
+  }
+
+  Future<void> _initializeApp() async {
+    // Check onboarding status
+    final prefs = await SharedPreferences.getInstance();
+    final hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
+    
+    // Try to restore saved authentication
+    final authService = Provider.of<AuthService>(context, listen: false);
+    await authService.loadToken();
+    
+    // If we have a saved token, try to fetch the user profile
+    if (authService.isAuthenticated) {
+      final result = await authService.fetchProfile();
+      // If fetching profile fails (e.g., token expired), logout
+      if (!result['success']) {
+        await authService.logout();
+      }
+    }
+    
+    setState(() {
+      _hasSeenOnboarding = hasSeenOnboarding;
+      _isCheckingAuth = false;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // Show loader while checking auth and prefs
+    if (_isCheckingAuth || _hasSeenOnboarding == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
     return Consumer<AuthService>(
       builder: (context, authService, child) {
         if (authService.isAuthenticated) {
           return const DashboardScreen();
+        } else if (!_hasSeenOnboarding!) {
+          return const OnboardingScreen();
         } else {
           return const AnimatedStoryWelcomeScreen();
         }
