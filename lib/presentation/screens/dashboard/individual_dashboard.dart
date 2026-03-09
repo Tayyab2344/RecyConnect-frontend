@@ -10,6 +10,7 @@ import '../individual/browse_marketplace_screen.dart';
 import '../individual/my_listings_screen.dart';
 import '../individual/my_orders_screen.dart';
 import '../individual/seller_orders_screen.dart';
+import '../individual/transactions_screen.dart';
 import '../profile/profile_screen.dart';
 
 
@@ -278,8 +279,9 @@ class _IndividualDashboardState extends State<IndividualDashboard> {
           Icons.monetization_on_outlined,
           const Color(0xFFFFA726),
           () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Earnings feature coming soon!')),
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const TransactionsScreen()),
             );
           },
         ),

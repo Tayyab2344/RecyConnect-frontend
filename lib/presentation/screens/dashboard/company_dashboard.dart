@@ -9,6 +9,7 @@ import '../../widgets/curved/curved_bottom_nav.dart';
 import '../company/bulk_sell_screen.dart';
 import '../marketplace/marketplace_screen.dart';
 import '../individual/my_orders_screen.dart';
+import '../individual/transactions_screen.dart';
 import '../profile/profile_screen.dart';
 
 class CompanyDashboard extends StatefulWidget {
@@ -441,12 +442,12 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
         ),
         const SizedBox(height: 16),
         GridView.count(
-          crossAxisCount: 3,
+          crossAxisCount: 4,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           mainAxisSpacing: 12,
           crossAxisSpacing: 12,
-          childAspectRatio: 1.0,
+          childAspectRatio: 0.8,
           children: [
             _buildQuickActionCard('Browse', Icons.search, const Color(0xFF4CAF50), () {
               _pageController.animateToPage(1, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
@@ -454,8 +455,14 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
             _buildQuickActionCard('Bulk Sell', Icons.sell_outlined, const Color(0xFF2196F3), () {
               _pageController.animateToPage(2, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
             }),
-            _buildQuickActionCard('My Orders', Icons.receipt_long_outlined, const Color(0xFFFFA726), () {
+            _buildQuickActionCard('Orders', Icons.receipt_long_outlined, const Color(0xFFFFA726), () {
               _pageController.animateToPage(3, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+            }),
+            _buildQuickActionCard('Wallet', Icons.account_balance_wallet, const Color(0xFF9C27B0), () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const TransactionsScreen()),
+              );
             }),
           ],
         ),

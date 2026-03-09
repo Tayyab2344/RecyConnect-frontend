@@ -3,7 +3,7 @@ import '../../../../core/theme/marketplace_theme.dart';
 import '../../../../core/models/listing_model.dart';
 import '../../../widgets/marketplace/glass_card.dart';
 import '../../../widgets/marketplace/neon_button.dart';
-import 'purchase_confirmation_dialog.dart';
+import 'checkout_screen.dart';
 
 class ItemDetailScreen extends StatelessWidget {
   final Listing item;
@@ -11,9 +11,11 @@ class ItemDetailScreen extends StatelessWidget {
   const ItemDetailScreen({Key? key, required this.item}) : super(key: key);
 
   void _onBuyPressed(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => PurchaseConfirmationDialog(item: item),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CheckoutScreen(item: item),
+      ),
     );
   }
 
