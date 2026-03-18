@@ -21,6 +21,9 @@ dependencies:
   
   # Image & Camera
   image_picker: ^1.1.2
+
+  # TFLite for on-device AI classification
+  tflite_flutter: ^0.11.0
   
   # OCR
   google_mlkit_commons: ^0.11.0
@@ -98,3 +101,4 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
+    - assets/recyconnect_outputs/

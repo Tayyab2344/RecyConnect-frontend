@@ -149,6 +149,12 @@ class Listing {
         return 'Metal';
       case 'e-waste':
         return 'E-Waste';
+      case 'glass':
+        return 'Glass';
+      case 'clothing':
+        return 'Clothing';
+      case 'other':
+        return 'Other';
       default:
         return materialType;
     }

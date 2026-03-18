@@ -1,13 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:recyconnect/core/models/listing_model.dart';
 import 'package:recyconnect/core/services/auth_service.dart';
+import 'package:recyconnect/core/services/image_classifier_service.dart';
 import 'package:recyconnect/core/services/listing_service.dart';
 import 'package:recyconnect/core/theme/marketplace_theme.dart';
 import 'package:recyconnect/presentation/widgets/marketplace/glass_card.dart';
@@ -54,6 +54,8 @@ class _CreateListingScreenState extends State<CreateListingScreen>
     'Metal': 40.0,
     'E-Waste': 100.0,
     'Glass': 10.0,
+    'Clothing': 25.0,
+    'Other': 5.0,
   };
 
   @override
@@ -154,8 +156,8 @@ class _CreateListingScreenState extends State<CreateListingScreen>
              _selectedImages = _selectedImages.take(3).toList();
           }
         });
-        // Trigger AI Analysis Simulation
-        _simulateAIAnalysis();
+        // Trigger real AI Classification
+        _runAIClassification();
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -164,40 +166,65 @@ class _CreateListingScreenState extends State<CreateListingScreen>
     }
   }
 
-  void _simulateAIAnalysis() {
+  Future<void> _runAIClassification() async {
     setState(() => _isAnalyzing = true);
     _scanController.repeat(reverse: true);
 
-    // Simulate 2 seconds of "processing"
-    Timer(const Duration(seconds: 2), () {
-      if (!mounted) return;
-      setState(() {
-        _isAnalyzing = false;
-        _scanController.stop();
-        _scanController.reset();
+    try {
+      final classifier = ImageClassifierService.instance;
+      await classifier.initialize();
 
-        // Mock AI Results
-        _selectedMaterial = 'Plastic'; // AI detected Plastic
-        _titleController.text = 'Batch of Recyclable Plastic Bottles';
-        _descriptionController.text =
-            'Assortment of PET bottles and containers. Clean and ready for recycling.';
-        
-        // Visual feedback
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: const [
-                 Icon(Icons.auto_awesome, color: Colors.white),
-                 SizedBox(width: 8),
-                 Text('AI Analysis Complete! Details Auto-filled.'),
-              ],
+      if (_selectedImages.isNotEmpty && classifier.isReady) {
+        final imageFile = File(_selectedImages.first.path);
+        final result = await classifier.classifyImage(imageFile);
+
+        if (!mounted) return;
+
+        if (result != null) {
+          setState(() {
+            _isAnalyzing = false;
+            _scanController.stop();
+            _scanController.reset();
+            _selectedMaterial = result.displayName;
+          });
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.auto_awesome, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'AI Detected: ${result.displayName} (${result.confidencePercent} confidence)',
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: MarketplaceTheme.lightAccent,
+              duration: const Duration(seconds: 3),
             ),
-            backgroundColor: MarketplaceTheme.lightAccent,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      });
+          );
+          return;
+        }
+      }
+    } catch (e) {
+      print('AI Classification error: $e');
+    }
+
+    // Fallback if classification fails
+    if (!mounted) return;
+    setState(() {
+      _isAnalyzing = false;
+      _scanController.stop();
+      _scanController.reset();
     });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Could not auto-detect material. Please select manually.'),
+        duration: Duration(seconds: 2),
+      ),
+    );
   }
 
   double get _estimatedValue {
@@ -810,6 +837,8 @@ class _CreateListingScreenState extends State<CreateListingScreen>
       case 'Metal': return Icons.build;
       case 'E-Waste': return Icons.computer;
       case 'Glass': return Icons.wine_bar;
+      case 'Clothing': return Icons.checkroom;
+      case 'Other': return Icons.category;
       default: return Icons.recycling;
     }
   }
