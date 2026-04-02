@@ -45,7 +45,10 @@ class TransactionService {
       // Depending on backend structure, might need to parse `data` or `transactions` key
       return decodedData['data'] ?? decodedData['transactions'] ?? decodedData;
     } else {
-      throw Exception('Failed to load transactions: ${response.body}');
+      final decoded = jsonDecode(response.body);
+      final message = decoded['message'] ?? 'Unknown error';
+      final error = decoded['error'] ?? '';
+      throw Exception('$message${error.toString().isNotEmpty ? ": $error" : ""}');
     }
   }
 
