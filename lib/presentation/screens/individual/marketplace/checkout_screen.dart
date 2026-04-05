@@ -76,7 +76,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     try {
       // 1. Reserve 1 unit of the listing (idempotent - safe to retry)
-      final reservationResult = await _reservationService.reserveListing(widget.item.id, 1.0);
+      final reservationResult = await _reservationService.reserveListing(widget.item.id, widget.item.estimatedWeight);
       reservationId = reservationResult['data']?['reservation']?['id'] as int?;
 
       // 2. Create Order
