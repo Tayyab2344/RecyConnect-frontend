@@ -26,6 +26,7 @@ class AuthService extends ChangeNotifier {
   bool get isAuthenticated => _token != null && _token!.isNotEmpty;
   String? get userName => _user?['name'] as String?;
   String? get userRole => _user?['role'];
+  int? get userId => (_user?['id'] as num?)?.toInt();
   Map<String, dynamic>? get currentUser => _user;
 
   void _setLoading(bool loading) {
@@ -134,6 +135,7 @@ class AuthService extends ChangeNotifier {
         // Extract user data from nested 'user' object
         final userData = responseData['user'];
         _user = {
+          'id': userData['id'],
           'role': userData['role'],
           'name': userData['name'] ?? userData['businessName'] ?? userData['companyName'],
           'collectorId': userData['collectorId'],

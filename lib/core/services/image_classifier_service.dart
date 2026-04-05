@@ -1,14 +1,18 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
-import 'package:tflite_flutter/tflite_flutter.dart';
 import 'dart:ui' as ui;
+
+// Conditionally import tflite_flutter only on non-web platforms
+import 'package:tflite_flutter/tflite_flutter.dart'
+    if (dart.library.html) 'image_classifier_service_web_stub.dart';
 
 /// Service for classifying images using the RecyConnect TFLite model.
 /// Uses the quantized MobileNetV2-based model for material classification.
 class ImageClassifierService {
   static ImageClassifierService? _instance;
-  Interpreter? _interpreter;
+  dynamic _interpreter;
   List<String> _labels = [];
   bool _isInitialized = false;
   bool _initFailed = false;
@@ -42,6 +46,13 @@ class ImageClassifierService {
   /// Initialize the model and labels. Call once at app start or before first use.
   Future<void> initialize() async {
     if (_isInitialized || _initFailed) return;
+
+    // TFLite is not supported on web
+    if (kIsWeb) {
+      print('ImageClassifierService: TFLite not supported on web, skipping initialization');
+      _initFailed = true;
+      return;
+    }
 
     try {
       // Load labels

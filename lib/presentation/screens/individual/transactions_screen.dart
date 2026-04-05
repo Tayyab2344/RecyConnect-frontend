@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../../../core/services/transaction_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/error_message_helper.dart';
+import '../../widgets/recycle_loader.dart';
 
 class TransactionsScreen extends StatefulWidget {
   const TransactionsScreen({Key? key}) : super(key: key);
@@ -54,7 +55,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     return Scaffold(
       backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.backgroundLight,
       appBar: AppBar(
-        title: const Text('Transaction History'),
+        title: const Text('My Earnings'),
         centerTitle: true,
         backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.primaryGreen,
         foregroundColor: Colors.white,
@@ -62,7 +63,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       ),
       body: _isLoading
           ? Center(
-              child: CircularProgressIndicator(
+              child: RecycleLoader(
                 color: isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen,
               ),
             )

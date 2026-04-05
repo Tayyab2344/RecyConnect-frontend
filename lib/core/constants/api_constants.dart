@@ -1,6 +1,6 @@
 class ApiConstants {
-  // Production URL (Default)
-  static const String baseUrl = String.fromEnvironment('API_URL', defaultValue: 'https://recy-connect-backend-6smb.vercel.app/api');
+  // Production URL - Vercel Backend
+  static const String baseUrl = 'https://recy-connect-backend.vercel.app/api';
 
   static const String checkEmail = '$baseUrl/auth/check-email';
 

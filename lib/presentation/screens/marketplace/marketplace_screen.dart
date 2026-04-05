@@ -1,4 +1,4 @@
-import 'dart:ui';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import '../../../core/services/listing_service.dart';
 import '../../../core/models/listing_model.dart';
@@ -22,8 +22,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> with SingleTicker
   String _searchQuery = '';
   String? _selectedCategory;
   
-  // Mock Role for Demo (Replace with AuthService)
-  final String _userRole = 'Individual'; // Options: Individual, Warehouse, Company
+  // Role-based filtering is handled server-side via JWT token.
 
   final List<CategoryItem> _categories = [
     CategoryItem('All', Icons.grid_view_rounded),
@@ -44,7 +43,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> with SingleTicker
     setState(() {
       _listingsFuture = _listingService.getListings(
         search: _searchQuery.isNotEmpty ? _searchQuery : null,
-        material: _selectedCategory,
+        // 'All' means no filter — pass null so backend returns all materials
+        material: (_selectedCategory == null || _selectedCategory == 'All') ? null : _selectedCategory,
         isMarketplace: true,
       );
     });
@@ -280,12 +280,39 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> with SingleTicker
                children: [
                  ClipRRect(
                    borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                   child: listing.decodedImages.isNotEmpty
-                       ? Image.memory(listing.decodedImages.first, fit: BoxFit.cover)
-                       : Container(
-                           color: isDark ? Colors.black26 : Colors.grey.shade200,
-                           child: Icon(Icons.image, color: isDark ? Colors.white24 : Colors.grey),
-                         ),
+                   child: listing.hasNetworkImages
+                       ? Image.network(
+                           listing.imageUrls.first,
+                           fit: BoxFit.cover,
+                           width: double.infinity,
+                           loadingBuilder: (context, child, loadingProgress) {
+                             if (loadingProgress == null) return child;
+                             return Container(
+                               color: isDark ? Colors.black26 : Colors.grey.shade200,
+                               child: Center(
+                                 child: CircularProgressIndicator(
+                                   strokeWidth: 2,
+                                   color: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
+                                 ),
+                               ),
+                             );
+                           },
+                           errorBuilder: (context, error, stackTrace) {
+                             return Container(
+                               color: isDark ? Colors.black26 : Colors.grey.shade200,
+                               child: Center(
+                                 child: Icon(Icons.broken_image_outlined,
+                                     color: isDark ? Colors.white24 : Colors.grey),
+                               ),
+                             );
+                           },
+                         )
+                       : listing.decodedImages.isNotEmpty
+                           ? Image.memory(listing.decodedImages.first, fit: BoxFit.cover)
+                           : Container(
+                               color: isDark ? Colors.black26 : Colors.grey.shade200,
+                               child: Icon(Icons.image, color: isDark ? Colors.white24 : Colors.grey),
+                             ),
                  ),
                  // Material Badge
                  Positioned(
@@ -366,7 +393,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> with SingleTicker
                          padding: EdgeInsets.zero,
                        ),
                        child: Text(
-                         _userRole == 'Warehouse' ? "Bulk Buy" : "Buy",
+                         "Buy",
                          style: TextStyle(
                             fontSize: 12, 
                             color: isDark ? AppColors.neonGreen : Colors.white,
@@ -408,7 +435,7 @@ class GlassContainer extends StatelessWidget {
     return ClipRRect(
       borderRadius: borderRadius ?? BorderRadius.zero,
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: Container(
           decoration: BoxDecoration(
             color: isDark 

@@ -1,4 +1,4 @@
-import 'dart:ui';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import '../../../core/theme/marketplace_theme.dart';
 import '../../../core/theme/app_theme.dart';
@@ -11,6 +11,7 @@ import '../../../core/models/order_model.dart';
 import '../../widgets/empty_state_widget.dart';
 import '../../widgets/marketplace/glass_card.dart';
 import '../../widgets/marketplace/neon_button.dart';
+import '../../widgets/recycle_loader.dart';
 import 'marketplace/item_detail_screen.dart';
 
 class BrowseMarketplaceScreen extends StatefulWidget {
@@ -124,7 +125,7 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen> {
               _buildStickyFilterBar(isDark),
               Expanded(
                 child: _isLoading
-                    ? const Center(child: CircularProgressIndicator())
+                    ? RecycleLoader.centered()
                     : _errorMessage != null
                         ? Center(child: Text(_errorMessage!))
                         : _items.isEmpty
@@ -166,7 +167,7 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen> {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
               child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                 child: Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
@@ -289,16 +290,56 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Image / Icon Placeholder
+          // Image Area
           Expanded(
             flex: 3,
             child: Container(
               width: double.infinity,
-              color: isDark ? Colors.black12 : Colors.grey.shade100,
-              child: Icon(
-                _getIconForMaterial(item.materialType),
-                size: 48,
-                color: isDark ? MarketplaceTheme.darkAccentCyan : Colors.grey,
+              decoration: BoxDecoration(
+                color: isDark ? Colors.black12 : Colors.grey.shade100,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              ),
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                child: item.hasNetworkImages
+                    ? Image.network(
+                        item.imageUrls.first,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Center(
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: isDark
+                                  ? MarketplaceTheme.darkAccentCyan
+                                  : MarketplaceTheme.lightAccent,
+                            ),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) {
+                          return Center(
+                            child: Icon(
+                              Icons.broken_image_outlined,
+                              size: 36,
+                              color: isDark ? MarketplaceTheme.darkAccentCyan : Colors.grey,
+                            ),
+                          );
+                        },
+                      )
+                    : item.decodedImages.isNotEmpty
+                        ? Image.memory(
+                            item.decodedImages.first,
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                          )
+                        : Center(
+                            child: Icon(
+                              _getIconForMaterial(item.materialType),
+                              size: 48,
+                              color: isDark ? MarketplaceTheme.darkAccentCyan : Colors.grey,
+                            ),
+                          ),
               ),
             ),
           ),

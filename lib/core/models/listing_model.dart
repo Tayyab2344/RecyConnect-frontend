@@ -112,9 +112,22 @@ class Listing {
     };
   }
 
+  /// Check if images are network URLs (Cloudinary) rather than base64
+  bool get hasNetworkImages {
+    if (images == null || images!.isEmpty) return false;
+    return images!.first.startsWith('http://') || images!.first.startsWith('https://');
+  }
+
+  /// Get image URLs for network images (Cloudinary URLs)
+  List<String> get imageUrls {
+    if (images == null || images!.isEmpty) return [];
+    return images!.where((img) => img.startsWith('http://') || img.startsWith('https://')).toList();
+  }
+
+  /// Decode base64 images (legacy support)
   List<Uint8List> get decodedImages {
     if (images == null || images!.isEmpty) return [];
-    return images!.map((img) {
+    return images!.where((img) => !img.startsWith('http://') && !img.startsWith('https://')).map((img) {
       try {
         return base64Decode(img);
       } catch (e) {

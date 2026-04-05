@@ -5,13 +5,23 @@ import '../../../widgets/marketplace/glass_card.dart';
 import '../../../widgets/marketplace/neon_button.dart';
 import '../individual/marketplace/checkout_screen.dart'; // Route to the checkout screen
 
-class ItemDetailScreen extends StatelessWidget {
+class ItemDetailScreen extends StatefulWidget {
   final Map<String, dynamic> itemMap;
-  late final Listing item; // Parse item
 
-  ItemDetailScreen({Key? key, required this.itemMap}) : super(key: key) {
-    // Quick parse or fake if coming from stub map
-    item = Listing.fromJson(itemMap);
+  const ItemDetailScreen({Key? key, required this.itemMap}) : super(key: key);
+
+  @override
+  State<ItemDetailScreen> createState() => _ItemDetailScreenState();
+}
+
+class _ItemDetailScreenState extends State<ItemDetailScreen> {
+  late final Listing item;
+  int _currentImageIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    item = Listing.fromJson(widget.itemMap);
   }
 
   void _onBuyPressed(BuildContext context) {
@@ -54,14 +64,102 @@ class ItemDetailScreen extends StatelessWidget {
                   // Hero Image Area
                   Container(
                     height: 250,
-                    color: isDark ? Colors.black26 : Colors.grey.shade100,
-                    child: Center(
-                      child: Icon(
-                        Icons.recycling, // Replace with actual image later
-                        size: 80,
-                        color: isDark
-                            ? MarketplaceTheme.darkAccentCyan
-                            : MarketplaceTheme.lightAccent,
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.black26 : Colors.grey.shade100,
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                      child: Stack(
+                        children: [
+                          PageView.builder(
+                            onPageChanged: (index) {
+                              setState(() {
+                                _currentImageIndex = index;
+                              });
+                            },
+                            itemCount: item.hasNetworkImages
+                                ? item.imageUrls.length
+                                : (item.decodedImages.isNotEmpty ? item.decodedImages.length : 1),
+                            itemBuilder: (context, index) {
+                              if (item.hasNetworkImages) {
+                                return Image.network(
+                                  item.imageUrls[index],
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  height: 250,
+                                  loadingBuilder: (context, child, loadingProgress) {
+                                    if (loadingProgress == null) return child;
+                                    return Center(
+                                      child: CircularProgressIndicator(
+                                        value: loadingProgress.expectedTotalBytes != null
+                                            ? loadingProgress.cumulativeBytesLoaded /
+                                                loadingProgress.expectedTotalBytes!
+                                            : null,
+                                        color: isDark
+                                            ? MarketplaceTheme.darkAccentCyan
+                                            : MarketplaceTheme.lightAccent,
+                                      ),
+                                    );
+                                  },
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Center(
+                                      child: Icon(
+                                        Icons.broken_image_outlined,
+                                        size: 60,
+                                        color: isDark
+                                            ? MarketplaceTheme.darkAccentCyan
+                                            : MarketplaceTheme.lightAccent,
+                                      ),
+                                    );
+                                  },
+                                );
+                              } else if (item.decodedImages.isNotEmpty) {
+                                return Image.memory(
+                                  item.decodedImages[index],
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  height: 250,
+                                );
+                              } else {
+                                return Center(
+                                  child: Icon(
+                                    Icons.recycling,
+                                    size: 80,
+                                    color: isDark
+                                        ? MarketplaceTheme.darkAccentCyan
+                                        : MarketplaceTheme.lightAccent,
+                                  ),
+                                );
+                              }
+                            },
+                          ),
+                          // Dot Indicators
+                          if ((item.hasNetworkImages && item.imageUrls.length > 1) ||
+                              (!item.hasNetworkImages && item.decodedImages.length > 1))
+                            Positioned(
+                              bottom: 8,
+                              left: 0,
+                              right: 0,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: List.generate(
+                                  item.hasNetworkImages ? item.imageUrls.length : item.decodedImages.length,
+                                  (index) => Container(
+                                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                                    width: _currentImageIndex == index ? 10 : 8,
+                                    height: _currentImageIndex == index ? 10 : 8,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: _currentImageIndex == index
+                                          ? (isDark ? MarketplaceTheme.darkAccentCyan : MarketplaceTheme.lightAccent)
+                                          : Colors.white.withOpacity(0.5),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                   ),

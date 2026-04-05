@@ -151,9 +151,9 @@ class _CreateListingScreenState extends State<CreateListingScreen>
       if (newImages.isNotEmpty) {
         setState(() {
           _selectedImages.addAll(newImages);
-          // Limit to 3 images total if needed
-          if (_selectedImages.length > 3) {
-             _selectedImages = _selectedImages.take(3).toList();
+          // Limit to 4 images total
+          if (_selectedImages.length > 4) {
+             _selectedImages = _selectedImages.take(4).toList();
           }
         });
         // Trigger real AI Classification
@@ -366,11 +366,13 @@ class _CreateListingScreenState extends State<CreateListingScreen>
             fontWeight: FontWeight.bold,
           ),
         ),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios,
-              color: isDark ? MarketplaceTheme.darkTextPrimary : MarketplaceTheme.lightTextPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: Navigator.canPop(context)
+            ? IconButton(
+                icon: Icon(Icons.arrow_back_ios,
+                    color: isDark ? MarketplaceTheme.darkTextPrimary : MarketplaceTheme.lightTextPrimary),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
       ),
       body: Container(
         decoration: BoxDecoration(

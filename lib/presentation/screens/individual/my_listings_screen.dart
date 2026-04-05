@@ -5,6 +5,7 @@ import '../../../core/models/listing_model.dart';
 import '../../../core/services/listing_service.dart';
 import '../../../core/utils/static_data.dart';
 import '../../widgets/marketplace/glass_card.dart';
+import '../../widgets/recycle_loader.dart';
 import '../../../core/theme/marketplace_theme.dart';
 import 'create_listing_screen.dart';
 
@@ -154,7 +155,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
             child: RefreshIndicator(
               onRefresh: _loadListings,
               child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? RecycleLoader.centered()
                   : Column(
                       children: [
                         _buildStatsCard(isDark),
@@ -355,28 +356,68 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
               ),
             ),
             
-            // Icon
+            // Image or Icon
             Expanded(
-              child: Center(
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [
-                        _getMaterialColor(listing.materialType).withOpacity(0.3),
-                        _getMaterialColor(listing.materialType).withOpacity(0.1),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                  ),
-                  child: Text(
-                    StaticDataHelper.getMaterialIcon(listing.materialType),
-                    style: const TextStyle(fontSize: 40),
-                  ),
-                ),
-              ),
+              child: listing.hasNetworkImages
+                  ? ClipRRect(
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                      child: Image.network(
+                        listing.imageUrls.first,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Center(
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: _getMaterialColor(listing.materialType),
+                            ),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) => Center(
+                          child: Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: _getMaterialColor(listing.materialType).withOpacity(0.15),
+                            ),
+                            child: Text(
+                              StaticDataHelper.getMaterialIcon(listing.materialType),
+                              style: const TextStyle(fontSize: 40),
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
+                  : listing.decodedImages.isNotEmpty
+                      ? ClipRRect(
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                          child: Image.memory(
+                            listing.decodedImages.first,
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                          ),
+                        )
+                      : Center(
+                          child: Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: LinearGradient(
+                                colors: [
+                                  _getMaterialColor(listing.materialType).withOpacity(0.3),
+                                  _getMaterialColor(listing.materialType).withOpacity(0.1),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                            ),
+                            child: Text(
+                              StaticDataHelper.getMaterialIcon(listing.materialType),
+                              style: const TextStyle(fontSize: 40),
+                            ),
+                          ),
+                        ),
             ),
             
             // Details

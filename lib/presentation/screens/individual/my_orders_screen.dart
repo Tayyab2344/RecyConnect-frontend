@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../../core/models/order_model.dart';
 import '../../../core/services/order_service.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../widgets/recycle_loader.dart';
 import '../individual/browse_marketplace_screen.dart';
 
 /// Premium My Orders Screen with Glassmorphism Design
@@ -118,7 +119,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
                 Expanded(
                   child: _isLoading
                       ? Center(
-                          child: CircularProgressIndicator(
+                          child: RecycleLoader(
                             color: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
                           ),
                         )
@@ -175,18 +176,20 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
       child: Row(
         children: [
-          // Back button
-          _buildIconButton(
-            icon: Icons.arrow_back_ios_new_rounded,
-            isDark: isDark,
-            onTap: () => Navigator.pop(context),
-          ),
-          const SizedBox(width: 16),
-          
+          // Back button — only show when navigated to (not embedded as a tab)
+          if (Navigator.canPop(context))
+            _buildIconButton(
+              icon: Icons.arrow_back_ios_new_rounded,
+              isDark: isDark,
+              onTap: () => Navigator.pop(context),
+            ),
+          if (Navigator.canPop(context))
+            const SizedBox(width: 16),
+
           // Title
           Expanded(
             child: Text(
-              'My Orders',
+              'My Purchases',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
