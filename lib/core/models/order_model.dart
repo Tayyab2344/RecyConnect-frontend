@@ -12,6 +12,7 @@ class Order {
   final String status;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final int? reservationId;
   
   // Optional nested user data
   final OrderUser? buyer;
@@ -31,6 +32,7 @@ class Order {
     required this.status,
     required this.createdAt,
     required this.updatedAt,
+    this.reservationId,
     this.buyer,
     this.seller,
   });
@@ -50,6 +52,7 @@ class Order {
       status: json['status'],
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: DateTime.parse(json['updatedAt']),
+      reservationId: json['reservationId'],
       buyer: json['buyer'] != null ? OrderUser.fromJson(json['buyer']) : null,
       seller: json['seller'] != null ? OrderUser.fromJson(json['seller']) : null,
     );
@@ -70,6 +73,7 @@ class Order {
       'status': status,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
+      if (reservationId != null) 'reservationId': reservationId,
     };
   }
 
@@ -84,6 +88,7 @@ class Order {
       if (longitude != null) 'longitude': longitude,
       if (locationMethod != null) 'locationMethod': locationMethod,
       'paymentMethod': paymentMethod,
+      if (reservationId != null) 'reservationId': reservationId,
     };
   }
 

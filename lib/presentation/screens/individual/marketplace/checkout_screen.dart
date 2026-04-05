@@ -72,9 +72,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     setState(() => _isLoading = true);
 
+    int? reservationId;
+
     try {
-      // 1. Reserve Listing
-      await _reservationService.reserveListing(widget.item.id);
+      // 1. Reserve 1 unit of the listing (idempotent - safe to retry)
+      final reservationResult = await _reservationService.reserveListing(widget.item.id, 1.0);
+      reservationId = reservationResult['data']?['reservation']?['id'] as int?;
 
       // 2. Create Order
       final order = Order(
@@ -86,6 +89,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         pickupAddress: _addressController.text,
         paymentMethod: _paymentMethod,
         status: 'PENDING',
+        reservationId: reservationId,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
@@ -93,15 +97,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
       // 3. Handle Payment
       if (_paymentMethod == 'COD') {
-        await _paymentService.createCodPayment(createdOrder.id.toString());
+        await _paymentService.createCodPayment(createdOrder.id);
       } else {
-        // Stripe integration would go here. We create an intent.
-        await _paymentService.createPaymentIntent(createdOrder.id.toString());
-        // ... (Usually followed by a Stripe SDK popup to complete the transaction)
-        // For now, we simulate a successful authorization
-        final paymentsResult = await _paymentService.getPaymentMethods(createdOrder.id.toString());
+        await _paymentService.createPaymentIntent(createdOrder.id);
+        final paymentsResult = await _paymentService.getPaymentMethods(createdOrder.id);
         if (paymentsResult['success'] == true && (paymentsResult['data'] as List).isNotEmpty) {
-          final paymentId = paymentsResult['data'][0]['id'].toString();
+          final paymentId = paymentsResult['data'][0]['id'] as int;
           await _paymentService.authorizePayment(paymentId);
           await _paymentService.capturePayment(paymentId);
         }
@@ -109,15 +110,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
       if (!mounted) return;
 
-      // 4. Show Success and navigate away
+      // 4. Show Success
       _showSuccessDialog();
 
     } catch (e) {
+      // Release the reservation so the user can retry
+      if (reservationId != null) {
+        try {
+          await _reservationService.releaseReservation(reservationId);
+        } catch (_) {}
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Checkout failed: ${e.toString().replaceAll("Exception: ", "")}')),
       );
-      // Optional: Release reservation if failed partially.
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
