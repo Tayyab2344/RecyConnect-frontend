@@ -72,28 +72,21 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     setState(() => _isLoading = true);
 
-    int? reservationId;
-
     try {
-      // 1. Reserve 1 unit of the listing (idempotent - safe to retry)
-      final reservationResult = await _reservationService.reserveListing(widget.item.id, widget.item.estimatedWeight);
-      reservationId = reservationResult['data']?['reservation']?['id'] as int?;
-
-      // 2. Create Order
+      // 1. Create Order directly
       final order = Order(
         id: 0,
-        buyerId: 0,
+        buyerId: 0, // Ignored by backend (uses token)
         sellerId: widget.item.userId,
         materialType: widget.item.materialType,
         weight: widget.item.estimatedWeight,
         pickupAddress: _addressController.text,
         paymentMethod: _paymentMethod,
         status: 'PENDING',
-        reservationId: reservationId,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
-      final createdOrder = await _orderService.createOrder(order);
+      final createdOrder = await _orderService.createOrder(order, listingId: widget.item.id);
 
       // 3. Handle Payment
       if (_paymentMethod == 'COD') {
@@ -114,12 +107,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       _showSuccessDialog();
 
     } catch (e) {
-      // Release the reservation so the user can retry
-      if (reservationId != null) {
-        try {
-          await _reservationService.releaseReservation(reservationId);
-        } catch (_) {}
-      }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Checkout failed: ${e.toString().replaceAll("Exception: ", "")}')),

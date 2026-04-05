@@ -6,11 +6,11 @@ class OrderService {
   final ApiService _apiService = ApiService();
 
   // Create a new order
-  Future<Order> createOrder(Order order) async {
+  Future<Order> createOrder(Order order, {int? listingId}) async {
     try {
       final response = await _apiService.post(
         '/orders',
-        order.toCreateJson(),
+        order.toCreateJson(listingId: listingId),
       );
       
       if (response['success'] == true && response['data'] != null) {

@@ -78,7 +78,7 @@ class Order {
   }
 
   // Helper to create a new order for API POST
-  Map<String, dynamic> toCreateJson() {
+  Map<String, dynamic> toCreateJson({int? listingId}) {
     return {
       'sellerId': sellerId,
       'materialType': materialType,
@@ -89,6 +89,7 @@ class Order {
       if (locationMethod != null) 'locationMethod': locationMethod,
       'paymentMethod': paymentMethod,
       if (reservationId != null) 'reservationId': reservationId,
+      if (listingId != null) 'listingId': listingId,
     };
   }
 
