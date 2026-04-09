@@ -15,7 +15,10 @@ dependencies:
   
   # HTTP & API
   http: ^1.2.2
-  
+
+  # Stripe Payment
+  flutter_stripe: ^10.1.1
+
   # Local Storage
   shared_preferences: ^2.3.2
   
@@ -101,4 +104,5 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
-    - assets/recyconnect_outputs/
+    - assets/recyconnect_outputs/labels.txt
+    - assets/recyconnect_outputs/recyconnect_model_quantized.tflite

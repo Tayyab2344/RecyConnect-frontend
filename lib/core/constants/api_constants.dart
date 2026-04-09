@@ -1,6 +1,6 @@
 class ApiConstants {
   // Production URL - Vercel Backend
-  static const String baseUrl = 'https://recy-connect-backend.vercel.app/api';
+  static const String baseUrl = 'https://recy-connect-backend-8aer.vercel.app/api';
 
   static const String checkEmail = '$baseUrl/auth/check-email';
 

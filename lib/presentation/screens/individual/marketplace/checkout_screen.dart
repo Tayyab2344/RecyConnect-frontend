@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/models/listing_model.dart';
 import '../../../../core/models/order_model.dart';
 import '../../../../core/services/auth_service.dart';
-import '../../../../core/services/reservation_service.dart';
 import '../../../../core/services/order_service.dart';
 import '../../../../core/services/payment_service.dart';
 import '../../../../core/theme/marketplace_theme.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../widgets/marketplace/glass_card.dart';
 import '../../../widgets/marketplace/neon_button.dart';
 
@@ -21,13 +20,14 @@ class CheckoutScreen extends StatefulWidget {
 }
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
-  final ReservationService _reservationService = ReservationService();
   final OrderService _orderService = OrderService();
   final PaymentService _paymentService = PaymentService();
 
   final TextEditingController _addressController = TextEditingController();
-  String _paymentMethod = 'COD';
   bool _isLoading = false;
+
+  // 'cod' = Cash on Delivery, 'stripe' = Stripe online payment
+  String _selectedPaymentMethod = 'cod';
 
   @override
   void initState() {
@@ -50,13 +50,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         final addressParts = <String>[];
         if (data['address'] != null) addressParts.add(data['address']);
         if (data['city'] != null) addressParts.add(data['city']);
-        
-        if (addressParts.isNotEmpty) {
-          if (mounted) {
-            setState(() {
-              _addressController.text = addressParts.join(', ');
-            });
-          }
+        if (addressParts.isNotEmpty && mounted) {
+          setState(() => _addressController.text = addressParts.join(', '));
         }
       }
     } catch (_) {}
@@ -73,50 +68,96 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // 1. Create Order directly
-      final order = Order(
-        id: 0,
-        buyerId: 0, // Ignored by backend (uses token)
-        sellerId: widget.item.userId,
-        materialType: widget.item.materialType,
-        weight: widget.item.estimatedWeight,
-        pickupAddress: _addressController.text,
-        paymentMethod: _paymentMethod,
-        status: 'PENDING',
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
+      // Step 1: Create the order
+      final Order order = await _orderService.createOrder(
+        widget.item.id,
+        widget.item.estimatedWeight,
+        paymentMethod: _selectedPaymentMethod,
       );
-      final createdOrder = await _orderService.createOrder(order, listingId: widget.item.id);
-
-      // 3. Handle Payment
-      if (_paymentMethod == 'COD') {
-        await _paymentService.createCodPayment(createdOrder.id);
-      } else {
-        await _paymentService.createPaymentIntent(createdOrder.id);
-        final paymentsResult = await _paymentService.getPaymentMethods(createdOrder.id);
-        if (paymentsResult['success'] == true && (paymentsResult['data'] as List).isNotEmpty) {
-          final paymentId = paymentsResult['data'][0]['id'] as int;
-          await _paymentService.authorizePayment(paymentId);
-          await _paymentService.capturePayment(paymentId);
-        }
-      }
 
       if (!mounted) return;
 
-      // 4. Show Success
-      _showSuccessDialog();
-
+      // Step 2: If Stripe selected, launch Stripe Payment Sheet
+      if (_selectedPaymentMethod == 'stripe') {
+        await _launchStripePayment(order);
+      } else {
+        // COD: just show success
+        _showSuccessDialog(isCod: true);
+      }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Checkout failed: ${e.toString().replaceAll("Exception: ", "")}')),
+        SnackBar(
+          content: Text(
+            e.toString()
+                .replaceAll('Exception: ', '')
+                .replaceAll('Error creating order: Exception: ', ''),
+          ),
+          backgroundColor: Colors.red.shade700,
+        ),
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  void _showSuccessDialog() {
+  Future<void> _launchStripePayment(Order order) async {
+    try {
+      // Step 3: Get PaymentIntent clientSecret from backend
+      final intentData = await _paymentService.createPaymentIntent(order.id);
+      final clientSecret = intentData['data']?['clientSecret'] as String?;
+
+      if (clientSecret == null) {
+        throw Exception('Payment setup failed — no client secret returned.');
+      }
+
+      // Step 4: Init Stripe payment sheet
+      await Stripe.instance.initPaymentSheet(
+        paymentSheetParameters: SetupPaymentSheetParameters(
+          paymentIntentClientSecret: clientSecret,
+          merchantDisplayName: 'RecyConnect',
+          style: ThemeMode.dark,
+          appearance: const PaymentSheetAppearance(
+            colors: PaymentSheetAppearanceColors(
+              primary: Color(0xFF00E676),
+              background: Color(0xFF0D1B2A),
+              componentBackground: Color(0xFF1A2D40),
+              componentText: Colors.white,
+              primaryText: Colors.white,
+              secondaryText: Color(0xFFB0C4DE),
+              placeholderText: Color(0xFF6B8FAB),
+            ),
+            shapes: PaymentSheetShape(
+              borderRadius: 14,
+            ),
+          ),
+        ),
+      );
+
+      // Step 5: Present the payment sheet to the user
+      await Stripe.instance.presentPaymentSheet();
+
+      // Payment successful
+      if (mounted) _showSuccessDialog(isCod: false);
+    } on StripeException catch (e) {
+      if (!mounted) return;
+      // User cancelled — don't show error, just stay on checkout
+      if (e.error.code == FailureCode.Canceled) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Payment cancelled. Your order is saved — you can pay later.')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Payment failed: ${e.error.localizedMessage ?? e.toString()}'),
+            backgroundColor: Colors.red.shade700,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showSuccessDialog({required bool isCod}) {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -128,32 +169,35 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.check_circle_outline,
-                  color: MarketplaceTheme.lightAccent, size: 64),
+              Icon(
+                isCod ? Icons.check_circle_outline : Icons.verified_rounded,
+                color: MarketplaceTheme.lightAccent,
+                size: 64,
+              ),
               const SizedBox(height: 16),
-              const Text(
-                'Order Confirmed!',
-                style: TextStyle(
-                  fontSize: 20, 
+              Text(
+                isCod ? 'Order Placed!' : 'Payment Successful!',
+                style: const TextStyle(
+                  fontSize: 20,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Your payment/order has been successfully processed.',
+              Text(
+                isCod
+                    ? 'Your order is placed. Cash payment will be collected on delivery after the seller confirms.'
+                    : 'Your payment was processed successfully via Stripe. The seller will confirm your order shortly.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white70),
+                style: const TextStyle(color: Colors.white70, fontSize: 13),
               ),
               const SizedBox(height: 24),
               NeonButton(
-                text: 'CONTINUE SHOPPING',
+                text: 'VIEW MY ORDERS',
                 onPressed: () {
-                  Navigator.of(ctx).pop(); // Close dialog
+                  Navigator.of(ctx).pop();
                   int count = 0;
-                  Navigator.of(context).popUntil((route) {
-                    return count++ == 2; // Pop checkout and item detail
-                  });
+                  Navigator.of(context).popUntil((route) => count++ == 2);
                 },
               ),
             ],
@@ -167,8 +211,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final item = widget.item;
-    // Mock rate calculation as before, typical values
-    final rate = 20.0; 
+    const rate = 20.0; // Rs/kg fallback rate
     final total = item.estimatedWeight * rate;
 
     return Scaffold(
@@ -179,13 +222,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         title: Text(
           'Checkout',
           style: TextStyle(
-            color: isDark ? MarketplaceTheme.darkTextPrimary : MarketplaceTheme.lightTextPrimary,
+            color: isDark
+                ? MarketplaceTheme.darkTextPrimary
+                : MarketplaceTheme.lightTextPrimary,
             fontWeight: FontWeight.bold,
           ),
         ),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios,
-              color: isDark ? MarketplaceTheme.darkTextPrimary : MarketplaceTheme.lightTextPrimary),
+          icon: Icon(
+            Icons.arrow_back_ios,
+            color: isDark
+                ? MarketplaceTheme.darkTextPrimary
+                : MarketplaceTheme.lightTextPrimary,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -202,16 +251,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Order Summary
-                      Text(
-                        'ORDER SUMMARY',
-                        style: TextStyle(
-                          color: isDark ? MarketplaceTheme.darkAccentCyan : MarketplaceTheme.lightAccent,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
+                      // ── ORDER SUMMARY ──────────────────────────────
+                      _sectionLabel('ORDER SUMMARY', isDark),
                       const SizedBox(height: 12),
                       GlassCard(
                         padding: const EdgeInsets.all(16),
@@ -220,18 +261,34 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text('${item.estimatedWeight} kg of ${item.materialType}',
-                                  style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontWeight: FontWeight.bold)),
-                                Text('Rs ${total.toStringAsFixed(0)}',
-                                  style: TextStyle(color: isDark ? MarketplaceTheme.darkAccentGreen : MarketplaceTheme.lightAccent, fontWeight: FontWeight.bold)),
+                                Text(
+                                  '${item.estimatedWeight} kg of ${item.materialType}',
+                                  style: TextStyle(
+                                    color: isDark ? Colors.white : Colors.black87,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  'Rs ${total.toStringAsFixed(0)}',
+                                  style: TextStyle(
+                                    color: isDark
+                                        ? MarketplaceTheme.darkAccentGreen
+                                        : MarketplaceTheme.lightAccent,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ],
                             ),
                             const SizedBox(height: 12),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text('Delivery Fee', style: TextStyle(color: isDark ? Colors.white70 : Colors.black54)),
-                                Text('Free', style: TextStyle(color: isDark ? Colors.white70 : Colors.black54)),
+                                Text('Delivery Fee',
+                                    style: TextStyle(
+                                        color: isDark ? Colors.white70 : Colors.black54)),
+                                Text('Free',
+                                    style: TextStyle(
+                                        color: isDark ? Colors.white70 : Colors.black54)),
                               ],
                             ),
                             const Divider(height: 24),
@@ -239,9 +296,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text('Total',
-                                  style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontWeight: FontWeight.bold, fontSize: 18)),
+                                    style: TextStyle(
+                                        color: isDark ? Colors.white : Colors.black87,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 18)),
                                 Text('Rs ${total.toStringAsFixed(0)}',
-                                  style: TextStyle(color: isDark ? MarketplaceTheme.darkAccentGreen : MarketplaceTheme.lightAccent, fontWeight: FontWeight.bold, fontSize: 18)),
+                                    style: TextStyle(
+                                        color: isDark
+                                            ? MarketplaceTheme.darkAccentGreen
+                                            : MarketplaceTheme.lightAccent,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 18)),
                               ],
                             ),
                           ],
@@ -249,91 +314,239 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       ),
                       const SizedBox(height: 24),
 
-                      // Delivery Address
-                      Text(
-                        'DELIVERY ADDRESS',
-                        style: TextStyle(
-                          color: isDark ? MarketplaceTheme.darkAccentCyan : MarketplaceTheme.lightAccent,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
+                      // ── DELIVERY ADDRESS ───────────────────────────
+                      _sectionLabel('DELIVERY ADDRESS', isDark),
                       const SizedBox(height: 12),
                       GlassCard(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 4),
                         child: TextFormField(
                           controller: _addressController,
-                          style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                          style: TextStyle(
+                              color: isDark ? Colors.white : Colors.black87),
                           decoration: InputDecoration(
                             border: InputBorder.none,
                             hintText: 'Enter full delivery address',
-                            hintStyle: TextStyle(color: isDark ? Colors.white24 : Colors.black12),
-                            icon: Icon(Icons.location_on_outlined, color: isDark ? Colors.white54 : Colors.black38),
+                            hintStyle: TextStyle(
+                                color: isDark ? Colors.white24 : Colors.black12),
+                            icon: Icon(Icons.location_on_outlined,
+                                color: isDark ? Colors.white54 : Colors.black38),
                           ),
                         ),
                       ),
                       const SizedBox(height: 24),
 
-                      // Payment Method
-                      Text(
-                        'PAYMENT METHOD',
-                        style: TextStyle(
-                          color: isDark ? MarketplaceTheme.darkAccentCyan : MarketplaceTheme.lightAccent,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
+                      // ── PAYMENT METHOD ─────────────────────────────
+                      _sectionLabel('PAYMENT METHOD', isDark),
                       const SizedBox(height: 12),
-                      GlassCard(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        child: Column(
-                          children: [
-                            RadioListTile<String>(
-                              title: Text('Cash on Delivery (COD)', style: TextStyle(color: isDark ? Colors.white : Colors.black)),
-                              value: 'COD',
-                              groupValue: _paymentMethod,
-                              activeColor: isDark ? MarketplaceTheme.darkAccentGreen : MarketplaceTheme.lightAccent,
-                              onChanged: (val) => setState(() => _paymentMethod = val!),
-                            ),
-                            RadioListTile<String>(
-                              title: Text('Pay via Stripe', style: TextStyle(color: isDark ? Colors.white : Colors.black)),
-                              value: 'STRIPE',
-                              groupValue: _paymentMethod,
-                              activeColor: isDark ? MarketplaceTheme.darkAccentGreen : MarketplaceTheme.lightAccent,
-                              onChanged: (val) => setState(() => _paymentMethod = val!),
-                            ),
-                          ],
-                        ),
+
+                      // Cash on Delivery
+                      _buildPaymentOption(
+                        isDark: isDark,
+                        value: 'cod',
+                        icon: Icons.payments_outlined,
+                        title: 'Cash on Delivery',
+                        subtitle:
+                            'Pay cash when your order is delivered, arranged with the seller after confirmation.',
+                      ),
+                      const SizedBox(height: 10),
+
+                      // Stripe
+                      _buildPaymentOption(
+                        isDark: isDark,
+                        value: 'stripe',
+                        icon: Icons.credit_card_rounded,
+                        title: 'Pay with Stripe',
+                        subtitle:
+                            'Secure card payment powered by Stripe. You\'ll be prompted to enter your card details.',
+                        badge: 'SECURE',
                       ),
                     ],
                   ),
                 ),
               ),
 
-              // Bottom Action Bar
+              // ── CONFIRM BUTTON ─────────────────────────────────────
               Container(
-                padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.of(context).padding.bottom),
+                padding: EdgeInsets.fromLTRB(
+                    16, 16, 16, 16 + MediaQuery.of(context).padding.bottom),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF0F172A).withOpacity(0.9) : Colors.white.withOpacity(0.9),
-                  border: Border(top: BorderSide(color: isDark ? Colors.white10 : Colors.black12)),
+                  color: isDark
+                      ? const Color(0xFF0F172A).withOpacity(0.95)
+                      : Colors.white.withOpacity(0.95),
+                  border: Border(
+                      top: BorderSide(
+                          color: isDark ? Colors.white10 : Colors.black12)),
                   boxShadow: [
                     BoxShadow(
-                       color: Colors.black.withOpacity(0.1),
-                       blurRadius: 10,
-                       offset: const Offset(0, -4),
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, -4),
                     )
                   ],
                 ),
                 child: SizedBox(
                   width: double.infinity,
                   child: NeonButton(
-                    text: 'CONFIRM ORDER',
+                    text: _selectedPaymentMethod == 'stripe'
+                        ? 'PAY WITH STRIPE'
+                        : 'CONFIRM ORDER',
                     isLoading: _isLoading,
                     onPressed: _processCheckout,
                   ),
                 ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _sectionLabel(String text, bool isDark) => Text(
+        text,
+        style: TextStyle(
+          color: isDark
+              ? MarketplaceTheme.darkAccentCyan
+              : MarketplaceTheme.lightAccent,
+          fontWeight: FontWeight.bold,
+          fontSize: 12,
+          letterSpacing: 1.5,
+        ),
+      );
+
+  Widget _buildPaymentOption({
+    required bool isDark,
+    required String value,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    String? badge,
+  }) {
+    final isSelected = _selectedPaymentMethod == value;
+    final accentColor = isDark
+        ? MarketplaceTheme.darkAccentGreen
+        : MarketplaceTheme.lightAccent;
+
+    return GestureDetector(
+      onTap: () => setState(() => _selectedPaymentMethod = value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected
+                ? accentColor
+                : (isDark ? Colors.white12 : Colors.black12),
+            width: isSelected ? 2 : 1,
+          ),
+          color: isSelected
+              ? accentColor.withOpacity(isDark ? 0.10 : 0.06)
+              : (isDark
+                  ? Colors.white.withOpacity(0.05)
+                  : Colors.white.withOpacity(0.75)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              // Icon box
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? accentColor.withOpacity(0.15)
+                      : (isDark ? Colors.white10 : Colors.black.withOpacity(0.05)),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  icon,
+                  color: isSelected
+                      ? accentColor
+                      : (isDark ? Colors.white54 : Colors.black38),
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 14),
+
+              // Text + badge
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          title,
+                          style: TextStyle(
+                            color: isDark ? Colors.white : Colors.black87,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                        if (badge != null) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF635BFF).withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                  color: const Color(0xFF635BFF).withOpacity(0.4)),
+                            ),
+                            child: Text(
+                              badge,
+                              style: const TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF635BFF),
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        color: isDark ? Colors.white54 : Colors.black45,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+
+              // Radio circle
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: 22,
+                height: 22,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: isSelected
+                        ? accentColor
+                        : (isDark ? Colors.white30 : Colors.black26),
+                    width: 2,
+                  ),
+                ),
+                child: isSelected
+                    ? Center(
+                        child: Container(
+                          width: 10,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: accentColor,
+                          ),
+                        ),
+                      )
+                    : null,
               ),
             ],
           ),

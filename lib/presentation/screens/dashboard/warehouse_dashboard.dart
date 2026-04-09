@@ -6,9 +6,10 @@ import '../../../core/services/listing_service.dart';
 import '../../../core/services/order_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../widgets/curved/curved_bottom_nav.dart';
+import '../../widgets/recycle_loader.dart';
 
 import '../individual/create_listing_screen.dart';
-import '../marketplace/marketplace_screen.dart';
+import '../individual/browse_marketplace_screen.dart';
 import '../individual/my_listings_screen.dart';
 import '../individual/my_orders_screen.dart';
 import '../individual/seller_orders_screen.dart';
@@ -78,7 +79,7 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
         },
         children: [
           _buildHomeTab(),
-          const MarketplaceScreen(),
+          const BrowseMarketplaceScreen(),
           const CreateListingScreen(),
           const MyOrdersScreen(),
           const ProfileScreen(),
@@ -103,7 +104,9 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
       child: SafeArea(
         child: RefreshIndicator(
           onRefresh: _loadDashboardStats,
-          child: SingleChildScrollView(
+          child: _isLoading 
+              ? const RecycleLoadingScreen(message: 'Loading your dashboard...')
+              : SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(20),
             child: Column(
@@ -204,34 +207,36 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
   }
 
   Widget _buildStatsOverview() {
-    // Mock data for now, replacing with real data where possible
+    final listings = _stats?['listings'] as Map?;
+    final orders = _stats?['orders'] as Map?;
+
     final stats = [
       {
-        'title': 'Total Revenue',
-        'value': 'Rs 125.5K',
-        'change': '+12%',
-        'icon': Icons.attach_money,
+        'title': 'Total Listings',
+        'value': '${listings?['totalListings'] ?? 0}',
+        'change': '+${listings?['activeListings'] ?? 0} active',
+        'icon': Icons.inventory_2,
         'color': const Color(0xFF4CAF50),
       },
       {
-        'title': 'Net Profit',
-        'value': 'Rs 45.2K',
-        'change': '+8%',
-        'icon': Icons.trending_up,
+        'title': 'Total Orders',
+        'value': '${orders?['totalOrders'] ?? 0}',
+        'change': '${orders?['confirmedCount'] ?? 0} confirmed',
+        'icon': Icons.shopping_cart,
         'color': const Color(0xFF2196F3),
       },
       {
         'title': 'Active Orders',
-        'value': '28',
-        'change': '+5',
-        'icon': Icons.shopping_cart,
+        'value': '${orders?['pendingCount'] ?? 0}',
+        'change': 'needs action',
+        'icon': Icons.assignment_turned_in,
         'color': const Color(0xFFFFA726),
       },
       {
-        'title': 'Inventory Value',
-        'value': 'Rs 85K',
-        'change': '-3%',
-        'icon': Icons.inventory_2,
+        'title': 'Total Weight',
+        'value': '${listings?['totalWeight'] ?? 0}kg',
+        'change': 'all time',
+        'icon': Icons.scale,
         'color': const Color(0xFF9C27B0),
       },
     ];

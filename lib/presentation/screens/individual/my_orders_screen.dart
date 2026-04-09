@@ -69,10 +69,14 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
   void _filterOrders() {
     setState(() {
       _filteredOrders = _orders.where((order) {
-        // Filter by status
+        // Filter by status — backend statuses: CREATED, CONFIRMED, COMPLETED, CANCELLED
         bool matchesStatus = false;
         if (_selectedStatus == 'Active') {
-          matchesStatus = order.status == 'PENDING' || order.status == 'COLLECTED';
+          // "Active" includes newly created orders and confirmed-in-progress orders
+          matchesStatus = order.status == 'CREATED' ||
+              order.status == 'CONFIRMED' ||
+              order.status == 'PENDING' ||
+              order.status == 'COLLECTED';
         } else if (_selectedStatus == 'Completed') {
           matchesStatus = order.status == 'COMPLETED';
         } else if (_selectedStatus == 'Cancelled') {
@@ -746,6 +750,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
 
   Map<String, dynamic> _getStatusInfo(String status, bool isDark) {
     switch (status) {
+      case 'CREATED':
       case 'PENDING':
         return {
           'color': const Color(0xFFF59E0B),
@@ -756,6 +761,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
           ),
           'textColor': isDark ? const Color(0xFFFBBF24) : const Color(0xFFF57C00),
         };
+      case 'CONFIRMED':
       case 'COLLECTED':
         return {
           'color': const Color(0xFF3B82F6),
@@ -799,6 +805,10 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
 
   String _getStatusText(String status) {
     switch (status) {
+      case 'CREATED':
+        return 'Pending';
+      case 'CONFIRMED':
+        return 'Confirmed';
       case 'PENDING':
         return 'Pending';
       case 'COLLECTED':

@@ -5,14 +5,19 @@ import 'api_service.dart';
 class OrderService {
   final ApiService _apiService = ApiService();
 
-  // Create a new order
-  Future<Order> createOrder(Order order, {int? listingId}) async {
+  // Create a new order from a listing
+  // paymentMethod: 'cod' (Cash on Delivery) or 'stripe' (Online card payment)
+  Future<Order> createOrder(int listingId, double weight, {String paymentMethod = 'cod'}) async {
     try {
       final response = await _apiService.post(
         '/orders',
-        order.toCreateJson(listingId: listingId),
+        {
+          'listingId': listingId,
+          'weight': weight,
+          'paymentMethod': paymentMethod,
+        },
       );
-      
+
       if (response['success'] == true && response['data'] != null) {
         return Order.fromJson(response['data']);
       } else {
