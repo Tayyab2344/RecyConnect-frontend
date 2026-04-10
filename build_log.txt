@@ -1,0 +1,4165 @@
+﻿Running Gradle task 'assembleRelease'...                        
+flutter : 
+lib/main.dart:13:1: Error: 
+The '===' operator is not 
+supported.
+At line:1 char:1
++ flutter build apk 
+--release 2>&1 | Out-File 
+-FilePath "d:\RecyConnect 
+...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~
+    + CategoryInfo         
+     : NotSpecified: (lib  
+  /main.dart:1... not su   
+ pported.:String) [], R    
+emoteException
+    + FullyQualifiedErrorI 
+   d : NativeCommandError
+ 
+=======
+^
+lib/main.dart:13:4: Error: 
+The '===' operator is not 
+supported.
+=======
+   ^
+lib/main.dart:26:1: Error: 
+The '===' operator is not 
+supported.
+=======
+^
+lib/main.dart:26:4: Error: 
+The '===' operator is not 
+supported.
+=======
+   ^
+lib/main.dart:125:1: 
+Error: The '===' operator 
+is not supported.
+=======
+^
+lib/main.dart:125:4: 
+Error: The '===' operator 
+is not supported.
+=======
+   ^
+lib/main.dart:124:43: 
+Error: Can't find '}' to 
+match '{'.
+class AuthWrapper extends 
+StatelessWidget {
+                           
+               ^
+lib/main.dart:7:1: Error: 
+Expected a declaration, 
+but got '<<'.
+<<<<<<< HEAD
+^^
+lib/main.dart:7:3: Error: 
+Expected a declaration, 
+but got '<<'.
+<<<<<<< HEAD
+  ^^
+lib/main.dart:7:5: Error: 
+Expected a declaration, 
+but got '<<'.
+<<<<<<< HEAD
+    ^^
+lib/main.dart:7:7: Error: 
+Expected a declaration, 
+but got '<'.
+<<<<<<< HEAD
+      ^
+lib/main.dart:8:1: Error: 
+Expected an identifier, 
+but got 'import'.
+Try inserting an 
+identifier before 'import'.
+import 'core/providers/them
+e_provider.dart';
+^^^^^^
+lib/main.dart:7:9: Error: 
+Expected ';' after this.
+<<<<<<< HEAD
+        ^^^^
+lib/main.dart:8:1: Error: 
+Directives must appear 
+before any declarations.
+Try moving the directive 
+before any declarations.
+import 'core/providers/them
+e_provider.dart';
+^^^^^^
+lib/main.dart:9:1: Error: 
+Directives must appear 
+before any declarations.
+Try moving the directive 
+before any declarations.
+import 'core/theme/app_them
+e.dart';
+^^^^^^
+lib/main.dart:11:1: Error: 
+Directives must appear 
+before any declarations.
+Try moving the directive 
+before any declarations.
+import 'presentation/screen
+s/onboarding/welcome_screen
+.dart';
+^^^^^^
+lib/main.dart:12:1: Error: 
+Directives must appear 
+before any declarations.
+Try moving the directive 
+before any declarations.
+import 'presentation/screen
+s/onboarding/intro_screen.d
+art';
+^^^^^^
+lib/main.dart:13:1: Error: 
+Expected a declaration, 
+but got '==='.
+=======
+^^^
+lib/main.dart:13:4: Error: 
+Expected a declaration, 
+but got '==='.
+=======
+   ^^^
+lib/main.dart:13:7: Error: 
+Expected a declaration, 
+but got '='.
+=======
+      ^
+lib/main.dart:14:1: Error: 
+Directives must appear 
+before any declarations.
+Try moving the directive 
+before any declarations.
+import 'core/theme/app_them
+e.dart';
+^^^^^^
+lib/main.dart:15:1: Error: 
+Directives must appear 
+before any declarations.
+Try moving the directive 
+before any declarations.
+import 'core/providers/them
+e_provider.dart';
+^^^^^^
+lib/main.dart:16:1: Error: 
+Directives must appear 
+before any declarations.
+Try moving the directive 
+before any declarations.
+import 'presentation/screen
+s/onboarding/welcome_story_
+screen.dart';
+^^^^^^
+lib/main.dart:17:1: Error: 
+Expected a declaration, 
+but got '>>>'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+^^^
+lib/main.dart:17:4: Error: 
+Expected a declaration, 
+but got '>>>'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+   ^^^
+lib/main.dart:17:7: Error: 
+Expected a declaration, 
+but got '>'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+      ^
+lib/main.dart:17:9: Error: 
+Expected a declaration, 
+but got '49'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+        ^^
+lib/main.dart:18:1: Error: 
+Expected an identifier, 
+but got 'import'.
+Try inserting an 
+identifier before 'import'.
+import 'presentation/screen
+s/dashboard/dashboard_scree
+n.dart';
+^^^^^^
+lib/main.dart:17:11: 
+Error: Expected ';' after 
+this.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+          ^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+lib/main.dart:18:1: Error: 
+Directives must appear 
+before any declarations.
+Try moving the directive 
+before any declarations.
+import 'presentation/screen
+s/dashboard/dashboard_scree
+n.dart';
+^^^^^^
+lib/main.dart:19:1: Error: 
+Directives must appear 
+before any declarations.
+Try moving the directive 
+before any declarations.
+import 'package:shared_pref
+erences/shared_preferences.
+dart';
+^^^^^^
+lib/main.dart:20:1: Error: 
+Directives must appear 
+before any declarations.
+Try moving the directive 
+before any declarations.
+import 'presentation/screen
+s/onboarding/onboarding_scr
+een.dart';
+^^^^^^
+lib/main.dart:64:1: Error: 
+Expected a declaration, 
+but got '<<'.
+<<<<<<< HEAD
+^^
+lib/main.dart:64:3: Error: 
+Expected a declaration, 
+but got '<<'.
+<<<<<<< HEAD
+  ^^
+lib/main.dart:64:5: Error: 
+Expected a declaration, 
+but got '<<'.
+<<<<<<< HEAD
+    ^^
+lib/main.dart:64:7: Error: 
+Expected a declaration, 
+but got '<'.
+<<<<<<< HEAD
+      ^
+lib/main.dart:64:9: Error: 
+Variables must be declared 
+using the keywords 
+'const', 'final', 'var' or 
+a type name.
+Try adding the name of the 
+type of the variable or 
+the keyword 'var'.
+<<<<<<< HEAD
+        ^^^^
+lib/main.dart:64:9: Error: 
+Expected ';' after this.
+<<<<<<< HEAD
+        ^^^^
+lib/main.dart:125:1: 
+Error: Expected a class 
+member, but got '==='.
+=======
+^^^
+lib/main.dart:125:4: 
+Error: Expected a class 
+member, but got '==='.
+=======
+   ^^^
+lib/main.dart:125:7: 
+Error: Operator 
+declarations must be 
+preceded by the keyword 
+'operator'.
+Try adding the keyword 
+'operator'.
+=======
+      ^
+lib/main.dart:125:7: 
+Error: The string '=' 
+isn't a user-definable 
+operator.
+=======
+      ^
+lib/main.dart:125:7: 
+Error: A method 
+declaration needs an 
+explicit list of 
+parameters.
+Try adding a parameter 
+list to the method 
+declaration.
+=======
+      ^
+lib/main.dart:127:1: 
+Error: Expected '{' before 
+this.
+class AuthWrapper extends 
+StatefulWidget {
+^^^^^
+lib/main.dart:127:1: 
+Error: Classes can't be 
+declared inside other 
+classes.
+Try moving the class to 
+the top-level.
+class AuthWrapper extends 
+StatefulWidget {
+^^^^^
+lib/main.dart:127:19: 
+Error: Expected a class 
+member, but got 'extends'.
+class AuthWrapper extends 
+StatefulWidget {
+                  ^^^^^^^
+lib/main.dart:127:27: 
+Error: A method 
+declaration needs an 
+explicit list of 
+parameters.
+Try adding a parameter 
+list to the method 
+declaration.
+class AuthWrapper extends 
+StatefulWidget {
+                          
+^^^^^^^^^^^^^^
+lib/main.dart:135:1: 
+Error: Classes can't be 
+declared inside other 
+classes.
+Try moving the class to 
+the top-level.
+class _AuthWrapperState 
+extends State<AuthWrapper> 
+{
+^^^^^
+lib/main.dart:135:25: 
+Error: Expected a class 
+member, but got 'extends'.
+class _AuthWrapperState 
+extends State<AuthWrapper> 
+{
+                        
+^^^^^^^
+lib/main.dart:135:33: 
+Error: A method 
+declaration needs an 
+explicit list of 
+parameters.
+Try adding a parameter 
+list to the method 
+declaration.
+class _AuthWrapperState 
+extends State<AuthWrapper> 
+{
+                           
+     ^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:4:1: 
+Error: The '===' operator 
+is not supported.
+=======
+^
+lib/presentation/screens/au
+th/login_screen.dart:4:4: 
+Error: The '===' operator 
+is not supported.
+=======
+   ^
+lib/presentation/screens/au
+th/login_screen.dart:16:1: 
+Error: The '===' operator 
+is not supported.
+=======
+^
+lib/presentation/screens/au
+th/login_screen.dart:16:4: 
+Error: The '===' operator 
+is not supported.
+=======
+   ^
+lib/presentation/screens/au
+th/login_screen.dart:147:1:
+ Error: The '===' operator 
+is not supported.
+=======
+^
+lib/presentation/screens/au
+th/login_screen.dart:147:4:
+ Error: The '===' operator 
+is not supported.
+=======
+   ^
+lib/presentation/screens/au
+th/login_screen.dart:142:53
+: Error: Can't find ')' to 
+match '('.
+          ScaffoldMessenger
+.of(context).showSnackBar(
+                           
+                         ^
+lib/presentation/screens/au
+th/login_screen.dart:227:1:
+ Error: The '===' operator 
+is not supported.
+=======
+^
+lib/presentation/screens/au
+th/login_screen.dart:227:4:
+ Error: The '===' operator 
+is not supported.
+=======
+   ^
+lib/presentation/screens/au
+th/login_screen.dart:280:1:
+ Error: The '===' operator 
+is not supported.
+=======
+^
+lib/presentation/screens/au
+th/login_screen.dart:280:4:
+ Error: The '===' operator 
+is not supported.
+=======
+   ^
+lib/presentation/screens/au
+th/login_screen.dart:307:1:
+ Error: The '===' operator 
+is not supported.
+=======
+^
+lib/presentation/screens/au
+th/login_screen.dart:307:4:
+ Error: The '===' operator 
+is not supported.
+=======
+   ^
+lib/presentation/screens/au
+th/login_screen.dart:257:24
+: Error: Can't find ')' to 
+match '('.
+          child: Center(
+                       ^
+lib/presentation/screens/au
+th/login_screen.dart:256:24
+: Error: Can't find ')' to 
+match '('.
+        child: SafeArea(
+                       ^
+lib/presentation/screens/au
+th/login_screen.dart:215:22
+: Error: Can't find ')' to 
+match '('.
+      body: Container(
+                     ^
+lib/presentation/screens/au
+th/login_screen.dart:213:20
+: Error: Can't find ')' to 
+match '('.
+    return Scaffold(
+                   ^
+lib/presentation/screens/au
+th/login_screen.dart:371:1:
+ Error: The '===' operator 
+is not supported.
+=======
+^
+lib/presentation/screens/au
+th/login_screen.dart:371:4:
+ Error: The '===' operator 
+is not supported.
+=======
+   ^
+lib/presentation/screens/au
+th/login_screen.dart:389:1:
+ Error: The '===' operator 
+is not supported.
+=======
+^
+lib/presentation/screens/au
+th/login_screen.dart:389:4:
+ Error: The '===' operator 
+is not supported.
+=======
+   ^
+lib/presentation/screens/au
+th/login_screen.dart:414:1:
+ Error: The '===' operator 
+is not supported.
+=======
+^
+lib/presentation/screens/au
+th/login_screen.dart:414:4:
+ Error: The '===' operator 
+is not supported.
+=======
+   ^
+lib/presentation/screens/au
+th/login_screen.dart:377:33
+: Error: Can't find '}' to 
+match '{'.
+      builder: (context, 
+child) {
+                           
+     ^
+lib/presentation/screens/au
+th/login_screen.dart:372:34
+: Error: Can't find '}' to 
+match '{'.
+  Widget _buildLogo(bool 
+isDark) {
+                           
+      ^
+lib/presentation/screens/au
+th/login_screen.dart:369:18
+: Error: Can't find ')' to 
+match '('.
+        Container(
+                 ^
+lib/presentation/screens/au
+th/login_screen.dart:688:1:
+ Error: The '===' operator 
+is not supported.
+=======
+^
+lib/presentation/screens/au
+th/login_screen.dart:688:4:
+ Error: The '===' operator 
+is not supported.
+=======
+   ^
+lib/presentation/screens/au
+th/login_screen.dart:985:1:
+ Error: The '===' operator 
+is not supported.
+=======
+^
+lib/presentation/screens/au
+th/login_screen.dart:985:4:
+ Error: The '===' operator 
+is not supported.
+=======
+   ^
+lib/presentation/screens/au
+th/login_screen.dart:900:17
+: Error: Can't find ']' to 
+match '['.
+      children: [
+                ^
+lib/presentation/screens/au
+th/login_screen.dart:899:18
+: Error: Can't find ')' to 
+match '('.
+    return Column(
+                 ^
+lib/presentation/screens/au
+th/login_screen.dart:3:1: 
+Error: Expected a 
+declaration, but got '<<'.
+<<<<<<< HEAD
+^^
+lib/presentation/screens/au
+th/login_screen.dart:3:3: 
+Error: Expected a 
+declaration, but got '<<'.
+<<<<<<< HEAD
+  ^^
+lib/presentation/screens/au
+th/login_screen.dart:3:5: 
+Error: Expected a 
+declaration, but got '<<'.
+<<<<<<< HEAD
+    ^^
+lib/presentation/screens/au
+th/login_screen.dart:3:7: 
+Error: Expected a 
+declaration, but got '<'.
+<<<<<<< HEAD
+      ^
+lib/presentation/screens/au
+th/login_screen.dart:3:9: 
+Error: Variables must be 
+declared using the 
+keywords 'const', 'final', 
+'var' or a type name.
+Try adding the name of the 
+type of the variable or 
+the keyword 'var'.
+<<<<<<< HEAD
+        ^^^^
+lib/presentation/screens/au
+th/login_screen.dart:3:9: 
+Error: Expected ';' after 
+this.
+<<<<<<< HEAD
+        ^^^^
+lib/presentation/screens/au
+th/login_screen.dart:4:1: 
+Error: Expected a 
+declaration, but got '==='.
+=======
+^^^
+lib/presentation/screens/au
+th/login_screen.dart:4:4: 
+Error: Expected a 
+declaration, but got '==='.
+=======
+   ^^^
+lib/presentation/screens/au
+th/login_screen.dart:4:7: 
+Error: Expected a 
+declaration, but got '='.
+=======
+      ^
+lib/presentation/screens/au
+th/login_screen.dart:5:1: 
+Error: Directives must 
+appear before any 
+declarations.
+Try moving the directive 
+before any declarations.
+import '../../../core/theme
+/app_colors.dart';
+^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:6:1: 
+Error: Expected a 
+declaration, but got '>>>'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+^^^
+lib/presentation/screens/au
+th/login_screen.dart:6:4: 
+Error: Expected a 
+declaration, but got '>>>'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+   ^^^
+lib/presentation/screens/au
+th/login_screen.dart:6:7: 
+Error: Expected a 
+declaration, but got '>'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+      ^
+lib/presentation/screens/au
+th/login_screen.dart:6:9: 
+Error: Expected a 
+declaration, but got '49'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+        ^^
+lib/presentation/screens/au
+th/login_screen.dart:7:1: 
+Error: Expected an 
+identifier, but got 
+'import'.
+Try inserting an 
+identifier before 'import'.
+import '../../../core/theme
+/app_theme.dart';
+^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:6:11: 
+Error: Expected ';' after 
+this.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+          ^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:7:1: 
+Error: Directives must 
+appear before any 
+declarations.
+Try moving the directive 
+before any declarations.
+import '../../../core/theme
+/app_theme.dart';
+^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:8:1: 
+Error: Directives must 
+appear before any 
+declarations.
+Try moving the directive 
+before any declarations.
+import '../../../core/servi
+ces/auth_service.dart';
+^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:9:1: 
+Error: Directives must 
+appear before any 
+declarations.
+Try moving the directive 
+before any declarations.
+import '../../../core/utils
+/validators.dart';
+^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:10:1: 
+Error: Directives must 
+appear before any 
+declarations.
+Try moving the directive 
+before any declarations.
+import '../../widgets/commo
+n/recyconnect_logo.dart';
+^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:11:1: 
+Error: Directives must 
+appear before any 
+declarations.
+Try moving the directive 
+before any declarations.
+import '../dashboard/dashbo
+ard_screen.dart';
+^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:12:1: 
+Error: Expected a 
+declaration, but got '<<'.
+<<<<<<< HEAD
+^^
+lib/presentation/screens/au
+th/login_screen.dart:12:3: 
+Error: Expected a 
+declaration, but got '<<'.
+<<<<<<< HEAD
+  ^^
+lib/presentation/screens/au
+th/login_screen.dart:12:5: 
+Error: Expected a 
+declaration, but got '<<'.
+<<<<<<< HEAD
+    ^^
+lib/presentation/screens/au
+th/login_screen.dart:12:7: 
+Error: Expected a 
+declaration, but got '<'.
+<<<<<<< HEAD
+      ^
+lib/presentation/screens/au
+th/login_screen.dart:13:1: 
+Error: Expected an 
+identifier, but got 
+'import'.
+Try inserting an 
+identifier before 'import'.
+import '../seller/seller_da
+shboard.dart';
+^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:12:9: 
+Error: Expected ';' after 
+this.
+<<<<<<< HEAD
+        ^^^^
+lib/presentation/screens/au
+th/login_screen.dart:13:1: 
+Error: Directives must 
+appear before any 
+declarations.
+Try moving the directive 
+before any declarations.
+import '../seller/seller_da
+shboard.dart';
+^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:14:1: 
+Error: Directives must 
+appear before any 
+declarations.
+Try moving the directive 
+before any declarations.
+import '../admin/admin_dash
+board_screen.dart';
+^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:15:1: 
+Error: Directives must 
+appear before any 
+declarations.
+Try moving the directive 
+before any declarations.
+import '../marketplace/buye
+r_dashboard.dart';
+^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:16:1: 
+Error: Expected a 
+declaration, but got '==='.
+=======
+^^^
+lib/presentation/screens/au
+th/login_screen.dart:16:4: 
+Error: Expected a 
+declaration, but got '==='.
+=======
+   ^^^
+lib/presentation/screens/au
+th/login_screen.dart:16:7: 
+Error: Expected a 
+declaration, but got '='.
+=======
+      ^
+lib/presentation/screens/au
+th/login_screen.dart:17:1: 
+Error: Directives must 
+appear before any 
+declarations.
+Try moving the directive 
+before any declarations.
+import '../admin/admin_dash
+board_screen.dart';
+^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:18:1: 
+Error: Expected a 
+declaration, but got '>>>'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+^^^
+lib/presentation/screens/au
+th/login_screen.dart:18:4: 
+Error: Expected a 
+declaration, but got '>>>'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+   ^^^
+lib/presentation/screens/au
+th/login_screen.dart:18:7: 
+Error: Expected a 
+declaration, but got '>'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+      ^
+lib/presentation/screens/au
+th/login_screen.dart:18:9: 
+Error: Expected a 
+declaration, but got '49'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+        ^^
+lib/presentation/screens/au
+th/login_screen.dart:19:1: 
+Error: Expected an 
+identifier, but got 
+'import'.
+Try inserting an 
+identifier before 'import'.
+import 'role_selection_scre
+en.dart';
+^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:18:11:
+ Error: Expected ';' after 
+this.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+          ^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:19:1: 
+Error: Directives must 
+appear before any 
+declarations.
+Try moving the directive 
+before any declarations.
+import 'role_selection_scre
+en.dart';
+^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:20:1: 
+Error: Directives must 
+appear before any 
+declarations.
+Try moving the directive 
+before any declarations.
+import 'forgot_password_scr
+een.dart';
+^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:361:1:
+ Error: Operator 
+declarations must be 
+preceded by the keyword 
+'operator'.
+Try adding the keyword 
+'operator'.
+<<<<<<< HEAD
+^^
+lib/presentation/screens/au
+th/login_screen.dart:361:1:
+ Error: A method 
+declaration needs an 
+explicit list of 
+parameters.
+Try adding a parameter 
+list to the method 
+declaration.
+<<<<<<< HEAD
+^^
+lib/presentation/screens/au
+th/login_screen.dart:361:3:
+ Error: Expected '{' 
+before this.
+<<<<<<< HEAD
+  ^^
+lib/presentation/screens/au
+th/login_screen.dart:361:1:
+ Error: Operator '<<' 
+should have exactly one 
+parameter.
+<<<<<<< HEAD
+^^
+lib/presentation/screens/au
+th/login_screen.dart:361:3:
+ Error: Operator 
+declarations must be 
+preceded by the keyword 
+'operator'.
+Try adding the keyword 
+'operator'.
+<<<<<<< HEAD
+  ^^
+lib/presentation/screens/au
+th/login_screen.dart:361:3:
+ Error: A method 
+declaration needs an 
+explicit list of 
+parameters.
+Try adding a parameter 
+list to the method 
+declaration.
+<<<<<<< HEAD
+  ^^
+lib/presentation/screens/au
+th/login_screen.dart:361:5:
+ Error: Expected '{' 
+before this.
+<<<<<<< HEAD
+    ^^
+lib/presentation/screens/au
+th/login_screen.dart:361:3:
+ Error: Operator '<<' 
+should have exactly one 
+parameter.
+<<<<<<< HEAD
+  ^^
+lib/presentation/screens/au
+th/login_screen.dart:361:5:
+ Error: Operator 
+declarations must be 
+preceded by the keyword 
+'operator'.
+Try adding the keyword 
+'operator'.
+<<<<<<< HEAD
+    ^^
+lib/presentation/screens/au
+th/login_screen.dart:362:3:
+ Error: Expected ',' 
+before this.
+  Widget 
+_buildLogoSection() {
+  ^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:362:3:
+ Error: Expected '>' after 
+this.
+  Widget 
+_buildLogoSection() {
+  ^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:361:5:
+ Error: A method 
+declaration needs an 
+explicit list of 
+parameters.
+Try adding a parameter 
+list to the method 
+declaration.
+<<<<<<< HEAD
+    ^^
+lib/presentation/screens/au
+th/login_screen.dart:362:10
+: Error: Expected '{' 
+before this.
+  Widget 
+_buildLogoSection() {
+         ^^^^^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:361:5:
+ Error: Operator '<<' 
+should have exactly one 
+parameter.
+<<<<<<< HEAD
+    ^^
+lib/presentation/screens/au
+th/login_screen.dart:361:9:
+ Error: Types parameters 
+aren't allowed when 
+defining an operator.
+Try removing the type 
+parameters.
+<<<<<<< HEAD
+        ^^^^
+lib/presentation/screens/au
+th/login_screen.dart:426:8:
+ Error: Expected a class 
+member, but got ','.
+      },
+       ^
+lib/presentation/screens/au
+th/login_screen.dart:427:5:
+ Error: Expected a class 
+member, but got ')'.
+    );
+    ^
+lib/presentation/screens/au
+th/login_screen.dart:427:6:
+ Error: Expected a class 
+member, but got ';'.
+    );
+     ^
+lib/presentation/screens/au
+th/login_screen.dart:663:1:
+ Error: Expected a 
+declaration, but got '<<'.
+<<<<<<< HEAD
+^^
+lib/presentation/screens/au
+th/login_screen.dart:663:3:
+ Error: Expected a 
+declaration, but got '<<'.
+<<<<<<< HEAD
+  ^^
+lib/presentation/screens/au
+th/login_screen.dart:663:5:
+ Error: Expected a 
+declaration, but got '<<'.
+<<<<<<< HEAD
+    ^^
+lib/presentation/screens/au
+th/login_screen.dart:663:7:
+ Error: Expected a 
+declaration, but got '<'.
+<<<<<<< HEAD
+      ^
+lib/presentation/screens/au
+th/login_screen.dart:664:3:
+ Error: Expected ';' after 
+this.
+  Widget _buildLoginCard() 
+{
+  ^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:688:1:
+ Error: Expected a 
+declaration, but got '==='.
+=======
+^^^
+lib/presentation/screens/au
+th/login_screen.dart:688:4:
+ Error: Expected a 
+declaration, but got '==='.
+=======
+   ^^^
+lib/presentation/screens/au
+th/login_screen.dart:688:7:
+ Error: Expected a 
+declaration, but got '='.
+=======
+      ^
+lib/presentation/screens/au
+th/login_screen.dart:1076:1
+: Error: Expected a 
+declaration, but got '}'.
+}
+^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:12:1: Error: The '===' 
+operator is not supported.
+=======
+^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:12:4: Error: The '===' 
+operator is not supported.
+=======
+   ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:323:7: Error: Can't 
+find '>' to match '<'.
+<<<<<<< HEAD
+      ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:304:24: Error: Can't 
+find ')' to match '('.
+              Container(
+                       ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:331:1: Error: The '===' 
+operator is not supported.
+=======
+^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:331:4: Error: The '===' 
+operator is not supported.
+=======
+   ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:298:33: Error: Can't 
+find '}' to match '{'.
+      builder: (context, 
+child) {
+                           
+     ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:387:1: Error: The '===' 
+operator is not supported.
+=======
+^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:387:4: Error: The '===' 
+operator is not supported.
+=======
+   ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:376:26: Error: Can't 
+find ')' to match '('.
+        child: CurvedCard(
+                         ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:372:31: Error: Can't 
+find ')' to match '('.
+      child: 
+AnimatedContainer(
+                           
+   ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:371:7: Error: Can't 
+find '>' to match '<'.
+<<<<<<< HEAD
+      ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:369:27: Error: Can't 
+find ')' to match '('.
+    return GestureDetector(
+                          ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:6:1: Error: Expected a 
+declaration, but got '<<'.
+<<<<<<< HEAD
+^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:6:3: Error: Expected a 
+declaration, but got '<<'.
+<<<<<<< HEAD
+  ^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:6:5: Error: Expected a 
+declaration, but got '<<'.
+<<<<<<< HEAD
+    ^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:6:7: Error: Expected a 
+declaration, but got '<'.
+<<<<<<< HEAD
+      ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:7:1: Error: Expected an 
+identifier, but got 
+'import'.
+Try inserting an 
+identifier before 'import'.
+import '../../../core/theme
+/design_tokens.dart';
+^^^^^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:6:9: Error: Expected 
+';' after this.
+<<<<<<< HEAD
+        ^^^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:7:1: Error: Directives 
+must appear before any 
+declarations.
+Try moving the directive 
+before any declarations.
+import '../../../core/theme
+/design_tokens.dart';
+^^^^^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:8:1: Error: Directives 
+must appear before any 
+declarations.
+Try moving the directive 
+before any declarations.
+import '../../widgets/curve
+d/wave_painter.dart';
+^^^^^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:9:1: Error: Directives 
+must appear before any 
+declarations.
+Try moving the directive 
+before any declarations.
+import '../../widgets/curve
+d/curved_card.dart';
+^^^^^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:10:1: Error: Directives 
+must appear before any 
+declarations.
+Try moving the directive 
+before any declarations.
+import '../../widgets/curve
+d/organic_button.dart';
+^^^^^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:12:1: Error: Expected a 
+declaration, but got '==='.
+=======
+^^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:12:4: Error: Expected a 
+declaration, but got '==='.
+=======
+   ^^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:12:7: Error: Expected a 
+declaration, but got '='.
+=======
+      ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:13:1: Error: Directives 
+must appear before any 
+declarations.
+Try moving the directive 
+before any declarations.
+import 'collector_registrat
+ion_screen.dart';
+^^^^^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:14:1: Error: Expected a 
+declaration, but got '>>>'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+^^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:14:4: Error: Expected a 
+declaration, but got '>>>'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+   ^^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:14:7: Error: Expected a 
+declaration, but got '>'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+      ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:14:9: Error: Expected a 
+declaration, but got '49'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+        ^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:15:1: Error: Expected 
+an identifier, but got 
+'import'.
+Try inserting an 
+identifier before 'import'.
+import 
+'registration_screen.dart';
+^^^^^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:14:11: Error: Expected 
+';' after this.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+          ^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:15:1: Error: Directives 
+must appear before any 
+declarations.
+Try moving the directive 
+before any declarations.
+import 
+'registration_screen.dart';
+^^^^^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:16:1: Error: Directives 
+must appear before any 
+declarations.
+Try moving the directive 
+before any declarations.
+import 'individual_registra
+tion_screen.dart';
+^^^^^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:361:8: Error: Expected 
+a class member, but got 
+','.
+      },
+       ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:362:5: Error: Expected 
+a class member, but got 
+')'.
+    );
+    ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:362:6: Error: Expected 
+a class member, but got 
+';'.
+    );
+     ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:652:1: Error: Expected 
+a declaration, but got '}'.
+}
+^
+lib/presentation/screens/au
+th/login_screen.dart:361:3:
+ Error: '<<' is already 
+declared in this scope.
+<<<<<<< HEAD
+  ^^
+lib/presentation/screens/au
+th/login_screen.dart:361:1:
+ Context: Previous 
+declaration of '<<'.
+<<<<<<< HEAD
+^^
+lib/presentation/screens/au
+th/login_screen.dart:361:5:
+ Error: '<<' is already 
+declared in this scope.
+<<<<<<< HEAD
+    ^^
+lib/presentation/screens/au
+th/login_screen.dart:361:1:
+ Context: Previous 
+declaration of '<<'.
+<<<<<<< HEAD
+^^
+lib/main.dart:7:9: Error: 
+'HEAD' isn't a type.
+<<<<<<< HEAD
+        ^^^^
+lib/main.dart:64:9: 
+Context: This isn't a type.
+<<<<<<< HEAD
+        ^^^^
+lib/main.dart:17:11: 
+Error: Type 'b837f06550d44f
+1e6ff8b751c414976b29c066' 
+not found.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+          ^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:6:11: 
+Error: Type 'b837f06550d44f
+1e6ff8b751c414976b29c066' 
+not found.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+          ^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:12:9: 
+Error: 'HEAD' isn't a type.
+<<<<<<< HEAD
+        ^^^^
+lib/presentation/screens/au
+th/login_screen.dart:3:9: 
+Context: This isn't a type.
+<<<<<<< HEAD
+        ^^^^
+lib/presentation/screens/au
+th/login_screen.dart:18:11:
+ Error: Type 'b837f06550d44
+f1e6ff8b751c414976b29c066' 
+not found.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+          ^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:663:9:
+ Error: 'HEAD' isn't a 
+type.
+<<<<<<< HEAD
+        ^^^^
+lib/presentation/screens/au
+th/login_screen.dart:3:9: 
+Context: This isn't a type.
+<<<<<<< HEAD
+        ^^^^
+lib/presentation/screens/au
+th/login_screen.dart:208:3:
+ Error: 'Widget' isn't a 
+type.
+  Widget 
+build(BuildContext 
+context) {
+  ^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:664:3:
+ Context: This isn't a 
+type.
+  Widget _buildLoginCard() 
+{
+  ^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:430:3:
+ Error: 'Widget' isn't a 
+type.
+  Widget 
+_buildGlassCard(Size 
+screenSize, bool isDark) {
+  ^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:664:3:
+ Context: This isn't a 
+type.
+  Widget _buildLoginCard() 
+{
+  ^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:610:3:
+ Error: 'Widget' isn't a 
+type.
+  Widget _buildInputField({
+  ^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:664:3:
+ Context: This isn't a 
+type.
+  Widget _buildLoginCard() 
+{
+  ^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:689:3:
+ Error: 'Widget' isn't a 
+type.
+  Widget 
+_buildLoginButton(bool 
+isLoading, bool isDark) {
+  ^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:664:3:
+ Context: This isn't a 
+type.
+  Widget _buildLoginCard() 
+{
+  ^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:1029:3
+: Error: 'Widget' isn't a 
+type.
+  Widget 
+_buildSignUpLink(bool 
+isDark) {
+  ^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:664:3:
+ Context: This isn't a 
+type.
+  Widget _buildLoginCard() 
+{
+  ^^^^^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:6:9: Error: Type 'HEAD' 
+not found.
+<<<<<<< HEAD
+        ^^^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:14:11: Error: Type 'b837
+f06550d44f1e6ff8b751c414976
+b29c066' not found.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+          ^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+lib/presentation/screens/on
+boarding/welcome_screen.dar
+t:7:1: Error: 'Widget' is 
+imported from both 'package
+:flutter/src/widgets/framew
+ork.dart' and 'package:recy
+connect/presentation/screen
+s/auth/login_screen.dart'.
+import '../auth/login_scree
+n.dart';
+^^^^^^
+lib/presentation/screens/on
+boarding/intro_screen.dart:
+4:1: Error: 'Widget' is 
+imported from both 'package
+:flutter/src/widgets/framew
+ork.dart' and 'package:recy
+connect/presentation/screen
+s/auth/login_screen.dart'.
+import '../auth/login_scree
+n.dart';
+^^^^^^
+lib/presentation/screens/on
+boarding/welcome_story_scre
+en.dart:4:1: Error: 
+'Widget' is imported from 
+both 'package:flutter/src/w
+idgets/framework.dart' and 
+'package:recyconnect/presen
+tation/screens/auth/login_s
+creen.dart'.
+import '../auth/login_scree
+n.dart';
+^^^^^^
+lib/presentation/screens/on
+boarding/onboarding_screen.
+dart:3:1: Error: 'Widget' 
+is imported from both 'pack
+age:flutter/src/widgets/fra
+mework.dart' and 'package:r
+ecyconnect/presentation/scr
+eens/auth/login_screen.dart
+'.
+import '../auth/login_scree
+n.dart';
+^^^^^^
+lib/presentation/screens/se
+ller/seller_dashboard.dart:
+3:1: Error: 'Widget' is 
+imported from both 'package
+:flutter/src/widgets/framew
+ork.dart' and 'package:recy
+connect/presentation/screen
+s/auth/login_screen.dart'.
+import '../auth/login_scree
+n.dart';
+^^^^^^
+lib/presentation/screens/ma
+rketplace/buyer_dashboard.d
+art:3:1: Error: 'Widget' 
+is imported from both 'pack
+age:flutter/src/widgets/fra
+mework.dart' and 'package:r
+ecyconnect/presentation/scr
+eens/auth/login_screen.dart
+'.
+import '../auth/login_scree
+n.dart';
+^^^^^^
+lib/presentation/screens/pr
+ofile/profile_screen.dart:7
+:1: Error: 'Widget' is 
+imported from both 'package
+:flutter/src/widgets/framew
+ork.dart' and 'package:recy
+connect/presentation/screen
+s/auth/login_screen.dart'.
+import '../auth/login_scree
+n.dart';
+^^^^^^
+lib/presentation/widgets/ad
+min/admin_drawer.dart:14:1:
+ Error: 'Widget' is 
+imported from both 'package
+:flutter/src/widgets/framew
+ork.dart' and 'package:recy
+connect/presentation/screen
+s/auth/login_screen.dart'.
+import '../../screens/auth/
+login_screen.dart';
+^^^^^^
+lib/presentation/screens/au
+th/collector_registration_s
+creen.dart:7:1: Error: 
+'Widget' is imported from 
+both 'package:flutter/src/w
+idgets/framework.dart' and 
+'package:recyconnect/presen
+tation/screens/auth/login_s
+creen.dart'.
+import 'login_screen.dart';
+^^^^^^
+lib/presentation/screens/au
+th/reset_password_screen.da
+rt:6:1: Error: 'Widget' is 
+imported from both 'package
+:flutter/src/widgets/framew
+ork.dart' and 'package:recy
+connect/presentation/screen
+s/auth/login_screen.dart'.
+import 'login_screen.dart';
+^^^^^^
+lib/presentation/screens/ad
+min/admin_settings_screen.d
+art:9:1: Error: 'Widget' 
+is imported from both 'pack
+age:flutter/src/widgets/fra
+mework.dart' and 'package:r
+ecyconnect/presentation/scr
+eens/auth/login_screen.dart
+'.
+import '../../screens/auth/
+login_screen.dart';
+^^^^^^
+lib/presentation/screens/au
+th/otp_verification_screen.
+dart:7:1: Error: 'Widget' 
+is imported from both 'pack
+age:flutter/src/widgets/fra
+mework.dart' and 'package:r
+ecyconnect/presentation/scr
+eens/auth/login_screen.dart
+'.
+import 'login_screen.dart';
+^^^^^^
+lib/main.dart:124:7: 
+Error: The non-abstract 
+class 'AuthWrapper' is 
+missing implementations 
+for these members:
+ - StatelessWidget.build
+Try to either
+ - provide an 
+implementation,
+ - inherit an 
+implementation from a 
+superclass or mixin,
+ - mark the class as 
+abstract, or
+ - provide a 
+'noSuchMethod' 
+implementation.
+class AuthWrapper extends 
+StatelessWidget {
+      ^^^^^^^^^^^
+/D:/flutter/packages/flutte
+r/lib/src/widgets/framework
+.dart:572:10: Context: 
+'StatelessWidget.build' is 
+defined here.
+  Widget 
+build(BuildContext 
+context);
+         ^^^^^
+lib/main.dart:24:1: Error: 
+Expected an identifier, 
+but got '<<'.
+Try inserting an 
+identifier before '<<'.
+<<<<<<< HEAD
+^^
+lib/main.dart:24:3: Error: 
+Expected an identifier, 
+but got '<<'.
+Try inserting an 
+identifier before '<<'.
+<<<<<<< HEAD
+  ^^
+lib/main.dart:24:5: Error: 
+Expected an identifier, 
+but got '<<'.
+Try inserting an 
+identifier before '<<'.
+<<<<<<< HEAD
+    ^^
+lib/main.dart:24:9: Error: 
+'HEAD' isn't a type.
+<<<<<<< HEAD
+        ^^^^
+lib/main.dart:24:9: Error: 
+Expected '>' after this.
+<<<<<<< HEAD
+        ^^^^
+lib/main.dart:26:1: Error: 
+Expected '[' before this.
+=======
+^^^
+lib/main.dart:26:4: Error: 
+Expected an identifier, 
+but got '==='.
+Try inserting an 
+identifier before '==='.
+=======
+   ^^^
+lib/main.dart:26:1: Error: 
+The string '===' isn't a 
+user-definable operator.
+=======
+^^^
+lib/main.dart:33:1: Error: 
+Expected an identifier, 
+but got '>>>'.
+Try inserting an 
+identifier before '>>>'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+^^^
+lib/main.dart:33:4: Error: 
+Expected an identifier, 
+but got '>>>'.
+Try inserting an 
+identifier before '>>>'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+   ^^^
+lib/main.dart:33:7: Error: 
+Expected an identifier, 
+but got '>'.
+Try inserting an 
+identifier before '>'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+      ^
+lib/main.dart:33:9: Error: 
+Expected ';' after this.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+        ^^
+lib/main.dart:33:11: 
+Error: 'b837f06550d44f1e6ff
+8b751c414976b29c066' isn't 
+a type.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+          ^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+lib/main.dart:34:3: Error: 
+Expected ';' after this.
+  runApp(const MyApp());
+  ^^^^^^
+lib/main.dart:119:18: 
+Error: Cannot invoke a 
+non-'const' constructor 
+where a const expression 
+is expected.
+Try using a constructor or 
+factory that is 'const'.
+    return const 
+AuthWrapper();
+                 
+^^^^^^^^^^^
+lib/main.dart:128:1: 
+Error: Expected an 
+identifier, but got '>>>'.
+Try inserting an 
+identifier before '>>>'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+^^^
+lib/main.dart:128:4: 
+Error: Expected an 
+identifier, but got '>>>'.
+Try inserting an 
+identifier before '>>>'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+   ^^^
+lib/main.dart:128:7: 
+Error: Expected an 
+identifier, but got '>'.
+Try inserting an 
+identifier before '>'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+      ^
+lib/main.dart:128:9: 
+Error: Expected ';' after 
+this.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+        ^^
+lib/main.dart:128:11: 
+Error: Expected ';' after 
+this.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+          ^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+lib/main.dart:129:20: 
+Error: Too many positional 
+arguments: 0 allowed, but 
+1 found.
+Try removing the extra 
+positional arguments.
+  const 
+AuthWrapper({super.key});
+                   ^
+lib/main.dart:124:7: 
+Context: The class 
+'AuthWrapper' has a 
+constructor that takes no 
+arguments.
+class AuthWrapper extends 
+StatelessWidget {
+      ^
+lib/main.dart:132:3: 
+Error: 'State' isn't a 
+type.
+  State<AuthWrapper> 
+createState() => 
+_AuthWrapperState();
+  ^^^^^
+lib/main.dart:128:11: 
+Error: The getter 'b837f065
+50d44f1e6ff8b751c414976b29c
+066' isn't defined for the 
+type 'AuthWrapper'.
+ - 'AuthWrapper' is from 'p
+ackage:recyconnect/main.dar
+t' ('lib/main.dart').
+Try correcting the name to 
+the name of an existing 
+getter, or defining a 
+getter or field named 'b837
+f06550d44f1e6ff8b751c414976
+b29c066'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+          ^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+lib/main.dart:132:39: 
+Error: The method 
+'_AuthWrapperState' isn't 
+defined for the type 
+'AuthWrapper'.
+ - 'AuthWrapper' is from 'p
+ackage:recyconnect/main.dar
+t' ('lib/main.dart').
+Try correcting the name to 
+the name of an existing 
+method, or defining a 
+method named 
+'_AuthWrapperState'.
+  State<AuthWrapper> 
+createState() => 
+_AuthWrapperState();
+                           
+           
+^^^^^^^^^^^^^^^^^
+lib/main.dart:141:11: 
+Error: Superclass has no 
+method named 'initState'.
+    super.initState();
+          ^^^^^^^^^
+lib/main.dart:142:5: 
+Error: Local variable 
+'_initializeApp' can't be 
+referenced before it is 
+declared.
+    _initializeApp();
+    ^^^^^^^^^^^^^^
+lib/main.dart:145:16: 
+Context: This is the 
+declaration of the 
+variable '_initializeApp'.
+  Future<void> 
+_initializeApp() async {
+               
+^^^^^^^^^^^^^^
+lib/main.dart:142:5: 
+Error: The method 
+'_initializeApp' isn't 
+defined for the type 
+'AuthWrapper'.
+ - 'AuthWrapper' is from 'p
+ackage:recyconnect/main.dar
+t' ('lib/main.dart').
+Try correcting the name to 
+the name of an existing 
+method, or defining a 
+method named 
+'_initializeApp'.
+    _initializeApp();
+    ^^^^^^^^^^^^^^
+lib/main.dart:151:50: 
+Error: The getter 
+'context' isn't defined 
+for the type 'AuthWrapper'.
+ - 'AuthWrapper' is from 'p
+ackage:recyconnect/main.dar
+t' ('lib/main.dart').
+Try correcting the name to 
+the name of an existing 
+getter, or defining a 
+getter or field named 
+'context'.
+    final authService = Pro
+vider.of<AuthService>(conte
+xt, listen: false);
+                           
+                      
+^^^^^^^
+lib/main.dart:163:5: 
+Error: The method 
+'setState' isn't defined 
+for the type 'AuthWrapper'.
+ - 'AuthWrapper' is from 'p
+ackage:recyconnect/main.dar
+t' ('lib/main.dart').
+Try correcting the name to 
+the name of an existing 
+method, or defining a 
+method named 'setState'.
+    setState(() {
+    ^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:143:1:
+ Error: Expected an 
+identifier, but got '<<'.
+Try inserting an 
+identifier before '<<'.
+<<<<<<< HEAD
+^^
+lib/presentation/screens/au
+th/login_screen.dart:143:3:
+ Error: Expected an 
+identifier, but got '<<'.
+Try inserting an 
+identifier before '<<'.
+<<<<<<< HEAD
+  ^^
+lib/presentation/screens/au
+th/login_screen.dart:143:5:
+ Error: Expected an 
+identifier, but got '<<'.
+Try inserting an 
+identifier before '<<'.
+<<<<<<< HEAD
+    ^^
+lib/presentation/screens/au
+th/login_screen.dart:143:9:
+ Error: 'HEAD' isn't a 
+type.
+<<<<<<< HEAD
+        ^^^^
+lib/presentation/screens/au
+th/login_screen.dart:143:9:
+ Error: Expected '>' after 
+this.
+<<<<<<< HEAD
+        ^^^^
+lib/presentation/screens/au
+th/login_screen.dart:144:13
+: Error: Expected '[' 
+before this.
+            const SnackBar(
+            ^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:144:13
+: Error: Expected ',' 
+before this.
+            const SnackBar(
+            ^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:147:1:
+ Error: Expected an 
+identifier, but got '==='.
+Try inserting an 
+identifier before '==='.
+=======
+^^^
+lib/presentation/screens/au
+th/login_screen.dart:147:7:
+ Error: Expected an 
+identifier, but got '='.
+Try inserting an 
+identifier before '='.
+=======
+      ^
+lib/presentation/screens/au
+th/login_screen.dart:147:4:
+ Error: The string '===' 
+isn't a user-definable 
+operator.
+=======
+   ^^^
+lib/presentation/screens/au
+th/login_screen.dart:153:44
+: Error: Cannot invoke a 
+non-'const' constructor 
+where a const expression 
+is expected.
+Try using a constructor or 
+factory that is 'const'.
+                
+borderRadius: 
+BorderRadius.circular(12),
+                           
+                ^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:155:1:
+ Error: Expected an 
+identifier, but got '>>>'.
+Try inserting an 
+identifier before '>>>'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+^^^
+lib/presentation/screens/au
+th/login_screen.dart:155:4:
+ Error: Expected an 
+identifier, but got '>>>'.
+Try inserting an 
+identifier before '>>>'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+   ^^^
+lib/presentation/screens/au
+th/login_screen.dart:155:7:
+ Error: Expected an 
+identifier, but got '>'.
+Try inserting an 
+identifier before '>'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+      ^
+lib/presentation/screens/au
+th/login_screen.dart:155:11
+: Error: Expected ',' 
+before this.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+          ^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:155:11
+: Error: Not a constant 
+expression.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+          ^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:148:21
+: Error: Too many 
+positional arguments: 0 
+allowed, but 2 found.
+Try removing the extra 
+positional arguments.
+            SnackBar(
+                    ^
+/D:/flutter/packages/flutte
+r/lib/src/material/snack_ba
+r.dart:275:9: Context: 
+Found this candidate, but 
+the arguments don't match.
+  const SnackBar({
+        ^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:144:27
+: Error: Too many 
+positional arguments: 0 
+allowed, but 1 found.
+Try removing the extra 
+positional arguments.
+            const SnackBar(
+                          ^
+/D:/flutter/packages/flutte
+r/lib/src/material/snack_ba
+r.dart:275:9: Context: 
+Found this candidate, but 
+the arguments don't match.
+  const SnackBar({
+        ^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:142:53
+: Error: Too many 
+positional arguments: 1 
+allowed, but 2 found.
+Try removing the extra 
+positional arguments.
+          ScaffoldMessenger
+.of(context).showSnackBar(
+                           
+                         ^
+lib/presentation/screens/au
+th/login_screen.dart:217:1:
+ Error: Expected an 
+identifier, but got '<<'.
+Try inserting an 
+identifier before '<<'.
+<<<<<<< HEAD
+^^
+lib/presentation/screens/au
+th/login_screen.dart:217:3:
+ Error: Expected an 
+identifier, but got '<<'.
+Try inserting an 
+identifier before '<<'.
+<<<<<<< HEAD
+  ^^
+lib/presentation/screens/au
+th/login_screen.dart:217:5:
+ Error: Expected an 
+identifier, but got '<<'.
+Try inserting an 
+identifier before '<<'.
+<<<<<<< HEAD
+    ^^
+lib/presentation/screens/au
+th/login_screen.dart:217:9:
+ Error: 'HEAD' isn't a 
+type.
+<<<<<<< HEAD
+        ^^^^
+lib/presentation/screens/au
+th/login_screen.dart:217:9:
+ Error: Expected '>' after 
+this.
+<<<<<<< HEAD
+        ^^^^
+lib/presentation/screens/au
+th/login_screen.dart:218:11
+: Error: Expected '[' 
+before this.
+          gradient: 
+LinearGradient(
+          ^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:218:11
+: Error: Expected ',' 
+before this.
+          gradient: 
+LinearGradient(
+          ^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:227:1:
+ Error: Expected an 
+identifier, but got '==='.
+Try inserting an 
+identifier before '==='.
+=======
+^^^
+lib/presentation/screens/au
+th/login_screen.dart:227:7:
+ Error: Expected an 
+identifier, but got '='.
+Try inserting an 
+identifier before '='.
+=======
+      ^
+lib/presentation/screens/au
+th/login_screen.dart:227:4:
+ Error: The string '===' 
+isn't a user-definable 
+operator.
+=======
+   ^^^
+lib/presentation/screens/au
+th/login_screen.dart:229:19
+: Error: Expected ')' 
+before this.
+          gradient: isDark
+                  ^
+lib/presentation/screens/au
+th/login_screen.dart:216:34
+: Error: Too many 
+positional arguments: 0 
+allowed, but 2 found.
+Try removing the extra 
+positional arguments.
+        decoration: 
+BoxDecoration(
+                           
+      ^
+/D:/flutter/packages/flutte
+r/lib/src/painting/box_deco
+ration.dart:93:9: Context: 
+Found this candidate, but 
+the arguments don't match.
+  const BoxDecoration({
+        ^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:271:1:
+ Error: Expected an 
+identifier, but got '<<'.
+Try inserting an 
+identifier before '<<'.
+<<<<<<< HEAD
+^^
+lib/presentation/screens/au
+th/login_screen.dart:271:3:
+ Error: Expected an 
+identifier, but got '<<'.
+Try inserting an 
+identifier before '<<'.
+<<<<<<< HEAD
+  ^^
+lib/presentation/screens/au
+th/login_screen.dart:271:5:
+ Error: Expected an 
+identifier, but got '<<'.
+Try inserting an 
+identifier before '<<'.
+<<<<<<< HEAD
+    ^^
+lib/presentation/screens/au
+th/login_screen.dart:271:9:
+ Error: 'HEAD' isn't a 
+type.
+<<<<<<< HEAD
+        ^^^^
+lib/presentation/screens/au
+th/login_screen.dart:271:9:
+ Error: Expected '>' after 
+this.
+<<<<<<< HEAD
+        ^^^^
+lib/presentation/screens/au
+th/login_screen.dart:273:23
+: Error: Expected '[' 
+before this.
+                      
+_buildLoginCard(),
+                      
+^^^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:273:23
+: Error: Expected ',' 
+before this.
+                      
+_buildLoginCard(),
+                      
+^^^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:280:1:
+ Error: Expected an 
+identifier, but got '==='.
+Try inserting an 
+identifier before '==='.
+=======
+^^^
+lib/presentation/screens/au
+th/login_screen.dart:280:7:
+ Error: Expected an 
+identifier, but got '='.
+Try inserting an 
+identifier before '='.
+=======
+      ^
+lib/presentation/screens/au
+th/login_screen.dart:280:4:
+ Error: The string '===' 
+isn't a user-definable 
+operator.
+=======
+   ^^^
+lib/presentation/screens/au
+th/login_screen.dart:300:1:
+ Error: Expected an 
+identifier, but got '>>>'.
+Try inserting an 
+identifier before '>>>'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+^^^
+lib/presentation/screens/au
+th/login_screen.dart:300:4:
+ Error: Expected an 
+identifier, but got '>>>'.
+Try inserting an 
+identifier before '>>>'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+   ^^^
+lib/presentation/screens/au
+th/login_screen.dart:300:7:
+ Error: Expected an 
+identifier, but got '>'.
+Try inserting an 
+identifier before '>'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+      ^
+lib/presentation/screens/au
+th/login_screen.dart:300:11
+: Error: Expected ',' 
+before this.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+          ^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:285:43
+: Error: Too many 
+positional arguments: 0 
+allowed, but 2 found.
+Try removing the extra 
+positional arguments.
+                  
+gradient: RadialGradient(
+                           
+               ^
+/D:/flutter/packages/flutte
+r/lib/src/painting/gradient
+.dart:647:9: Context: 
+Found this candidate, but 
+the arguments don't match.
+  const RadialGradient({
+        ^^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:305:1:
+ Error: Expected an 
+identifier, but got '<<'.
+Try inserting an 
+identifier before '<<'.
+<<<<<<< HEAD
+^^
+lib/presentation/screens/au
+th/login_screen.dart:305:3:
+ Error: Expected an 
+identifier, but got '<<'.
+Try inserting an 
+identifier before '<<'.
+<<<<<<< HEAD
+  ^^
+lib/presentation/screens/au
+th/login_screen.dart:305:5:
+ Error: Expected an 
+identifier, but got '<<'.
+Try inserting an 
+identifier before '<<'.
+<<<<<<< HEAD
+    ^^
+lib/presentation/screens/au
+th/login_screen.dart:305:9:
+ Error: 'HEAD' isn't a 
+type.
+<<<<<<< HEAD
+        ^^^^
+lib/presentation/screens/au
+th/login_screen.dart:305:9:
+ Error: Expected '>' after 
+this.
+<<<<<<< HEAD
+        ^^^^
+lib/presentation/screens/au
+th/login_screen.dart:306:11
+: Error: Expected '[' 
+before this.
+          ),
+          ^
+lib/presentation/screens/au
+th/login_screen.dart:264:32
+: Error: Too many 
+positional arguments: 0 
+allowed, but 2 found.
+Try removing the extra 
+positional arguments.
+                  child: 
+Column(
+                           
+    ^
+/D:/flutter/packages/flutte
+r/lib/src/widgets/basic.dar
+t:5937:9: Context: Found 
+this candidate, but the 
+arguments don't match.
+  const Column({
+        ^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:307:1:
+ Error: Expected an 
+identifier, but got '==='.
+Try inserting an 
+identifier before '==='.
+=======
+^^^
+lib/presentation/screens/au
+th/login_screen.dart:307:7:
+ Error: Expected an 
+identifier, but got '='.
+Try inserting an 
+identifier before '='.
+=======
+      ^
+lib/presentation/screens/au
+th/login_screen.dart:307:4:
+ Error: The string '===' 
+isn't a user-definable 
+operator.
+=======
+   ^^^
+lib/presentation/screens/au
+th/login_screen.dart:310:13
+: Error: Expected an 
+identifier, but got 'if'.
+Try inserting an 
+identifier before 'if'.
+            if (isDark)
+            ^^
+lib/presentation/screens/au
+th/login_screen.dart:310:13
+: Error: Expected ')' 
+before this.
+            if (isDark)
+            ^^
+lib/presentation/screens/au
+th/login_screen.dart:262:39
+: Error: Too many 
+positional arguments: 0 
+allowed, but 1 found.
+Try removing the extra 
+positional arguments.
+                child: 
+SlideTransition(
+                           
+           ^
+/D:/flutter/packages/flutte
+r/lib/src/widgets/transitio
+ns.dart:193:9: Context: 
+Found this candidate, but 
+the arguments don't match.
+  const SlideTransition({
+        ^^^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:371:1:
+ Error: Expected an 
+identifier, but got '==='.
+Try inserting an 
+identifier before '==='.
+=======
+^^^
+lib/presentation/screens/au
+th/login_screen.dart:371:7:
+ Error: Expected an 
+identifier, but got '='.
+Try inserting an 
+identifier before '='.
+=======
+      ^
+lib/presentation/screens/au
+th/login_screen.dart:371:4:
+ Error: The string '===' 
+isn't a user-definable 
+operator.
+=======
+   ^^^
+lib/presentation/screens/au
+th/login_screen.dart:372:3:
+ Error: 'Widget' isn't a 
+type.
+  Widget _buildLogo(bool 
+isDark) {
+  ^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:372:10
+: Error: A function 
+expression can't have a 
+name.
+  Widget _buildLogo(bool 
+isDark) {
+         ^^^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:380:1:
+ Error: Expected an 
+identifier, but got '>>>'.
+Try inserting an 
+identifier before '>>>'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+^^^
+lib/presentation/screens/au
+th/login_screen.dart:380:4:
+ Error: Expected an 
+identifier, but got '>>>'.
+Try inserting an 
+identifier before '>>>'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+   ^^^
+lib/presentation/screens/au
+th/login_screen.dart:380:7:
+ Error: Expected an 
+identifier, but got '>'.
+Try inserting an 
+identifier before '>'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+      ^
+lib/presentation/screens/au
+th/login_screen.dart:380:11
+: Error: Expected ',' 
+before this.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+          ^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:381:11
+: Error: Expected ',' 
+before this.
+          decoration: 
+BoxDecoration(
+          ^^^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:386:1:
+ Error: Expected an 
+identifier, but got '<<'.
+Try inserting an 
+identifier before '<<'.
+<<<<<<< HEAD
+^^
+lib/presentation/screens/au
+th/login_screen.dart:386:3:
+ Error: Expected an 
+identifier, but got '<<'.
+Try inserting an 
+identifier before '<<'.
+<<<<<<< HEAD
+  ^^
+lib/presentation/screens/au
+th/login_screen.dart:386:5:
+ Error: Expected an 
+identifier, but got '<<'.
+Try inserting an 
+identifier before '<<'.
+<<<<<<< HEAD
+    ^^
+lib/presentation/screens/au
+th/login_screen.dart:386:9:
+ Error: 'HEAD' isn't a 
+type.
+<<<<<<< HEAD
+        ^^^^
+lib/presentation/screens/au
+th/login_screen.dart:386:9:
+ Error: Expected '>' after 
+this.
+<<<<<<< HEAD
+        ^^^^
+lib/presentation/screens/au
+th/login_screen.dart:387:17
+: Error: Expected '[' 
+before this.
+                
+AppTheme.primaryGreen,
+                ^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:387:17
+: Error: Expected ',' 
+before this.
+                
+AppTheme.primaryGreen,
+                ^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:389:1:
+ Error: Expected an 
+identifier, but got '==='.
+Try inserting an 
+identifier before '==='.
+=======
+^^^
+lib/presentation/screens/au
+th/login_screen.dart:389:7:
+ Error: Expected an 
+identifier, but got '='.
+Try inserting an 
+identifier before '='.
+=======
+      ^
+lib/presentation/screens/au
+th/login_screen.dart:389:4:
+ Error: The string '===' 
+isn't a user-definable 
+operator.
+=======
+   ^^^
+lib/presentation/screens/au
+th/login_screen.dart:392:1:
+ Error: Expected an 
+identifier, but got '>>>'.
+Try inserting an 
+identifier before '>>>'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+^^^
+lib/presentation/screens/au
+th/login_screen.dart:392:4:
+ Error: Expected an 
+identifier, but got '>>>'.
+Try inserting an 
+identifier before '>>>'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+   ^^^
+lib/presentation/screens/au
+th/login_screen.dart:392:7:
+ Error: Expected an 
+identifier, but got '>'.
+Try inserting an 
+identifier before '>'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+      ^
+lib/presentation/screens/au
+th/login_screen.dart:392:11
+: Error: Expected ',' 
+before this.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+          ^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:398:1:
+ Error: Expected an 
+identifier, but got '<<'.
+Try inserting an 
+identifier before '<<'.
+<<<<<<< HEAD
+^^
+lib/presentation/screens/au
+th/login_screen.dart:398:3:
+ Error: Expected an 
+identifier, but got '<<'.
+Try inserting an 
+identifier before '<<'.
+<<<<<<< HEAD
+  ^^
+lib/presentation/screens/au
+th/login_screen.dart:398:5:
+ Error: Expected an 
+identifier, but got '<<'.
+Try inserting an 
+identifier before '<<'.
+<<<<<<< HEAD
+    ^^
+lib/presentation/screens/au
+th/login_screen.dart:398:9:
+ Error: 'HEAD' isn't a 
+type.
+<<<<<<< HEAD
+        ^^^^
+lib/presentation/screens/au
+th/login_screen.dart:398:9:
+ Error: Expected '>' after 
+this.
+<<<<<<< HEAD
+        ^^^^
+lib/presentation/screens/au
+th/login_screen.dart:399:17
+: Error: Expected '[' 
+before this.
+                color: 
+isDark
+                ^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:399:17
+: Error: Expected ',' 
+before this.
+                color: 
+isDark
+                ^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:397:24
+: Error: Too many 
+positional arguments: 0 
+allowed, but 1 found.
+Try removing the extra 
+positional arguments.
+              BoxShadow(
+                       ^
+/D:/flutter/packages/flutte
+r/lib/src/painting/box_shad
+ow.dart:37:9: Context: 
+Found this candidate, but 
+the arguments don't match.
+  const BoxShadow({
+        ^^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:378:25
+: Error: Too many 
+positional arguments: 0 
+allowed, but 2 found.
+Try removing the extra 
+positional arguments.
+        return Container(
+                        ^
+/D:/flutter/packages/flutte
+r/lib/src/widgets/container
+.dart:255:3: Context: 
+Found this candidate, but 
+the arguments don't match.
+  Container({
+  ^^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:412:9:
+ Error: Expected ';' after 
+this.
+        ),
+        ^
+lib/presentation/screens/au
+th/login_screen.dart:412:10
+: Error: Expected an 
+identifier, but got ','.
+Try inserting an 
+identifier before ','.
+        ),
+         ^
+lib/presentation/screens/au
+th/login_screen.dart:412:10
+: Error: Unexpected token 
+';'.
+        ),
+         ^
+lib/presentation/screens/au
+th/login_screen.dart:413:34
+: Error: Expected ';' 
+after this.
+        const 
+SizedBox(height: 24),
+                           
+      ^
+lib/presentation/screens/au
+th/login_screen.dart:413:35
+: Error: Expected an 
+identifier, but got ','.
+Try inserting an 
+identifier before ','.
+        const 
+SizedBox(height: 24),
+                           
+       ^
+lib/presentation/screens/au
+th/login_screen.dart:413:35
+: Error: Unexpected token 
+';'.
+        const 
+SizedBox(height: 24),
+                           
+       ^
+lib/presentation/screens/au
+th/login_screen.dart:414:1:
+ Error: Expected an 
+identifier, but got '==='.
+Try inserting an 
+identifier before '==='.
+=======
+^^^
+lib/presentation/screens/au
+th/login_screen.dart:414:7:
+ Error: Expected an 
+identifier, but got '='.
+Try inserting an 
+identifier before '='.
+=======
+      ^
+lib/presentation/screens/au
+th/login_screen.dart:414:4:
+ Error: The string '===' 
+isn't a user-definable 
+operator.
+=======
+   ^^^
+lib/presentation/screens/au
+th/login_screen.dart:415:17
+: Error: Expected ';' 
+after this.
+                color: glow
+Color.withValues(alpha: 
+(isDark ? 0.2 : 0.15) * 
+_pulseAnimation.value),
+                ^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:415:22
+: Error: Expected an 
+identifier, but got ':'.
+Try inserting an 
+identifier before ':'.
+                color: glow
+Color.withValues(alpha: 
+(isDark ? 0.2 : 0.15) * 
+_pulseAnimation.value),
+                     ^
+lib/presentation/screens/au
+th/login_screen.dart:415:22
+: Error: Unexpected token 
+';'.
+                color: glow
+Color.withValues(alpha: 
+(isDark ? 0.2 : 0.15) * 
+_pulseAnimation.value),
+                     ^
+lib/presentation/screens/au
+th/login_screen.dart:415:97
+: Error: Expected ';' 
+after this.
+                color: glow
+Color.withValues(alpha: 
+(isDark ? 0.2 : 0.15) * 
+_pulseAnimation.value),
+                           
+                           
+                           
+         ^
+lib/presentation/screens/au
+th/login_screen.dart:415:98
+: Error: Expected an 
+identifier, but got ','.
+Try inserting an 
+identifier before ','.
+                color: glow
+Color.withValues(alpha: 
+(isDark ? 0.2 : 0.15) * 
+_pulseAnimation.value),
+                           
+                           
+                           
+         ^
+lib/presentation/screens/au
+th/login_screen.dart:415:98
+: Error: Unexpected token 
+';'.
+                color: glow
+Color.withValues(alpha: 
+(isDark ? 0.2 : 0.15) * 
+_pulseAnimation.value),
+                           
+                           
+                           
+         ^
+lib/presentation/screens/au
+th/login_screen.dart:416:43
+: Error: Expected ';' 
+after this.
+                
+blurRadius: isDark ? 25 : 
+20,
+                           
+               ^^
+lib/presentation/screens/au
+th/login_screen.dart:416:45
+: Error: Expected an 
+identifier, but got ','.
+Try inserting an 
+identifier before ','.
+                
+blurRadius: isDark ? 25 : 
+20,
+                           
+                 ^
+lib/presentation/screens/au
+th/login_screen.dart:416:45
+: Error: Unexpected token 
+';'.
+                
+blurRadius: isDark ? 25 : 
+20,
+                           
+                 ^
+lib/presentation/screens/au
+th/login_screen.dart:417:44
+: Error: Expected ';' 
+after this.
+                
+spreadRadius: isDark ? 3 : 
+2,
+                           
+                ^
+lib/presentation/screens/au
+th/login_screen.dart:417:45
+: Error: Expected an 
+identifier, but got ','.
+Try inserting an 
+identifier before ','.
+                
+spreadRadius: isDark ? 3 : 
+2,
+                           
+                 ^
+lib/presentation/screens/au
+th/login_screen.dart:417:45
+: Error: Unexpected token 
+';'.
+                
+spreadRadius: isDark ? 3 : 
+2,
+                           
+                 ^
+lib/presentation/screens/au
+th/login_screen.dart:418:15
+: Error: Expected ';' 
+after this.
+              ),
+              ^
+lib/presentation/screens/au
+th/login_screen.dart:418:16
+: Error: Expected an 
+identifier, but got ','.
+Try inserting an 
+identifier before ','.
+              ),
+               ^
+lib/presentation/screens/au
+th/login_screen.dart:418:16
+: Error: Unexpected token 
+';'.
+              ),
+               ^
+lib/presentation/screens/au
+th/login_screen.dart:369:18
+: Error: Too many 
+positional arguments: 0 
+allowed, but 1 found.
+Try removing the extra 
+positional arguments.
+        Container(
+                 ^
+/D:/flutter/packages/flutte
+r/lib/src/widgets/container
+.dart:255:3: Context: 
+Found this candidate, but 
+the arguments don't match.
+  Container({
+  ^^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:420:11
+: Error: Expected ';' 
+after this.
+          ),
+          ^
+lib/presentation/screens/au
+th/login_screen.dart:420:12
+: Error: Expected an 
+identifier, but got ','.
+Try inserting an 
+identifier before ','.
+          ),
+           ^
+lib/presentation/screens/au
+th/login_screen.dart:420:12
+: Error: Unexpected token 
+';'.
+          ),
+           ^
+lib/presentation/screens/au
+th/login_screen.dart:424:11
+: Error: Expected ';' 
+after this.
+          ),
+          ^
+lib/presentation/screens/au
+th/login_screen.dart:424:12
+: Error: Expected an 
+identifier, but got ','.
+Try inserting an 
+identifier before ','.
+          ),
+           ^
+lib/presentation/screens/au
+th/login_screen.dart:424:12
+: Error: Unexpected token 
+';'.
+          ),
+           ^
+lib/presentation/screens/au
+th/login_screen.dart:425:9:
+ Error: Expected an 
+identifier, but got ')'.
+Try inserting an 
+identifier before ')'.
+        );
+        ^
+lib/presentation/screens/au
+th/login_screen.dart:424:12
+: Error: Expected ';' 
+after this.
+          ),
+           ^
+lib/presentation/screens/au
+th/login_screen.dart:425:9:
+ Error: Unexpected token 
+';'.
+        );
+        ^
+lib/presentation/screens/au
+th/login_screen.dart:438:18
+: Error: Undefined name 
+'_pulseAnimation'.
+      animation: 
+_pulseAnimation,
+                 
+^^^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:441:18
+: Error: Undefined name 
+'math'.
+          width: 
+math.min(400, 
+screenSize.width - 48),
+                 ^^^^
+lib/presentation/screens/au
+th/login_screen.dart:449:79
+: Error: Undefined name 
+'_pulseAnimation'.
+                      
+color: const Color(0xFF00D9
+A5).withValues(alpha: 0.15 
+* _pulseAnimation.value),
+                           
+                           
+                        
+^^^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:454:74
+: Error: Undefined name 
+'_pulseAnimation'.
+                      
+color: AppColors.neonBlue.w
+ithValues(alpha: 0.08 * 
+_pulseAnimation.value),
+                           
+                           
+                   
+^^^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:472:65
+: Error: Undefined name 
+'_pulseAnimation'.
+                      
+color: glowColor.withValues
+(alpha: 0.08 * 
+_pulseAnimation.value),
+                           
+                           
+          ^^^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:486:23
+: Error: Undefined name 
+'ImageFilter'.
+              filter: 
+ImageFilter.blur(sigmaX: 
+20, sigmaY: 20),
+                      
+^^^^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:507:71
+: Error: Undefined name 
+'_pulseAnimation'.
+                        ? C
+olors.white.withValues(alph
+a: 0.15 + 0.1 * 
+_pulseAnimation.value)
+                           
+                           
+                
+^^^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:508:70
+: Error: Undefined name 
+'_pulseAnimation'.
+                        : C
+olors.white.withValues(alph
+a: 0.6 + 0.1 * 
+_pulseAnimation.value),
+                           
+                           
+               
+^^^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:513:24
+: Error: Undefined name 
+'_formKey'.
+                  key: 
+_formKey,
+                       
+^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:542:37
+: Error: Undefined name 
+'_emailController'.
+                        
+controller: 
+_emailController,
+                           
+         ^^^^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:554:37
+: Error: Undefined name 
+'_passwordController'.
+                        
+controller: 
+_passwordController,
+                           
+         
+^^^^^^^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:643:1:
+ Error: Expected an 
+identifier, but got '>>>'.
+Try inserting an 
+identifier before '>>>'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+^^^
+lib/presentation/screens/au
+th/login_screen.dart:643:4:
+ Error: Expected an 
+identifier, but got '>>>'.
+Try inserting an 
+identifier before '>>>'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+   ^^^
+lib/presentation/screens/au
+th/login_screen.dart:643:7:
+ Error: Expected an 
+identifier, but got '>'.
+Try inserting an 
+identifier before '>'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+      ^
+lib/presentation/screens/au
+th/login_screen.dart:643:11
+: Error: Expected ',' 
+before this.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+          ^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:644:9:
+ Error: Expected ',' 
+before this.
+        Text(
+        ^^^^
+lib/presentation/screens/au
+th/login_screen.dart:647:17
+: Error: Undefined name 
+'theme'.
+              ? theme.textT
+heme.displayLarge?.copyWith
+(fontSize: 32)
+                ^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:643:11
+: Error: Undefined name 'b8
+37f06550d44f1e6ff8b751c4149
+76b29c066'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+          ^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:665:28
+: Error: Undefined name 
+'context'.
+    final theme = 
+Theme.of(context);
+                           
+^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:685:14
+: Error: Method not found: 
+'_buildLoginForm'.
+      child: 
+_buildLoginForm(),
+             
+^^^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:692:1:
+ Error: Expected an 
+identifier, but got '>>>'.
+Try inserting an 
+identifier before '>>>'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+^^^
+lib/presentation/screens/au
+th/login_screen.dart:692:4:
+ Error: Expected an 
+identifier, but got '>>>'.
+Try inserting an 
+identifier before '>>>'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+   ^^^
+lib/presentation/screens/au
+th/login_screen.dart:692:7:
+ Error: Expected an 
+identifier, but got '>'.
+Try inserting an 
+identifier before '>'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+      ^
+lib/presentation/screens/au
+th/login_screen.dart:692:9:
+ Error: Expected ';' after 
+this.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+        ^^
+lib/presentation/screens/au
+th/login_screen.dart:692:11
+: Error: 'b837f06550d44f1e6
+ff8b751c414976b29c066' 
+isn't a type.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+          ^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:694:3:
+ Error: Expected ';' after 
+this.
+  Widget _buildLoginForm() 
+{
+  ^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:695:28
+: Error: Undefined name 
+'context'.
+    final theme = 
+Theme.of(context);
+                           
+^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:700:12
+: Error: Undefined name 
+'_formKey'.
+      key: _formKey,
+           ^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:705:25
+: Error: Undefined name 
+'_emailController'.
+            controller: 
+_emailController,
+                        
+^^^^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:759:25
+: Error: Undefined name 
+'_passwordController'.
+            controller: 
+_passwordController,
+                        
+^^^^^^^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:760:26
+: Error: Undefined name 
+'_obscurePassword'.
+            obscureText: 
+_obscurePassword,
+                         
+^^^^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:808:19
+: Error: Undefined name 
+'_obscurePassword'.
+                  
+_obscurePassword ? 
+Icons.visibility_outlined 
+: Icons.visibility_off_outl
+ined,
+                  
+^^^^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:811:69
+: Error: Undefined name 
+'_obscurePassword'.
+                onPressed: 
+() => setState(() => 
+_obscurePassword = 
+!_obscurePassword),
+                           
+                           
+              
+^^^^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:811:49
+: Error: Setter not found: 
+'_obscurePassword'.
+                onPressed: 
+() => setState(() => 
+_obscurePassword = 
+!_obscurePassword),
+                           
+                     
+^^^^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:811:34
+: Error: Method not found: 
+'setState'.
+                onPressed: 
+() => setState(() => 
+_obscurePassword = 
+!_obscurePassword),
+                           
+      ^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:824:19
+: Error: Undefined name 
+'context'.
+                  context,
+                  ^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:850:61
+: Error: Undefined name 
+'_handleLogin'.
+                  
+onPressed: 
+authService.isLoading ? 
+null : _handleLogin,
+                           
+                           
+      ^^^^^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:894:3:
+ Error: 'Widget' isn't a 
+type.
+  Widget _buildFooter() {
+  ^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:895:28
+: Error: Undefined name 
+'context'.
+    final theme = 
+Theme.of(context);
+                           
+^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:915:19
+: Error: Undefined name 
+'context'.
+                  context,
+                  ^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:984:1:
+ Error: Expected an 
+identifier, but got '<<'.
+Try inserting an 
+identifier before '<<'.
+<<<<<<< HEAD
+^^
+lib/presentation/screens/au
+th/login_screen.dart:984:3:
+ Error: Expected an 
+identifier, but got '<<'.
+Try inserting an 
+identifier before '<<'.
+<<<<<<< HEAD
+  ^^
+lib/presentation/screens/au
+th/login_screen.dart:984:5:
+ Error: Expected an 
+identifier, but got '<<'.
+Try inserting an 
+identifier before '<<'.
+<<<<<<< HEAD
+    ^^
+lib/presentation/screens/au
+th/login_screen.dart:984:9:
+ Error: 'HEAD' isn't a 
+type.
+<<<<<<< HEAD
+        ^^^^
+lib/presentation/screens/au
+th/login_screen.dart:984:9:
+ Error: Expected '>' after 
+this.
+<<<<<<< HEAD
+        ^^^^
+lib/presentation/screens/au
+th/login_screen.dart:985:1:
+ Error: Expected '[' 
+before this.
+=======
+^^^
+lib/presentation/screens/au
+th/login_screen.dart:985:4:
+ Error: Expected an 
+identifier, but got '==='.
+Try inserting an 
+identifier before '==='.
+=======
+   ^^^
+lib/presentation/screens/au
+th/login_screen.dart:985:1:
+ Error: The string '===' 
+isn't a user-definable 
+operator.
+=======
+^^^
+lib/presentation/screens/au
+th/login_screen.dart:986:11
+: Error: Undefined name 
+'child'.
+          child: 
+ElevatedButton(
+          ^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:986:16
+: Error: Expected ')' 
+before this.
+          child: 
+ElevatedButton(
+               ^
+lib/presentation/screens/au
+th/login_screen.dart:935:18
+: Error: Too many 
+positional arguments: 0 
+allowed, but 1 found.
+Try removing the extra 
+positional arguments.
+        Container(
+                 ^
+/D:/flutter/packages/flutte
+r/lib/src/widgets/container
+.dart:255:3: Context: 
+Found this candidate, but 
+the arguments don't match.
+  Container({
+  ^^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:1025:8
+: Error: Expected an 
+identifier, but got ','.
+Try inserting an 
+identifier before ','.
+      },
+       ^
+lib/presentation/screens/au
+th/login_screen.dart:1025:7
+: Error: Expected ';' 
+after this.
+      },
+      ^
+lib/presentation/screens/au
+th/login_screen.dart:1025:8
+: Error: Unexpected token 
+';'.
+      },
+       ^
+lib/presentation/screens/au
+th/login_screen.dart:1026:5
+: Error: Expected an 
+identifier, but got ')'.
+Try inserting an 
+identifier before ')'.
+    );
+    ^
+lib/presentation/screens/au
+th/login_screen.dart:1025:8
+: Error: Expected ';' 
+after this.
+      },
+       ^
+lib/presentation/screens/au
+th/login_screen.dart:1026:5
+: Error: Unexpected token 
+';'.
+    );
+    ^
+lib/presentation/screens/au
+th/login_screen.dart:1048:1
+5: Error: Undefined name 
+'context'.
+              context,
+              ^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:1071:1
+: Error: Expected an 
+identifier, but got '>>>'.
+Try inserting an 
+identifier before '>>>'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+^^^
+lib/presentation/screens/au
+th/login_screen.dart:1071:4
+: Error: Expected an 
+identifier, but got '>>>'.
+Try inserting an 
+identifier before '>>>'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+   ^^^
+lib/presentation/screens/au
+th/login_screen.dart:1071:7
+: Error: Expected an 
+identifier, but got '>'.
+Try inserting an 
+identifier before '>'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+      ^
+lib/presentation/screens/au
+th/login_screen.dart:1071:1
+1: Error: Expected ',' 
+before this.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+          ^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:1071:1
+1: Error: Undefined name 'b
+837f06550d44f1e6ff8b751c414
+976b29c066'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+          ^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/login_screen.dart:1045:2
+4: Error: Too many 
+positional arguments: 0 
+allowed, but 2 found.
+Try removing the extra 
+positional arguments.
+        GestureDetector(
+                       ^
+/D:/flutter/packages/flutte
+r/lib/src/widgets/gesture_d
+etector.dart:237:3: 
+Context: Found this 
+candidate, but the 
+arguments don't match.
+  GestureDetector({
+  ^^^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:323:1: Error: Expected 
+an identifier, but got 
+'<<'.
+Try inserting an 
+identifier before '<<'.
+<<<<<<< HEAD
+^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:323:3: Error: Expected 
+an identifier, but got 
+'<<'.
+Try inserting an 
+identifier before '<<'.
+<<<<<<< HEAD
+  ^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:323:5: Error: Expected 
+an identifier, but got 
+'<<'.
+Try inserting an 
+identifier before '<<'.
+<<<<<<< HEAD
+    ^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:323:9: Error: 'HEAD' 
+isn't a type.
+<<<<<<< HEAD
+        ^^^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:324:15: Error: Expected 
+'[' before this.
+              ],
+              ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:304:24: Error: Too many 
+positional arguments: 0 
+allowed, but 1 found.
+Try removing the extra 
+positional arguments.
+              Container(
+                       ^
+/D:/flutter/packages/flutte
+r/lib/src/widgets/container
+.dart:255:3: Context: 
+Found this candidate, but 
+the arguments don't match.
+  Container({
+  ^^^^^^^^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:331:1: Error: Expected 
+an identifier, but got 
+'==='.
+Try inserting an 
+identifier before '==='.
+=======
+^^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:331:7: Error: Expected 
+an identifier, but got '='.
+Try inserting an 
+identifier before '='.
+=======
+      ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:331:4: Error: The 
+string '===' isn't a 
+user-definable operator.
+=======
+   ^^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:332:22: Error: Expected 
+')' before this.
+                child: 
+Icon(
+                     ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:299:23: Error: Too many 
+positional arguments: 0 
+allowed, but 1 found.
+Try removing the extra 
+positional arguments.
+        return Padding(
+                      ^
+/D:/flutter/packages/flutte
+r/lib/src/widgets/basic.dar
+t:2244:9: Context: Found 
+this candidate, but the 
+arguments don't match.
+  const 
+Padding({super.key, 
+required this.padding, 
+super.child});
+        ^^^^^^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:337:15: Error: Expected 
+';' after this.
+              ),
+              ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:337:16: Error: Expected 
+an identifier, but got ','.
+Try inserting an 
+identifier before ','.
+              ),
+               ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:337:16: Error: 
+Unexpected token ';'.
+              ),
+               ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:338:40: Error: Expected 
+';' after this.
+              const 
+SizedBox(height: 20),
+                           
+            ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:338:41: Error: Expected 
+an identifier, but got ','.
+Try inserting an 
+identifier before ','.
+              const 
+SizedBox(height: 20),
+                           
+             ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:338:41: Error: 
+Unexpected token ';'.
+              const 
+SizedBox(height: 20),
+                           
+             ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:347:15: Error: Expected 
+';' after this.
+              ),
+              ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:347:16: Error: Expected 
+an identifier, but got ','.
+Try inserting an 
+identifier before ','.
+              ),
+               ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:347:16: Error: 
+Unexpected token ';'.
+              ),
+               ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:348:39: Error: Expected 
+';' after this.
+              const 
+SizedBox(height: 8),
+                           
+           ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:348:40: Error: Expected 
+an identifier, but got ','.
+Try inserting an 
+identifier before ','.
+              const 
+SizedBox(height: 8),
+                           
+            ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:348:40: Error: 
+Unexpected token ';'.
+              const 
+SizedBox(height: 8),
+                           
+            ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:356:15: Error: Expected 
+';' after this.
+              ),
+              ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:356:16: Error: Expected 
+an identifier, but got ','.
+Try inserting an 
+identifier before ','.
+              ),
+               ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:356:16: Error: 
+Unexpected token ';'.
+              ),
+               ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:357:13: Error: Expected 
+an identifier, but got ']'.
+Try inserting an 
+identifier before ']'.
+            ],
+            ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:356:16: Error: Expected 
+';' after this.
+              ),
+               ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:357:13: Error: 
+Unexpected token ';'.
+            ],
+            ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:357:14: Error: Expected 
+an identifier, but got ','.
+Try inserting an 
+identifier before ','.
+            ],
+             ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:357:13: Error: Expected 
+';' after this.
+            ],
+            ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:357:14: Error: 
+Unexpected token ';'.
+            ],
+             ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:358:1: Error: Expected 
+an identifier, but got 
+'>>>'.
+Try inserting an 
+identifier before '>>>'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+^^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:358:4: Error: Expected 
+an identifier, but got 
+'>>>'.
+Try inserting an 
+identifier before '>>>'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+   ^^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:358:7: Error: Expected 
+an identifier, but got '>'.
+Try inserting an 
+identifier before '>'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+      ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:358:9: Error: Expected 
+';' after this.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+        ^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:358:11: Error: Expected 
+';' after this.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+          ^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:359:11: Error: Expected 
+';' after this.
+          ),
+          ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:359:12: Error: Expected 
+an identifier, but got ','.
+Try inserting an 
+identifier before ','.
+          ),
+           ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:359:12: Error: 
+Unexpected token ';'.
+          ),
+           ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:360:9: Error: Expected 
+an identifier, but got ')'.
+Try inserting an 
+identifier before ')'.
+        );
+        ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:359:12: Error: Expected 
+';' after this.
+          ),
+           ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:360:9: Error: 
+Unexpected token ';'.
+        );
+        ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:358:11: Error: The 
+getter 'b837f06550d44f1e6ff
+8b751c414976b29c066' isn't 
+defined for the type '_Role
+SelectionScreenState'.
+ - '_RoleSelectionScreenSta
+te' is from 'package:recyco
+nnect/presentation/screens/
+auth/role_selection_screen.
+dart' ('lib/presentation/sc
+reens/auth/role_selection_s
+creen.dart').
+Try correcting the name to 
+the name of an existing 
+getter, or defining a 
+getter or field named 'b837
+f06550d44f1e6ff8b751c414976
+b29c066'.
+>>>>>>> 49b837f06550d44f1e6
+ff8b751c414976b29c066
+          ^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:366:24: Error: 
+Undefined name 
+'_selectedRole'.
+    final isSelected = 
+_selectedRole == role.id;
+                       
+^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:370:35: Error: Setter 
+not found: '_selectedRole'.
+      onTap: () => 
+setState(() => 
+_selectedRole = role.id),
+                           
+       ^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:370:20: Error: Method 
+not found: 'setState'.
+      onTap: () => 
+setState(() => 
+_selectedRole = role.id),
+                   ^^^^^^^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:371:1: Error: Expected 
+an identifier, but got 
+'<<'.
+Try inserting an 
+identifier before '<<'.
+<<<<<<< HEAD
+^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:371:3: Error: Expected 
+an identifier, but got 
+'<<'.
+Try inserting an 
+identifier before '<<'.
+<<<<<<< HEAD
+  ^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:371:5: Error: Expected 
+an identifier, but got 
+'<<'.
+Try inserting an 
+identifier before '<<'.
+<<<<<<< HEAD
+    ^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:371:9: Error: 'HEAD' 
+isn't a type.
+<<<<<<< HEAD
+        ^^^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:371:9: Error: Expected 
+'>' after this.
+<<<<<<< HEAD
+        ^^^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:537:3: Error: Expected 
+'[' before this.
+  }
+  ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:369:27: Error: Too many 
+positional arguments: 0 
+allowed, but 1 found.
+Try removing the extra 
+positional arguments.
+    return GestureDetector(
+                          ^
+/D:/flutter/packages/flutte
+r/lib/src/widgets/gesture_d
+etector.dart:237:3: 
+Context: Found this 
+candidate, but the 
+arguments don't match.
+  GestureDetector({
+  ^^^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:536:6: Error: Expected 
+';' after this.
+    );
+     ^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:540:23: Error: 
+Undefined name 
+'_selectedRole'.
+    final isEnabled = 
+_selectedRole != null;
+                      
+^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:543:22: Error: 
+Undefined name 
+'_selectedRole'.
+    final roleText = 
+_selectedRole != null
+                     
+^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:544:11: Error: 
+Undefined name 
+'_selectedRole'.
+        ? _selectedRole![0]
+.toUpperCase() + 
+_selectedRole!.substring(1)
+          ^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:544:45: Error: 
+Undefined name 
+'_selectedRole'.
+        ? _selectedRole![0]
+.toUpperCase() + 
+_selectedRole!.substring(1)
+                           
+                 
+^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:564:22: Error: 
+Undefined name 
+'_pulseAnimation'.
+          animation: 
+_pulseAnimation,
+                     
+^^^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:573:65: Error: 
+Undefined name 
+'_pulseAnimation'.
+                          
+color: buttonColor.withOpac
+ity(0.35 * 
+_pulseAnimation.value),
+                           
+                           
+          ^^^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:623:9: Error: Undefined 
+name '_selectedRole'.
+    if (_selectedRole == 
+null) return;
+        ^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:625:33: Error: 
+Undefined name 
+'_selectedRole'.
+    final Widget 
+targetScreen = 
+_selectedRole == 
+'individual'
+                           
+     ^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:627:36: Error: 
+Undefined name 
+'_selectedRole'.
+        : 
+RegistrationScreen(role: 
+_selectedRole!);
+                           
+        ^^^^^^^^^^^^^
+lib/presentation/screens/au
+th/role_selection_screen.da
+rt:630:7: Error: Undefined 
+name 'context'.
+      context,
+      ^^^^^^^
+Target 
+kernel_snapshot_program 
+failed: Exception
+
+
+FAILURE: Build failed with 
+an exception.
+
+* What went wrong:
+Execution failed for task '
+:app:compileFlutterBuildRel
+ease'.
+> Process 'command 'D:\flut
+ter\bin\flutter.bat'' 
+finished with non-zero 
+exit value 1
+
+* Try:
+> Run with --stacktrace 
+option to get the stack 
+trace.
+> Run with --info or 
+--debug option to get more 
+log output.
+> Run with --scan to get 
+full insights.
+> Get more help at 
+https://help.gradle.org.
+
+BUILD FAILED in 30s
+Running Gradle task 'assembleRelease'...                           30.5s
+Gradle task 
+assembleRelease failed 
+with exit code 1

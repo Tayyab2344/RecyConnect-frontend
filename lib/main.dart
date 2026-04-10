@@ -1,36 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'core/services/auth_service.dart';
 import 'core/services/admin_service.dart';
-<<<<<<< HEAD
-import 'core/providers/theme_provider.dart';
-import 'core/theme/app_theme.dart';
-
-import 'presentation/screens/onboarding/welcome_screen.dart';
-import 'presentation/screens/onboarding/intro_screen.dart';
-=======
 import 'core/theme/app_theme.dart';
 import 'core/providers/theme_provider.dart';
 import 'presentation/screens/onboarding/welcome_story_screen.dart';
->>>>>>> 49b837f06550d44f1e6ff8b751c414976b29c066
 import 'presentation/screens/dashboard/dashboard_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'presentation/screens/onboarding/onboarding_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-<<<<<<< HEAD
-  
-=======
 
   // Initialize Stripe with the publishable key
   Stripe.publishableKey =
       'pk_test_51TIrmdRoUZN6nt4Cr39P7xQbKlfFVBdSNxnCEnliaJueZcUiKUw1QxuXkUj2VJR9KsiQCUxSXJI58DewZDyoHSUS00k7tJCsi0';
   await Stripe.instance.applySettings();
 
->>>>>>> 49b837f06550d44f1e6ff8b751c414976b29c066
   runApp(const MyApp());
 }
 
@@ -52,7 +39,7 @@ class MyApp extends StatelessWidget {
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: themeProvider.themeMode,
-            home: const SplashRouter(),
+            home: const AuthWrapper(),
             debugShowCheckedModeBanner: false,
           );
         },
@@ -61,71 +48,8 @@ class MyApp extends StatelessWidget {
   }
 }
 
-<<<<<<< HEAD
-/// SplashRouter - Determines which screen to show first based on first launch status
-class SplashRouter extends StatefulWidget {
-  const SplashRouter({super.key});
-
-  @override
-  State<SplashRouter> createState() => _SplashRouterState();
-}
-
-class _SplashRouterState extends State<SplashRouter> {
-  bool _isLoading = true;
-  bool _showIntro = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _checkFirstLaunch();
-  }
-
-  Future<void> _checkFirstLaunch() async {
-    final prefs = await SharedPreferences.getInstance();
-    final hasSeenIntro = prefs.getBool('has_seen_intro') ?? false;
-    
-    if (!hasSeenIntro) {
-      // Mark intro as seen for future launches
-      await prefs.setBool('has_seen_intro', true);
-    }
-    
-    if (mounted) {
-      setState(() {
-        _showIntro = !hasSeenIntro;
-        _isLoading = false;
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (_isLoading) {
-      // Show minimal loading state while checking preferences
-      return const Scaffold(
-        backgroundColor: Color(0xFFFFFFFF),
-        body: Center(
-          child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4CAF50)),
-            strokeWidth: 2.5,
-          ),
-        ),
-      );
-    }
-
-    if (_showIntro) {
-      return const IntroScreen();
-    }
-
-    return const AuthWrapper();
-  }
-}
-
-/// AuthWrapper - Routes authenticated users to Dashboard, others to WelcomeScreen
-class AuthWrapper extends StatelessWidget {
-=======
 
 class AuthWrapper extends StatefulWidget {
->>>>>>> 49b837f06550d44f1e6ff8b751c414976b29c066
   const AuthWrapper({super.key});
 
   @override
@@ -180,9 +104,15 @@ class _AuthWrapperState extends State<AuthWrapper> {
         } else if (!_hasSeenOnboarding!) {
           return const OnboardingScreen();
         } else {
-          return const WelcomeScreen();
+          return const AnimatedStoryWelcomeScreen();
         }
       },
     );
   }
 }
+
+
+
+
+
+

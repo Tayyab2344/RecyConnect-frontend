@@ -1,17 +1,9 @@
 import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flutter/material.dart';
-
+import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_colors.dart';
-<<<<<<< HEAD
-import '../../../core/theme/design_tokens.dart';
-import '../../widgets/curved/wave_painter.dart';
-import '../../widgets/curved/curved_card.dart';
-import '../../widgets/curved/organic_button.dart';
-
-=======
 import 'collector_registration_screen.dart';
->>>>>>> 49b837f06550d44f1e6ff8b751c414976b29c066
 import 'registration_screen.dart';
 import 'individual_registration_screen.dart';
 
@@ -37,7 +29,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
 
   // Role data
   final List<_RoleData> _roles = [
-    const _RoleData(
+    _RoleData(
       id: 'individual',
       title: 'Individual / Household',
       description: 'For households and personal recycling needs',
@@ -45,7 +37,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
       color: AppColors.primaryGreen,
       tooltip: 'Perfect for individuals who want to sell recyclable materials.',
     ),
-    const _RoleData(
+    _RoleData(
       id: 'warehouse',
       title: 'Warehouse',
       description: 'For recycling facilities and warehouses',
@@ -53,7 +45,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
       color: AppColors.roleWarehouse,
       tooltip: 'Ideal for recycling facilities managing bulk operations.',
     ),
-    const _RoleData(
+    _RoleData(
       id: 'company',
       title: 'Company / Business',
       description: 'For businesses and corporate recycling',
@@ -320,15 +312,6 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
                     ),
                   ],
                 ),
-<<<<<<< HEAD
-              ],
-            ),
-            child: const Icon(
-              Icons.people_rounded,
-              size: 40,
-              color: AppColors.primaryGreen,
-            ),
-=======
                 child: Icon(
                   Icons.people_alt_rounded,
                   size: 36,
@@ -355,7 +338,6 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
                 textAlign: TextAlign.center,
               ),
             ],
->>>>>>> 49b837f06550d44f1e6ff8b751c414976b29c066
           ),
         );
       },
@@ -368,23 +350,6 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
 
     return GestureDetector(
       onTap: () => setState(() => _selectedRole = role.id),
-<<<<<<< HEAD
-      child: AnimatedContainer(
-        duration: DesignTokens.animationNormal,
-        curve: Curves.easeOutCubic,
-        transform: Matrix4.diagonal3Values(isSelected ? 1.02 : 1.0, isSelected ? 1.02 : 1.0, 1.0),
-        child: CurvedCard(
-          radius: DesignTokens.radiusLarge,
-          padding: const EdgeInsets.all(DesignTokens.spacing20),
-          backgroundColor: isDark ? AppColors.darkCard : Colors.white,
-          border: isSelected
-              ? Border.all(color: role.color, width: 2.5)
-              : Border.all(
-                  color: isDark
-                      ? AppColors.darkBorder.withValues(alpha: 0.3)
-                      : Colors.transparent,
-                  width: 1,
-=======
       child: AnimatedBuilder(
         animation: _pulseAnimation,
         builder: (context, child) {
@@ -402,7 +367,6 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
                   blurRadius: isSelected ? 25 : 15,
                   offset: const Offset(0, 6),
                   spreadRadius: isSelected ? 2 : 0,
->>>>>>> 49b837f06550d44f1e6ff8b751c414976b29c066
                 ),
                 if (isDark)
                   BoxShadow(
