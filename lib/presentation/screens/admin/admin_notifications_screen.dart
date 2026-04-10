@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/admin_colors.dart';
-import '../../../core/constants/modern_colors.dart';
 import '../../widgets/admin/admin_drawer.dart';
 
 // Notification Data Model
@@ -240,7 +239,8 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
             onPressed: () => Navigator.pop(context),
             child: Text(
               'Cancel',
-              style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
+              style: TextStyle(
+                  color: Theme.of(context).textTheme.bodyMedium?.color),
             ),
           ),
           ElevatedButton(
@@ -287,7 +287,8 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
             onPressed: () => Navigator.pop(context),
             child: Text(
               'Cancel',
-              style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
+              style: TextStyle(
+                  color: Theme.of(context).textTheme.bodyMedium?.color),
             ),
           ),
           ElevatedButton(
@@ -463,8 +464,10 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
           color: notification.isRead
               ? cardTheme.cardColor
               : isDark
-                  ? const Color(0xFF1E3A5F) // Dark blue tint for unread in dark mode
-                  : AdminColors.accentBlue.withOpacity(0.05), // Light blue tint for unread
+                  ? const Color(
+                      0xFF1E3A5F) // Dark blue tint for unread in dark mode
+                  : AdminColors.accentBlue
+                      .withOpacity(0.05), // Light blue tint for unread
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
@@ -485,7 +488,9 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                 width: 4,
                 decoration: BoxDecoration(
                   color: notification.isRead
-                      ? (isDark ? const Color(0xFF475569) : AdminColors.textLight)
+                      ? (isDark
+                          ? const Color(0xFF475569)
+                          : AdminColors.textLight)
                       : AdminColors.accentBlue,
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(12),
@@ -538,7 +543,8 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                                   notification.message,
                                   style: TextStyle(
                                     fontSize: 14,
-                                    color: cardTheme.textTheme.bodyMedium?.color,
+                                    color:
+                                        cardTheme.textTheme.bodyMedium?.color,
                                     height: 1.4,
                                   ),
                                 ),

@@ -15,12 +15,18 @@ dependencies:
   
   # HTTP & API
   http: ^1.2.2
-  
+
+  # Stripe Payment
+  flutter_stripe: ^10.1.1
+
   # Local Storage
   shared_preferences: ^2.3.2
   
   # Image & Camera
   image_picker: ^1.1.2
+
+  # TFLite for on-device AI classification
+  tflite_flutter: ^0.11.0
   
   # OCR
   google_mlkit_commons: ^0.11.0
@@ -80,6 +86,17 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.0
+  flutter_launcher_icons: ^0.14.1
+
+# App Icon Configuration
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icons/app_icon.png"
+  min_sdk_android: 21
+  adaptive_icon_background: "#0A0A0A"
+  adaptive_icon_foreground: "assets/icons/app_icon.png"
+  remove_alpha_ios: true
 
 flutter:
   uses-material-design: true
@@ -87,3 +104,5 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
+    - assets/recyconnect_outputs/labels.txt
+    - assets/recyconnect_outputs/recyconnect_model_quantized.tflite

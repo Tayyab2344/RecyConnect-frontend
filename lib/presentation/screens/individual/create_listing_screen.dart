@@ -1,12 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 import 'package:recyconnect/core/models/listing_model.dart';
 import 'package:recyconnect/core/services/auth_service.dart';
+import 'package:recyconnect/core/services/image_classifier_service.dart';
 import 'package:recyconnect/core/services/listing_service.dart';
 import 'package:recyconnect/core/theme/marketplace_theme.dart';
 import 'package:recyconnect/presentation/widgets/marketplace/glass_card.dart';
@@ -23,7 +24,8 @@ class _CreateListingScreenState extends State<CreateListingScreen>
     with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final ListingService _listingService = ListingService();
-  final AuthService _authService = AuthService();
+  // Using Provider for AuthService instead of local instance
+
 
   // Scroll Controller
   final ScrollController _scrollController = ScrollController();
@@ -52,6 +54,8 @@ class _CreateListingScreenState extends State<CreateListingScreen>
     'Metal': 40.0,
     'E-Waste': 100.0,
     'Glass': 10.0,
+    'Clothing': 25.0,
+    'Other': 5.0,
   };
 
   @override
@@ -79,7 +83,8 @@ class _CreateListingScreenState extends State<CreateListingScreen>
 
   Future<void> _loadUserLocation() async {
     try {
-      final response = await _authService.fetchProfile();
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final response = await authService.fetchProfile();
       if (response['success'] == true) {
         final data = response['data']['data'];
         final addressParts = <String>[];
@@ -89,7 +94,8 @@ class _CreateListingScreenState extends State<CreateListingScreen>
         if (addressParts.isNotEmpty) {
           setState(() {
             _addressController.text = addressParts.join(', ');
-            _locationMethod = 'auto';
+            // Force manual so user can edit if they want, but it's pre-filled
+            _locationMethod = 'manual';
           });
         }
       }
@@ -97,56 +103,128 @@ class _CreateListingScreenState extends State<CreateListingScreen>
   }
 
   Future<void> _pickImages() async {
-    final ImagePicker picker = ImagePicker();
-    // FIX: Compression to prevent Payload Too Large error
-    final List<XFile> images = await picker.pickMultiImage(
-      imageQuality: 70, // Compress quality
-      maxWidth: 1024,   // Resize large images
+    final source = await showDialog<ImageSource>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Add Photos'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt, color: MarketplaceTheme.lightAccent),
+              title: const Text('Take Photo'),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library, color: MarketplaceTheme.lightAccent),
+              title: const Text('Choose from Gallery'),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
     );
 
-    if (images.isNotEmpty) {
-      setState(() {
-        _selectedImages = images.take(3).toList();
-      });
-      // Trigger AI Analysis Simulation
-      _simulateAIAnalysis();
+    if (source == null) return;
+
+    final ImagePicker picker = ImagePicker();
+    List<XFile> newImages = [];
+
+    try {
+      if (source == ImageSource.camera) {
+        final XFile? image = await picker.pickImage(
+          source: ImageSource.camera,
+          imageQuality: 70,
+          maxWidth: 800,
+          maxHeight: 800,
+        );
+        if (image != null) newImages.add(image);
+      } else {
+        final List<XFile> images = await picker.pickMultiImage(
+          imageQuality: 70,
+          maxWidth: 800,
+          maxHeight: 800,
+        );
+        newImages.addAll(images);
+      }
+
+      if (newImages.isNotEmpty) {
+        setState(() {
+          _selectedImages.addAll(newImages);
+          // Limit to 4 images total
+          if (_selectedImages.length > 4) {
+             _selectedImages = _selectedImages.take(4).toList();
+          }
+        });
+        // Trigger real AI Classification
+        _runAIClassification();
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error picking image: $e')),
+      );
     }
   }
 
-  void _simulateAIAnalysis() {
+  Future<void> _runAIClassification() async {
     setState(() => _isAnalyzing = true);
     _scanController.repeat(reverse: true);
 
-    // Simulate 2 seconds of "processing"
-    Timer(const Duration(seconds: 2), () {
-      if (!mounted) return;
-      setState(() {
-        _isAnalyzing = false;
-        _scanController.stop();
-        _scanController.reset();
+    try {
+      final classifier = ImageClassifierService.instance;
+      await classifier.initialize();
 
-        // Mock AI Results
-        _selectedMaterial = 'Plastic'; // AI detected Plastic
-        _titleController.text = 'Batch of Recyclable Plastic Bottles';
-        _descriptionController.text =
-            'Assortment of PET bottles and containers. Clean and ready for recycling.';
-        
-        // Visual feedback
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: const [
-                 Icon(Icons.auto_awesome, color: Colors.white),
-                 SizedBox(width: 8),
-                 Text('AI Analysis Complete! Details Auto-filled.'),
-              ],
+      if (_selectedImages.isNotEmpty && classifier.isReady) {
+        final imageFile = File(_selectedImages.first.path);
+        final result = await classifier.classifyImage(imageFile);
+
+        if (!mounted) return;
+
+        if (result != null) {
+          setState(() {
+            _isAnalyzing = false;
+            _scanController.stop();
+            _scanController.reset();
+            _selectedMaterial = result.displayName;
+          });
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.auto_awesome, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'AI Detected: ${result.displayName} (${result.confidencePercent} confidence)',
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: MarketplaceTheme.lightAccent,
+              duration: const Duration(seconds: 3),
             ),
-            backgroundColor: MarketplaceTheme.lightAccent,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      });
+          );
+          return;
+        }
+      }
+    } catch (e) {
+      print('AI Classification error: $e');
+    }
+
+    // Fallback if classification fails
+    if (!mounted) return;
+    setState(() {
+      _isAnalyzing = false;
+      _scanController.stop();
+      _scanController.reset();
     });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Could not auto-detect material. Please select manually.'),
+        duration: Duration(seconds: 2),
+      ),
+    );
   }
 
   double get _estimatedValue {
@@ -244,13 +322,29 @@ class _CreateListingScreenState extends State<CreateListingScreen>
               text: 'DONE',
               onPressed: () {
                 Navigator.of(context).pop(); // Close dialog
-                Navigator.of(context).pop(); // Exit screen
+                if (Navigator.of(context).canPop()) {
+                  Navigator.of(context).pop(); // Exit screen
+                } else {
+                  _resetForm(); // Reset if used as tab
+                }
               },
             ),
           ],
         ),
       ),
     );
+  }
+
+  void _resetForm() {
+    setState(() {
+      _titleController.clear();
+      _descriptionController.clear();
+      _weightController.clear();
+      // Keep address if possible or clear
+      _selectedImages.clear();
+      _selectedMaterial = 'Plastic';
+      _requestCollector = false;
+    });
   }
 
   // --- UI Construction ---
@@ -272,11 +366,13 @@ class _CreateListingScreenState extends State<CreateListingScreen>
             fontWeight: FontWeight.bold,
           ),
         ),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios,
-              color: isDark ? MarketplaceTheme.darkTextPrimary : MarketplaceTheme.lightTextPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: Navigator.canPop(context)
+            ? IconButton(
+                icon: Icon(Icons.arrow_back_ios,
+                    color: isDark ? MarketplaceTheme.darkTextPrimary : MarketplaceTheme.lightTextPrimary),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
       ),
       body: Container(
         decoration: BoxDecoration(
@@ -346,16 +442,62 @@ class _CreateListingScreenState extends State<CreateListingScreen>
               onTap: _pickImages,
               child: DottedBorderPlaceholder(isDark: isDark, isAnalyzing: _isAnalyzing),
             )
-          : ListView.builder(
+          : SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              itemCount: _selectedImages.length + 1,
-              itemBuilder: (context, index) {
-                if (index == _selectedImages.length) {
-                  // Add more button
-                  return GestureDetector(
+              child: Row(
+                children: [
+                  ..._selectedImages.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    return Stack(
+                      children: [
+                        Container(
+                          width: 110,
+                          height: 110,
+                          margin: const EdgeInsets.only(right: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.file(
+                              File(_selectedImages[index].path),
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Center(
+                                  child: Icon(Icons.broken_image, 
+                                    color: Colors.grey, size: 30),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: 4,
+                          right: 12,
+                          child: CircleAvatar(
+                            radius: 10,
+                            backgroundColor: Colors.black54,
+                            child: IconButton(
+                              padding: EdgeInsets.zero,
+                              icon: const Icon(Icons.close,
+                                  size: 14, color: Colors.white),
+                              onPressed: () {
+                                setState(() {
+                                  _selectedImages.removeAt(index);
+                                });
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  }).toList(),
+                  GestureDetector(
                     onTap: _pickImages,
                     child: Container(
                       width: 100,
+                      height: 110,
                       margin: const EdgeInsets.only(left: 8),
                       decoration: BoxDecoration(
                         border: Border.all(
@@ -365,42 +507,9 @@ class _CreateListingScreenState extends State<CreateListingScreen>
                       child: Icon(Icons.add_a_photo,
                           color: isDark ? Colors.white54 : Colors.black45),
                     ),
-                  );
-                }
-                // Image Thumbnail
-                return Stack(
-                  children: [
-                    Container(
-                      width: 110,
-                      margin: const EdgeInsets.only(right: 8),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        image: DecorationImage(
-                          image: FileImage(File(_selectedImages[index].path)),
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      top: 4,
-                      right: 12,
-                      child: CircleAvatar(
-                        radius: 10,
-                        backgroundColor: Colors.black54,
-                        child: IconButton(
-                          padding: EdgeInsets.zero,
-                          icon: const Icon(Icons.close, size: 14, color: Colors.white),
-                          onPressed: () {
-                             setState(() {
-                               _selectedImages.removeAt(index);
-                             });
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
+                  ),
+                ],
+              ),
             ),
     );
   }
@@ -489,7 +598,14 @@ class _CreateListingScreenState extends State<CreateListingScreen>
                   if (v == null || v.isEmpty) return 'Required';
                   final n = double.tryParse(v);
                   if (n == null || n <= 0) return 'Invalid';
-                  if (n > 10) return 'Max 10kg';
+                  
+                  // Role-based validation
+                  final authService = Provider.of<AuthService>(context, listen: false);
+                  final userRole = authService.userRole;
+                  // Fallback if role is not readily available synchronously
+                  if (userRole == 'individual' && n > 20) return 'Max 20kg for individuals';
+                  if ((userRole == 'warehouse' || userRole == 'company') && n < 10) return 'Min 10kg required';
+                  
                   return null;
                 },
               ),
@@ -723,6 +839,8 @@ class _CreateListingScreenState extends State<CreateListingScreen>
       case 'Metal': return Icons.build;
       case 'E-Waste': return Icons.computer;
       case 'Glass': return Icons.wine_bar;
+      case 'Clothing': return Icons.checkroom;
+      case 'Other': return Icons.category;
       default: return Icons.recycling;
     }
   }

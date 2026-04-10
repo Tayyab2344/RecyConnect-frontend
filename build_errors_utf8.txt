@@ -1,0 +1,61 @@
+﻿
+Running Gradle task 'assembleRelease'...                        
+flutter : lib/core/models/
+order_model.dart:91:14: 
+Error: A non-null value 
+must be returned since 
+the return type 'String' 
+doesn't allow null.
+At line:1 char:1
++ flutter build apk 
+--release > 
+build_errors.txt 2>&1
++ ~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+~
+    + CategoryInfo        
+      : NotSpecified: (l  
+  ib/core/models...n't    
+ allow null.:String) [    
+], RemoteException
+    + FullyQualifiedError 
+   Id : NativeCommandErr  
+  or
+ 
+  String get 
+statusDisplay {
+             ^
+Target 
+kernel_snapshot_program 
+failed: Exception
+
+
+FAILURE: Build failed 
+with an exception.
+
+* What went wrong:
+Execution failed for task 
+':app:compileFlutterBuildR
+elease'.
+> Process 'command 'C:\flu
+tter\bin\flutter.bat'' 
+finished with non-zero 
+exit value 1
+
+* Try:
+> Run with --stacktrace 
+option to get the stack 
+trace.
+> Run with --info or 
+--debug option to get 
+more log output.
+> Run with --scan to get 
+full insights.
+> Get more help at 
+https://help.gradle.org.
+
+BUILD FAILED in 1m 38s
+Running Gradle task 'assembleRelease'...                          101.2s
+Gradle task 
+assembleRelease failed 
+with exit code 1

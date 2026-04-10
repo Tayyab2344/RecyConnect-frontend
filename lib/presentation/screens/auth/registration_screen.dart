@@ -1,15 +1,15 @@
 import 'dart:io';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:ui';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/services/auth_service.dart';
-import '../../../core/services/ocr_service.dart';
+import '../../../core/services/ocr_service.dart'; // Add OcrService import
 import '../../../core/utils/validators.dart';
-
-import '../../../core/utils/pakistan_locations.dart';
 import '../../widgets/city_area_selector.dart';
 import 'otp_verification_screen.dart';
 
@@ -81,45 +81,79 @@ class _RegistrationScreenState extends State<RegistrationScreen>
   }
 
   Future<void> _analyzeDocument(XFile file, String docType) async {
-    final authService = Provider.of<AuthService>(context, listen: false);
+    // Client-side OCR implementation using OcrService
+    // This runs locally on the device (offline-capable) and avoids Vercel timeouts
     
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Analyzing document... please wait')),
+      const SnackBar(content: Text('Processing document...')),
     );
 
-    final result = await authService.analyzeDocument(file);
-
-    if (result['success'] == true) {
-      final data = result['data'];
-      final extracted = data['extracted'];
+    try {
+      final File imageFile = File(file.path);
       
-      setState(() {
-        if (docType == 'CNIC') {
-          if (extracted['cnic'] != null) {
-             _cnicController.text = extracted['cnic'];
-             _extractedCnicNumber = extracted['cnic'];
+      if (docType == 'CNIC') {
+        final extractedData = await OcrService.extractCnicData(imageFile);
+        
+        if (extractedData.containsKey('cnic')) {
+          setState(() {
+            _cnicController.text = extractedData['cnic']!; // The service already handles formatting? 
+            // OcrService regex: \d{5}-\d{7}-\d{1}. If it matches, it's formatted.
+            _extractedCnicNumber = extractedData['cnic'];
+          });
+          
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('CNIC Extracted: ${extractedData['cnic']}'),
+                backgroundColor: AppTheme.primaryGreen,
+              ),
+            );
           }
-        } else if (docType == 'NTN') {
-          if (extracted['ntn'] != null) {
-            _ntnController.text = extracted['ntn'];
-            _extractedNtnNumber = extracted['ntn'];
+        } else {
+           if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Could not detect CNIC number. Please enter manually.'),
+                backgroundColor: Colors.orange,
+              ),
+            );
           }
         }
-      });
-
+      } else if (docType == 'NTN') {
+        final extractedData = await OcrService.extractNtnData(imageFile);
+        
+        if (extractedData.containsKey('ntn')) {
+          setState(() {
+            _ntnController.text = extractedData['ntn']!;
+            _extractedNtnNumber = extractedData['ntn'];
+          });
+          
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('NTN Extracted: ${extractedData['ntn']}'),
+                backgroundColor: AppTheme.primaryGreen,
+              ),
+            );
+          }
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Could not detect NTN number. Please enter manually.'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+          }
+        }
+      } 
+      // Utility bill OCR is also available in OcrService if needed, but not requested specifically for this fix yet
+      
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Document analyzed. Extracted: ${extracted['cnic'] ?? extracted['ntn'] ?? "No specific data found"}'),
-            backgroundColor: AppTheme.primaryGreen,
-          ),
-        );
-      }
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Analysis failed: ${result['message']}'),
+            content: Text('OCR Failed: $e'),
             backgroundColor: AppTheme.errorRed,
           ),
         );
@@ -330,47 +364,42 @@ class _RegistrationScreenState extends State<RegistrationScreen>
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final isWeb = size.width > 800;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      backgroundColor: AppTheme.backgroundLight,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: const Icon(Icons.arrow_back_ios_new, size: 18),
-          ),
-          onPressed: () => Navigator.pop(context),
-          color: AppTheme.textDark,
-        ),
-        title: Text(
-          '${_getRoleDisplayName()} Registration',
-          style: AppTheme.headingStyle.copyWith(fontSize: 20),
-        ),
-        centerTitle: true,
-      ),
+    return PopScope(
+      canPop: _currentStep == 0,
+      onPopInvoked: (didPop) {
+        if (didPop) return;
+        setState(() => _currentStep--);
+      },
+      child: Scaffold(
       body: Container(
+        width: size.width,
+        height: size.height,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              AppTheme.backgroundLight,
-              Colors.white,
-            ],
-          ),
+          gradient: isDark
+              ? const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFF0A1628),
+                    Color(0xFF0D2137),
+                    Color(0xFF0F2847),
+                    Color(0xFF0A1E35),
+                  ],
+                  stops: [0.0, 0.3, 0.7, 1.0],
+                )
+              : const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0xFFFFFFFF),
+                    Color(0xFFF0F9F7),
+                    Color(0xFFE8F5F2),
+                    Color(0xFFDFF2ED),
+                  ],
+                  stops: [0.0, 0.3, 0.7, 1.0],
+                ),
         ),
         child: SafeArea(
           child: Center(
@@ -383,6 +412,9 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                   key: _formKey,
                   child: Column(
                     children: [
+                      // Custom App Bar
+                      _buildGlassAppBar(isDark),
+                      
                       Expanded(
                         child: ListView(
                           padding: EdgeInsets.all(isWeb ? 40 : 24),
@@ -422,6 +454,61 @@ class _RegistrationScreenState extends State<RegistrationScreen>
             ),
           ),
         ),
+      ),
+      ),
+    );
+  }
+
+  Widget _buildGlassAppBar(bool isDark) {
+    final textColor = isDark ? Colors.white : const Color(0xFF1A1A1A);
+    
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          // Back button
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.white.withOpacity(0.1)
+                    : Colors.white.withOpacity(0.9),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withOpacity(0.15)
+                      : Colors.black.withOpacity(0.05),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(isDark ? 0.2 : 0.08),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Icon(
+                Icons.arrow_back_ios_new_rounded,
+                size: 18,
+                color: isDark ? Colors.white : const Color(0xFF333333),
+              ),
+            ),
+          ),
+          const Spacer(),
+          // Title
+          Text(
+            '${_getRoleDisplayName()} Registration',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: textColor,
+            ),
+          ),
+          const Spacer(),
+          const SizedBox(width: 40), // Balance the back button
+        ],
       ),
     );
   }
@@ -525,19 +612,43 @@ class _RegistrationScreenState extends State<RegistrationScreen>
   }
 
   Widget _buildBasicInfoStep() {
-    return Container(
-      padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+        child: Container(
+          padding: const EdgeInsets.all(28),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isDark
+                  ? [
+                      Colors.white.withOpacity(0.12),
+                      Colors.white.withOpacity(0.05),
+                    ]
+                  : [
+                      Colors.white.withOpacity(0.85),
+                      Colors.white.withOpacity(0.65),
+                    ],
+            ),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withOpacity(0.15)
+                  : Colors.white.withOpacity(0.6),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(isDark ? 0.2 : 0.08),
+                blurRadius: 25,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
-        ],
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -880,23 +991,49 @@ class _RegistrationScreenState extends State<RegistrationScreen>
           ),
         ],
       ),
+    ),
+      ),
     );
   }
 
   Widget _buildDocumentsStep() {
-    return Container(
-      padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+        child: Container(
+          padding: const EdgeInsets.all(28),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isDark
+                  ? [
+                      Colors.white.withOpacity(0.12),
+                      Colors.white.withOpacity(0.05),
+                    ]
+                  : [
+                      Colors.white.withOpacity(0.85),
+                      Colors.white.withOpacity(0.65),
+                    ],
+            ),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withOpacity(0.15)
+                  : Colors.white.withOpacity(0.6),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(isDark ? 0.2 : 0.08),
+                blurRadius: 25,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
-        ],
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1069,31 +1206,57 @@ class _RegistrationScreenState extends State<RegistrationScreen>
           ],
         ],
       ),
+    ),
+      ),
     );
   }
 
   Widget _buildVerificationStep() {
-    return Container(
-      padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: AppTheme.primaryGreen.withOpacity(0.1),
-              shape: BoxShape.circle,
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+        child: Container(
+          padding: const EdgeInsets.all(28),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isDark
+                  ? [
+                      Colors.white.withOpacity(0.12),
+                      Colors.white.withOpacity(0.05),
+                    ]
+                  : [
+                      Colors.white.withOpacity(0.85),
+                      Colors.white.withOpacity(0.65),
+                    ],
             ),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withOpacity(0.15)
+                  : Colors.white.withOpacity(0.6),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(isDark ? 0.2 : 0.08),
+                blurRadius: 25,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryGreen.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
             child: const Icon(
               Icons.check_circle_rounded,
               size: 64,
@@ -1219,6 +1382,8 @@ class _RegistrationScreenState extends State<RegistrationScreen>
             ),
           ],
         ],
+      ),
+    ),
       ),
     );
   }
@@ -1532,14 +1697,15 @@ class _RegistrationScreenState extends State<RegistrationScreen>
       ),
       child: Row(
         children: [
-          if (_currentStep > 0)
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () => setState(() => _currentStep--),
-                child: const Text('Previous'),
-              ),
-            ),
-          if (_currentStep > 0) const SizedBox(width: 16),
+          // Previous button removed as per request
+          // if (_currentStep > 0)
+          //   Expanded(
+          //     child: OutlinedButton(
+          //       onPressed: () => setState(() => _currentStep--),
+          //       child: const Text('Previous'),
+          //     ),
+          //   ),
+          // if (_currentStep > 0) const SizedBox(width: 16),
           Expanded(
             flex: 2,
             child: ElevatedButton(
@@ -1549,9 +1715,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                       if (isLastStep) {
                         _handleRegister();
                       } else {
-                        if (_validateCurrentStep()) {
-                          setState(() => _currentStep++);
-                        }
+                        _handleNextStep();
                       }
                     },
               child: _isLoading
@@ -1571,7 +1735,15 @@ class _RegistrationScreenState extends State<RegistrationScreen>
     );
   }
 
-  bool _validateCurrentStep() {
+  Future<void> _handleNextStep() async {
+    FocusScope.of(context).unfocus(); // Close keyboard
+    final isValid = await _validateCurrentStep();
+    if (isValid && mounted) {
+      setState(() => _currentStep++);
+    }
+  }
+
+  Future<bool> _validateCurrentStep() async {
     switch (_currentStep) {
       case 0:
         // Validate basic info
@@ -1614,23 +1786,43 @@ class _RegistrationScreenState extends State<RegistrationScreen>
           return false;
         }
         
-        // Profile image validation
-        if (widget.role != 'individual' && _profileImage == null) {
-           _showSnackBar('Profile picture is required for ${widget.role}', isError: true);
-           return false;
-        }
+         // Profile image is optional for Individuals again, as backend accepts it.
+         // if (_profileImage == null) {
+         //    _showSnackBar('Profile picture is required', isError: true);
+         //    return false;
+         // }
 
-        return _formKey.currentState?.validate() ?? false;
+         if (!(_formKey.currentState?.validate() ?? false)) {
+           return false;
+         }
+
+         // Check email existence asynchronously
+         setState(() => _isLoading = true);
+         try {
+           final authService = context.read<AuthService>();
+           final result = await authService.checkEmail(_emailController.text.trim());
+           if (result['success'] == true) {
+             final exists = result['data']['exists'] == true;
+             if (exists) {
+               _showSnackBar('Email already exists. Please login or use another email.', isError: true);
+               return false;
+             }
+           } else {
+             _showSnackBar('Failed to validate email: ${result['message']}', isError: true);
+             return false;
+           }
+         } catch (e) {
+           _showSnackBar('Error validating email', isError: true);
+           return false;
+         } finally {
+           if (mounted) setState(() => _isLoading = false);
+         }
+
+         return true;
       case 1:
         if (widget.role == 'warehouse' || widget.role == 'company') {
           if (_cnicImage == null) {
             _showSnackBar('Please upload CNIC document', isError: true);
-            return false;
-          }
-          // Validate extracted CNIC format
-          final cnicError = Validators.cnic(_cnicController.text);
-          if (cnicError != null) {
-            _showSnackBar(cnicError, isError: true);
             return false;
           }
         }
@@ -1641,12 +1833,6 @@ class _RegistrationScreenState extends State<RegistrationScreen>
           }
           if (_ntnImage == null) {
             _showSnackBar('Please upload NTN certificate', isError: true);
-            return false;
-          }
-          // Validate extracted NTN format
-          final ntnError = Validators.ntn(_ntnController.text);
-          if (ntnError != null) {
-            _showSnackBar(ntnError, isError: true);
             return false;
           }
         }
@@ -1666,6 +1852,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
   Future<void> _onCnicImageSelected(dynamic imageData) async {
     if (imageData == null) return;
+
     setState(() => _cnicImage = imageData);
 
     // Analyze document immediately to extract CNIC
@@ -1685,6 +1872,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
   Future<void> _onNtnImageSelected(dynamic imageData) async {
     if (imageData == null) return;
+
     setState(() => _ntnImage = imageData);
 
     // Analyze document immediately to extract NTN
@@ -1711,6 +1899,10 @@ class _RegistrationScreenState extends State<RegistrationScreen>
         'name': _nameController.text.trim(), // Always include name
       };
 
+      if (_cnicController.text.isNotEmpty) {
+        userData['cnic'] = _cnicController.text.trim();
+      }
+
       if (widget.role == 'warehouse') {
         userData['businessName'] = _businessNameController.text.trim();
       } else if (widget.role == 'company') {
@@ -1719,10 +1911,18 @@ class _RegistrationScreenState extends State<RegistrationScreen>
       
       // Prepare files map
       final Map<String, XFile> files = {};
-      if (_profileImage != null) files['profileImage'] = _profileImage!;
+      
+      // Reverting to 'profileImage'
+      if (_profileImage != null) files['profileImage'] = _profileImage!; 
+      
+      // Restoring other files
       if (_cnicImage != null) files['cnic'] = _cnicImage!;
       if (_utilityImage != null) files['utility'] = _utilityImage!;
       if (_ntnImage != null) files['ntn'] = _ntnImage!;
+      
+      if (kDebugMode) {
+        print('Registration Files Check: ${files.keys.toList()}');
+      }
 
       final response = await authService.register(userData, files);
 

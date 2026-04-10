@@ -1,0 +1,9 @@
+{
+  "clothing": 0,
+  "e-waste": 1,
+  "glass": 2,
+  "metal": 3,
+  "other": 4,
+  "paper": 5,
+  "plastic": 6
+}

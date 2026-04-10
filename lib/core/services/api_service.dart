@@ -117,8 +117,9 @@ class ApiService {
       return jsonDecode(response.body);
     } else {
       final errorBody = jsonDecode(response.body);
-      final message = errorBody['message'] ?? errorBody['error']?['message'] ?? 'Unknown error';
-      throw Exception('HTTP ${response.statusCode}: $message');
+      final message = errorBody['message'] ?? 'Unknown error';
+      final errorDetail = errorBody['error'] ?? '';
+      throw Exception('HTTP ${response.statusCode}: $message${errorDetail.toString().isNotEmpty ? " ($errorDetail)" : ""}');
     }
   }
 }

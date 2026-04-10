@@ -1,16 +1,22 @@
+import 'dart:math' as math;
+import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+<<<<<<< HEAD
 import '../../../core/theme/design_tokens.dart';
 import '../../widgets/curved/wave_painter.dart';
 import '../../widgets/curved/curved_card.dart';
 import '../../widgets/curved/organic_button.dart';
 
+=======
+import 'collector_registration_screen.dart';
+>>>>>>> 49b837f06550d44f1e6ff8b751c414976b29c066
 import 'registration_screen.dart';
 import 'individual_registration_screen.dart';
 
-/// RoleSelectionScreen - Premium role selection with curvy design
-/// Features: Wave background, selectable frosted cards, organic animations
+/// RoleSelectionScreen - Premium glassmorphism design matching login screen
+/// Features: Holographic background, glass cards, glowing effects
 class RoleSelectionScreen extends StatefulWidget {
   const RoleSelectionScreen({super.key});
 
@@ -19,10 +25,13 @@ class RoleSelectionScreen extends StatefulWidget {
 }
 
 class _RoleSelectionScreenState extends State<RoleSelectionScreen>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
+    with TickerProviderStateMixin {
+  late AnimationController _entranceController;
+  late AnimationController _pulseController;
+  late AnimationController _nodeController;
   late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _pulseAnimation;
 
   String? _selectedRole;
 
@@ -34,8 +43,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
       description: 'For households and personal recycling needs',
       icon: Icons.home_rounded,
       color: AppColors.primaryGreen,
-      lightColor: AppColors.roleIndividualLight,
-      tooltip: 'Perfect for individuals and households who want to sell recyclable materials.',
+      tooltip: 'Perfect for individuals who want to sell recyclable materials.',
     ),
     const _RoleData(
       id: 'warehouse',
@@ -43,8 +51,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
       description: 'For recycling facilities and warehouses',
       icon: Icons.warehouse_rounded,
       color: AppColors.roleWarehouse,
-      lightColor: AppColors.roleWarehouseLight,
-      tooltip: 'Ideal for recycling facilities managing bulk operations and inventory.',
+      tooltip: 'Ideal for recycling facilities managing bulk operations.',
     ),
     const _RoleData(
       id: 'company',
@@ -52,8 +59,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
       description: 'For businesses and corporate recycling',
       icon: Icons.business_rounded,
       color: AppColors.roleCompany,
-      lightColor: AppColors.roleCompanyLight,
-      tooltip: 'Designed for businesses seeking comprehensive recycling solutions.',
+      tooltip: 'Designed for businesses seeking recycling solutions.',
     ),
   ];
 
@@ -61,111 +67,181 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
   void initState() {
     super.initState();
 
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 800),
+    _entranceController = AnimationController(
       vsync: this,
+      duration: const Duration(milliseconds: 1000),
     );
 
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+      CurvedAnimation(
+        parent: _entranceController,
+        curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
+      ),
     );
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.08),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic));
+    _scaleAnimation = Tween<double>(begin: 0.95, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _entranceController,
+        curve: const Interval(0.2, 0.8, curve: Curves.easeOutBack),
+      ),
+    );
 
-    _animationController.forward();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    )..repeat(reverse: true);
+
+    _pulseAnimation = Tween<double>(begin: 0.6, end: 1.0).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
+    _nodeController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 8),
+    )..repeat();
+
+    _entranceController.forward();
   }
 
   @override
   void dispose() {
-    _animationController.dispose();
+    _entranceController.dispose();
+    _pulseController.dispose();
+    _nodeController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final size = MediaQuery.of(context).size;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.darkBackground : AppColors.softGreyBg,
-      body: Stack(
-        children: [
-          // Wave background
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: CustomPaint(
-              size: Size(size.width, 260),
-              painter: WavePainter(
-                gradient: AppColors.heroGradient,
-                color: AppColors.primaryGreen,
-                waveHeight: 70,
-                isTop: true,
+      body: Container(
+        width: size.width,
+        height: size.height,
+        decoration: BoxDecoration(
+          gradient: isDark
+              ? const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.loginNavyDeep,
+                    AppColors.loginNavyDark,
+                    AppColors.loginNavyMedium,
+                    AppColors.loginNavyLight,
+                  ],
+                  stops: [0.0, 0.3, 0.7, 1.0],
+                )
+              : const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    AppColors.white,
+                    AppColors.loginWhiteSoft,
+                    AppColors.loginTealLight,
+                    AppColors.loginTealSoft,
+                  ],
+                  stops: [0.0, 0.3, 0.7, 1.0],
+                ),
+        ),
+        child: Stack(
+          children: [
+            // Holographic background pattern
+            Positioned.fill(
+              child: AnimatedBuilder(
+                animation: _nodeController,
+                builder: (context, child) {
+                  return CustomPaint(
+                    painter: _RoleSelectionBackgroundPainter(
+                      animationValue: _nodeController.value,
+                      isDark: isDark,
+                    ),
+                  );
+                },
               ),
             ),
-          ),
 
-          // Content
-          SafeArea(
-            child: FadeTransition(
-              opacity: _fadeAnimation,
-              child: SlideTransition(
-                position: _slideAnimation,
-                child: Column(
-                  children: [
-                    // Back Button
-                    _buildBackButton(isDark),
-
-                    // Header Section
-                    _buildHeader(),
-
-                    const SizedBox(height: DesignTokens.spacing24),
-
-                    // Role Cards
-                    Expanded(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: DesignTokens.spacing24,
-                        ),
-                        child: Column(
-                          children: [
-                            ..._roles.asMap().entries.map((entry) {
-                              final index = entry.key;
-                              final role = entry.value;
-                              return TweenAnimationBuilder<double>(
-                                tween: Tween(begin: 0.0, end: 1.0),
-                                duration: Duration(milliseconds: 400 + (index * 100)),
-                                curve: Curves.easeOutCubic,
-                                builder: (context, value, child) {
-                                  return Opacity(
-                                    opacity: value,
-                                    child: Transform.translate(
-                                      offset: Offset(0, 20 * (1 - value)),
-                                      child: child,
-                                    ),
-                                  );
-                                },
-                                child: Padding(
-                                  padding: const EdgeInsets.only(bottom: DesignTokens.spacing16),
-                                  child: _buildRoleCard(role, isDark),
-                                ),
-                              );
-                            }),
-                            const SizedBox(height: 80), // Space for button
+            // Radial glow
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: RadialGradient(
+                    center: const Alignment(0, -0.5),
+                    radius: 1.2,
+                    colors: isDark
+                        ? [
+                            AppColors.neonTeal.withOpacity(0.05),
+                            Colors.transparent,
+                            AppColors.neonBlue.withOpacity(0.03),
+                          ]
+                        : [
+                            AppColors.primaryGreen.withOpacity(0.03),
+                            Colors.transparent,
+                            AppColors.ecoTeal.withOpacity(0.02),
                           ],
-                        ),
-                      ),
-                    ),
-                  ],
+                    stops: const [0.0, 0.5, 1.0],
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+
+            // Main content
+            SafeArea(
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: ScaleTransition(
+                  scale: _scaleAnimation,
+                  child: Column(
+                    children: [
+                      // Back button
+                      _buildBackButton(isDark),
+                      
+                      // Header
+                      _buildHeader(isDark),
+
+                      const SizedBox(height: 32),
+
+                      // Role Cards
+                      Expanded(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: Column(
+                            children: [
+                              ..._roles.asMap().entries.map((entry) {
+                                final index = entry.key;
+                                final role = entry.value;
+                                return TweenAnimationBuilder<double>(
+                                  tween: Tween(begin: 0.0, end: 1.0),
+                                  duration: Duration(milliseconds: 500 + (index * 150)),
+                                  curve: Curves.easeOutCubic,
+                                  builder: (context, value, child) {
+                                    return Opacity(
+                                      opacity: value,
+                                      child: Transform.translate(
+                                        offset: Offset(0, 30 * (1 - value)),
+                                        child: child,
+                                      ),
+                                    );
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(bottom: 16),
+                                    child: _buildRoleCard(role, isDark),
+                                  ),
+                                );
+                              }),
+                              const SizedBox(height: 100),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
       bottomNavigationBar: _buildContinueButton(isDark),
     );
@@ -173,25 +249,36 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
 
   Widget _buildBackButton(bool isDark) {
     return Padding(
-      padding: const EdgeInsets.all(DesignTokens.spacing16),
+      padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(DesignTokens.radiusSmall + 4),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.white.withOpacity(0.1)
+                    : Colors.white.withOpacity(0.9),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withOpacity(0.15)
+                      : Colors.black.withOpacity(0.05),
                 ),
-              ],
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.arrow_back_rounded),
-              onPressed: () => Navigator.pop(context),
-              color: AppColors.primaryGreen,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(isDark ? 0.2 : 0.08),
+                    blurRadius: 15,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Icon(
+                Icons.arrow_back_ios_new_rounded,
+                size: 20,
+                color: isDark ? Colors.white : AppColors.textDarkGrey,
+              ),
             ),
           ),
         ],
@@ -199,23 +286,41 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
     );
   }
 
-  Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: DesignTokens.spacing24),
-      child: Column(
-        children: [
-          // Icon
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.15),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
+  Widget _buildHeader(bool isDark) {
+    final glowColor = isDark ? AppColors.neonTeal : AppColors.primaryGreen;
+    final textColor = isDark ? Colors.white : AppColors.darkText;
+    final subtextColor = isDark
+        ? Colors.white.withOpacity(0.7)
+        : AppColors.darkGrey;
+
+    return AnimatedBuilder(
+      animation: _pulseAnimation,
+      builder: (context, child) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            children: [
+              // Icon with glow
+              Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isDark
+                      ? Colors.white.withOpacity(0.08)
+                      : Colors.white.withOpacity(0.9),
+                  border: Border.all(
+                    color: glowColor.withOpacity(0.4),
+                    width: 2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: glowColor.withOpacity(0.2 * _pulseAnimation.value),
+                      blurRadius: 25,
+                      spreadRadius: 2,
+                    ),
+                  ],
                 ),
+<<<<<<< HEAD
               ],
             ),
             child: const Icon(
@@ -223,34 +328,47 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
               size: 40,
               color: AppColors.primaryGreen,
             ),
+=======
+                child: Icon(
+                  Icons.people_alt_rounded,
+                  size: 36,
+                  color: glowColor,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Choose Your Role',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: textColor,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Select how you want to use RecyConnect',
+                style: TextStyle(
+                  fontSize: 15,
+                  color: subtextColor,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+>>>>>>> 49b837f06550d44f1e6ff8b751c414976b29c066
           ),
-          const SizedBox(height: DesignTokens.spacing16),
-          const Text(
-            'Choose Your Role',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Select how you want to use RecyConnect',
-            style: TextStyle(
-              fontSize: 15,
-              color: Colors.white.withValues(alpha: 0.9),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
   Widget _buildRoleCard(_RoleData role, bool isDark) {
     final isSelected = _selectedRole == role.id;
+    final glowColor = isDark ? AppColors.neonTeal : AppColors.primaryGreen;
 
     return GestureDetector(
       onTap: () => setState(() => _selectedRole = role.id),
+<<<<<<< HEAD
       child: AnimatedContainer(
         duration: DesignTokens.animationNormal,
         curve: Curves.easeOutCubic,
@@ -266,206 +384,237 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
                       ? AppColors.darkBorder.withValues(alpha: 0.3)
                       : Colors.transparent,
                   width: 1,
+=======
+      child: AnimatedBuilder(
+        animation: _pulseAnimation,
+        builder: (context, child) {
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutCubic,
+            transform: Matrix4.identity()..scale(isSelected ? 1.02 : 1.0),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: isSelected
+                      ? role.color.withOpacity(0.25 * _pulseAnimation.value)
+                      : Colors.black.withOpacity(isDark ? 0.2 : 0.08),
+                  blurRadius: isSelected ? 25 : 15,
+                  offset: const Offset(0, 6),
+                  spreadRadius: isSelected ? 2 : 0,
+>>>>>>> 49b837f06550d44f1e6ff8b751c414976b29c066
                 ),
-          shadows: [
-            BoxShadow(
-              color: isSelected
-                  ? role.color.withValues(alpha: 0.25)
-                  : Colors.black.withValues(alpha: isDark ? 0.2 : 0.06),
-              blurRadius: isSelected ? 20 : 15,
-              offset: const Offset(0, 6),
-              spreadRadius: isSelected ? 1 : 0,
+                if (isDark)
+                  BoxShadow(
+                    color: Colors.white.withOpacity(0.03),
+                    blurRadius: 20,
+                    spreadRadius: -5,
+                  ),
+              ],
             ),
-          ],
-          child: Row(
-            children: [
-              // Icon with gradient background
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      role.color,
-                      role.color.withValues(alpha: 0.8),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: isDark
+                          ? [
+                              Colors.white.withOpacity(0.12),
+                              Colors.white.withOpacity(0.05),
+                            ]
+                          : [
+                              Colors.white.withOpacity(0.85),
+                              Colors.white.withOpacity(0.65),
+                            ],
+                    ),
+                    border: Border.all(
+                      color: isSelected
+                          ? role.color.withOpacity(0.7)
+                          : isDark
+                              ? Colors.white.withOpacity(0.12)
+                              : Colors.white.withOpacity(0.6),
+                      width: isSelected ? 2.5 : 1.5,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      // Icon container
+                      Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              role.color,
+                              role.color.withOpacity(0.8),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(14),
+                          boxShadow: [
+                            BoxShadow(
+                              color: role.color.withOpacity(0.3),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          role.icon,
+                          size: 28,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+
+                      // Text
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              role.title,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: isDark ? Colors.white : AppColors.darkText,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              role.description,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: isDark
+                                    ? Colors.white.withOpacity(0.6)
+                                    : AppColors.darkGrey,
+                                height: 1.3,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(width: 12),
+
+                      // Selection indicator
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 250),
+                        width: 26,
+                        height: 26,
+                        decoration: BoxDecoration(
+                          color: isSelected ? role.color : Colors.transparent,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isSelected
+                                ? role.color
+                                : isDark
+                                    ? Colors.white.withOpacity(0.3)
+                                    : Colors.grey.shade300,
+                            width: 2,
+                          ),
+                        ),
+                        child: isSelected
+                            ? const Icon(Icons.check_rounded, size: 16, color: Colors.white)
+                            : null,
+                      ),
                     ],
                   ),
-                  borderRadius: BorderRadius.circular(DesignTokens.radiusMedium),
-                  boxShadow: [
-                    BoxShadow(
-                      color: role.color.withValues(alpha: 0.3),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  role.icon,
-                  size: 28,
-                  color: Colors.white,
                 ),
               ),
-              const SizedBox(width: DesignTokens.spacing16),
-
-              // Text content
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      role.title,
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
-                        color: isDark ? AppColors.darkTextPrimary : AppColors.darkText,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      role.description,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: isDark
-                            ? AppColors.darkTextSecondary
-                            : AppColors.mediumGrey,
-                        height: 1.3,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(width: DesignTokens.spacing8),
-
-              // Info button
-              IconButton(
-                icon: Icon(
-                  Icons.info_outline_rounded,
-                  size: 22,
-                  color: isDark ? AppColors.darkTextSecondary : AppColors.mediumGrey,
-                ),
-                onPressed: () => _showRoleInfoDialog(role),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-              ),
-
-              // Selection indicator
-              AnimatedContainer(
-                duration: DesignTokens.animationNormal,
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: isSelected ? role.color : (isDark ? AppColors.darkSurface : AppColors.lightGrey),
-                  shape: BoxShape.circle,
-                  border: !isSelected
-                      ? Border.all(
-                          color: isDark ? AppColors.darkBorder : AppColors.lightGrey,
-                          width: 2,
-                        )
-                      : null,
-                ),
-                child: isSelected
-                    ? const Icon(Icons.check_rounded, size: 18, color: Colors.white)
-                    : null,
-              ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
 
   Widget _buildContinueButton(bool isDark) {
     final isEnabled = _selectedRole != null;
+    final buttonColor = isDark ? AppColors.neonTeal : AppColors.primaryGreen;
+    final buttonTextColor = isDark ? AppColors.loginNavyDeep : Colors.white;
     final roleText = _selectedRole != null
         ? _selectedRole![0].toUpperCase() + _selectedRole!.substring(1)
         : '';
 
     return Container(
-      padding: const EdgeInsets.all(DesignTokens.spacing20),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : Colors.white,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(DesignTokens.radiusLarge),
-          topRight: Radius.circular(DesignTokens.radiusLarge),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -4),
+        color: isDark
+            ? AppColors.loginNavyDeep.withOpacity(0.9)
+            : Colors.white.withOpacity(0.95),
+        border: Border(
+          top: BorderSide(
+            color: isDark
+                ? Colors.white.withOpacity(0.08)
+                : Colors.black.withOpacity(0.05),
           ),
-        ],
+        ),
       ),
       child: SafeArea(
         top: false,
-        child: OrganicButton(
-          text: isEnabled ? 'Continue as $roleText' : 'Select a role to continue',
-          icon: isEnabled ? Icons.arrow_forward_rounded : null,
-          iconTrailing: true,
-          style: OrganicButtonStyle.gradient,
-          isDisabled: !isEnabled,
-          onPressed: isEnabled ? _handleContinue : null,
-        ),
-      ),
-    );
-  }
-
-  void _showRoleInfoDialog(_RoleData role) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: isDark ? AppColors.darkCard : Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(DesignTokens.dialogRadius),
-        ),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
+        child: AnimatedBuilder(
+          animation: _pulseAnimation,
+          builder: (context, child) {
+            return Container(
+              height: 56,
               decoration: BoxDecoration(
-                color: role.color,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: isEnabled
+                    ? [
+                        BoxShadow(
+                          color: buttonColor.withOpacity(0.35 * _pulseAnimation.value),
+                          blurRadius: 20,
+                          offset: const Offset(0, 6),
+                        ),
+                      ]
+                    : null,
               ),
-              child: Icon(role.icon, color: Colors.white, size: 20),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                role.title,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? AppColors.darkTextPrimary : AppColors.darkText,
+              child: ElevatedButton(
+                onPressed: isEnabled ? _handleContinue : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: buttonColor,
+                  foregroundColor: buttonTextColor,
+                  disabledBackgroundColor: isDark
+                      ? Colors.white.withOpacity(0.08)
+                      : Colors.grey.shade200,
+                  disabledForegroundColor: isDark
+                      ? Colors.white.withOpacity(0.3)
+                      : Colors.grey.shade500,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      isEnabled ? 'Continue as $roleText' : 'Select a role to continue',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                    if (isEnabled) ...[
+                      const SizedBox(width: 8),
+                      const Icon(Icons.arrow_forward_rounded, size: 20),
+                    ],
+                  ],
                 ),
               ),
-            ),
-          ],
+            );
+          },
         ),
-        content: Text(
-          role.tooltip,
-          style: TextStyle(
-            fontSize: 15,
-            height: 1.5,
-            color: isDark ? AppColors.darkTextSecondary : AppColors.mediumGrey,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Got it',
-              style: TextStyle(
-                color: role.color,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -496,9 +645,73 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
             ),
           );
         },
-        transitionDuration: DesignTokens.pageTransition,
+        transitionDuration: const Duration(milliseconds: 400),
       ),
     );
+  }
+}
+
+/// Background painter with subtle grid pattern
+class _RoleSelectionBackgroundPainter extends CustomPainter {
+  final double animationValue;
+  final bool isDark;
+
+  _RoleSelectionBackgroundPainter({
+    required this.animationValue,
+    required this.isDark,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.5;
+
+    // Grid pattern
+    final gridColor = isDark
+        ? Colors.white.withOpacity(0.03)
+        : Colors.black.withOpacity(0.02);
+    paint.color = gridColor;
+
+    const gridSpacing = 60.0;
+    
+    // Horizontal lines
+    for (double y = 0; y < size.height; y += gridSpacing) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+    
+    // Vertical lines
+    for (double x = 0; x < size.width; x += gridSpacing) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+
+    // Floating dots
+    final dotPaint = Paint()
+      ..style = PaintingStyle.fill;
+
+    final random = math.Random(42);
+    for (int i = 0; i < 12; i++) {
+      final x = random.nextDouble() * size.width;
+      final y = random.nextDouble() * size.height;
+      
+      final offset = math.sin(animationValue * 2 * math.pi + i * 0.5) * 8;
+      final opacity = 0.3 + 0.2 * math.sin(animationValue * 2 * math.pi + i);
+      
+      dotPaint.color = isDark
+          ? AppColors.neonTeal.withOpacity(opacity * 0.3)
+          : AppColors.primaryGreen.withOpacity(opacity * 0.15);
+      
+      canvas.drawCircle(
+        Offset(x, y + offset),
+        3 + random.nextDouble() * 2,
+        dotPaint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _RoleSelectionBackgroundPainter oldDelegate) {
+    return animationValue != oldDelegate.animationValue;
   }
 }
 
@@ -509,7 +722,6 @@ class _RoleData {
   final String description;
   final IconData icon;
   final Color color;
-  final Color lightColor;
   final String tooltip;
 
   const _RoleData({
@@ -518,7 +730,6 @@ class _RoleData {
     required this.description,
     required this.icon,
     required this.color,
-    required this.lightColor,
     required this.tooltip,
   });
 }

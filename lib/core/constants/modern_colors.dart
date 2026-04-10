@@ -83,6 +83,11 @@ class ModernColors {
   static Color glassBackgroundDark = Colors.white.withOpacity(0.15);
   static Color glassBorder = Colors.white.withOpacity(0.2);
   static Color glassBorderLight = Colors.white.withOpacity(0.5);
+  
+  // Dark Mode Neon Colors (matching app theme)
+  static const Color neonCyan = Color(0xFF00E5FF);
+  static const Color neonGreen = Color(0xFF00E676);
+  static const Color neonPurple = Color(0xFFD500F9);
 
   /// Glass decoration for light mode
   static BoxDecoration glassDecoration({
@@ -102,6 +107,41 @@ class ModernColors {
           color: Colors.black.withOpacity(0.1),
           offset: const Offset(0, 8),
           blurRadius: 32,
+        ),
+      ],
+    );
+  }
+
+  /// Glass decoration for dark mode with neon glow
+  static BoxDecoration glassDecorationDark({
+    double borderRadius = 20,
+    Color glowColor = neonCyan,
+    double glowIntensity = 0.15,
+  }) {
+    return BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Colors.white.withOpacity(0.12),
+          Colors.white.withOpacity(0.05),
+        ],
+      ),
+      borderRadius: BorderRadius.circular(borderRadius),
+      border: Border.all(
+        color: glowColor.withOpacity(glowIntensity),
+        width: 1.5,
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: glowColor.withOpacity(0.08),
+          blurRadius: 20,
+          spreadRadius: 0,
+        ),
+        BoxShadow(
+          color: Colors.black.withOpacity(0.3),
+          offset: const Offset(0, 8),
+          blurRadius: 15,
         ),
       ],
     );

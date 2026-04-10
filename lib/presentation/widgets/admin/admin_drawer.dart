@@ -1,7 +1,7 @@
 import 'dart:convert';
+import 'dart:ui';
 import 'package:flutter/material.dart';
-import '../../../core/constants/admin_colors.dart';
-import '../../../core/constants/modern_colors.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/services/preferences_service.dart';
 import '../../screens/admin/admin_dashboard_screen.dart';
 import '../../screens/admin/admin_users_screen.dart';
@@ -9,11 +9,12 @@ import '../../screens/admin/admin_collectors_screen.dart';
 import '../../screens/admin/admin_orders_screen.dart';
 import '../../screens/admin/admin_pricing_screen.dart';
 import '../../screens/admin/admin_activities_screen.dart';
-import '../../screens/admin/admin_reports_screen.dart';
 import '../../screens/admin/admin_notifications_screen.dart';
 import '../../screens/admin/admin_settings_screen.dart';
 import '../../screens/auth/login_screen.dart';
 
+/// Premium Admin Drawer with Glassmorphism Design
+/// Matches the app's main theme with neon accents (dark) and soft pastels (light)
 class AdminDrawer extends StatefulWidget {
   final String currentRoute;
 
@@ -34,7 +35,7 @@ class _AdminDrawerState extends State<AdminDrawer>
 
   // Admin info from preferences
   String _adminName = 'Admin User';
-  String _adminEmail = 'panel.quantix@gmail.com';
+  String _adminEmail = '';
   String? _profileImageBase64;
 
   @override
@@ -108,12 +109,12 @@ class _AdminDrawerState extends State<AdminDrawer>
   }
 
   void _showLogoutDialog() {
-    final theme = Theme.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          backgroundColor: theme.cardColor,
+          backgroundColor: isDark ? Theme.of(context).cardColor : Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
@@ -122,7 +123,7 @@ class _AdminDrawerState extends State<AdminDrawer>
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  gradient: ModernColors.redGradient,
+                  gradient: AppColors.redGradient,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(Icons.logout, color: Colors.white, size: 20),
@@ -133,7 +134,7 @@ class _AdminDrawerState extends State<AdminDrawer>
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: theme.textTheme.bodyLarge?.color,
+                  color: Theme.of(context).textTheme.headlineSmall?.color,
                 ),
               ),
             ],
@@ -142,7 +143,7 @@ class _AdminDrawerState extends State<AdminDrawer>
             'Are you sure you want to logout from the admin panel?',
             style: TextStyle(
               fontSize: 14,
-              color: theme.textTheme.bodyMedium?.color,
+              color: Theme.of(context).textTheme.bodyMedium?.color,
             ),
           ),
           actions: [
@@ -154,22 +155,16 @@ class _AdminDrawerState extends State<AdminDrawer>
               child: Text(
                 'Cancel',
                 style: TextStyle(
-                  color: theme.textTheme.bodyMedium?.color,
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ),
             Container(
               decoration: BoxDecoration(
-                gradient: ModernColors.redGradient,
+                gradient: AppColors.redGradient,
                 borderRadius: BorderRadius.circular(10),
-                boxShadow: [
-                  BoxShadow(
-                    color: AdminColors.error.withOpacity(0.3),
-                    offset: const Offset(0, 4),
-                    blurRadius: 12,
-                  ),
-                ],
+                boxShadow: [BoxShadow(color: AppColors.error.withValues(alpha: 0.3), blurRadius: 20, spreadRadius: 2)],
               ),
               child: ElevatedButton(
                 onPressed: () {
@@ -205,33 +200,38 @@ class _AdminDrawerState extends State<AdminDrawer>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Drawer(
       backgroundColor: Colors.transparent,
       child: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF10B981),
-              Color(0xFF059669),
-              Color(0xFF047857),
-            ],
-          ),
+        decoration: BoxDecoration(
+          gradient: isDark
+              ? AppColors.darkBackgroundGradient
+              : const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0xFF1A8F3A),
+                    Color(0xFF2AAE97),
+                    Color(0xFF1A8F3A),
+                  ],
+                ),
         ),
         child: SafeArea(
           child: Column(
             children: [
               // Modern Header
-              _buildModernHeader(),
+              _buildModernHeader(isDark),
 
               // Menu Items Container
               Expanded(
                 child: Container(
                   margin: const EdgeInsets.only(top: 10),
                   decoration: BoxDecoration(
-                    color: theme.cardColor,
+                    color: isDark 
+                        ? Theme.of(context).cardColor.withValues(alpha: 0.95)
+                        : Colors.white,
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(30),
                       topRight: Radius.circular(30),
@@ -242,75 +242,84 @@ class _AdminDrawerState extends State<AdminDrawer>
                       topLeft: Radius.circular(30),
                       topRight: Radius.circular(30),
                     ),
-                    child: FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: ListView(
-                        padding: const EdgeInsets.symmetric(vertical: 20),
-                        children: [
-                          _buildModernMenuItem(
-                            icon: Icons.dashboard_rounded,
-                            title: 'Dashboard',
-                            route: 'dashboard',
-                            screen: const AdminDashboardScreen(),
-                          ),
-                          _buildModernMenuItem(
-                            icon: Icons.people_rounded,
-                            title: 'Users Management',
-                            route: 'users',
-                            screen: const AdminUsersScreen(),
-                          ),
-                          _buildModernMenuItem(
-                            icon: Icons.local_shipping_rounded,
-                            title: 'Collectors',
-                            route: 'collectors',
-                            screen: const AdminCollectorsScreen(),
-                          ),
-                          _buildModernMenuItem(
-                            icon: Icons.shopping_bag_rounded,
-                            title: 'Orders',
-                            route: 'orders',
-                            screen: const AdminOrdersScreen(),
-                          ),
-                          _buildModernMenuItem(
-                            icon: Icons.attach_money_rounded,
-                            title: 'Pricing',
-                            route: 'pricing',
-                            screen: const AdminPricingScreen(),
-                          ),
-                          _buildModernMenuItem(
-                            icon: Icons.history_rounded,
-                            title: 'Activity Logs',
-                            route: 'logs',
-                            screen: const AdminActivitiesScreen(),
-                          ),
-                          _buildModernMenuItem(
-                            icon: Icons.bar_chart_rounded,
-                            title: 'Reports & Analytics',
-                            route: 'reports',
-                            screen: const AdminReportsScreen(),
-                          ),
-                          _buildModernMenuItem(
-                            icon: Icons.notifications_rounded,
-                            title: 'Notifications',
-                            route: 'notifications',
-                            screen: const AdminNotificationsScreen(),
-                            badge: '3',
-                          ),
-                          _buildModernMenuItem(
-                            icon: Icons.settings_rounded,
-                            title: 'Settings',
-                            route: 'settings',
-                            screen: const AdminSettingsScreen(),
-                          ),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                      child: FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: ListView(
+                          padding: const EdgeInsets.symmetric(vertical: 20),
+                          children: [
+                            _buildModernMenuItem(
+                              icon: Icons.dashboard_rounded,
+                              title: 'Dashboard',
+                              route: 'dashboard',
+                              screen: const AdminDashboardScreen(),
+                              isDark: isDark,
+                            ),
+                            _buildModernMenuItem(
+                              icon: Icons.people_rounded,
+                              title: 'Users Management',
+                              route: 'users',
+                              screen: const AdminUsersScreen(),
+                              isDark: isDark,
+                            ),
+                            _buildModernMenuItem(
+                              icon: Icons.local_shipping_rounded,
+                              title: 'Collectors',
+                              route: 'collectors',
+                              screen: const AdminCollectorsScreen(),
+                              isDark: isDark,
+                            ),
+                            _buildModernMenuItem(
+                              icon: Icons.shopping_bag_rounded,
+                              title: 'Orders',
+                              route: 'orders',
+                              screen: const AdminOrdersScreen(),
+                              isDark: isDark,
+                            ),
+                            _buildModernMenuItem(
+                              icon: Icons.attach_money_rounded,
+                              title: 'Pricing',
+                              route: 'pricing',
+                              screen: const AdminPricingScreen(),
+                              isDark: isDark,
+                            ),
+                            _buildModernMenuItem(
+                              icon: Icons.history_rounded,
+                              title: 'Activity Logs',
+                              route: 'logs',
+                              screen: const AdminActivitiesScreen(),
+                              isDark: isDark,
+                            ),
+                            _buildModernMenuItem(
+                              icon: Icons.notifications_rounded,
+                              title: 'Notifications',
+                              route: 'notifications',
+                              screen: const AdminNotificationsScreen(),
+                              badge: '3',
+                              isDark: isDark,
+                            ),
+                            _buildModernMenuItem(
+                              icon: Icons.settings_rounded,
+                              title: 'Settings',
+                              route: 'settings',
+                              screen: const AdminSettingsScreen(),
+                              isDark: isDark,
+                            ),
 
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                            child: Divider(color: Colors.grey.withOpacity(0.2)),
-                          ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                              child: Divider(
+                                color: isDark 
+                                    ? Colors.white.withValues(alpha: 0.1)
+                                    : Colors.grey.withValues(alpha: 0.2),
+                              ),
+                            ),
 
-                          // Logout Item
-                          _buildLogoutItem(),
-                        ],
+                            // Logout Item
+                            _buildLogoutItem(isDark),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -318,7 +327,7 @@ class _AdminDrawerState extends State<AdminDrawer>
               ),
 
               // Footer
-              _buildModernFooter(),
+              _buildModernFooter(isDark),
             ],
           ),
         ),
@@ -326,7 +335,7 @@ class _AdminDrawerState extends State<AdminDrawer>
     );
   }
 
-  Widget _buildModernHeader() {
+  Widget _buildModernHeader(bool isDark) {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
       child: Column(
@@ -348,22 +357,23 @@ class _AdminDrawerState extends State<AdminDrawer>
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         gradient: LinearGradient(
-                          colors: [
-                            Colors.white.withOpacity(0.8),
-                            Colors.white.withOpacity(0.4),
-                          ],
+                          colors: isDark
+                              ? [AppColors.neonCyan, AppColors.neonGreen]
+                              : [Colors.white.withValues(alpha: 0.8), Colors.white.withValues(alpha: 0.4)],
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 20,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
+                        boxShadow: isDark
+                            ? [BoxShadow(color: AppColors.neonCyan.withValues(alpha: 0.4), blurRadius: 20, spreadRadius: 2)]
+                            : [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.2),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 8),
+                                ),
+                              ],
                       ),
                       child: Container(
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
+                        decoration: BoxDecoration(
+                          color: isDark ? Theme.of(context).cardColor : Colors.white,
                           shape: BoxShape.circle,
                         ),
                         child: _profileImageBase64 != null
@@ -377,10 +387,10 @@ class _AdminDrawerState extends State<AdminDrawer>
                                     return Center(
                                       child: Text(
                                         _getInitials(),
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 32,
                                           fontWeight: FontWeight.bold,
-                                          color: AdminColors.primaryGreen,
+                                          color: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
                                         ),
                                       ),
                                     );
@@ -390,10 +400,10 @@ class _AdminDrawerState extends State<AdminDrawer>
                             : Center(
                                 child: Text(
                                   _getInitials(),
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 32,
                                     fontWeight: FontWeight.bold,
-                                    color: AdminColors.primaryGreen,
+                                    color: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
                                   ),
                                 ),
                               ),
@@ -407,15 +417,13 @@ class _AdminDrawerState extends State<AdminDrawer>
                         width: 20,
                         height: 20,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF22C55E),
+                          color: AppColors.success,
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 3),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFF22C55E).withOpacity(0.5),
-                              blurRadius: 8,
-                            ),
-                          ],
+                          border: Border.all(
+                            color: isDark ? Theme.of(context).cardColor : Colors.white,
+                            width: 3,
+                          ),
+                          boxShadow: [BoxShadow(color: AppColors.success.withValues(alpha: 0.5), blurRadius: 20, spreadRadius: 2)],
                         ),
                       ),
                     ),
@@ -460,7 +468,7 @@ class _AdminDrawerState extends State<AdminDrawer>
                   _adminEmail,
                   style: TextStyle(
                     fontSize: 13,
-                    color: Colors.white.withOpacity(0.8),
+                    color: Colors.white.withValues(alpha: 0.8),
                   ),
                 ),
               );
@@ -480,10 +488,12 @@ class _AdminDrawerState extends State<AdminDrawer>
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: Colors.white.withOpacity(0.3),
+                        color: isDark 
+                            ? AppColors.neonCyan.withValues(alpha: 0.5)
+                            : Colors.white.withValues(alpha: 0.3),
                       ),
                     ),
                     child: Row(
@@ -492,7 +502,7 @@ class _AdminDrawerState extends State<AdminDrawer>
                         Icon(
                           Icons.verified,
                           size: 14,
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.white.withValues(alpha: 0.9),
                         ),
                         const SizedBox(width: 6),
                         Text(
@@ -500,7 +510,7 @@ class _AdminDrawerState extends State<AdminDrawer>
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: Colors.white.withOpacity(0.9),
+                            color: Colors.white.withValues(alpha: 0.9),
                           ),
                         ),
                       ],
@@ -520,25 +530,22 @@ class _AdminDrawerState extends State<AdminDrawer>
     required String title,
     required String route,
     required Widget screen,
+    required bool isDark,
     String? badge,
   }) {
     final isSelected = _selectedItem == route;
-    final theme = Theme.of(context);
+    final accentColor = isDark ? AppColors.neonCyan : AppColors.primaryGreen;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        gradient: isSelected ? ModernColors.primaryGradient : null,
+        gradient: isSelected
+            ? (isDark ? AppColors.neonGradient : AppColors.primaryGradient)
+            : null,
         borderRadius: BorderRadius.circular(14),
         boxShadow: isSelected
-            ? [
-                BoxShadow(
-                  color: AdminColors.primaryGreen.withOpacity(0.3),
-                  offset: const Offset(0, 4),
-                  blurRadius: 12,
-                ),
-              ]
+            ? [BoxShadow(color: accentColor.withValues(alpha: 0.3), blurRadius: 20, spreadRadius: 2)]
             : null,
       ),
       child: Material(
@@ -547,8 +554,8 @@ class _AdminDrawerState extends State<AdminDrawer>
           onTap: () => _navigateTo(route, screen),
           borderRadius: BorderRadius.circular(14),
           splashColor: isSelected
-              ? Colors.white.withOpacity(0.2)
-              : AdminColors.primaryGreen.withOpacity(0.1),
+              ? Colors.white.withValues(alpha: 0.2)
+              : accentColor.withValues(alpha: 0.1),
           highlightColor: Colors.transparent,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -560,14 +567,19 @@ class _AdminDrawerState extends State<AdminDrawer>
                   padding: EdgeInsets.all(isSelected ? 10 : 8),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? Colors.white.withOpacity(0.2)
-                        : AdminColors.primaryGreen.withOpacity(0.1),
+                        ? Colors.white.withValues(alpha: 0.2)
+                        : accentColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
+                    border: !isSelected && isDark
+                        ? Border.all(color: accentColor.withValues(alpha: 0.2))
+                        : null,
                   ),
                   child: Icon(
                     icon,
                     size: 20,
-                    color: isSelected ? Colors.white : AdminColors.primaryGreen,
+                    color: isSelected 
+                        ? (isDark ? AppColors.loginNavyDeep : Colors.white)
+                        : accentColor,
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -579,7 +591,9 @@ class _AdminDrawerState extends State<AdminDrawer>
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                      color: isSelected ? Colors.white : theme.textTheme.bodyLarge?.color,
+                      color: isSelected 
+                          ? (isDark ? AppColors.loginNavyDeep : Colors.white)
+                          : Theme.of(context).textTheme.bodyLarge?.color,
                     ),
                   ),
                 ),
@@ -591,8 +605,8 @@ class _AdminDrawerState extends State<AdminDrawer>
                     decoration: BoxDecoration(
                       gradient: isSelected
                           ? null
-                          : ModernColors.redGradient,
-                      color: isSelected ? Colors.white.withOpacity(0.3) : null,
+                          : AppColors.redGradient,
+                      color: isSelected ? Colors.white.withValues(alpha: 0.3) : null,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
@@ -600,17 +614,19 @@ class _AdminDrawerState extends State<AdminDrawer>
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: isSelected 
+                            ? (isDark ? AppColors.loginNavyDeep : Colors.white)
+                            : Colors.white,
                       ),
                     ),
                   ),
 
                 // Arrow indicator for selected
                 if (isSelected)
-                  const Icon(
+                  Icon(
                     Icons.arrow_forward_ios_rounded,
                     size: 14,
-                    color: Colors.white,
+                    color: isDark ? AppColors.loginNavyDeep : Colors.white,
                   ),
               ],
             ),
@@ -620,7 +636,7 @@ class _AdminDrawerState extends State<AdminDrawer>
     );
   }
 
-  Widget _buildLogoutItem() {
+  Widget _buildLogoutItem(bool isDark) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
@@ -631,7 +647,7 @@ class _AdminDrawerState extends State<AdminDrawer>
         child: InkWell(
           onTap: _showLogoutDialog,
           borderRadius: BorderRadius.circular(14),
-          splashColor: AdminColors.error.withOpacity(0.1),
+          splashColor: AppColors.error.withValues(alpha: 0.1),
           highlightColor: Colors.transparent,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -640,13 +656,16 @@ class _AdminDrawerState extends State<AdminDrawer>
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AdminColors.error.withOpacity(0.1),
+                    color: AppColors.error.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
+                    border: isDark
+                        ? Border.all(color: AppColors.error.withValues(alpha: 0.3))
+                        : null,
                   ),
                   child: const Icon(
                     Icons.logout_rounded,
                     size: 20,
-                    color: AdminColors.error,
+                    color: AppColors.error,
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -655,7 +674,7 @@ class _AdminDrawerState extends State<AdminDrawer>
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: AdminColors.error,
+                    color: AppColors.error,
                   ),
                 ),
               ],
@@ -666,15 +685,16 @@ class _AdminDrawerState extends State<AdminDrawer>
     );
   }
 
-  Widget _buildModernFooter() {
-    final theme = Theme.of(context);
+  Widget _buildModernFooter(bool isDark) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-        color: theme.cardColor,
+        color: isDark 
+            ? Theme.of(context).cardColor.withValues(alpha: 0.95)
+            : Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             offset: const Offset(0, -4),
             blurRadius: 10,
           ),
@@ -686,13 +706,13 @@ class _AdminDrawerState extends State<AdminDrawer>
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              gradient: ModernColors.primaryGradient,
+              gradient: isDark ? AppColors.neonGradient : AppColors.primaryGradient,
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.recycling,
               size: 16,
-              color: Colors.white,
+              color: isDark ? AppColors.loginNavyDeep : Colors.white,
             ),
           ),
           const SizedBox(width: 10),
@@ -705,14 +725,14 @@ class _AdminDrawerState extends State<AdminDrawer>
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: theme.textTheme.bodyLarge?.color,
+                  color: Theme.of(context).textTheme.headlineSmall?.color,
                 ),
               ),
               Text(
                 'Version 1.0.0',
                 style: TextStyle(
                   fontSize: 10,
-                  color: theme.textTheme.bodyMedium?.color,
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
                 ),
               ),
             ],

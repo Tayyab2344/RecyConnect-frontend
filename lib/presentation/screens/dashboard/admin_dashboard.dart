@@ -11,7 +11,7 @@ class AdminDashboard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundLight,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -25,7 +25,7 @@ class AdminDashboard extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: AppTheme.textDark,
+                      color: Theme.of(context).textTheme.headlineSmall?.color,
                     ),
                   );
                 },
@@ -35,7 +35,7 @@ class AdminDashboard extends StatelessWidget {
                 'System Administration Dashboard',
                 style: TextStyle(
                   fontSize: 16,
-                  color: AppTheme.textLight,
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
                 ),
               ),
               const SizedBox(height: 32),
@@ -51,7 +51,7 @@ class AdminDashboard extends StatelessWidget {
                       title: 'Activity Logs',
                       value: 'View All',
                       icon: Icons.history,
-                      color: AppTheme.primaryBlue,
+                      color: Theme.of(context).colorScheme.primary, // Was AppTheme.primaryBlue
                       onTap: () {
                         Navigator.push(
                           context,
@@ -65,7 +65,7 @@ class AdminDashboard extends StatelessWidget {
                       title: 'User Management',
                       value: 'Manage',
                       icon: Icons.people,
-                      color: AppTheme.primaryGreen,
+                      color: Theme.of(context).colorScheme.secondary, // Was AppTheme.primaryGreen
                       onTap: () {
                         // TODO: Navigate to user management
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -78,7 +78,7 @@ class AdminDashboard extends StatelessWidget {
                       title: 'System Stats',
                       value: 'View',
                       icon: Icons.analytics,
-                      color: Colors.orange,
+                      color: Theme.of(context).colorScheme.tertiary, // Was Colors.orange
                       onTap: () {
                         // TODO: Navigate to system statistics
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -91,7 +91,7 @@ class AdminDashboard extends StatelessWidget {
                       title: 'Settings',
                       value: 'Configure',
                       icon: Icons.settings,
-                      color: AppTheme.textLight,
+                      color: Theme.of(context).colorScheme.outline, // Was AppTheme.textLight
                       onTap: () {
                         // TODO: Navigate to admin settings
                         ScaffoldMessenger.of(context).showSnackBar(

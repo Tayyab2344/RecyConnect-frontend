@@ -6,20 +6,18 @@ import '../../../core/services/listing_service.dart';
 import '../../../core/services/order_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../widgets/curved/curved_bottom_nav.dart';
+import '../../widgets/recycle_loader.dart';
 
 import '../individual/create_listing_screen.dart';
-import '../marketplace/marketplace_screen.dart';
+import '../individual/browse_marketplace_screen.dart';
 import '../individual/my_listings_screen.dart';
 import '../individual/my_orders_screen.dart';
 import '../individual/seller_orders_screen.dart';
 import '../profile/profile_screen.dart';
 import '../warehouse/inventory_list_screen.dart';
-import '../warehouse/financial_dashboard_screen.dart';
-import '../warehouse/analytics_dashboard_screen.dart';
-import '../warehouse/reports_screen.dart';
-import '../warehouse/reports_screen.dart';
 import '../warehouse/collector_performance_screen.dart';
 import '../warehouse/collector_management_screen.dart';
+import '../warehouse/my_earnings_screen.dart';
 
 class WarehouseDashboard extends StatefulWidget {
   const WarehouseDashboard({super.key});
@@ -81,7 +79,7 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
         },
         children: [
           _buildHomeTab(),
-          const MarketplaceScreen(),
+          const BrowseMarketplaceScreen(),
           const CreateListingScreen(),
           const MyOrdersScreen(),
           const ProfileScreen(),
@@ -106,7 +104,9 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
       child: SafeArea(
         child: RefreshIndicator(
           onRefresh: _loadDashboardStats,
-          child: SingleChildScrollView(
+          child: _isLoading 
+              ? const RecycleLoadingScreen(message: 'Loading your dashboard...')
+              : SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(20),
             child: Column(
@@ -207,34 +207,36 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
   }
 
   Widget _buildStatsOverview() {
-    // Mock data for now, replacing with real data where possible
+    final listings = _stats?['listings'] as Map?;
+    final orders = _stats?['orders'] as Map?;
+
     final stats = [
       {
-        'title': 'Total Revenue',
-        'value': 'Rs 125.5K',
-        'change': '+12%',
-        'icon': Icons.attach_money,
+        'title': 'Total Listings',
+        'value': '${listings?['totalListings'] ?? 0}',
+        'change': '+${listings?['activeListings'] ?? 0} active',
+        'icon': Icons.inventory_2,
         'color': const Color(0xFF4CAF50),
       },
       {
-        'title': 'Net Profit',
-        'value': 'Rs 45.2K',
-        'change': '+8%',
-        'icon': Icons.trending_up,
+        'title': 'Total Orders',
+        'value': '${orders?['totalOrders'] ?? 0}',
+        'change': '${orders?['confirmedCount'] ?? 0} confirmed',
+        'icon': Icons.shopping_cart,
         'color': const Color(0xFF2196F3),
       },
       {
         'title': 'Active Orders',
-        'value': '28',
-        'change': '+5',
-        'icon': Icons.shopping_cart,
+        'value': '${orders?['pendingCount'] ?? 0}',
+        'change': 'needs action',
+        'icon': Icons.assignment_turned_in,
         'color': const Color(0xFFFFA726),
       },
       {
-        'title': 'Inventory Value',
-        'value': 'Rs 85K',
-        'change': '-3%',
-        'icon': Icons.inventory_2,
+        'title': 'Total Weight',
+        'value': '${listings?['totalWeight'] ?? 0}kg',
+        'change': 'all time',
+        'icon': Icons.scale,
         'color': const Color(0xFF9C27B0),
       },
     ];
@@ -350,23 +352,11 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
             _buildQuickActionCard('Inventory', Icons.inventory_outlined, const Color(0xFFFFA726), () {
               Navigator.push(context, MaterialPageRoute(builder: (context) => const InventoryListScreen()));
             }),
-            _buildQuickActionCard('Finance', Icons.account_balance_wallet_outlined, const Color(0xFF9C27B0), () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const FinancialDashboardScreen()));
-            }),
-            _buildQuickActionCard('Analytics', Icons.analytics_outlined, const Color(0xFFE91E63), () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const AnalyticsDashboardScreen()));
-            }),
-            _buildQuickActionCard('Reports', Icons.description_outlined, const Color(0xFF607D8B), () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const ReportsScreen()));
-            }),
             _buildQuickActionCard('Collectors', Icons.people_alt_outlined, Colors.orange, () {
               Navigator.push(context, MaterialPageRoute(builder: (context) => const CollectorManagementScreen()));
             }),
-            _buildQuickActionCard('Analytics', Icons.analytics_outlined, const Color(0xFF00BCD4), () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const AnalyticsDashboardScreen()));
-            }),
-            _buildQuickActionCard('Reports', Icons.description_outlined, const Color(0xFFE91E63), () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const ReportsScreen()));
+            _buildQuickActionCard('My Earnings', Icons.monetization_on_outlined, const Color(0xFF9C27B0), () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const MyEarningsScreen()));
             }),
           ],
         ),

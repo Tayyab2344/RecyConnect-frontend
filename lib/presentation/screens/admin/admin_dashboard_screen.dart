@@ -1,10 +1,11 @@
+import 'dart:ui';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../../../core/constants/admin_colors.dart';
-import '../../../core/constants/modern_colors.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../widgets/admin/admin_drawer.dart';
-import '../../widgets/admin/modern_widgets.dart';
 import 'admin_activities_screen.dart';
+
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -16,12 +17,16 @@ class AdminDashboardScreen extends StatefulWidget {
 class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     with TickerProviderStateMixin {
   late AnimationController _fadeController;
+  late AnimationController _pulseController;
+  late AnimationController _bgAnimController;
   late Animation<double> _fadeAnimation;
+  late Animation<double> _pulseAnimation;
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
+    
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
@@ -29,6 +34,20 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _fadeController, curve: Curves.easeOut),
     );
+
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    )..repeat(reverse: true);
+    
+    _pulseAnimation = Tween<double>(begin: 0.6, end: 1.0).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
+    _bgAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 8),
+    )..repeat();
 
     // Simulate loading
     Future.delayed(const Duration(milliseconds: 500), () {
@@ -42,150 +61,341 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   @override
   void dispose() {
     _fadeController.dispose();
+    _pulseController.dispose();
+    _bgAnimController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 600;
     final isTablet = screenWidth >= 600 && screenWidth < 900;
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: _buildModernAppBar(theme, isMobile),
+      extendBodyBehindAppBar: true,
       drawer: const AdminDrawer(currentRoute: 'dashboard'),
-      body: _isLoading
-          ? _buildLoadingState()
-          : FadeTransition(
-              opacity: _fadeAnimation,
-              child: SingleChildScrollView(
-                padding: EdgeInsets.all(isMobile ? 16 : 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Animated Welcome Section
-                    AnimatedWelcomeHeader(
-                      title: 'Welcome back, Admin! ',
-                      subtitle: "Here's what's happening with RecyConnect today",
-                      isMobile: isMobile,
-                    ),
-                    const SizedBox(height: 24),
+      body: Stack(
+        children: [
+          // 1. Animated gradient background
+          _buildBackground(isDark),
 
-                    // Modern Stats Cards
-                    _buildModernStatsCards(screenWidth, isMobile, isTablet),
-                    const SizedBox(height: 24),
+          // 2. Floating particles (dark mode only)
+          if (isDark) _buildFloatingParticles(),
 
-                    // Charts Section
-                    _buildModernCharts(context, isMobile),
-                    const SizedBox(height: 24),
+          // 3. Main content
+          SafeArea(
+            child: _isLoading
+                ? _buildLoadingState(isDark)
+                : FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: CustomScrollView(
+                      slivers: [
+                       
+                        SliverToBoxAdapter(
+                          child: _buildCustomAppBar(isDark, isMobile),
+                        ),
 
-                    // Quick Actions Section
-                    _buildModernQuickActions(context, screenWidth, isMobile, isTablet),
-                    const SizedBox(height: 24),
+                       
+                        SliverPadding(
+                          padding: EdgeInsets.all(isMobile ? 16 : 24),
+                          sliver: SliverList(
+                            delegate: SliverChildListDelegate([
+                             
+                              _buildWelcomeHeader(isDark, isMobile),
+                              const SizedBox(height: 24),
 
-                    // Recent Activities
-                    _buildModernRecentActivities(context, isMobile),
-                    const SizedBox(height: 20),
-                  ],
-                ),
-              ),
-            ),
-    );
-  }
+                             
+                              _buildModernStatsCards(screenWidth, isMobile, isTablet, isDark),
+                              const SizedBox(height: 24),
 
-  PreferredSizeWidget _buildModernAppBar(ThemeData theme, bool isMobile) {
-    return AppBar(
-      title: Text(
-        'Admin Dashboard',
-        style: TextStyle(
-          color: theme.appBarTheme.foregroundColor,
-          fontWeight: FontWeight.bold,
-          fontSize: isMobile ? 18 : 20,
-        ),
-      ),
-      backgroundColor: theme.appBarTheme.backgroundColor,
-      elevation: 0,
-      iconTheme: IconThemeData(color: theme.appBarTheme.foregroundColor),
-      actions: [
-        // Notification button with badge
-        Stack(
-          children: [
-            IconButton(
-              icon: Icon(
-                Icons.notifications_outlined,
-                color: theme.appBarTheme.foregroundColor,
-              ),
-              onPressed: () {},
-            ),
-            Positioned(
-              right: 8,
-              top: 8,
-              child: Container(
-                width: 18,
-                height: 18,
-                decoration: const BoxDecoration(
-                  gradient: ModernColors.redGradient,
-                  shape: BoxShape.circle,
-                ),
-                child: const Center(
-                  child: Text(
-                    '3',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
+                             
+                              _buildModernCharts(isMobile, isDark),
+                              const SizedBox(height: 24),
+
+                            
+                              _buildModernQuickActions(screenWidth, isMobile, isTablet, isDark),
+                              const SizedBox(height: 24),
+
+                              // Recent Activities
+                              _buildModernRecentActivities(isMobile, isDark),
+                              const SizedBox(height: 20),
+                            ]),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-              ),
-            ),
-          ],
-        ),
-        if (!isMobile)
-          Container(
-            margin: const EdgeInsets.only(right: 12),
-            padding: const EdgeInsets.all(2),
-            decoration: BoxDecoration(
-              gradient: ModernColors.primaryGradient,
-              shape: BoxShape.circle,
-            ),
-            child: CircleAvatar(
-              radius: 16,
-              backgroundColor: Colors.white,
-              child: const Text(
-                'AD',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: AdminColors.primaryGreen,
-                ),
-              ),
-            ),
           ),
-      ],
-    );
-  }
-
-  Widget _buildLoadingState() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        children: [
-          ShimmerLoading(itemCount: 1, itemHeight: 100),
-          const SizedBox(height: 20),
-          ShimmerStatsGrid(count: 4, crossAxisCount: 2),
-          const SizedBox(height: 20),
-          ShimmerLoading(itemCount: 2, itemHeight: 250),
         ],
       ),
     );
   }
 
-  Widget _buildModernStatsCards(double screenWidth, bool isMobile, bool isTablet) {
+  Widget _buildBackground(bool isDark) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: isDark 
+            ? AppColors.darkBackgroundGradient 
+            : AppColors.lightBackgroundGradient,
+      ),
+    );
+  }
+
+  Widget _buildFloatingParticles() {
+    return AnimatedBuilder(
+      animation: _bgAnimController,
+      builder: (context, child) {
+        return CustomPaint(
+          size: MediaQuery.of(context).size,
+          painter: _ParticlesPainter(
+            animationValue: _bgAnimController.value,
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildCustomAppBar(bool isDark, bool isMobile) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(isMobile ? 16 : 24, 10, isMobile ? 16 : 24, 0),
+      child: Row(
+        children: [
+          // Menu button
+          Builder(
+            builder: (context) => _buildIconButton(
+              icon: Icons.menu_rounded,
+              isDark: isDark,
+              onTap: () => Scaffold.of(context).openDrawer(),
+            ),
+          ),
+          const SizedBox(width: 16),
+          
+          // Title
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Admin Dashboard',
+                  style: TextStyle(
+                    fontSize: isMobile ? 22 : 28,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).textTheme.headlineSmall?.color,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                Row(
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.success,
+                        boxShadow: isDark
+                            ? [BoxShadow(color: AppColors.success.withValues(alpha: 0.5), blurRadius: 20, spreadRadius: 2)]
+                            : null,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'All systems operational',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).textTheme.bodyMedium?.color,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          // Notification button
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              _buildIconButton(
+                icon: Icons.notifications_outlined,
+                isDark: isDark,
+                onTap: () {},
+              ),
+              Positioned(
+                right: 6,
+                top: 6,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    gradient: AppColors.redGradient,
+                    shape: BoxShape.circle,
+                    boxShadow: isDark
+                        ? [BoxShadow(color: AppColors.error.withValues(alpha: 0.5), blurRadius: 20, spreadRadius: 2)]
+                        : null,
+                  ),
+                  constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                  child: const Center(
+                    child: Text(
+                      '3',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIconButton({
+    required IconData icon,
+    required bool isDark,
+    required VoidCallback onTap,
+  }) {
+    return AnimatedBuilder(
+      animation: _pulseAnimation,
+      builder: (context, child) {
+        return GestureDetector(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              color: isDark
+                  ? Theme.of(context).cardColor.withValues(alpha: 0.08)
+                  : Theme.of(context).cardColor.withValues(alpha: 0.8),
+              border: Border.all(
+                color: isDark
+                    ? AppColors.neonCyan.withValues(alpha: 0.3)
+                    : AppColors.darkText.withValues(alpha: 0.05),
+              ),
+              boxShadow: isDark
+                  ? [
+                      BoxShadow(
+                        color: AppColors.neonCyan.withValues(alpha: 0.1 * _pulseAnimation.value),
+                        blurRadius: 15,
+                        spreadRadius: 1,
+                      ),
+                    ]
+                  : [
+                      BoxShadow(
+                        color: AppColors.darkText.withValues(alpha: 0.08),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+            ),
+            child: Icon(
+              icon,
+              color: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
+              size: 22,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildLoadingState(bool isDark) {
+    return Center(
+      child: CircularProgressIndicator(
+        color: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
+      ),
+    );
+  }
+
+  Widget _buildWelcomeHeader(bool isDark, bool isMobile) {
+    return AnimatedBuilder(
+      animation: _pulseAnimation,
+      builder: (context, child) {
+        return _GlassCard(
+          isDark: isDark,
+          pulseValue: _pulseAnimation.value,
+          child: Padding(
+            padding: EdgeInsets.all(isMobile ? 20 : 24),
+            child: Row(
+              children: [
+                // Animated Icon
+                TweenAnimationBuilder(
+                  duration: const Duration(milliseconds: 600),
+                  tween: Tween<double>(begin: 0, end: 1),
+                  curve: Curves.elasticOut,
+                  builder: (context, double value, child) {
+                    return Transform.scale(
+                      scale: value,
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          gradient: isDark
+                              ? AppColors.neonGradient
+                              : AppColors.primaryGradient,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: (isDark ? AppColors.neonGreen : AppColors.primaryGreen).withValues(alpha: 0.4),
+                              blurRadius: 20,
+                              spreadRadius: 2,
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          Icons.waving_hand_rounded,
+                          color: isDark ? AppColors.darkBackground : Colors.white,
+                          size: 28,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Welcome back, Admin!',
+                        style: TextStyle(
+                          fontSize: isMobile ? 18 : 22,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).textTheme.headlineSmall?.color,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        "Here's what's happening with RecyConnect today",
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Theme.of(context).textTheme.bodyMedium?.color,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildModernStatsCards(double screenWidth, bool isMobile, bool isTablet, bool isDark) {
     int crossAxisCount = isMobile ? 2 : (isTablet ? 2 : 4);
-    double childAspectRatio = isMobile ? 1.1 : (isTablet ? 1.4 : 1.4);
+    double childAspectRatio = isMobile ? 1.0 : (isTablet ? 1.2 : 1.15);
+
+    final stats = [
+      {'icon': Icons.people_rounded, 'title': 'Total Users', 'value': '1,234', 'trend': '+12%', 'color': AppColors.accentBlue},
+      {'icon': Icons.local_shipping_rounded, 'title': 'Collectors', 'value': '89', 'trend': '+8%', 'color': AppColors.accentOrange},
+      {'icon': Icons.shopping_bag_rounded, 'title': 'Orders', 'value': '567', 'trend': '+23%', 'color': AppColors.accentPurple},
+      {'icon': Icons.attach_money_rounded, 'title': 'Revenue', 'value': '\$12.5K', 'trend': '+15%', 'color': AppColors.success},
+    ];
 
     return GridView.count(
       crossAxisCount: crossAxisCount,
@@ -194,62 +404,96 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
       crossAxisSpacing: isMobile ? 12 : 16,
       mainAxisSpacing: isMobile ? 12 : 16,
       childAspectRatio: childAspectRatio,
-      children: [
-        ModernStatCard(
-          icon: Icons.people_rounded,
-          title: 'Total Users',
-          value: '1,234',
-          trend: '+12%',
-          isPositive: true,
-          color: AdminColors.accentBlue,
-        ),
-        ModernStatCard(
-          icon: Icons.local_shipping_rounded,
-          title: 'Collectors',
-          value: '89',
-          trend: '+8%',
-          isPositive: true,
-          color: AdminColors.accentOrange,
-        ),
-        ModernStatCard(
-          icon: Icons.shopping_bag_rounded,
-          title: 'Orders',
-          value: '567',
-          trend: '+23%',
-          isPositive: true,
-          color: AdminColors.accentPurple,
-        ),
-        ModernStatCard(
-          icon: Icons.attach_money_rounded,
-          title: 'Revenue',
-          value: '\$12.5K',
-          trend: '+15%',
-          isPositive: true,
-          color: AdminColors.success,
-        ),
-      ],
+      children: stats.map((stat) {
+        return AnimatedBuilder(
+          animation: _pulseAnimation,
+          builder: (context, child) {
+            return _GlassCard(
+              isDark: isDark,
+              pulseValue: _pulseAnimation.value,
+              glowColor: stat['color'] as Color,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: (stat['color'] as Color).withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(12),
+                            border: isDark
+                                ? Border.all(color: (stat['color'] as Color).withValues(alpha: 0.3))
+                                : null,
+                          ),
+                          child: Icon(stat['icon'] as IconData, color: stat['color'] as Color, size: 22),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.success.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.trending_up, size: 12, color: AppColors.success),
+                              const SizedBox(width: 4),
+                              Text(
+                                stat['trend'] as String,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.success,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          stat['value'] as String,
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).textTheme.headlineSmall?.color,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          stat['title'] as String,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Theme.of(context).textTheme.bodyMedium?.color,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      }).toList(),
     );
   }
 
-  Widget _buildModernCharts(BuildContext context, bool isMobile) {
+  Widget _buildModernCharts(bool isMobile, bool isDark) {
     if (isMobile) {
       return Column(
         children: [
-          _buildGlassChartCard(
-            context: context,
-            title: 'Waste Collection',
-            subtitle: 'Last 7 days',
-            isMobile: isMobile,
-            child: _buildBarChart(isMobile),
-          ),
+          _buildChartCard('Waste Collection', 'Last 7 days', _buildBarChart(isMobile, isDark), isDark),
           const SizedBox(height: 16),
-          _buildGlassChartCard(
-            context: context,
-            title: 'Revenue Trend',
-            subtitle: 'Monthly overview',
-            isMobile: isMobile,
-            child: _buildLineChart(isMobile),
-          ),
+          _buildChartCard('Revenue Trend', 'Monthly overview', _buildLineChart(isMobile, isDark), isDark),
         ],
       );
     }
@@ -258,108 +502,77 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
-          child: _buildGlassChartCard(
-            context: context,
-            title: 'Waste Collection',
-            subtitle: 'Last 7 days',
-            isMobile: isMobile,
-            child: _buildBarChart(isMobile),
-          ),
+          child: _buildChartCard('Waste Collection', 'Last 7 days', _buildBarChart(isMobile, isDark), isDark),
         ),
         const SizedBox(width: 16),
         Expanded(
-          child: _buildGlassChartCard(
-            context: context,
-            title: 'Revenue Trend',
-            subtitle: 'Monthly overview',
-            isMobile: isMobile,
-            child: _buildLineChart(isMobile),
-          ),
+          child: _buildChartCard('Revenue Trend', 'Monthly overview', _buildLineChart(isMobile, isDark), isDark),
         ),
       ],
     );
   }
 
-  Widget _buildGlassChartCard({
-    required BuildContext context,
-    required String title,
-    required String subtitle,
-    required bool isMobile,
-    required Widget child,
-  }) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: EdgeInsets.all(isMobile ? 16 : 20),
-      clipBehavior: Clip.hardEdge,
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: ModernColors.softShadowMedium,
-        border: Border.all(
-          color: Colors.grey.withOpacity(0.1),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildChartCard(String title, String subtitle, Widget chart, bool isDark) {
+    return AnimatedBuilder(
+      animation: _pulseAnimation,
+      builder: (context, child) {
+        return _GlassCard(
+          isDark: isDark,
+          pulseValue: _pulseAnimation.value,
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: isMobile ? 16 : 18,
-                        fontWeight: FontWeight.bold,
-                        color: theme.textTheme.bodyLarge?.color,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).textTheme.headlineSmall?.color,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          subtitle,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Theme.of(context).textTheme.bodyMedium?.color,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        fontSize: isMobile ? 11 : 12,
-                        color: theme.textTheme.bodyMedium?.color,
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: (isDark ? AppColors.neonCyan : AppColors.primaryGreen).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
+                      child: Icon(
+                        Icons.more_horiz,
+                        color: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
+                        size: 20,
+                      ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AdminColors.primaryGreen.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  Icons.more_horiz,
-                  color: AdminColors.primaryGreen,
-                  size: 20,
-                ),
-              ),
-            ],
+                const SizedBox(height: 24),
+                SizedBox(height: 200, child: chart),
+              ],
+            ),
           ),
-          SizedBox(height: isMobile ? 16 : 24),
-          SizedBox(
-            height: isMobile ? 180 : 200,
-            child: child,
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildBarChart(bool isMobile) {
-    final theme = Theme.of(context);
+  Widget _buildBarChart(bool isMobile, bool isDark) {
     return BarChart(
       BarChartData(
         alignment: BarChartAlignment.spaceAround,
@@ -367,14 +580,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         barTouchData: BarTouchData(
           enabled: true,
           touchTooltipData: BarTouchTooltipData(
-            getTooltipColor: (_) => AdminColors.primaryGreenDark,
+            getTooltipColor: (_) => isDark ? AppColors.neonGreen : AppColors.primaryGreen,
             getTooltipItem: (group, groupIndex, rod, rodIndex) {
               return BarTooltipItem(
                 '${rod.toY.toInt()} kg',
-                const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
+                const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
               );
             },
           ),
@@ -391,8 +601,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                   child: Text(
                     days[value.toInt()],
                     style: TextStyle(
-                      fontSize: isMobile ? 10 : 12,
-                      color: theme.textTheme.bodyMedium?.color,
+                      fontSize: 10,
+                      color: Theme.of(context).textTheme.bodyMedium?.color,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -407,26 +617,28 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         gridData: const FlGridData(show: false),
         borderData: FlBorderData(show: false),
         barGroups: [
-          _buildAnimatedBarGroup(0, 65, isMobile),
-          _buildAnimatedBarGroup(1, 80, isMobile),
-          _buildAnimatedBarGroup(2, 45, isMobile),
-          _buildAnimatedBarGroup(3, 90, isMobile),
-          _buildAnimatedBarGroup(4, 70, isMobile),
-          _buildAnimatedBarGroup(5, 55, isMobile),
-          _buildAnimatedBarGroup(6, 85, isMobile),
+          _buildBarGroup(0, 65, isMobile, isDark),
+          _buildBarGroup(1, 80, isMobile, isDark),
+          _buildBarGroup(2, 45, isMobile, isDark),
+          _buildBarGroup(3, 90, isMobile, isDark),
+          _buildBarGroup(4, 70, isMobile, isDark),
+          _buildBarGroup(5, 55, isMobile, isDark),
+          _buildBarGroup(6, 85, isMobile, isDark),
         ],
       ),
     );
   }
 
-  BarChartGroupData _buildAnimatedBarGroup(int x, double y, bool isMobile) {
+  BarChartGroupData _buildBarGroup(int x, double y, bool isMobile, bool isDark) {
     return BarChartGroupData(
       x: x,
       barRods: [
         BarChartRodData(
           toY: y,
-          gradient: const LinearGradient(
-            colors: [Color(0xFF10B981), Color(0xFF059669)],
+          gradient: LinearGradient(
+            colors: isDark
+                ? [AppColors.neonGreen, AppColors.neonCyan]
+                : [AppColors.primaryGreen, const Color(0xFF45A049)],
             begin: Alignment.bottomCenter,
             end: Alignment.topCenter,
           ),
@@ -437,8 +649,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     );
   }
 
-  Widget _buildLineChart(bool isMobile) {
-    final theme = Theme.of(context);
+  Widget _buildLineChart(bool isMobile, bool isDark) {
     return LineChart(
       LineChartData(
         gridData: FlGridData(
@@ -447,7 +658,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           horizontalInterval: 20,
           getDrawingHorizontalLine: (value) {
             return FlLine(
-              color: Colors.grey.withOpacity(0.1),
+              color: isDark ? Theme.of(context).dividerColor.withValues(alpha: 0.05) : Theme.of(context).dividerColor.withValues(alpha: 0.1),
               strokeWidth: 1,
             );
           },
@@ -465,8 +676,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                     child: Text(
                       months[value.toInt()],
                       style: TextStyle(
-                        fontSize: isMobile ? 10 : 12,
-                        color: theme.textTheme.bodyMedium?.color,
+                        fontSize: 10,
+                        color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -488,15 +699,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         lineTouchData: LineTouchData(
           enabled: true,
           touchTooltipData: LineTouchTooltipData(
-            getTooltipColor: (_) => AdminColors.accentBlue,
+            getTooltipColor: (_) => AppColors.accentBlue,
             getTooltipItems: (touchedSpots) {
               return touchedSpots.map((spot) {
                 return LineTooltipItem(
                   '\$${spot.y.toInt()}K',
-                  const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                 );
               }).toList();
             },
@@ -513,8 +721,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
               FlSpot(5, 85),
             ],
             isCurved: true,
-            gradient: const LinearGradient(
-              colors: [Color(0xFF3B82F6), Color(0xFF8B5CF6)],
+            gradient: LinearGradient(
+              colors: isDark
+                  ? [AppColors.neonCyan, AppColors.accentBlue]
+                  : [AppColors.accentBlue, const Color(0xFF1D4ED8)],
             ),
             barWidth: 3,
             isStrokeCapRound: true,
@@ -525,7 +735,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                   radius: 5,
                   color: Colors.white,
                   strokeWidth: 3,
-                  strokeColor: const Color(0xFF3B82F6),
+                  strokeColor: isDark ? AppColors.neonCyan : AppColors.accentBlue,
                 );
               },
             ),
@@ -533,8 +743,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
               show: true,
               gradient: LinearGradient(
                 colors: [
-                  const Color(0xFF3B82F6).withOpacity(0.3),
-                  const Color(0xFF3B82F6).withOpacity(0.0),
+                  (isDark ? AppColors.neonCyan : AppColors.accentBlue).withValues(alpha: 0.3),
+                  (isDark ? AppColors.neonCyan : AppColors.accentBlue).withValues(alpha: 0.0),
                 ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
@@ -546,13 +756,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     );
   }
 
-  Widget _buildModernQuickActions(
-    BuildContext context,
-    double screenWidth,
-    bool isMobile,
-    bool isTablet,
-  ) {
-    final theme = Theme.of(context);
+  Widget _buildModernQuickActions(double screenWidth, bool isMobile, bool isTablet, bool isDark) {
     int crossAxisCount = isMobile ? 2 : (isTablet ? 2 : 4);
 
     return Column(
@@ -561,43 +765,32 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Expanded(
-              child: Text(
-                'Quick Actions',
-                style: TextStyle(
-                  fontSize: isMobile ? 18 : 20,
-                  fontWeight: FontWeight.bold,
-                  color: theme.textTheme.bodyLarge?.color,
-                ),
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
+            Text(
+              'Quick Actions',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).textTheme.headlineSmall?.color,
               ),
             ),
-            const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: AdminColors.primaryGreen.withOpacity(0.1),
+                gradient: isDark ? AppColors.neonGradient : AppColors.primaryGradient,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    Icons.bolt,
-                    size: 16,
-                    color: AdminColors.primaryGreen,
-                  ),
+                  Icon(Icons.bolt, size: 14, color: isDark ? AppColors.loginNavyDeep : Colors.white),
                   const SizedBox(width: 4),
                   Text(
                     'Fast Access',
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: AdminColors.primaryGreen,
+                      color: isDark ? AppColors.loginNavyDeep : Colors.white,
                     ),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
                   ),
                 ],
               ),
@@ -613,135 +806,295 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           mainAxisSpacing: 12,
           childAspectRatio: isMobile ? 1.1 : 1.2,
           children: [
-            ModernQuickActionCard(
-              icon: Icons.add_shopping_cart_rounded,
-              title: 'New Order',
-              color: AdminColors.accentOrange,
-              onTap: () {},
-            ),
-            ModernQuickActionCard(
-              icon: Icons.analytics_rounded,
-              title: 'View Reports',
-              color: AdminColors.success,
-              onTap: () {},
-            ),
+            _buildQuickActionCard(Icons.add_shopping_cart_rounded, 'New Order', AppColors.accentOrange, isDark),
           ],
         ),
       ],
     );
   }
 
-  Widget _buildModernRecentActivities(BuildContext context, bool isMobile) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: EdgeInsets.all(isMobile ? 16 : 20),
-      clipBehavior: Clip.hardEdge,
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: ModernColors.softShadowMedium,
-        border: Border.all(
-          color: Colors.grey.withOpacity(0.1),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        gradient: ModernColors.primaryGradient,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        Icons.history,
-                        color: Colors.white,
-                        size: 20,
-                      ),
+  Widget _buildQuickActionCard(IconData icon, String title, Color color, bool isDark) {
+    return AnimatedBuilder(
+      animation: _pulseAnimation,
+      builder: (context, child) {
+        return GestureDetector(
+          onTap: () {},
+          child: _GlassCard(
+            isDark: isDark,
+            pulseValue: _pulseAnimation.value,
+            glowColor: color,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(14),
+                      border: isDark ? Border.all(color: color.withValues(alpha: 0.3)) : null,
                     ),
-                    const SizedBox(width: 12),
-                    Flexible(
-                      child: Text(
-                        'Recent Activities',
-                        style: TextStyle(
-                          fontSize: isMobile ? 16 : 18,
-                          fontWeight: FontWeight.bold,
-                          color: theme.textTheme.bodyLarge?.color,
+                    child: Icon(icon, color: color, size: 24),
+                  ),
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).textTheme.headlineSmall?.color,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildModernRecentActivities(bool isMobile, bool isDark) {
+    final activities = [
+      {'icon': Icons.person_add_rounded, 'title': 'New user registered', 'subtitle': 'John Doe joined the platform', 'time': '5 min ago', 'color': AppColors.accentBlue},
+      {'icon': Icons.shopping_bag_rounded, 'title': 'New order placed', 'subtitle': 'Order #1234 - Plastic waste collection', 'time': '15 min ago', 'color': AppColors.accentOrange},
+      {'icon': Icons.trending_up_rounded, 'title': 'Price updated', 'subtitle': 'Plastic price updated to 110 PKR/kg', 'time': '1 hour ago', 'color': AppColors.accentPurple},
+      {'icon': Icons.star_rounded, 'title': 'New 5-star rating', 'subtitle': 'Ahmed Khan received excellent review', 'time': '2 hours ago', 'color': AppColors.accentYellow},
+    ];
+
+    return AnimatedBuilder(
+      animation: _pulseAnimation,
+      builder: (context, child) {
+        return _GlassCard(
+          isDark: isDark,
+          pulseValue: _pulseAnimation.value,
+          child: Padding(
+            padding: EdgeInsets.all(isMobile ? 16 : 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            gradient: isDark ? AppColors.neonGradient : AppColors.primaryGradient,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            Icons.history,
+                            color: isDark ? AppColors.loginNavyDeep : Colors.white,
+                            size: 20,
+                          ),
                         ),
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
+                        const SizedBox(width: 12),
+                        Text(
+                          'Recent Activities',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).textTheme.headlineSmall?.color,
+                          ),
+                        ),
+                      ],
+                    ),
+                    TextButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const AdminActivitiesScreen()),
+                        );
+                      },
+                      icon: Text(
+                        'View All',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
+                        ),
+                      ),
+                      label: Icon(
+                        Icons.arrow_forward_ios,
+                        size: 12,
+                        color: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
                       ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(width: 8),
-              TextButton.icon(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const AdminActivitiesScreen(),
-                    ),
+                const SizedBox(height: 16),
+                ...activities.asMap().entries.map((entry) {
+                  final activity = entry.value;
+                  final isLast = entry.key == activities.length - 1;
+                  return Column(
+                    children: [
+                      _buildActivityItem(activity, isDark),
+                      if (!isLast)
+                        Divider(
+                          height: 16,
+                          color: isDark ? Theme.of(context).dividerColor.withValues(alpha: 0.1) : Theme.of(context).dividerColor.withValues(alpha: 0.1),
+                        ),
+                    ],
                   );
-                },
-                icon: Text(
-                  'View All',
+                }),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildActivityItem(Map<String, dynamic> activity, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: (activity['color'] as Color).withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(12),
+              border: isDark
+                  ? Border.all(color: (activity['color'] as Color).withValues(alpha: 0.3))
+                  : null,
+            ),
+            child: Icon(
+              activity['icon'] as IconData,
+              color: activity['color'] as Color,
+              size: 18,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  activity['title'] as String,
                   style: TextStyle(
-                    fontSize: isMobile ? 12 : 14,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: AdminColors.primaryGreen,
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
                   ),
                 ),
-                label: Icon(
-                  Icons.arrow_forward_ios,
-                  size: 12,
-                  color: AdminColors.primaryGreen,
+                const SizedBox(height: 2),
+                Text(
+                  activity['subtitle'] as String,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).textTheme.bodyMedium?.color,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          const SizedBox(height: 16),
-          ModernActivityItem(
-            icon: Icons.person_add_rounded,
-            title: 'New user registered',
-            subtitle: 'John Doe joined the platform',
-            time: '5 min ago',
-            color: AdminColors.accentBlue,
-          ),
-          Divider(height: 8, color: Colors.grey.withOpacity(0.1)),
-          ModernActivityItem(
-            icon: Icons.shopping_bag_rounded,
-            title: 'New order placed',
-            subtitle: 'Order #1234 - Plastic waste collection',
-            time: '15 min ago',
-            color: AdminColors.accentOrange,
-          ),
-          Divider(height: 8, color: Colors.grey.withOpacity(0.1)),
-          ModernActivityItem(
-            icon: Icons.trending_up_rounded,
-            title: 'Price updated',
-            subtitle: 'Plastic price updated to 110 PKR/kg',
-            time: '1 hour ago',
-            color: AdminColors.accentPurple,
-          ),
-          Divider(height: 8, color: Colors.grey.withOpacity(0.1)),
-          ModernActivityItem(
-            icon: Icons.star_rounded,
-            title: 'New 5-star rating',
-            subtitle: 'Ahmed Khan received excellent review',
-            time: '2 hours ago',
-            color: const Color(0xFFFBBF24),
+          Text(
+            activity['time'] as String,
+            style: TextStyle(
+              fontSize: 11,
+              color: Theme.of(context).textTheme.bodyMedium?.color,
+            ),
           ),
         ],
       ),
     );
+  }
+}
+
+// ============================================================================
+// SUPPORTING WIDGETS
+// ============================================================================
+
+class _GlassCard extends StatelessWidget {
+  final Widget child;
+  final bool isDark;
+  final double pulseValue;
+  final BorderRadius? borderRadius;
+  final Color? glowColor;
+
+  const _GlassCard({
+    required this.child,
+    required this.isDark,
+    required this.pulseValue,
+    this.borderRadius,
+    this.glowColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final radius = borderRadius ?? BorderRadius.circular(20);
+    final glow = glowColor ?? (isDark ? AppColors.neonCyan : AppColors.primaryGreen);
+
+    return ClipRRect(
+      borderRadius: radius,
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: radius,
+            gradient: isDark ? AppColors.darkCardGradient : AppColors.lightCardGradient,
+            border: Border.all(
+              color: isDark
+                  ? glow.withValues(alpha: 0.15 + 0.1 * pulseValue)
+                  : Theme.of(context).cardColor.withValues(alpha: 0.6),
+              width: 1.5,
+            ),
+            boxShadow: isDark
+                ? [
+                    BoxShadow(
+                      color: glow.withValues(alpha: 0.08 * pulseValue),
+                      blurRadius: 20,
+                      spreadRadius: 0,
+                    ),
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.3),
+                      blurRadius: 15,
+                      offset: const Offset(0, 8),
+                    ),
+                  ]
+                : [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+          ),
+          child: child,
+        ),
+      ),
+    );
+  }
+}
+
+class _ParticlesPainter extends CustomPainter {
+  final double animationValue;
+
+  _ParticlesPainter({required this.animationValue});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = AppColors.neonCyan.withValues(alpha: 0.3)
+      ..style = PaintingStyle.fill;
+
+    final random = math.Random(42);
+    for (int i = 0; i < 30; i++) {
+      final x = random.nextDouble() * size.width;
+      final baseY = random.nextDouble() * size.height;
+      final y = (baseY + animationValue * size.height * 0.3) % size.height;
+      final radius = random.nextDouble() * 2 + 1;
+
+      canvas.drawCircle(Offset(x, y), radius, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ParticlesPainter oldDelegate) {
+    return oldDelegate.animationValue != animationValue;
   }
 }
