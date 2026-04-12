@@ -89,18 +89,15 @@ class Order {
   }
 
   String get statusDisplay {
-    switch (status) {
-      case 'CREATED':
-        return 'Pending';
-      case 'CONFIRMED':
-        return 'Confirmed';
-      case 'COMPLETED':
-        return 'Completed';
-      case 'CANCELLED':
-        return 'Cancelled';
-      default:
-        return status;
-    }
+    const labels = {
+      'CREATED': 'Pending',
+      'CONFIRMED': 'Confirmed',
+      'COMPLETED': 'Completed',
+      'CANCELLED': 'Cancelled',
+    };
+
+    final normalizedStatus = status.trim().toUpperCase();
+    return labels[normalizedStatus] ?? normalizedStatus;
   }
 
   String get materialTypeDisplay {

@@ -1,3 +1,4 @@
+import 'dart:ui' show PointerEvent, PointerExitEvent;
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 
@@ -37,14 +38,14 @@ class TiltCard extends StatefulWidget {
   final bool addElevation;
 
   const TiltCard({
-    Key? key,
+    super.key,
     required this.child,
     this.maxTilt = 0.05,
     this.enabled = true,
     this.duration = const Duration(milliseconds: 200),
     this.curve = Curves.easeOutCubic,
     this.addElevation = true,
-  }) : super(key: key);
+  });
 
   @override
   State<TiltCard> createState() => _TiltCardState();
@@ -54,8 +55,6 @@ class _TiltCardState extends State<TiltCard>
     with SingleTickerProviderStateMixin {
   double _rotateX = 0.0;
   double _rotateY = 0.0;
-  double _scale = 1.0;
-  bool _isHovered = false;
 
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
@@ -96,7 +95,6 @@ class _TiltCardState extends State<TiltCard>
       // Apply tilt with max angle limit
       _rotateY = deltaX * widget.maxTilt;
       _rotateX = -deltaY * widget.maxTilt;
-      _isHovered = true;
     });
 
     if (widget.addElevation) {
@@ -108,7 +106,6 @@ class _TiltCardState extends State<TiltCard>
     setState(() {
       _rotateX = 0.0;
       _rotateY = 0.0;
-      _isHovered = false;
     });
 
     if (widget.addElevation) {
@@ -156,13 +153,13 @@ class TiltCardWithShadow extends StatefulWidget {
   final double maxShadowOffset;
 
   const TiltCardWithShadow({
-    Key? key,
+    super.key,
     required this.child,
     this.maxTilt = 0.05,
     this.enabled = true,
     this.shadowColor = const Color(0xFF10B981),
     this.maxShadowOffset = 12.0,
-  }) : super(key: key);
+  });
 
   @override
   State<TiltCardWithShadow> createState() => _TiltCardWithShadowState();
@@ -224,7 +221,7 @@ class _TiltCardWithShadowState extends State<TiltCardWithShadow> {
             decoration: BoxDecoration(
               boxShadow: [
                 BoxShadow(
-                  color: widget.shadowColor.withOpacity(0.3),
+                  color: widget.shadowColor.withValues(alpha: 0.3),
                   blurRadius: 24,
                   offset: Offset(_shadowX, _shadowY + 8),
                 ),
@@ -247,11 +244,11 @@ class LiftCard extends StatefulWidget {
   final Curve curve;
 
   const LiftCard({
-    Key? key,
+    super.key,
     required this.child,
     this.duration = const Duration(milliseconds: 200),
     this.curve = Curves.easeOutCubic,
-  }) : super(key: key);
+  });
 
   @override
   State<LiftCard> createState() => _LiftCardState();
@@ -277,7 +274,7 @@ class _LiftCardState extends State<LiftCard> {
           decoration: BoxDecoration(
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(_isPressed ? 0.1 : 0.15),
+                color: Colors.black.withValues(alpha: _isPressed ? 0.1 : 0.15),
                 blurRadius: _isPressed ? 8 : 16,
                 offset: Offset(0, _isPressed ? 4 : 8),
               ),

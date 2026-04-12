@@ -2,9 +2,9 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http_parser/http_parser.dart'; // Added for MediaType
 import '../constants/api_constants.dart';
+import 'secure_storage_service.dart';
 
 class AuthService extends ChangeNotifier {
   // IMPORTANT: Choose the correct URL based on your testing environment:
@@ -338,17 +338,15 @@ class AuthService extends ChangeNotifier {
     _user = null;
     _error = null;
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('auth_token');
-    await prefs.remove('user_data');
+    await SecureStorageService.deleteToken();
+    await SecureStorageService.deleteUserData();
 
     notifyListeners();
   }
 
   Future<void> _saveToken(String token) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('auth_token', token);
+      await SecureStorageService.saveToken(token);
     } catch (e) {
       if (kDebugMode) {
         print('Error saving token: $e');
@@ -358,8 +356,7 @@ class AuthService extends ChangeNotifier {
 
   Future<void> _saveUserData(Map<String, dynamic> userData) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('user_data', jsonEncode(userData));
+      await SecureStorageService.saveUserData(userData);
     } catch (e) {
       if (kDebugMode) {
         print('Error saving user data: $e');
@@ -369,18 +366,8 @@ class AuthService extends ChangeNotifier {
 
   Future<void> loadToken() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      _token = prefs.getString('auth_token');
-      
-      // Also load cached user data
-      final userDataStr = prefs.getString('user_data');
-      if (userDataStr != null) {
-        try {
-          _user = jsonDecode(userDataStr) as Map<String, dynamic>;
-        } catch (_) {
-          _user = null;
-        }
-      }
+      _token = await SecureStorageService.readToken();
+      _user = await SecureStorageService.readUserData();
       
       notifyListeners();
     } catch (e) {
@@ -666,5 +653,43 @@ class AuthService extends ChangeNotifier {
     if (_user != null) return _user;
     await fetchProfile();
     return _user;
+  }
+
+  /// Delete user account permanently
+  Future<Map<String, dynamic>> deleteAccount(String password, {String? reason}) async {
+    try {
+      _setLoading(true);
+      _setError(null);
+
+      final response = await http.delete(
+        Uri.parse('${ApiConstants.baseUrl}/user/account'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (_token != null) 'Authorization': 'Bearer $_token',
+        },
+        body: jsonEncode({
+          'password': password,
+          if (reason != null) 'reason': reason,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && data['success'] == true) {
+        // Clear local data after successful deletion
+        await logout();
+        _setLoading(false);
+        return {'success': true, 'message': data['message'] ?? 'Account deleted successfully'};
+      } else {
+        final errorMessage = _extractErrorMessage(data);
+        _setError(errorMessage);
+        _setLoading(false);
+        return {'success': false, 'message': errorMessage};
+      }
+    } catch (e) {
+      _setError('Network error: ${e.toString()}');
+      _setLoading(false);
+      return {'success': false, 'message': e.toString()};
+    }
   }
 }

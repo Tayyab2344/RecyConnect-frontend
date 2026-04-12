@@ -11,6 +11,7 @@ class MarketplaceTheme {
   static const Color lightTextSecondary = Color(0xFF636E72);
   static const Color lightAccent = Color(0xFF00B894); // Mint Green
   static const Color lightCardShadow = Color(0x1A000000); // Soft shadow
+  static const Color lightSidebarBg = Color(0xFFF6FBF9);
 
   // Dark Theme Colors (Neon / Futuristic)
   static const Color darkBackgroundStart = Color(0xFF0F172A); // Deep Navy
@@ -23,6 +24,7 @@ class MarketplaceTheme {
   static const Color darkAccentCyan = Color(0xFF00E5FF); // Neon Cyan
   static const Color darkAccentGreen = Color(0xFF00FF9D); // Neon Green
   static const Color darkCardShadow = Color(0x8000E5FF); // Neon Glow
+  static const Color darkSidebarBg = Color(0xFF111827);
 
   /// Get background gradient based on theme
   static LinearGradient getBackgroundGradient(bool isDark) {
@@ -89,5 +91,19 @@ class MarketplaceTheme {
         offset: const Offset(0, 0),
       ),
     ];
+  }
+
+  static LinearGradient getKPIGradient(bool isDark) {
+    return isDark
+        ? const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF172033), Color(0xFF0F172A)],
+          )
+        : const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFFFFFFFF), Color(0xFFF0F8F5)],
+          );
   }
 }

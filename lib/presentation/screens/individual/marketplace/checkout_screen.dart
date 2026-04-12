@@ -81,7 +81,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       if (_selectedPaymentMethod == 'stripe') {
         await _launchStripePayment(order);
       } else {
-        // COD: just show success
+        // COD: create the COD payment record in the backend, then show success
+        try {
+          await _paymentService.createCodPayment(order.id);
+        } catch (e) {
+          // Log but don't block — order is already created
+          debugPrint('COD payment record creation failed: $e');
+        }
         _showSuccessDialog(isCod: true);
       }
     } catch (e) {

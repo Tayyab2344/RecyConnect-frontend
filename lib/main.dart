@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:provider/provider.dart';
+import 'core/constants/app_config.dart';
 import 'core/services/auth_service.dart';
 import 'core/services/admin_service.dart';
 import 'core/theme/app_theme.dart';
@@ -14,10 +15,8 @@ import 'presentation/screens/onboarding/onboarding_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Stripe with the publishable key on mobile only
-  if (!kIsWeb) {
-    Stripe.publishableKey =
-        'pk_test_51TIrmdRoUZN6nt4Cr39P7xQbKlfFVBdSNxnCEnliaJueZcUiKUw1QxuXkUj2VJR9KsiQCUxSXJI58DewZDyoHSUS00k7tJCsi0';
+  if (!kIsWeb && AppConfig.hasStripePublishableKey) {
+    Stripe.publishableKey = AppConfig.stripePublishableKey;
     await Stripe.instance.applySettings();
   }
 
