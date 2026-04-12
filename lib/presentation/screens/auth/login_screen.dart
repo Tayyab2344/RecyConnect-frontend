@@ -104,8 +104,10 @@ class _LoginScreenState extends State<LoginScreen>
         final status = user?['verificationStatus'];
         final role = user?['role'];
 
+        print('DEBUG: User role from backend is: $role');
+
         // Check if user is admin and navigate to admin dashboard
-        if (role == 'admin') {
+        if (role?.toLowerCase() == 'admin') {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: const Row(

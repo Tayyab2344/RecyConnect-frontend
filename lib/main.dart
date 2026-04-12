@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:provider/provider.dart';
@@ -13,10 +14,12 @@ import 'presentation/screens/onboarding/onboarding_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Stripe with the publishable key
-  Stripe.publishableKey =
-      'pk_test_51TIrmdRoUZN6nt4Cr39P7xQbKlfFVBdSNxnCEnliaJueZcUiKUw1QxuXkUj2VJR9KsiQCUxSXJI58DewZDyoHSUS00k7tJCsi0';
-  await Stripe.instance.applySettings();
+  // Initialize Stripe with the publishable key on mobile only
+  if (!kIsWeb) {
+    Stripe.publishableKey =
+        'pk_test_51TIrmdRoUZN6nt4Cr39P7xQbKlfFVBdSNxnCEnliaJueZcUiKUw1QxuXkUj2VJR9KsiQCUxSXJI58DewZDyoHSUS00k7tJCsi0';
+    await Stripe.instance.applySettings();
+  }
 
   runApp(const MyApp());
 }
