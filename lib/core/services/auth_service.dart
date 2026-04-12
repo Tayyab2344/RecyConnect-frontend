@@ -654,4 +654,42 @@ class AuthService extends ChangeNotifier {
     await fetchProfile();
     return _user;
   }
+
+  /// Delete user account permanently
+  Future<Map<String, dynamic>> deleteAccount(String password, {String? reason}) async {
+    try {
+      _setLoading(true);
+      _setError(null);
+
+      final response = await http.delete(
+        Uri.parse('${ApiConstants.baseUrl}/user/account'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (_token != null) 'Authorization': 'Bearer $_token',
+        },
+        body: jsonEncode({
+          'password': password,
+          if (reason != null) 'reason': reason,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && data['success'] == true) {
+        // Clear local data after successful deletion
+        await logout();
+        _setLoading(false);
+        return {'success': true, 'message': data['message'] ?? 'Account deleted successfully'};
+      } else {
+        final errorMessage = _extractErrorMessage(data);
+        _setError(errorMessage);
+        _setLoading(false);
+        return {'success': false, 'message': errorMessage};
+      }
+    } catch (e) {
+      _setError('Network error: ${e.toString()}');
+      _setLoading(false);
+      return {'success': false, 'message': e.toString()};
+    }
+  }
 }

@@ -151,9 +151,12 @@ class _CreateListingScreenState extends State<CreateListingScreen>
       if (newImages.isNotEmpty) {
         setState(() {
           _selectedImages.addAll(newImages);
-          // Limit to 4 images total
-          if (_selectedImages.length > 4) {
-             _selectedImages = _selectedImages.take(4).toList();
+          // Limit to 3 images total (min 1, max 3)
+          if (_selectedImages.length > 3) {
+             _selectedImages = _selectedImages.take(3).toList();
+             ScaffoldMessenger.of(context).showSnackBar(
+               const SnackBar(content: Text('Maximum 3 images allowed')),
+             );
           }
         });
         // Trigger real AI Classification
@@ -516,21 +519,35 @@ class _CreateListingScreenState extends State<CreateListingScreen>
                       ],
                     );
                   }).toList(),
-                  GestureDetector(
-                    onTap: _pickImages,
-                    child: Container(
-                      width: 100,
-                      height: 110,
-                      margin: const EdgeInsets.only(left: 8),
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                            color: isDark ? Colors.white24 : Colors.black12),
-                        borderRadius: BorderRadius.circular(12),
+                  if (_selectedImages.length < 3)
+                    GestureDetector(
+                      onTap: _pickImages,
+                      child: Container(
+                        width: 100,
+                        height: 110,
+                        margin: const EdgeInsets.only(left: 8),
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                              color: isDark ? Colors.white24 : Colors.black12),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.add_a_photo,
+                                color: isDark ? Colors.white54 : Colors.black45),
+                            const SizedBox(height: 4),
+                            Text(
+                              '${_selectedImages.length}/3',
+                              style: TextStyle(
+                                color: isDark ? Colors.white38 : Colors.black38,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      child: Icon(Icons.add_a_photo,
-                          color: isDark ? Colors.white54 : Colors.black45),
                     ),
-                  ),
                 ],
               ),
             ),
