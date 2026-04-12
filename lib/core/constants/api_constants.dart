@@ -1,6 +1,7 @@
+import 'app_config.dart';
+
 class ApiConstants {
-  // Production URL - Vercel Backend
-  static const String baseUrl = 'https://recy-connect-backend-8aer.vercel.app/api';
+  static const String baseUrl = AppConfig.apiBaseUrl;
 
   static const String checkEmail = '$baseUrl/auth/check-email';
 

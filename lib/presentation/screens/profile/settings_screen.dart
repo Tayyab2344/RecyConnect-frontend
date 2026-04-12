@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/design_tokens.dart';
 import '../../../core/providers/theme_provider.dart';
 import '../help/help_center_screen.dart';
 import '../settings/notification_settings_screen.dart';
@@ -49,7 +47,7 @@ class SettingsScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         spreadRadius: 0,
                         blurRadius: 20,
                         offset: const Offset(0, 4),
@@ -113,7 +111,7 @@ class SettingsScreen extends StatelessWidget {
                                       fontSize: 14,
                                       color: isDark
                                           ? AppTheme.darkTextSecondary
-                                          : Colors.white.withOpacity(0.9),
+                                          : Colors.white.withValues(alpha: 0.9),
                                     ),
                                   ),
                                 ],
@@ -159,10 +157,10 @@ class SettingsScreen extends StatelessWidget {
                                 },
                                 activeColor: AppTheme.darkPrimaryGreen,
                                 activeTrackColor:
-                                    AppTheme.darkPrimaryGreen.withOpacity(0.5),
+                                    AppTheme.darkPrimaryGreen.withValues(alpha: 0.5),
                                 inactiveThumbColor: AppTheme.primaryGreen,
                                 inactiveTrackColor:
-                                    AppTheme.primaryGreen.withOpacity(0.3),
+                                    AppTheme.primaryGreen.withValues(alpha: 0.3),
                               ),
                             ),
                           ],
@@ -183,9 +181,9 @@ class SettingsScreen extends StatelessWidget {
                 color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? AppTheme.darkPrimaryGreen.withOpacity(0.3)
-                      : AppTheme.primaryGreen.withOpacity(0.2),
+                color: Theme.of(context).brightness == Brightness.dark
+                      ? AppTheme.darkPrimaryGreen.withValues(alpha: 0.3)
+                      : AppTheme.primaryGreen.withValues(alpha: 0.2),
                   width: 1,
                 ),
               ),
@@ -353,7 +351,7 @@ class SettingsScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isDark
-                ? AppTheme.darkSecondaryGreen.withOpacity(0.3)
+                ? AppTheme.darkSecondaryGreen.withValues(alpha: 0.3)
                 : AppTheme.lightGray,
           ),
         ),
@@ -362,7 +360,7 @@ class SettingsScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: (iconColor ?? defaultIconColor).withOpacity(0.1),
+                color: (iconColor ?? defaultIconColor).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(

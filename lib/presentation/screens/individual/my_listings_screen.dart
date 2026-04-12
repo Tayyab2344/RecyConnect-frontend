@@ -8,6 +8,7 @@ import '../../widgets/marketplace/glass_card.dart';
 import '../../widgets/recycle_loader.dart';
 import '../../../core/theme/marketplace_theme.dart';
 import 'create_listing_screen.dart';
+import 'listing_detail_screen.dart';
 
 class MyListingsScreen extends StatefulWidget {
   const MyListingsScreen({Key? key}) : super(key: key);
@@ -115,7 +116,13 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('My Listings'),
+        title: Text(
+          'My Listings',
+          style: TextStyle(
+            color: isDark ? Colors.white : Colors.black87,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
@@ -589,61 +596,16 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
   }
 
   void _showListingDetails(Listing listing) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Theme.of(context).cardColor,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-             Text(StaticDataHelper.getMaterialIcon(listing.materialType), style: const TextStyle(fontSize: 24)),
-             const SizedBox(width: 8),
-             Expanded(child: Text('${listing.materialTypeDisplay} Listing')),
-          ],
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ListingDetailScreen(
+          listing: listing,
+          onDelete: () {
+            Navigator.pop(context);
+            _deleteListing(listing.id);
+          },
         ),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildDetailRow('Weight', '${listing.estimatedWeight} kg'),
-              _buildDetailRow('Status', listing.statusDisplay),
-              _buildDetailRow('Address', listing.pickupAddress),
-              _buildDetailRow('Created', DateFormat('MMM dd, yyyy').format(listing.createdAt)),
-              if (listing.notes != null && listing.notes!.isNotEmpty)
-                _buildDetailRow('Notes', listing.notes!),
-            ],
-          ),
-        ),
-         actions: [
-          if (listing.status == 'PENDING')
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _deleteListing(listing.id);
-              },
-              child: const Text('Delete', style: TextStyle(color: Colors.red)),
-            ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF4CAF50), foregroundColor: Colors.white),
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey)),
-          Text(value, style: const TextStyle(fontSize: 15)),
-          const Divider(),
-        ],
       ),
     );
   }

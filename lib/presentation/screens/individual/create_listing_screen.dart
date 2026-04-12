@@ -292,42 +292,65 @@ class _CreateListingScreenState extends State<CreateListingScreen>
   }
 
   Widget _buildSuccessDialog(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return AlertDialog(
       backgroundColor: Colors.transparent,
+      elevation: 0,
       contentPadding: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       content: GlassCard(
-        borderRadius: 20,
+        borderRadius: 24,
+        padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.check_circle_outline,
-                color: MarketplaceTheme.lightAccent, size: 64),
-            const SizedBox(height: 16),
-            const Text(
-              'Listing Published!',
-              style: TextStyle(
-                fontSize: 20, 
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: (isDark ? MarketplaceTheme.darkAccentCyan : MarketplaceTheme.lightAccent).withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.check_circle_outline,
+                color: isDark ? MarketplaceTheme.darkAccentCyan : MarketplaceTheme.lightAccent, 
+                size: 72,
               ),
             ),
-            const SizedBox(height: 8),
-            const Text(
-              'Your item is now live on the marketplace.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white70),
-            ),
             const SizedBox(height: 24),
-            NeonButton(
-              text: 'DONE',
-              onPressed: () {
-                Navigator.of(context).pop(); // Close dialog
-                if (Navigator.of(context).canPop()) {
-                  Navigator.of(context).pop(); // Exit screen
-                } else {
-                  _resetForm(); // Reset if used as tab
-                }
-              },
+            Text(
+              'Listing Published!',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 24, 
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Your item is now live on the marketplace and ready for collectors.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 15,
+                color: isDark ? Colors.white70 : Colors.black54,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              child: NeonButton(
+                text: 'DONE',
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close dialog
+                  if (Navigator.of(context).canPop()) {
+                    Navigator.of(context).pop(); // Exit screen
+                  } else {
+                    _resetForm(); // Reset if used as tab
+                  }
+                },
+              ),
             ),
           ],
         ),

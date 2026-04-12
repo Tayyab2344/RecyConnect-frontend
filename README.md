@@ -28,31 +28,25 @@ cd RecyConnect-frontend
 flutter pub get
 ```
 
-### 3. Environment Configuration
+### 3. Runtime Configuration
 
-Create a `.env` file in the root directory:
+This project now uses `--dart-define` for environment-specific values.
 
-```env
-API_URL=http://192.168.1.13:5000/api
-```
+Local development example:
 
-> **Note:** Replace `192.168.1.13` with your local machine's IP address or production API URL.
-
-### 4. Configure API Base URL
-
-The API base URL is configured in `lib/core/constants/api_constants.dart`:
-
-```dart
-static const String baseUrl = String.fromEnvironment(
-  'API_URL',
-  defaultValue: 'http://192.168.1.13:5000/api'
-);
-```
-
-To use a different URL at runtime:
 ```bash
-flutter run --dart-define=API_URL=http://your-api-url:5000/api
+flutter run --dart-define=API_URL=http://192.168.1.13:5000/api
 ```
+
+Release example:
+
+```bash
+flutter build apk --release \
+  --dart-define=API_URL=https://your-production-api.example.com/api \
+  --dart-define=STRIPE_PUBLISHABLE_KEY=pk_live_your_publishable_key
+```
+
+The runtime configuration lives in `lib/core/constants/app_config.dart`.
 
 ### 5. Run the Application
 
@@ -86,7 +80,7 @@ The APK will be located at: `build/app/outputs/flutter-apk/app-debug.apk`
 ### Android APK (Release)
 
 ```bash
-flutter build apk --release
+flutter build apk --release --dart-define=API_URL=https://your-production-api.example.com/api --dart-define=STRIPE_PUBLISHABLE_KEY=pk_live_your_publishable_key
 ```
 
 The APK will be located at: `build/app/outputs/flutter-apk/app-release.apk`
@@ -94,7 +88,7 @@ The APK will be located at: `build/app/outputs/flutter-apk/app-release.apk`
 ### Android App Bundle (For Google Play Store)
 
 ```bash
-flutter build appbundle --release
+flutter build appbundle --release --dart-define=API_URL=https://your-production-api.example.com/api --dart-define=STRIPE_PUBLISHABLE_KEY=pk_live_your_publishable_key
 ```
 
 ### iOS App (macOS only)
@@ -187,9 +181,9 @@ RecyConnect-frontend/
    - **Windows:** Run `ipconfig` in Command Prompt
    - **macOS/Linux:** Run `ifconfig` in Terminal
 
-2. Update `lib/core/constants/api_constants.dart`:
-   ```dart
-   static const String baseUrl = 'http://YOUR_LOCAL_IP:5000/api';
+2. Run with your local backend URL:
+   ```bash
+   flutter run --dart-define=API_URL=http://YOUR_LOCAL_IP:5000/api
    ```
 
 3. Ensure your backend is running and listening on `0.0.0.0`
@@ -201,8 +195,7 @@ RecyConnect-frontend/
 The app requires the following permissions (configured in `android/app/src/main/AndroidManifest.xml`):
 - Internet access
 - Camera (for profile pictures and document scanning)
-- Location (for address detection)
-- Storage (for file uploads)
+- Media/image access for uploads
 
 ### iOS Permissions
 
@@ -305,9 +298,11 @@ flutter run
 
 ### Google Play Store (Android)
 
-1. Configure signing in `android/app/build.gradle`
-2. Build app bundle: `flutter build appbundle --release`
-3. Upload to Google Play Console
+1. Create a real release keystore
+2. Copy `android/key.properties.example` to `android/key.properties` and fill in your values
+3. Build app bundle:
+   `flutter build appbundle --release --dart-define=API_URL=https://your-production-api.example.com/api --dart-define=STRIPE_PUBLISHABLE_KEY=pk_live_your_publishable_key`
+4. Upload the `.aab` to Google Play Console
 
 ### Apple App Store (iOS)
 
@@ -326,7 +321,7 @@ flutter run
 ## Security
 
 - All API calls use HTTPS in production
-- JWT tokens stored securely in SharedPreferences
+- JWT tokens stored using secure device storage
 - Sensitive data never logged in release builds
 - Input validation on all forms
 

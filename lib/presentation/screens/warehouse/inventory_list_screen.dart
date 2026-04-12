@@ -1,6 +1,5 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import '../../../core/models/warehouse_inventory.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_colors.dart';
 import 'add_warehouse_item_screen.dart';
@@ -160,7 +159,7 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
         border: Border(
           bottom: BorderSide(
             color: (isDark ? AppTheme.darkSecondaryGreen : AppTheme.lightGray)
-                .withOpacity(0.3),
+                .withValues(alpha: 0.3),
           ),
         ),
       ),
@@ -286,7 +285,7 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
         border: Border(
           bottom: BorderSide(
             color: (isDark ? AppTheme.darkSecondaryGreen : AppTheme.lightGray)
-                .withOpacity(0.3),
+                .withValues(alpha: 0.3),
           ),
         ),
       ),
@@ -348,13 +347,13 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isLowStock
-              ? AppTheme.errorRed.withOpacity(0.3)
+              ? AppTheme.errorRed.withValues(alpha: 0.3)
               : (isDark ? AppTheme.darkSecondaryGreen : AppTheme.lightGray)
-                  .withOpacity(0.3),
+                  .withValues(alpha: 0.3),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -386,7 +385,7 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             color: (isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen)
-                                .withOpacity(0.1),
+                                .withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
@@ -415,7 +414,7 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    color: AppTheme.errorRed.withOpacity(0.1),
+                    color: AppTheme.errorRed.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
@@ -527,7 +526,8 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
         color: isDark ? AppTheme.darkCardSurface : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: (isDark ? AppTheme.darkSecondaryGreen : AppTheme.lightGray).withOpacity(0.3),
+          color: (isDark ? AppTheme.darkSecondaryGreen : AppTheme.lightGray)
+              .withValues(alpha: 0.3),
         ),
       ),
       child: Column(
@@ -588,7 +588,7 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
           const SizedBox(height: 8),
           LinearProgressIndicator(
             value: progress,
-            backgroundColor: color.withOpacity(0.1),
+            backgroundColor: color.withValues(alpha: 0.1),
             valueColor: AlwaysStoppedAnimation<Color>(color),
             minHeight: 4,
             borderRadius: BorderRadius.circular(2),
@@ -607,7 +607,7 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
             Icons.inventory_2_outlined,
             size: 64,
             color: (isDark ? AppTheme.darkTextSecondary : AppTheme.textLight)
-                .withOpacity(0.5),
+                .withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
           Text(

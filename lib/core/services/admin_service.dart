@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/api_constants.dart';
+import 'secure_storage_service.dart';
 
 class AdminService extends ChangeNotifier {
   // Update the baseUrl in lib/core/constants/api_constants.dart
@@ -27,8 +27,7 @@ class AdminService extends ChangeNotifier {
   }
 
   Future<void> _loadToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    _token = prefs.getString('auth_token');
+    _token = await SecureStorageService.readToken();
   }
 
   void _setLoading(bool loading) {
