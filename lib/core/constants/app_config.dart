@@ -6,7 +6,7 @@ class AppConfig {
 
   static const String stripePublishableKey = String.fromEnvironment(
     'STRIPE_PUBLISHABLE_KEY',
-    defaultValue: '',
+    defaultValue: 'pk_test_51TIrmdRoUZN6nt4Cr39P7xQbKlfFVBdSNxnCEnliaJueZcUiKUw1QxuXkUj2VJR9KsiQCUxSXJI58DewZDyoHSUS00k7tJCsi0',
   );
 
   static bool get hasStripePublishableKey =>
