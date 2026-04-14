@@ -23,7 +23,11 @@ class PaymentService {
     if (response.statusCode == 201) {
       return jsonDecode(response.body);
     } else {
-      throw Exception('Failed to create payment intent: ${response.body}');
+      // Log the full error for debugging
+      print('[PaymentService] createPaymentIntent FAILED: status=${response.statusCode}, body=${response.body}');
+      final errorBody = jsonDecode(response.body);
+      final message = errorBody['message'] ?? 'Failed to create payment intent';
+      throw Exception(message);
     }
   }
 

@@ -102,18 +102,6 @@ class SettingsScreen extends StatelessWidget {
                                           : Colors.white,
                                     ),
                                   ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    isDark
-                                        ? 'Dark greenish theme active'
-                                        : 'White + green theme active',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: isDark
-                                          ? AppTheme.darkTextSecondary
-                                          : Colors.white.withValues(alpha: 0.9),
-                                    ),
-                                  ),
                                 ],
                               ),
                             ),
@@ -141,11 +129,6 @@ class SettingsScreen extends StatelessWidget {
                                         ?.color,
                                   ),
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Switch between light and dark themes',
-                                  style: Theme.of(context).textTheme.labelSmall,
-                                ),
                               ],
                             ),
                             Transform.scale(
@@ -170,41 +153,6 @@ class SettingsScreen extends StatelessWidget {
                   ),
                 );
               },
-            ),
-
-            const SizedBox(height: 24),
-
-            // Theme Options Info
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                color: Theme.of(context).brightness == Brightness.dark
-                      ? AppTheme.darkPrimaryGreen.withValues(alpha: 0.3)
-                      : AppTheme.primaryGreen.withValues(alpha: 0.2),
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.info_outline,
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? AppTheme.darkPrimaryGreen
-                        : AppTheme.primaryGreen,
-                    size: 24,
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Text(
-                      'Your theme preference will be saved and applied across all screens.',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                  ),
-                ],
-              ),
             ),
 
             const SizedBox(height: 32),
