@@ -36,7 +36,7 @@ class _ProfileScreenState extends State<ProfileScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 2, vsync: this);
 
     // Pulse animation for glowing effects
     _pulseController = AnimationController(
@@ -164,7 +164,6 @@ class _ProfileScreenState extends State<ProfileScreen>
                                   controller: _tabController,
                                   children: [
                                     _buildPersonalTab(user, isDark, authService),
-                                    _buildStatsTab(isDark, authService),
                                     _buildActivityTab(isDark, authService),
                                   ],
                                 ),
@@ -553,7 +552,6 @@ class _ProfileScreenState extends State<ProfileScreen>
             labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
             tabs: const [
               Tab(text: 'Personal'),
-              Tab(text: 'Stats'),
               Tab(text: 'Activity'),
             ],
           ),

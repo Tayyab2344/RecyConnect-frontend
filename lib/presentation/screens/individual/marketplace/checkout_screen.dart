@@ -160,51 +160,113 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ),
         );
       }
+    } catch (e) {
+      // Catch backend/network errors (e.g., 400 from create-intent)
+      if (!mounted) return;
+      debugPrint('Stripe payment setup error: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Payment setup failed. Your order #${order.id} is saved — you can retry payment from My Orders.',
+          ),
+          backgroundColor: Colors.orange.shade700,
+          duration: const Duration(seconds: 5),
+        ),
+      );
+      // Don't show success dialog — payment didn't go through.
+      // The order is saved and user can retry from My Orders.
     }
   }
 
   void _showSuccessDialog({required bool isCod}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accentColor = isDark
+        ? MarketplaceTheme.darkAccentGreen
+        : MarketplaceTheme.lightAccent;
+
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
+      builder: (ctx) => Dialog(
         backgroundColor: Colors.transparent,
-        contentPadding: EdgeInsets.zero,
-        content: GlassCard(
-          borderRadius: 20,
+        elevation: 0,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1A2D40) : Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: isDark
+                  ? accentColor.withOpacity(0.3)
+                  : Colors.grey.shade200,
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: isDark
+                    ? accentColor.withOpacity(0.15)
+                    : Colors.black.withOpacity(0.1),
+                blurRadius: 24,
+                spreadRadius: 2,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                isCod ? Icons.check_circle_outline : Icons.verified_rounded,
-                color: MarketplaceTheme.lightAccent,
-                size: 64,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                isCod ? 'Order Placed!' : 'Payment Successful!',
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+              // Success icon with animated circle
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: accentColor.withOpacity(0.1),
+                  border: Border.all(
+                    color: accentColor.withOpacity(0.4),
+                    width: 2,
+                  ),
+                ),
+                child: Icon(
+                  isCod
+                      ? Icons.check_circle_outline_rounded
+                      : Icons.verified_rounded,
+                  color: accentColor,
+                  size: 48,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 20),
+              Text(
+                isCod ? 'Order Placed!' : 'Payment Successful!',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 10),
               Text(
                 isCod
                     ? 'Your order is placed. Cash payment will be collected on delivery after the seller confirms.'
                     : 'Your payment was processed successfully via Stripe. The seller will confirm your order shortly.',
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.white70, fontSize: 13),
+                style: TextStyle(
+                  color: isDark ? Colors.white60 : Colors.black54,
+                  fontSize: 13,
+                  height: 1.4,
+                ),
               ),
-              const SizedBox(height: 24),
-              NeonButton(
-                text: 'VIEW MY ORDERS',
-                onPressed: () {
-                  Navigator.of(ctx).pop();
-                  int count = 0;
-                  Navigator.of(context).popUntil((route) => count++ == 2);
-                },
+              const SizedBox(height: 28),
+              SizedBox(
+                width: double.infinity,
+                child: NeonButton(
+                  text: 'VIEW MY ORDERS',
+                  onPressed: () {
+                    Navigator.of(ctx).pop();
+                    int count = 0;
+                    Navigator.of(context).popUntil((route) => count++ == 2);
+                  },
+                ),
               ),
             ],
           ),
