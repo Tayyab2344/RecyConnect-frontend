@@ -203,7 +203,7 @@ class ListingDetailScreen extends StatelessWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        '${listing.materialTypeDisplay} Listing',
+                        listing.displayTitle,
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 24,
@@ -234,12 +234,44 @@ class ListingDetailScreen extends StatelessWidget {
   Widget _buildMainInfoCard(BuildContext context, bool isDark) {
     return GlassCard(
       padding: const EdgeInsets.all(20),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildInfoItem(Icons.scale, 'Weight', '${listing.estimatedWeight} kg', isDark),
-          Container(width: 1, height: 40, color: isDark ? Colors.white24 : Colors.black12),
-          _buildInfoItem(Icons.calendar_today, 'Date', DateFormat('MMM dd, yyyy').format(listing.createdAt), isDark),
+          // Title
+          if (listing.title != null && listing.title!.trim().isNotEmpty) ...[
+            Text(
+              'TITLE',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: isDark ? MarketplaceTheme.darkAccentCyan : MarketplaceTheme.lightAccent,
+                letterSpacing: 1.5,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              listing.title!,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Divider(color: isDark ? Colors.white12 : Colors.black12),
+            const SizedBox(height: 12),
+          ],
+          // Stats row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildInfoItem(Icons.category_outlined, 'Material', listing.materialTypeDisplay, isDark),
+              Container(width: 1, height: 40, color: isDark ? Colors.white24 : Colors.black12),
+              _buildInfoItem(Icons.scale, 'Weight', '${listing.estimatedWeight} kg', isDark),
+              Container(width: 1, height: 40, color: isDark ? Colors.white24 : Colors.black12),
+              _buildInfoItem(Icons.calendar_today, 'Date', DateFormat('MMM dd, yyyy').format(listing.createdAt), isDark),
+            ],
+          ),
         ],
       ),
     );
@@ -277,16 +309,47 @@ class ListingDetailScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Logistics',
+            'LISTING DETAILS',
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 12,
               fontWeight: FontWeight.bold,
               color: isDark ? MarketplaceTheme.darkAccentCyan : MarketplaceTheme.lightAccent,
-              letterSpacing: 1.2,
+              letterSpacing: 1.5,
             ),
           ),
           const SizedBox(height: 16),
           _buildDetailRow(Icons.location_on_outlined, 'Pickup Location', listing.pickupAddress, isDark),
+          const SizedBox(height: 16),
+          _buildDetailRow(
+            Icons.my_location_outlined, 
+            'Location Method', 
+            (listing.locationMethod ?? 'manual').toUpperCase(), 
+            isDark,
+          ),
+          const SizedBox(height: 16),
+          _buildDetailRow(
+            Icons.info_outline, 
+            'Status', 
+            listing.statusDisplay, 
+            isDark,
+            valueColor: _getStatusColor(listing.status),
+          ),
+          const SizedBox(height: 16),
+          _buildDetailRow(
+            Icons.update, 
+            'Last Updated', 
+            DateFormat('MMM dd, yyyy – hh:mm a').format(listing.updatedAt), 
+            isDark,
+          ),
+          if (listing.latitude != null && listing.longitude != null) ...[
+            const SizedBox(height: 16),
+            _buildDetailRow(
+              Icons.pin_drop_outlined, 
+              'Coordinates', 
+              '${listing.latitude!.toStringAsFixed(4)}, ${listing.longitude!.toStringAsFixed(4)}', 
+              isDark,
+            ),
+          ],
         ],
       ),
     );
@@ -321,7 +384,7 @@ class ListingDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailRow(IconData icon, String label, String value, bool isDark) {
+  Widget _buildDetailRow(IconData icon, String label, String value, bool isDark, {Color? valueColor}) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -351,7 +414,7 @@ class ListingDetailScreen extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w500,
-                  color: isDark ? Colors.white : Colors.black87,
+                  color: valueColor ?? (isDark ? Colors.white : Colors.black87),
                 ),
               ),
             ],

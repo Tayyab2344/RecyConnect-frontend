@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/marketplace_theme.dart';
-import '../../../../core/models/listing_model.dart';
-import '../../../widgets/marketplace/glass_card.dart';
-import '../../../widgets/marketplace/neon_button.dart';
+import '../../../core/theme/marketplace_theme.dart';
+import '../../../core/models/listing_model.dart';
+import '../../widgets/marketplace/glass_card.dart';
+import '../../widgets/marketplace/neon_button.dart';
 import '../individual/marketplace/checkout_screen.dart'; // Route to the checkout screen
 
 class ItemDetailScreen extends StatefulWidget {
@@ -198,7 +198,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          '${item.estimatedWeight} kg of ${item.materialType}',
+                          item.displayTitle,
                           style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,

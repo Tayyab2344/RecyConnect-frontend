@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import '../../../../core/models/listing_model.dart';
 import '../../../../core/services/auth_service.dart';
 import 'checkout_screen.dart';
@@ -289,7 +290,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  '${widget.item.estimatedWeight} kg of ${widget.item.materialTypeDisplay}',
+                                  widget.item.displayTitle,
                                   style: TextStyle(
                                     fontSize: 22,
                                     fontWeight: FontWeight.w800,
@@ -298,25 +299,97 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                                     letterSpacing: -0.5,
                                   ),
                                 ),
-                                const SizedBox(height: 16),
-                                _infoRow(
-                                  label: 'Seller',
-                                  value: widget.item.user?.name ?? 'Verified Seller',
-                                  isDark: isDark,
+                                const SizedBox(height: 12),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    _infoRow(
+                                      label: 'Weight',
+                                      value: '${widget.item.estimatedWeight} kg',
+                                      isDark: isDark,
+                                    ),
+                                    _infoRow(
+                                      label: 'Posted On',
+                                      value: DateFormat('MMM dd, yyyy').format(widget.item.createdAt),
+                                      isDark: isDark,
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(height: 10),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          // ── Seller Profile Card ───────────────────────
+                          _sectionCard(
+                            isDark: isDark,
+                            child: Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 24,
+                                  backgroundColor: isDark ? const Color(0xFF2E7D32) : const Color(0xFFE8F5E9),
+                                  child: Icon(Icons.person, color: isDark ? Colors.white : const Color(0xFF2E7D32), size: 28),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        widget.item.user?.name ?? 'Verified Seller',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        widget.item.user?.createdAt != null 
+                                          ? 'Member since ${DateFormat('MMM yyyy').format(widget.item.user!.createdAt!)}' 
+                                          : 'Active Member',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: isDark ? Colors.white54 : const Color(0xFF6B7280),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Icon(Icons.chevron_right, color: isDark ? Colors.white24 : Colors.black26),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          // ── Logistics & Notes Card ───────────────────────
+                          _sectionCard(
+                            isDark: isDark,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
                                 _infoRow(
-                                  label: 'Pickup',
+                                  label: 'Pickup Location',
                                   value: widget.item.pickupAddress.isNotEmpty
                                       ? widget.item.pickupAddress
                                       : 'Location shared after purchase',
                                   isDark: isDark,
                                 ),
+                                const SizedBox(height: 12),
+                                _infoRow(
+                                  label: 'Location Method',
+                                  value: (widget.item.locationMethod ?? 'Manual').toUpperCase(),
+                                  isDark: isDark,
+                                ),
                                 if (widget.item.notes != null &&
                                     widget.item.notes!.isNotEmpty) ...[
-                                  const SizedBox(height: 10),
+                                  const SizedBox(height: 12),
+                                  Divider(color: isDark ? Colors.white12 : Colors.black12),
+                                  const SizedBox(height: 8),
                                   _infoRow(
-                                    label: 'Notes',
+                                    label: 'Seller Notes',
                                     value: widget.item.notes!,
                                     isDark: isDark,
                                   ),
@@ -493,12 +566,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.shopping_bag_rounded, size: 20),
-                          SizedBox(width: 10),
-                          Text(
+                      child: const Text(
                             'Confirm Purchase',
                             style: TextStyle(
                               fontSize: 16,
@@ -506,8 +574,6 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                               letterSpacing: 0.3,
                             ),
                           ),
-                        ],
-                      ),
                     ),
             ),
           );

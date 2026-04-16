@@ -367,7 +367,7 @@ class _IndividualDashboardState extends State<IndividualDashboard> {
 
     for (final listing in _recentListings) {
       activities.add({
-        'title': 'Listed: ${listing.estimatedWeight} kg of ${listing.materialTypeDisplay}',
+        'title': 'Listed: ${listing.displayTitle}',
         'subtitle': listing.statusDisplay,
         'time': _timeAgo(listing.createdAt),
         'icon': Icons.add_circle_outline,
@@ -535,7 +535,7 @@ class _IndividualDashboardState extends State<IndividualDashboard> {
     for (final listing in pendingListings) {
       alerts.add({
         'title': 'Listing awaiting buyer',
-        'subtitle': '${listing.estimatedWeight} kg of ${listing.materialTypeDisplay} — ${listing.pickupAddress}',
+        'subtitle': '${listing.displayTitle} — ${listing.pickupAddress}',
         'icon': Icons.local_offer_outlined,
         'color': const Color(0xFFFFA726),
       });

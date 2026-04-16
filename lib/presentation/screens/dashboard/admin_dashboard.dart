@@ -22,7 +22,7 @@ class AdminDashboard extends StatelessWidget {
                 builder: (context, authService, child) {
                   return Text(
                     'Welcome, ${authService.user?['name'] ?? 'Admin'}!',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                       color: Theme.of(context).textTheme.headlineSmall?.color,
@@ -31,7 +31,7 @@ class AdminDashboard extends StatelessWidget {
                 },
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'System Administration Dashboard',
                 style: TextStyle(
                   fontSize: 16,

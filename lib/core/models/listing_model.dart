@@ -6,12 +6,14 @@ class ListingUser {
   final String? name;
   final String? email;
   final String? contactNo;
+  final DateTime? createdAt;
 
   ListingUser({
     required this.id,
     this.name,
     this.email,
     this.contactNo,
+    this.createdAt,
   });
 
   factory ListingUser.fromJson(Map<String, dynamic> json) {
@@ -20,6 +22,7 @@ class ListingUser {
       name: json['name'],
       email: json['email'],
       contactNo: json['contactNo'],
+      createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt']) : null,
     );
   }
 }
@@ -33,6 +36,7 @@ class Listing {
   final double? latitude;
   final double? longitude;
   final String? locationMethod;
+  final String? title;
   final String? notes;
   final String status;
   final String? buyerInfo;
@@ -50,6 +54,7 @@ class Listing {
     this.latitude,
     this.longitude,
     this.locationMethod,
+    this.title,
     this.notes,
     required this.status,
     this.buyerInfo,
@@ -69,6 +74,7 @@ class Listing {
       latitude: json['latitude'] != null ? (json['latitude'] as num).toDouble() : null,
       longitude: json['longitude'] != null ? (json['longitude'] as num).toDouble() : null,
       locationMethod: json['locationMethod'],
+      title: json['title'],
       notes: json['notes'],
       status: json['status'],
       buyerInfo: json['buyerInfo'],
@@ -89,6 +95,7 @@ class Listing {
       'latitude': latitude,
       'longitude': longitude,
       'locationMethod': locationMethod,
+      'title': title,
       'notes': notes,
       'status': status,
       'buyerInfo': buyerInfo,
@@ -107,6 +114,7 @@ class Listing {
       if (latitude != null) 'latitude': latitude,
       if (longitude != null) 'longitude': longitude,
       if (locationMethod != null) 'locationMethod': locationMethod,
+      if (title != null && title!.isNotEmpty) 'title': title,
       if (notes != null && notes!.isNotEmpty) 'notes': notes,
       if (images != null && images!.isNotEmpty) 'images': images,
     };
@@ -171,6 +179,14 @@ class Listing {
       default:
         return materialType;
     }
+  }
+
+  /// Returns the user-provided title, or falls back to "X kg of Material"
+  String get displayTitle {
+    if (title != null && title!.trim().isNotEmpty) {
+      return title!;
+    }
+    return '$estimatedWeight kg of $materialTypeDisplay';
   }
 }
 

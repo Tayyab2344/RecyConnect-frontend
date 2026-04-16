@@ -89,9 +89,12 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen> {
     return Scaffold(
       extendBodyBehindAppBar: true, // For glass effect
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Marketplace',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: isDark ? Colors.white : Colors.black87,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         centerTitle: true,
         backgroundColor: Colors.transparent,
@@ -137,7 +140,7 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen> {
                                   gridDelegate:
                                       const SliverGridDelegateWithFixedCrossAxisCount(
                                     crossAxisCount: 2,
-                                    childAspectRatio: 0.75,
+                                    childAspectRatio: 0.62,
                                     mainAxisSpacing: 16,
                                     crossAxisSpacing: 16,
                                   ),
@@ -355,24 +358,74 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Category badge
                       Text(
-                        item.materialType.toUpperCase(),
+                        item.materialTypeDisplay.toUpperCase(),
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 10,
                           fontWeight: FontWeight.bold,
                           color: isDark
                               ? MarketplaceTheme.darkAccentGreen
                               : MarketplaceTheme.lightAccent,
+                          letterSpacing: 0.5,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 3),
+                      // Title
                       Text(
-                        '${item.estimatedWeight} kg',
+                        item.displayTitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 14,
                           fontWeight: FontWeight.bold,
                           color: isDark ? Colors.white : Colors.black87,
                         ),
+                      ),
+                      const SizedBox(height: 4),
+                      // Seller name
+                      if (item.user?.name != null)
+                        Row(
+                          children: [
+                            Icon(Icons.person_outline, size: 12,
+                                color: isDark ? Colors.white38 : Colors.black45),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                'Sold by ${item.user!.name}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: isDark ? Colors.white38 : Colors.black45,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      const SizedBox(height: 6),
+                      // Price & weight row
+                      Row(
+                        children: [
+                          Text(
+                            'Rs ${(item.estimatedWeight * 20).toStringAsFixed(0)}',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: isDark
+                                  ? MarketplaceTheme.darkAccentGreen
+                                  : MarketplaceTheme.lightAccent,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            '· ${item.estimatedWeight} kg',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: isDark ? Colors.white54 : Colors.black45,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),

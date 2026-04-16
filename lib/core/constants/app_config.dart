@@ -1,7 +1,7 @@
 class AppConfig {
   static const String apiBaseUrl = String.fromEnvironment(
     'API_URL',
-    defaultValue: 'https://recy-connect-backend.vercel.app/api',
+    defaultValue: 'https://recy-connect-backend-3npm.vercel.app/api',
   );
 
   static const String stripePublishableKey = String.fromEnvironment(

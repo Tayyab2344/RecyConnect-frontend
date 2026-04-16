@@ -317,7 +317,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        childAspectRatio: 0.75,
+        childAspectRatio: 0.65,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
       ),
@@ -434,11 +434,22 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    listing.materialTypeDisplay,
+                    listing.displayTitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: isDark ? Colors.white : const Color(0xFF2C3E50),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    listing.materialTypeDisplay,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: _getMaterialColor(listing.materialType),
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -449,21 +460,17 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                       Text(
                         '${listing.estimatedWeight} kg',
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 12,
                           color: isDark ? Colors.white70 : Colors.grey[700],
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(Icons.calendar_today, size: 14, color: isDark ? Colors.white60 : Colors.grey),
+                      const Spacer(),
+                      Icon(Icons.calendar_today, size: 12, color: isDark ? Colors.white60 : Colors.grey),
                       const SizedBox(width: 4),
                       Text(
                         DateFormat('MMM dd').format(listing.createdAt),
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 11,
                           color: isDark ? Colors.white54 : Colors.grey[600],
                         ),
                       ),

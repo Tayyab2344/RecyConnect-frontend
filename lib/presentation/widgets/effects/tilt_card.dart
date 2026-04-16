@@ -1,5 +1,5 @@
-import 'dart:ui' show PointerEvent, PointerExitEvent;
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart' show PointerExitEvent;
 import 'dart:math' as math;
 
 /// 3D Tilt Card Effect

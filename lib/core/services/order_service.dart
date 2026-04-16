@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../models/order_model.dart';
 import '../constants/api_constants.dart';
 import 'api_service.dart';
@@ -103,6 +104,19 @@ class OrderService {
       }
     } catch (e) {
       throw Exception('Error updating order: $e');
+    }
+  }
+
+  // Cancel an order (used when Stripe payment is cancelled/failed)
+  Future<void> cancelOrder(int orderId, {String reason = 'Payment cancelled by user'}) async {
+    try {
+      await _apiService.post(
+        '/orders/$orderId/cancel',
+        {'reason': reason},
+      );
+    } catch (e) {
+      debugPrint('Error cancelling order: $e');
+      // Don't rethrow — cancellation is best-effort cleanup
     }
   }
 

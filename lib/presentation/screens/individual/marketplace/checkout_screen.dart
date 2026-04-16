@@ -114,6 +114,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       final clientSecret = intentData['data']?['clientSecret'] as String?;
 
       if (clientSecret == null) {
+        // Cancel the order since payment can't proceed
+        await _orderService.cancelOrder(order.id, reason: 'Payment setup failed');
         throw Exception('Payment setup failed — no client secret returned.');
       }
 
@@ -147,10 +149,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       if (mounted) _showSuccessDialog(isCod: false);
     } on StripeException catch (e) {
       if (!mounted) return;
-      // User cancelled — don't show error, just stay on checkout
+      // Cancel the order since payment was not completed
+      await _orderService.cancelOrder(order.id, reason: 'Stripe payment cancelled/failed');
       if (e.error.code == FailureCode.Canceled) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Payment cancelled. Your order is saved — you can pay later.')),
+          const SnackBar(content: Text('Payment cancelled.')),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -163,18 +166,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     } catch (e) {
       // Catch backend/network errors (e.g., 400 from create-intent)
       if (!mounted) return;
+      final errorMsg = e.toString()
+          .replaceAll('Exception: ', '')
+          .replaceAll('Error creating order: Exception: ', '');
       debugPrint('Stripe payment setup error: $e');
+      // Cancel the order since payment setup failed
+      await _orderService.cancelOrder(order.id, reason: 'Payment setup failed');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            'Payment setup failed. Your order #${order.id} is saved — you can retry payment from My Orders.',
-          ),
+          content: Text(errorMsg.isNotEmpty ? errorMsg : 'Payment setup failed. Please try again.'),
           backgroundColor: Colors.orange.shade700,
-          duration: const Duration(seconds: 5),
+          duration: const Duration(seconds: 4),
         ),
       );
-      // Don't show success dialog — payment didn't go through.
-      // The order is saved and user can retry from My Orders.
     }
   }
 
@@ -330,7 +334,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  '${item.estimatedWeight} kg of ${item.materialType}',
+                                  item.displayTitle,
                                   style: TextStyle(
                                     color: isDark ? Colors.white : Colors.black87,
                                     fontWeight: FontWeight.bold,

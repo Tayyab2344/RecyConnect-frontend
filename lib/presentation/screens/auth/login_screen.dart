@@ -27,6 +27,7 @@ class _LoginScreenState extends State<LoginScreen>
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  String? _loginError;
 
   late AnimationController _entranceController;
   late AnimationController _pulseController;
@@ -90,6 +91,9 @@ class _LoginScreenState extends State<LoginScreen>
 
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
+
+    // Clear previous error
+    setState(() => _loginError = null);
 
     final authService = Provider.of<AuthService>(context, listen: false);
     final email = _emailController.text.trim();
@@ -169,16 +173,19 @@ class _LoginScreenState extends State<LoginScreen>
           );
         }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(authService.error ?? 'Login failed'),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
+        // Show inline error card instead of SnackBar
+        setState(() {
+          final rawError = authService.error ?? 'Login failed';
+          // Map network errors to user-friendly messages
+          final errorLower = rawError.toLowerCase();
+          if (errorLower.contains('network') || errorLower.contains('socket') || errorLower.contains('connection')) {
+            _loginError = 'No internet connection. Please check your network and try again.';
+          } else if (errorLower.contains('timeout')) {
+            _loginError = 'Connection timed out. Please try again.';
+          } else {
+            _loginError = rawError;
+          }
+        });
       }
     }
   }
@@ -557,6 +564,10 @@ class _LoginScreenState extends State<LoginScreen>
                       ),
                       const SizedBox(height: 24),
 
+                      // Inline Error Card
+                      if (_loginError != null)
+                        _buildErrorCard(isDark),
+
                       // Login Button
                       Consumer<AuthService>(
                         builder: (context, authService, child) {
@@ -758,6 +769,79 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
+  
+  Widget _buildErrorCard(bool isDark) {
+    final isNetworkError = _loginError != null &&
+        (_loginError!.toLowerCase().contains('internet') ||
+         _loginError!.toLowerCase().contains('network') ||
+         _loginError!.toLowerCase().contains('connection') ||
+         _loginError!.toLowerCase().contains('timeout'));
+
+    final errorIcon = isNetworkError
+        ? Icons.wifi_off_rounded
+        : Icons.error_outline_rounded;
+
+    final errorBgColor = isDark
+        ? (isNetworkError ? const Color(0xFF2A1A00) : const Color(0xFF2A0A0A))
+        : (isNetworkError ? const Color(0xFFFFF8E1) : const Color(0xFFFFF0F0));
+
+    final errorBorderColor = isDark
+        ? (isNetworkError
+            ? Colors.orange.withValues(alpha: 0.3)
+            : Colors.red.withValues(alpha: 0.3))
+        : (isNetworkError
+            ? Colors.orange.withValues(alpha: 0.4)
+            : Colors.red.withValues(alpha: 0.3));
+
+    final errorIconColor = isNetworkError
+        ? (isDark ? Colors.orange.shade300 : Colors.orange.shade700)
+        : (isDark ? Colors.red.shade300 : Colors.red.shade600);
+
+    final errorTextColor = isDark
+        ? (isNetworkError ? Colors.orange.shade200 : Colors.red.shade200)
+        : (isNetworkError ? Colors.orange.shade800 : Colors.red.shade700);
+
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 20),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: errorBgColor,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: errorBorderColor, width: 1),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(errorIcon, color: errorIconColor, size: 20),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                _loginError!,
+                style: TextStyle(
+                  color: errorTextColor,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  height: 1.4,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            GestureDetector(
+              onTap: () => setState(() => _loginError = null),
+              child: Icon(
+                Icons.close_rounded,
+                color: errorIconColor.withValues(alpha: 0.6),
+                size: 18,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
   Widget _buildSignUpLink(bool isDark) {
     final textColor = isDark 
         ? Colors.white.withValues(alpha: 0.5)
