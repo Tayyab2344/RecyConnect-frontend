@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:recyconnect/core/services/image_classifier_service.dart';
 
 class BulkSellScreen extends StatefulWidget {
   const BulkSellScreen({Key? key}) : super(key: key);
@@ -159,7 +162,7 @@ class _BulkSellScreenState extends State<BulkSellScreen> {
   }
 
   Widget _buildMaterialSelector() {
-    final materials = ['Plastic', 'Metal', 'Glass', 'Paper', 'E-Waste', 'Other'];
+    final materials = ['Plastic', 'Metal', 'Glass', 'Paper', 'E-Waste', 'Clothing', 'Other'];
     
     return Container(
       padding: const EdgeInsets.all(20),
@@ -421,6 +424,35 @@ class _BulkSellScreenState extends State<BulkSellScreen> {
       setState(() {
         _uploadedImages.addAll(images.map((e) => e.path));
       });
+      // Run AI classification on the first image
+      _classifyUploadedImage(images.first.path);
+    }
+  }
+
+  Future<void> _classifyUploadedImage(String imagePath) async {
+    try {
+      final classifier = ImageClassifierService.instance;
+      await classifier.initialize();
+
+      if (classifier.isReady) {
+        final result = await classifier.classifyImage(File(imagePath));
+        if (result != null && mounted) {
+          setState(() {
+            _selectedMaterial = result.displayName;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'AI Detected: ${result.displayName} (${result.confidencePercent} confidence)',
+              ),
+              backgroundColor: const Color(0xFF9C27B0),
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print('AI Classification error: $e');
     }
   }
 

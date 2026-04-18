@@ -41,7 +41,7 @@ class ListingService {
   }) async {
     try {
       final queryParams = <String, String>{};
-      if (material != null) queryParams['material'] = material;
+      if (material != null) queryParams['materialType'] = material;
       if (status != null) queryParams['status'] = status;
       if (startDate != null) queryParams['startDate'] = startDate;
       if (endDate != null) queryParams['endDate'] = endDate;

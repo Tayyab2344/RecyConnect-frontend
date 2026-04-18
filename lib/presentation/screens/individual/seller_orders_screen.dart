@@ -4,6 +4,7 @@ import '../../../core/models/order_model.dart';
 import '../../../core/services/order_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/error_message_helper.dart';
+import '../../widgets/recycle_loader.dart';
 
 class SellerOrdersScreen extends StatefulWidget {
   const SellerOrdersScreen({Key? key}) : super(key: key);
@@ -105,7 +106,7 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
         showDialog(
           context: context,
           barrierDismissible: false,
-          builder: (context) => const Center(child: CircularProgressIndicator()),
+          builder: (context) => const Center(child: RecycleLoader()),
         );
 
         await _orderService.updateOrderStatus(order.id, newStatus);
@@ -147,7 +148,7 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
     return Scaffold(
       backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.backgroundLight,
       appBar: AppBar(
-        title: const Text('Seller Orders'),
+        title: const Text('Manage Sales'),
         centerTitle: true,
         backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.primaryGreen,
         foregroundColor: Colors.white,
@@ -228,7 +229,7 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
           Expanded(
             child: _isLoading
                 ? Center(
-                    child: CircularProgressIndicator(
+                    child: RecycleLoader(
                       color: isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen,
                     ),
                   )

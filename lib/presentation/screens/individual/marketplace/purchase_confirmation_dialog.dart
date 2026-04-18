@@ -51,7 +51,7 @@ class PurchaseConfirmationDialog extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'You are about to purchase ${item.estimatedWeight}kg of ${item.materialType} from ${item.user?.name ?? "Unknown"}.',
+              'You are about to purchase "${item.displayTitle}" from ${item.user?.name ?? "Unknown"}.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: isDark ? Colors.white70 : Colors.black54,

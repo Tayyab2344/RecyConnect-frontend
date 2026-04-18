@@ -27,6 +27,7 @@ class _LoginScreenState extends State<LoginScreen>
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  String? _loginError;
 
   late AnimationController _entranceController;
   late AnimationController _pulseController;
@@ -91,46 +92,14 @@ class _LoginScreenState extends State<LoginScreen>
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
+    // Clear previous error
+    setState(() => _loginError = null);
+
     final authService = Provider.of<AuthService>(context, listen: false);
     final email = _emailController.text.trim();
     final password = _passwordController.text;
 
-    // Check for admin credentials FIRST (before API call)
-    if (email == 'panel.quantix@gmail.com' && password == 'Qx\$9mP#kL2vR@nT7wZ!4') {
-      // Admin login - navigate directly to Admin Dashboard
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Row(
-              children: [
-                Icon(Icons.check_circle_rounded, color: Colors.white),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Welcome Admin! Login successful',
-                    style: TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: AppTheme.primaryGreen,
-            behavior: SnackBarBehavior.floating,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            margin: const EdgeInsets.all(16),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-              builder: (context) => const AdminDashboardScreen()),
-        );
-      }
-      return;
-    }
-
-    // Regular user login - proceed with API call
+    // All logins go through backend API (including admin)
     final success = await authService.login(email, password);
 
     if (mounted) {
@@ -138,6 +107,38 @@ class _LoginScreenState extends State<LoginScreen>
         final user = authService.currentUser;
         final status = user?['verificationStatus'];
         final role = user?['role'];
+
+        // Check if user is admin and navigate to admin dashboard
+        if (role == 'admin') {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Row(
+                children: [
+                  Icon(Icons.check_circle_rounded, color: Colors.white),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Welcome Admin! Login successful',
+                      style: TextStyle(fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: Theme.of(context).primaryColor,
+              behavior: SnackBarBehavior.floating,
+              shape:
+                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              margin: const EdgeInsets.all(16),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+                builder: (context) => const AdminDashboardScreen()),
+          );
+          return;
+        }
 
         if (status == 'PENDING' && role != 'individual') {
           _showStatusDialog(
@@ -159,7 +160,7 @@ class _LoginScreenState extends State<LoginScreen>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: const Text('Welcome back! Login successful'),
-              backgroundColor: const Color(0xFF00D9A5),
+              backgroundColor: AppColors.neonTeal,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -172,16 +173,19 @@ class _LoginScreenState extends State<LoginScreen>
           );
         }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(authService.error ?? 'Login failed'),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
+        // Show inline error card instead of SnackBar
+        setState(() {
+          final rawError = authService.error ?? 'Login failed';
+          // Map network errors to user-friendly messages
+          final errorLower = rawError.toLowerCase();
+          if (errorLower.contains('network') || errorLower.contains('socket') || errorLower.contains('connection')) {
+            _loginError = 'No internet connection. Please check your network and try again.';
+          } else if (errorLower.contains('timeout')) {
+            _loginError = 'Connection timed out. Please try again.';
+          } else {
+            _loginError = rawError;
+          }
+        });
       }
     }
   }
@@ -252,10 +256,10 @@ class _LoginScreenState extends State<LoginScreen>
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    Color(0xFF0A1628), // Deep navy
-                    Color(0xFF0D2137), // Dark teal-navy
-                    Color(0xFF0F2847), // Medium navy
-                    Color(0xFF0A1E35), // Back to deep navy
+                    AppColors.loginNavyDeep, // Deep navy
+                    AppColors.loginNavyDark, // Dark teal-navy
+                    AppColors.loginNavyMedium, // Medium navy
+                    AppColors.loginNavyLight, // Back to deep navy
                   ],
                   stops: [0.0, 0.3, 0.7, 1.0],
                 )
@@ -264,10 +268,10 @@ class _LoginScreenState extends State<LoginScreen>
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Color(0xFFFFFFFF), // Pure white
-                    Color(0xFFF0F9F7), // Soft white-teal
-                    Color(0xFFE8F5F2), // Light teal
-                    Color(0xFFDFF2ED), // Soft teal
+                    AppColors.white, // Pure white
+                    AppColors.loginWhiteSoft, // Soft white-teal
+                    AppColors.loginTealLight, // Light teal
+                    AppColors.loginTealSoft, // Soft teal
                   ],
                   stops: [0.0, 0.3, 0.7, 1.0],
                 ),
@@ -298,9 +302,9 @@ class _LoginScreenState extends State<LoginScreen>
                     radius: 1.2,
                     colors: isDark
                         ? [
-                            const Color(0xFF00D9A5).withValues(alpha: 0.05),
+                            AppColors.neonTeal.withValues(alpha: 0.05),
                             Colors.transparent,
-                            const Color(0xFF0066FF).withValues(alpha: 0.03),
+                            AppColors.neonBlue.withValues(alpha: 0.03),
                           ]
                         : [
                             const Color(0xFF1A8F3A).withValues(alpha: 0.03),
@@ -402,7 +406,7 @@ class _LoginScreenState extends State<LoginScreen>
     final textColor = isDark ? Colors.white : const Color(0xFF1A1A1A);
     final subtextColor = isDark 
         ? Colors.white.withValues(alpha: 0.6)
-        : const Color(0xFF666666);
+        : AppColors.darkGrey;
 
     return AnimatedBuilder(
       animation: _pulseAnimation,
@@ -421,7 +425,7 @@ class _LoginScreenState extends State<LoginScreen>
                       spreadRadius: 2,
                     ),
                     BoxShadow(
-                      color: const Color(0xFF0066FF).withValues(alpha: 0.08 * _pulseAnimation.value),
+                      color: AppColors.neonBlue.withValues(alpha: 0.08 * _pulseAnimation.value),
                       blurRadius: 40,
                       spreadRadius: -5,
                     ),
@@ -551,7 +555,7 @@ class _LoginScreenState extends State<LoginScreen>
                             style: TextStyle(
                               color: isDark 
                                   ? Colors.white.withValues(alpha: 0.7)
-                                  : const Color(0xFF666666),
+                                  : AppColors.darkGrey,
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
                             ),
@@ -559,6 +563,10 @@ class _LoginScreenState extends State<LoginScreen>
                         ),
                       ),
                       const SizedBox(height: 24),
+
+                      // Inline Error Card
+                      if (_loginError != null)
+                        _buildErrorCard(isDark),
 
                       // Login Button
                       Consumer<AuthService>(
@@ -589,23 +597,23 @@ class _LoginScreenState extends State<LoginScreen>
   }) {
     final labelColor = isDark 
         ? Colors.white.withValues(alpha: 0.8)
-        : const Color(0xFF333333);
+        : AppColors.textDarkGrey;
     final textColor = isDark ? Colors.white : const Color(0xFF1A1A1A);
     final hintColor = isDark 
         ? Colors.white.withValues(alpha: 0.3)
         : const Color(0xFF999999);
     final iconColor = isDark 
         ? Colors.white.withValues(alpha: 0.5)
-        : const Color(0xFF666666);
+        : AppColors.darkGrey;
     final fillColor = isDark 
         ? Colors.white.withValues(alpha: 0.08)
-        : const Color(0xFFF5F5F5);
+        : AppColors.softGreyBg;
     final borderColor = isDark 
         ? Colors.white.withValues(alpha: 0.15)
-        : const Color(0xFFDDDDDD);
+        : AppColors.lightGrey;
     final focusColor = isDark 
-        ? const Color(0xFF00D9A5)
-        : const Color(0xFF1A8F3A);
+        ? AppColors.neonTeal
+        : AppColors.primaryGreen;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -700,8 +708,8 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Widget _buildLoginButton(bool isLoading, bool isDark) {
-    final buttonColor = isDark ? const Color(0xFF00D9A5) : const Color(0xFF1A8F3A);
-    final buttonTextColor = isDark ? const Color(0xFF0A1628) : Colors.white;
+    final buttonColor = isDark ? AppColors.neonTeal : AppColors.primaryGreen;
+    final buttonTextColor = isDark ? AppColors.loginNavyDeep : Colors.white;
 
     return AnimatedBuilder(
       animation: _pulseAnimation,
@@ -761,10 +769,83 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
+  
+  Widget _buildErrorCard(bool isDark) {
+    final isNetworkError = _loginError != null &&
+        (_loginError!.toLowerCase().contains('internet') ||
+         _loginError!.toLowerCase().contains('network') ||
+         _loginError!.toLowerCase().contains('connection') ||
+         _loginError!.toLowerCase().contains('timeout'));
+
+    final errorIcon = isNetworkError
+        ? Icons.wifi_off_rounded
+        : Icons.error_outline_rounded;
+
+    final errorBgColor = isDark
+        ? (isNetworkError ? const Color(0xFF2A1A00) : const Color(0xFF2A0A0A))
+        : (isNetworkError ? const Color(0xFFFFF8E1) : const Color(0xFFFFF0F0));
+
+    final errorBorderColor = isDark
+        ? (isNetworkError
+            ? Colors.orange.withValues(alpha: 0.3)
+            : Colors.red.withValues(alpha: 0.3))
+        : (isNetworkError
+            ? Colors.orange.withValues(alpha: 0.4)
+            : Colors.red.withValues(alpha: 0.3));
+
+    final errorIconColor = isNetworkError
+        ? (isDark ? Colors.orange.shade300 : Colors.orange.shade700)
+        : (isDark ? Colors.red.shade300 : Colors.red.shade600);
+
+    final errorTextColor = isDark
+        ? (isNetworkError ? Colors.orange.shade200 : Colors.red.shade200)
+        : (isNetworkError ? Colors.orange.shade800 : Colors.red.shade700);
+
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 20),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: errorBgColor,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: errorBorderColor, width: 1),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(errorIcon, color: errorIconColor, size: 20),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                _loginError!,
+                style: TextStyle(
+                  color: errorTextColor,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  height: 1.4,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            GestureDetector(
+              onTap: () => setState(() => _loginError = null),
+              child: Icon(
+                Icons.close_rounded,
+                color: errorIconColor.withValues(alpha: 0.6),
+                size: 18,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
   Widget _buildSignUpLink(bool isDark) {
     final textColor = isDark 
         ? Colors.white.withValues(alpha: 0.5)
-        : const Color(0xFF666666);
+        : AppColors.darkGrey;
     final linkColor = isDark ? const Color(0xFF00D9A5) : const Color(0xFF1A8F3A);
 
     return Row(

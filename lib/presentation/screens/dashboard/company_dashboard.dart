@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/services/auth_service.dart';
 import '../../widgets/curved/curved_bottom_nav.dart';
 
-import '../company/bulk_buy_screen.dart';
 import '../company/bulk_sell_screen.dart';
-import '../company/contracts_screen.dart';
-import '../company/collector_logistics_screen.dart';
-import '../company/wallet_transactions_screen.dart';
-import '../company/team_management_screen.dart';
-import '../company/compliance_screen.dart';
-import '../company/analytics_screen.dart';
+import '../marketplace/marketplace_screen.dart';
+import '../individual/my_orders_screen.dart';
+import '../individual/transactions_screen.dart';
 import '../profile/profile_screen.dart';
 
 class CompanyDashboard extends StatefulWidget {
@@ -42,9 +40,9 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
         },
         children: [
           _buildHomeTab(),
-          const BulkBuyScreen(),
+          const MarketplaceScreen(),
           const BulkSellScreen(),
-          const WalletTransactionsScreen(),
+          const MyOrdersScreen(),
           const ProfileScreen(),
         ],
       ),
@@ -79,15 +77,11 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                 const SizedBox(height: 24),
                 _buildBrandingTitle(),
                 const SizedBox(height: 24),
-                _buildStatsOverview(),
+                _buildActionCards(),
+                const SizedBox(height: 32),
+                _buildRecentActivity(),
                 const SizedBox(height: 24),
-                _buildQuickActions(),
-                const SizedBox(height: 24),
-                _buildMarketRates(),
-                const SizedBox(height: 24),
-                _buildPendingOrders(),
-                const SizedBox(height: 24),
-                _buildAvailableSuppliers(),
+                _buildNotifications(),
                 const SizedBox(height: 80),
               ],
             ),
@@ -105,13 +99,20 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
           children: [
             Icon(Icons.business, color: Theme.of(context).colorScheme.primary, size: 20),
             const SizedBox(width: 8),
-            Text(
-              'Global Operations',
-              style: TextStyle(
-                color: Theme.of(context).textTheme.bodyLarge?.color,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+            Consumer<AuthService>(
+              builder: (context, authService, _) {
+                final businessName = authService.currentUser?['companyName'] 
+                    ?? authService.currentUser?['businessName'] 
+                    ?? 'Company Operations';
+                return Text(
+                  businessName,
+                  style: TextStyle(
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                );
+              },
             ),
           ],
         ),
@@ -146,7 +147,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
         Text(
           'RecyConnect',
           style: TextStyle(
-            color: Colors.white,
+            color: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.primaryGreen,
             fontSize: 32,
             fontWeight: FontWeight.bold,
             letterSpacing: -0.5,
@@ -156,12 +157,161 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
         Text(
           'B2B Supply Chain',
           style: TextStyle(
-            color: Colors.white.withOpacity(0.7),
+            color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.textDark).withOpacity(0.7),
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildActionCards() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Quick Actions',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).textTheme.bodyLarge?.color,
+          ),
+        ),
+        const SizedBox(height: 16),
+        GridView.count(
+          crossAxisCount: 3,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
+          childAspectRatio: 1.0,
+          children: [
+            _buildQuickActionCard('Browse', Icons.search, const Color(0xFF4CAF50), () {
+              _pageController.animateToPage(1, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+            }),
+            _buildQuickActionCard('Bulk Sell', Icons.sell_outlined, const Color(0xFF2196F3), () {
+              _pageController.animateToPage(2, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+            }),
+            _buildQuickActionCard('My Orders', Icons.receipt_long_outlined, const Color(0xFFFFA726), () {
+              _pageController.animateToPage(3, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+            }),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRecentActivity() {
+    final activities = [
+      {'title': 'Order #ORD-2401 shipped', 'time': '2 hours ago', 'icon': Icons.local_shipping, 'color': const Color(0xFF4CAF50)},
+      {'title': 'New quote received', 'time': '5 hours ago', 'icon': Icons.request_quote, 'color': const Color(0xFF2196F3)},
+      {'title': 'Payment confirmed', 'time': '1 day ago', 'icon': Icons.payment, 'color': const Color(0xFFFFA726)},
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Recent Activity',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).textTheme.bodyLarge?.color,
+          ),
+        ),
+        const SizedBox(height: 12),
+        ...activities.map((activity) => Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Theme.of(context).dividerColor.withOpacity(0.1),
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: (activity['color'] as Color).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(activity['icon'] as IconData, color: activity['color'] as Color, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      activity['title'] as String,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      activity['time'] as String,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        )),
+      ],
+    );
+  }
+
+  Widget _buildNotifications() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF4CAF50).withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFF4CAF50).withOpacity(0.3),
+        ),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.notifications_active, color: Color(0xFF4CAF50), size: 24),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'You have 3 new notifications',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Tap to view all notifications',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Icon(Icons.chevron_right, color: Color(0xFF4CAF50)),
+        ],
+      ),
     );
   }
 
@@ -287,35 +437,32 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: Theme.of(context).textTheme.bodyLarge?.color,
           ),
         ),
         const SizedBox(height: 16),
         GridView.count(
-          crossAxisCount: 3,
+          crossAxisCount: 4,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           mainAxisSpacing: 12,
           crossAxisSpacing: 12,
-          childAspectRatio: 1.0,
+          childAspectRatio: 0.8,
           children: [
-            _buildQuickActionCard('Bulk Buy', Icons.shopping_cart_outlined, const Color(0xFF4CAF50), () {
+            _buildQuickActionCard('Browse', Icons.search, const Color(0xFF4CAF50), () {
               _pageController.animateToPage(1, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
             }),
             _buildQuickActionCard('Bulk Sell', Icons.sell_outlined, const Color(0xFF2196F3), () {
               _pageController.animateToPage(2, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
             }),
-            _buildQuickActionCard('Contracts', Icons.description_outlined, const Color(0xFFFFA726), () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const ContractsScreen()));
+            _buildQuickActionCard('Orders', Icons.receipt_long_outlined, const Color(0xFFFFA726), () {
+              _pageController.animateToPage(3, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
             }),
-            _buildQuickActionCard('Logistics', Icons.local_shipping_outlined, const Color(0xFF9C27B0), () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const CollectorLogisticsScreen()));
-            }),
-            _buildQuickActionCard('Team', Icons.people_outlined, const Color(0xFF00BCD4), () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const TeamManagementScreen()));
-            }),
-            _buildQuickActionCard('Analytics', Icons.analytics_outlined, const Color(0xFFE91E63), () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const AnalyticsScreen()));
+            _buildQuickActionCard('Wallet', Icons.account_balance_wallet, const Color(0xFF9C27B0), () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const TransactionsScreen()),
+              );
             }),
           ],
         ),
@@ -523,7 +670,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
               ),
             ),
             TextButton(
@@ -650,7 +797,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: Theme.of(context).textTheme.bodyLarge?.color,
           ),
         ),
         const SizedBox(height: 12),
@@ -751,24 +898,23 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
       activeColor: AppColors.roleCompany,
       items: const [
         CurvedBottomNavItem(
-          icon: Icons.dashboard_outlined,
-          activeIcon: Icons.dashboard,
-          label: 'Dashboard',
+          icon: Icons.home_outlined,
+          activeIcon: Icons.home,
+          label: 'Home',
         ),
         CurvedBottomNavItem(
-          icon: Icons.shopping_cart_outlined,
-          activeIcon: Icons.shopping_cart,
-          label: 'Buy',
+          icon: Icons.storefront_outlined,
+          activeIcon: Icons.storefront,
+          label: 'Market',
         ),
-        CurvedBottomNavItem(
-          icon: Icons.sell_outlined,
-          activeIcon: Icons.sell,
+        CurvedBottomNavItem.simple(
+          icon: Icons.add,
           label: 'Sell',
         ),
         CurvedBottomNavItem(
-          icon: Icons.account_balance_wallet_outlined,
-          activeIcon: Icons.account_balance_wallet,
-          label: 'Wallet',
+          icon: Icons.receipt_long_outlined,
+          activeIcon: Icons.receipt_long,
+          label: 'Orders',
         ),
         CurvedBottomNavItem(
           icon: Icons.person_outline,

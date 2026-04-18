@@ -2,8 +2,9 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http_parser/http_parser.dart'; // Added for MediaType
 import '../constants/api_constants.dart';
+import 'secure_storage_service.dart';
 
 class AuthService extends ChangeNotifier {
   // IMPORTANT: Choose the correct URL based on your testing environment:
@@ -25,6 +26,7 @@ class AuthService extends ChangeNotifier {
   bool get isAuthenticated => _token != null && _token!.isNotEmpty;
   String? get userName => _user?['name'] as String?;
   String? get userRole => _user?['role'];
+  int? get userId => (_user?['id'] as num?)?.toInt();
   Map<String, dynamic>? get currentUser => _user;
 
   void _setLoading(bool loading) {
@@ -37,6 +39,63 @@ class AuthService extends ChangeNotifier {
     notifyListeners();
   }
 
+  String _extractErrorMessage(dynamic body) {
+    try {
+      if (kDebugMode) {
+        print('Full API Response Error Body: $body');
+      }
+
+      if (body is Map<String, dynamic>) {
+        // PRIORITY 1: Check for "errors" array (detailed validation errors) - Express Validator style
+        if (body.containsKey('errors') && body['errors'] is List) {
+          final errors = body['errors'] as List;
+          if (errors.isNotEmpty) {
+            return errors.take(2).map((e) {
+              if (e is Map) {
+                return e['msg'] ?? e['message'] ?? e.toString();
+              }
+              return e.toString();
+            }).join('. ');
+          }
+        }
+
+        // PRIORITY 2: Check for "error" key which might be a List (found in user logs)
+        if (body.containsKey('error')) {
+          final error = body['error'];
+          
+          // Case A: "error" is a List of errors
+          if (error is List && error.isNotEmpty) {
+             return error.take(2).map((e) {
+              if (e is Map) {
+                return e['msg'] ?? e['message'] ?? e.toString();
+              }
+              return e.toString();
+            }).join('. ');
+          }
+
+          // Case B: "error" is a simple String
+          if (error is String) return error;
+
+          // Case C: "error" is an Object with message
+          if (error is Map && error.containsKey('message')) {
+            return error['message'].toString();
+          }
+        }
+        
+        // PRIORITY 3: Check for "message" string
+        if (body.containsKey('message') && body['message'] != null) {
+          return body['message'].toString();
+        }
+      }
+      return 'An unexpected error occurred';
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error parsing response exception: $e');
+      }
+      return 'Error parsing response: $e';
+    }
+  }
+
   Future<bool> login(String email, String password) async {
     try {
       _setLoading(true);
@@ -46,7 +105,7 @@ class AuthService extends ChangeNotifier {
         Uri.parse('${ApiConstants.baseUrl}/auth/login'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'identifier': email,
+          'identifier': email, // Changed from 'email' to 'identifier' to match backend
           'password': password,
         }),
       );
@@ -76,6 +135,7 @@ class AuthService extends ChangeNotifier {
         // Extract user data from nested 'user' object
         final userData = responseData['user'];
         _user = {
+          'id': userData['id'],
           'role': userData['role'],
           'name': userData['name'] ?? userData['businessName'] ?? userData['companyName'],
           'collectorId': userData['collectorId'],
@@ -86,12 +146,13 @@ class AuthService extends ChangeNotifier {
 
         if (_token != null) {
           await _saveToken(_token!);
+          await _saveUserData(_user!);
         }
 
         _setLoading(false);
         return true;
       } else {
-        _setError(data['message'] as String? ?? data['error']?['message'] as String? ?? 'Login failed');
+        _setError(_extractErrorMessage(data));
         _setLoading(false);
         return false;
       }
@@ -99,6 +160,26 @@ class AuthService extends ChangeNotifier {
       _setError('Network error: ${e.toString()}');
       _setLoading(false);
       return false;
+    }
+  }
+
+  Future<Map<String, dynamic>> checkEmail(String email) async {
+    try {
+      final response = await http.post(
+        Uri.parse(ApiConstants.checkEmail),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email}),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return {'success': true, 'data': data['data']};
+      } else {
+        return {'success': false, 'message': _extractErrorMessage(data)};
+      }
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
     }
   }
 
@@ -126,11 +207,18 @@ class AuthService extends ChangeNotifier {
           entry.key,
           bytes,
           filename: file.name,
+          contentType: MediaType('image', 'jpeg'), // Explicitly set content type
         );
         request.files.add(multipartFile);
       }
 
-      final streamedResponse = await request.send();
+      print('Sending registration request...'); 
+      final streamedResponse = await request.send().timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          throw 'Connection timed out. Please check your internet or try a smaller image.';
+        },
+      );
       final response = await http.Response.fromStream(streamedResponse);
       final data = jsonDecode(response.body);
 
@@ -138,9 +226,10 @@ class AuthService extends ChangeNotifier {
         _setLoading(false);
         return {'success': true, 'message': data['message'], 'userId': data['userId']};
       } else {
-        _setError(data['message'] as String? ?? data['error']?['message'] as String? ?? 'Registration failed');
+        final errorMessage = _extractErrorMessage(data);
+        _setError(errorMessage);
         _setLoading(false);
-        return {'success': false, 'message': data['message'] ?? 'Registration failed'};
+        return {'success': false, 'message': errorMessage};
       }
     } catch (e) {
       _setError('Network error: ${e.toString()}');
@@ -175,7 +264,7 @@ class AuthService extends ChangeNotifier {
       if (response.statusCode == 200 && data['success'] == true) {
         return {'success': true, 'data': data['data']};
       } else {
-        return {'success': false, 'message': data['message'] ?? data['error']?['message'] ?? 'Analysis failed'};
+        return {'success': false, 'message': _extractErrorMessage(data)};
       }
     } catch (e) {
       _setLoading(false);
@@ -203,9 +292,10 @@ class AuthService extends ChangeNotifier {
         _setLoading(false);
         return {'success': true, 'message': data['message']};
       } else {
-        _setError(data['message'] as String? ?? 'OTP verification failed');
+        final errorMessage = _extractErrorMessage(data);
+        _setError(errorMessage);
         _setLoading(false);
-        return {'success': false, 'message': data['message']};
+        return {'success': false, 'message': errorMessage};
       }
     } catch (e) {
       _setError('Network error: ${e.toString()}');
@@ -231,9 +321,10 @@ class AuthService extends ChangeNotifier {
         _setLoading(false);
         return {'success': true, 'data': data};
       } else {
-        _setError(data['message'] as String? ?? 'Failed to resend OTP');
+        final errorMessage = _extractErrorMessage(data);
+        _setError(errorMessage);
         _setLoading(false);
-        return {'success': false, 'message': data['message']};
+        return {'success': false, 'message': errorMessage};
       }
     } catch (e) {
       _setError('Network error: ${e.toString()}');
@@ -247,16 +338,15 @@ class AuthService extends ChangeNotifier {
     _user = null;
     _error = null;
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('auth_token');
+    await SecureStorageService.deleteToken();
+    await SecureStorageService.deleteUserData();
 
     notifyListeners();
   }
 
   Future<void> _saveToken(String token) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('auth_token', token);
+      await SecureStorageService.saveToken(token);
     } catch (e) {
       if (kDebugMode) {
         print('Error saving token: $e');
@@ -264,10 +354,21 @@ class AuthService extends ChangeNotifier {
     }
   }
 
+  Future<void> _saveUserData(Map<String, dynamic> userData) async {
+    try {
+      await SecureStorageService.saveUserData(userData);
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error saving user data: $e');
+      }
+    }
+  }
+
   Future<void> loadToken() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      _token = prefs.getString('auth_token');
+      _token = await SecureStorageService.readToken();
+      _user = await SecureStorageService.readUserData();
+      
       notifyListeners();
     } catch (e) {
       if (kDebugMode) {
@@ -336,10 +437,10 @@ class AuthService extends ChangeNotifier {
         _setLoading(false);
         return {'success': true, 'data': data};
       } else {
-        _setError(
-            data['message'] as String? ?? data['error']?['message'] as String? ?? 'Profile update failed');
+        final errorMessage = _extractErrorMessage(data);
+        _setError(errorMessage);
         _setLoading(false);
-        return {'success': false, 'message': data['message'] ?? data['error']?['message']};
+        return {'success': false, 'message': errorMessage};
       }
     } catch (e) {
       _setError('Network error: ${e.toString()}');
@@ -350,8 +451,9 @@ class AuthService extends ChangeNotifier {
 
   Future<Map<String, dynamic>> fetchProfile() async {
     try {
-      _setLoading(true);
-      _setError(null);
+      // Set loading without notifying to prevent setState during build
+      _isLoading = true;
+      _error = null;
 
       final response = await http.get(
         Uri.parse('${ApiConstants.baseUrl}/auth/me'),
@@ -365,19 +467,26 @@ class AuthService extends ChangeNotifier {
 
       if (response.statusCode == 200) {
         _user = data['data'] as Map<String, dynamic>?;
-        notifyListeners();
-
-        _setLoading(false);
+        
+        // Save user data to persistent storage
+        if (_user != null) {
+          await _saveUserData(_user!);
+        }
+        
+        _isLoading = false;
+        notifyListeners();  // Notify once at the end
         return {'success': true, 'data': data};
       } else {
-        _setError(
-            data['message'] as String? ?? data['error']?['message'] as String? ?? 'Failed to fetch profile');
-        _setLoading(false);
-        return {'success': false, 'message': data['message'] ?? data['error']?['message']};
+        final errorMessage = _extractErrorMessage(data);
+        _error = errorMessage;
+        _isLoading = false;
+        notifyListeners();  // Notify once at the end
+        return {'success': false, 'message': errorMessage};
       }
     } catch (e) {
-      _setError('Network error: ${e.toString()}');
-      _setLoading(false);
+      _error = 'Network error: ${e.toString()}';
+      _isLoading = false;
+      notifyListeners();  // Notify once at the end
       return {'success': false, 'message': e.toString()};
     }
   }
@@ -399,9 +508,10 @@ class AuthService extends ChangeNotifier {
         _setLoading(false);
         return {'success': true, 'message': data['message']};
       } else {
-        _setError(data['message'] as String? ?? data['error']?['message'] ?? 'Failed to send reset email');
+        final errorMessage = _extractErrorMessage(data);
+        _setError(errorMessage);
         _setLoading(false);
-        return {'success': false, 'message': data['message'] ?? data['error']?['message']};
+        return {'success': false, 'message': errorMessage};
       }
     } catch (e) {
       _setError('Network error: ${e.toString()}');
@@ -432,9 +542,10 @@ class AuthService extends ChangeNotifier {
         _setLoading(false);
         return {'success': true, 'message': data['message']};
       } else {
-        _setError(data['message'] as String? ?? data['error']?['message'] ?? 'Password reset failed');
+        final errorMessage = _extractErrorMessage(data);
+        _setError(errorMessage);
         _setLoading(false);
-        return {'success': false, 'message': data['message'] ?? data['error']?['message']};
+        return {'success': false, 'message': errorMessage};
       }
     } catch (e) {
       _setError('Network error: ${e.toString()}');
@@ -467,9 +578,10 @@ class AuthService extends ChangeNotifier {
         _setLoading(false);
         return {'success': true, 'message': data['message']};
       } else {
-        _setError(data['message'] as String? ?? data['error']?['message'] ?? 'Password change failed');
+        final errorMessage = _extractErrorMessage(data);
+        _setError(errorMessage);
         _setLoading(false);
-        return {'success': false, 'message': data['message'] ?? data['error']?['message']};
+        return {'success': false, 'message': errorMessage};
       }
     } catch (e) {
       _setError('Network error: ${e.toString()}');
@@ -514,14 +626,12 @@ class AuthService extends ChangeNotifier {
         _setLoading(false);
         return {'success': true, 'message': data['message']};
       } else {
-        _setError(data['message'] as String? ??
-            data['error']?['message'] ??
-            data['message'] ??
-            'Collector registration failed');
+        final errorMessage = _extractErrorMessage(data);
+        _setError(errorMessage);
         _setLoading(false);
         return {
           'success': false,
-          'message': data['message'] ?? data['error']?['message'] ?? data['message']
+          'message': errorMessage
         };
       }
     } catch (e) {
@@ -543,5 +653,43 @@ class AuthService extends ChangeNotifier {
     if (_user != null) return _user;
     await fetchProfile();
     return _user;
+  }
+
+  /// Delete user account permanently
+  Future<Map<String, dynamic>> deleteAccount(String password, {String? reason}) async {
+    try {
+      _setLoading(true);
+      _setError(null);
+
+      final response = await http.delete(
+        Uri.parse('${ApiConstants.baseUrl}/user/account'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (_token != null) 'Authorization': 'Bearer $_token',
+        },
+        body: jsonEncode({
+          'password': password,
+          if (reason != null) 'reason': reason,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && data['success'] == true) {
+        // Clear local data after successful deletion
+        await logout();
+        _setLoading(false);
+        return {'success': true, 'message': data['message'] ?? 'Account deleted successfully'};
+      } else {
+        final errorMessage = _extractErrorMessage(data);
+        _setError(errorMessage);
+        _setLoading(false);
+        return {'success': false, 'message': errorMessage};
+      }
+    } catch (e) {
+      _setError('Network error: ${e.toString()}');
+      _setLoading(false);
+      return {'success': false, 'message': e.toString()};
+    }
   }
 }

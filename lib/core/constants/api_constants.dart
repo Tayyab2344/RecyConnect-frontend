@@ -1,12 +1,12 @@
+import 'app_config.dart';
+
 class ApiConstants {
-  // Localhost for emulator/web development
-  // static const String baseUrl = String.fromEnvironment('API_URL', defaultValue: 'http://localhost:5000/api');
-  
-  // IP address for running APK on physical device with backend
-  // IP address for running APK on physical device with backend
-  static const String baseUrl = String.fromEnvironment('API_URL', defaultValue: 'http://localhost:5000/api');
-  
-  // IP address for running APK on physical device with backend
-  // IP address for running APK on physical device with backend
-  // static const String baseUrl = String.fromEnvironment('API_URL', defaultValue: 'https://perkish-unpigmented-nadia.ngrok-free.dev/api');
+  static const String baseUrl = AppConfig.apiBaseUrl;
+
+  static const String checkEmail = '$baseUrl/auth/check-email';
+
+  // Transaction, Reservation, and Payment Endpoints
+  static const String transactions = '$baseUrl/transactions';
+  static const String reservations = '$baseUrl/reservations';
+  static const String payments = '$baseUrl/payments';
 }

@@ -15,12 +15,19 @@ dependencies:
   
   # HTTP & API
   http: ^1.2.2
-  
+
+  # Stripe Payment
+  flutter_stripe: ^10.1.1
+
   # Local Storage
   shared_preferences: ^2.3.2
+  flutter_secure_storage: ^9.2.2
   
   # Image & Camera
   image_picker: ^1.1.2
+
+  # TFLite for on-device AI classification
+  tflite_flutter: ^0.11.0
   
   # OCR
   google_mlkit_commons: ^0.11.0
@@ -98,3 +105,5 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
+    - assets/recyconnect_outputs/labels.txt
+    - assets/recyconnect_outputs/recyconnect_model_quantized.tflite

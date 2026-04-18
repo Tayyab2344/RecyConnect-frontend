@@ -1,13 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:recyconnect/core/models/listing_model.dart';
 import 'package:recyconnect/core/services/auth_service.dart';
+import 'package:recyconnect/core/services/image_classifier_service.dart';
 import 'package:recyconnect/core/services/listing_service.dart';
 import 'package:recyconnect/core/theme/marketplace_theme.dart';
 import 'package:recyconnect/presentation/widgets/marketplace/glass_card.dart';
@@ -54,6 +54,8 @@ class _CreateListingScreenState extends State<CreateListingScreen>
     'Metal': 40.0,
     'E-Waste': 100.0,
     'Glass': 10.0,
+    'Clothing': 25.0,
+    'Other': 5.0,
   };
 
   @override
@@ -101,60 +103,114 @@ class _CreateListingScreenState extends State<CreateListingScreen>
   }
 
   Future<void> _pickImages() async {
-    final ImagePicker picker = ImagePicker();
-    // FIX: Compression to prevent Payload Too Large error
-    final List<XFile> images = await picker.pickMultiImage(
-      imageQuality: 50, // Reduced quality
-      maxWidth: 800,    // Reduced width
+    final source = await showDialog<ImageSource>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Add Photos'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt, color: MarketplaceTheme.lightAccent),
+              title: const Text('Take Photo'),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library, color: MarketplaceTheme.lightAccent),
+              title: const Text('Choose from Gallery'),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
     );
 
-    if (images.isNotEmpty) {
-      setState(() {
-        _selectedImages.addAll(images);
-        // Limit to 3 images total if needed, or handle in UI
-        if (_selectedImages.length > 3) {
-           _selectedImages = _selectedImages.take(3).toList();
-        }
-      });
-      // Trigger AI Analysis Simulation
-      _simulateAIAnalysis();
+    if (source == null) return;
+
+    final ImagePicker picker = ImagePicker();
+
+    try {
+      final XFile? image = await picker.pickImage(
+        source: source,
+        imageQuality: 70,
+        maxWidth: 800,
+        maxHeight: 800,
+      );
+
+      if (image != null) {
+        setState(() {
+          // Only 1 image allowed — replace any existing
+          _selectedImages = [image];
+        });
+        // Trigger real AI Classification
+        _runAIClassification();
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error picking image: $e')),
+      );
     }
   }
 
-  void _simulateAIAnalysis() {
+  Future<void> _runAIClassification() async {
     setState(() => _isAnalyzing = true);
     _scanController.repeat(reverse: true);
 
-    // Simulate 2 seconds of "processing"
-    Timer(const Duration(seconds: 2), () {
-      if (!mounted) return;
-      setState(() {
-        _isAnalyzing = false;
-        _scanController.stop();
-        _scanController.reset();
+    try {
+      final classifier = ImageClassifierService.instance;
+      await classifier.initialize();
 
-        // Mock AI Results
-        _selectedMaterial = 'Plastic'; // AI detected Plastic
-        _titleController.text = 'Batch of Recyclable Plastic Bottles';
-        _descriptionController.text =
-            'Assortment of PET bottles and containers. Clean and ready for recycling.';
-        
-        // Visual feedback
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: const [
-                 Icon(Icons.auto_awesome, color: Colors.white),
-                 SizedBox(width: 8),
-                 Text('AI Analysis Complete! Details Auto-filled.'),
-              ],
+      if (_selectedImages.isNotEmpty && classifier.isReady) {
+        final imageFile = File(_selectedImages.first.path);
+        final result = await classifier.classifyImage(imageFile);
+
+        if (!mounted) return;
+
+        if (result != null) {
+          setState(() {
+            _isAnalyzing = false;
+            _scanController.stop();
+            _scanController.reset();
+            _selectedMaterial = result.displayName;
+          });
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.auto_awesome, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'AI Detected: ${result.displayName} (${result.confidencePercent} confidence)',
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: MarketplaceTheme.lightAccent,
+              duration: const Duration(seconds: 3),
             ),
-            backgroundColor: MarketplaceTheme.lightAccent,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      });
+          );
+          return;
+        }
+      }
+    } catch (e) {
+      print('AI Classification error: $e');
+    }
+
+    // Fallback if classification fails
+    if (!mounted) return;
+    setState(() {
+      _isAnalyzing = false;
+      _scanController.stop();
+      _scanController.reset();
     });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Could not auto-detect material. Please select manually.'),
+        duration: Duration(seconds: 2),
+      ),
+    );
   }
 
   double get _estimatedValue {
@@ -193,6 +249,7 @@ class _CreateListingScreenState extends State<CreateListingScreen>
         estimatedWeight: double.parse(_weightController.text),
         pickupAddress: _addressController.text,
         locationMethod: _locationMethod,
+        title: _titleController.text.trim(),
         notes: _descriptionController.text, // Mapping Description to Notes
         status: 'PENDING',
         createdAt: DateTime.now(),
@@ -222,42 +279,65 @@ class _CreateListingScreenState extends State<CreateListingScreen>
   }
 
   Widget _buildSuccessDialog(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return AlertDialog(
       backgroundColor: Colors.transparent,
+      elevation: 0,
       contentPadding: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       content: GlassCard(
-        borderRadius: 20,
+        borderRadius: 24,
+        padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.check_circle_outline,
-                color: MarketplaceTheme.lightAccent, size: 64),
-            const SizedBox(height: 16),
-            const Text(
-              'Listing Published!',
-              style: TextStyle(
-                fontSize: 20, 
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: (isDark ? MarketplaceTheme.darkAccentCyan : MarketplaceTheme.lightAccent).withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.check_circle_outline,
+                color: isDark ? MarketplaceTheme.darkAccentCyan : MarketplaceTheme.lightAccent, 
+                size: 72,
               ),
             ),
-            const SizedBox(height: 8),
-            const Text(
-              'Your item is now live on the marketplace.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white70),
-            ),
             const SizedBox(height: 24),
-            NeonButton(
-              text: 'DONE',
-              onPressed: () {
-                Navigator.of(context).pop(); // Close dialog
-                if (Navigator.of(context).canPop()) {
-                  Navigator.of(context).pop(); // Exit screen
-                } else {
-                  _resetForm(); // Reset if used as tab
-                }
-              },
+            Text(
+              'Listing Published!',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 24, 
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Your item is now live on the marketplace and ready for collectors.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 15,
+                color: isDark ? Colors.white70 : Colors.black54,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              child: NeonButton(
+                text: 'DONE',
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close dialog
+                  if (Navigator.of(context).canPop()) {
+                    Navigator.of(context).pop(); // Exit screen
+                  } else {
+                    _resetForm(); // Reset if used as tab
+                  }
+                },
+              ),
             ),
           ],
         ),
@@ -296,11 +376,13 @@ class _CreateListingScreenState extends State<CreateListingScreen>
             fontWeight: FontWeight.bold,
           ),
         ),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios,
-              color: isDark ? MarketplaceTheme.darkTextPrimary : MarketplaceTheme.lightTextPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: Navigator.canPop(context)
+            ? IconButton(
+                icon: Icon(Icons.arrow_back_ios,
+                    color: isDark ? MarketplaceTheme.darkTextPrimary : MarketplaceTheme.lightTextPrimary),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
       ),
       body: Container(
         decoration: BoxDecoration(
@@ -421,21 +503,7 @@ class _CreateListingScreenState extends State<CreateListingScreen>
                       ],
                     );
                   }).toList(),
-                  GestureDetector(
-                    onTap: _pickImages,
-                    child: Container(
-                      width: 100,
-                      height: 110,
-                      margin: const EdgeInsets.only(left: 8),
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                            color: isDark ? Colors.white24 : Colors.black12),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(Icons.add_a_photo,
-                          color: isDark ? Colors.white54 : Colors.black45),
-                    ),
-                  ),
+
                 ],
               ),
             ),
@@ -605,22 +673,6 @@ class _CreateListingScreenState extends State<CreateListingScreen>
           isDark: isDark,
           validator: (v) => v!.isEmpty ? 'Address is required' : null,
         ),
-        const SizedBox(height: 12),
-
-        // Collector Toggle
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          title: Text(
-            'Request Collector Pickup',
-            style: TextStyle(
-               color: isDark ? Colors.white : Colors.black87,
-               fontWeight: FontWeight.w500,
-            ),
-          ),
-          activeColor: isDark ? MarketplaceTheme.darkAccentCyan : MarketplaceTheme.lightAccent,
-          value: _requestCollector,
-          onChanged: (val) => setState(() => _requestCollector = val),
-        ),
       ],
     );
   }
@@ -767,6 +819,8 @@ class _CreateListingScreenState extends State<CreateListingScreen>
       case 'Metal': return Icons.build;
       case 'E-Waste': return Icons.computer;
       case 'Glass': return Icons.wine_bar;
+      case 'Clothing': return Icons.checkroom;
+      case 'Other': return Icons.category;
       default: return Icons.recycling;
     }
   }

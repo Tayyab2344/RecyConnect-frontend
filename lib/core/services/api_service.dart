@@ -1,14 +1,13 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/api_constants.dart';
+import 'secure_storage_service.dart';
 
 class ApiService {
 
   // Get stored JWT token
   Future<String?> _getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('auth_token');
+    return SecureStorageService.readToken();
   }
 
   // GET request with authentication
@@ -117,8 +116,9 @@ class ApiService {
       return jsonDecode(response.body);
     } else {
       final errorBody = jsonDecode(response.body);
-      final message = errorBody['message'] ?? errorBody['error']?['message'] ?? 'Unknown error';
-      throw Exception('HTTP ${response.statusCode}: $message');
+      final message = errorBody['message'] ?? 'Unknown error';
+      final errorDetail = errorBody['error'] ?? '';
+      throw Exception('HTTP ${response.statusCode}: $message${errorDetail.toString().isNotEmpty ? " ($errorDetail)" : ""}');
     }
   }
 }
