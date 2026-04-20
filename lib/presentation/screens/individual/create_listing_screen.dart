@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -47,16 +50,8 @@ class _CreateListingScreenState extends State<CreateListingScreen>
   // Animation for "AI Scanning"
   late AnimationController _scanController;
 
-  // Material Rates (Mock Data)
-  final Map<String, double> _materialRates = {
-    'Plastic': 20.0,
-    'Paper': 15.0,
-    'Metal': 40.0,
-    'E-Waste': 100.0,
-    'Glass': 10.0,
-    'Clothing': 25.0,
-    'Other': 5.0,
-  };
+  Map<String, double> _materialRates = {};
+  bool _isLoadingRates = true;
 
   @override
   void initState() {
@@ -65,7 +60,31 @@ class _CreateListingScreenState extends State<CreateListingScreen>
       vsync: this,
       duration: const Duration(seconds: 2),
     );
+    _loadRates();
     _loadUserLocation();
+  }
+
+  Future<void> _loadRates() async {
+    try {
+      final rates = await _listingService.fetchMaterialRates();
+      if (mounted) {
+        setState(() {
+          _materialRates = rates;
+          if (rates.isNotEmpty) {
+            _selectedMaterial = rates.keys.first;
+          }
+          _isLoadingRates = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoadingRates = false);
+        // Fallback or leave empty
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load material rates.')),
+        );
+      }
+    }
   }
 
   @override
@@ -234,10 +253,18 @@ class _CreateListingScreenState extends State<CreateListingScreen>
     setState(() => _isSubmitting = true);
 
     try {
-      // 1. Convert Images to Base64
+      // 1. Compress Images then Convert to Base64 (OOM Protection)
       List<String> base64Images = [];
       for (var img in _selectedImages) {
-        final bytes = await img.readAsBytes();
+        // Compress native payload to save hundreds of MBs in memory allocation
+        final Uint8List? compressedBytes = await FlutterImageCompress.compressWithFile(
+          img.path,
+          minWidth: 800,
+          minHeight: 800,
+          quality: 60,
+        );
+
+        final bytes = compressedBytes ?? await img.readAsBytes();
         base64Images.add(base64Encode(bytes));
       }
 
@@ -352,7 +379,9 @@ class _CreateListingScreenState extends State<CreateListingScreen>
       _weightController.clear();
       // Keep address if possible or clear
       _selectedImages.clear();
-      _selectedMaterial = 'Plastic';
+      if (_materialRates.isNotEmpty) {
+        _selectedMaterial = _materialRates.keys.first;
+      }
       _requestCollector = false;
     });
   }
@@ -523,7 +552,9 @@ class _CreateListingScreenState extends State<CreateListingScreen>
         // Material Dropdown
         GlassCard(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          child: DropdownButtonHideUnderline(
+          child: _isLoadingRates 
+            ? const Center(child: Padding(padding: EdgeInsets.all(12.0), child: CircularProgressIndicator()))
+            : DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               value: _selectedMaterial,
               isExpanded: true,
@@ -652,7 +683,7 @@ class _CreateListingScreenState extends State<CreateListingScreen>
                 ),
               ),
               Text(
-                'Rs ${_materialRates[_selectedMaterial]}/kg',
+                'Rs ${_materialRates[_selectedMaterial] ?? 0}/kg',
                 style: TextStyle(
                   color: isDark ? MarketplaceTheme.darkAccentGreen : MarketplaceTheme.lightAccent,
                   fontWeight: FontWeight.bold,

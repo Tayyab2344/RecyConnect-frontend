@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/theme/marketplace_theme.dart';
 import '../../../core/models/listing_model.dart';
 import '../../widgets/marketplace/glass_card.dart';
@@ -24,13 +25,19 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     item = Listing.fromJson(widget.itemMap);
   }
 
-  void _onBuyPressed(BuildContext context) {
-    Navigator.push(
+  void _onBuyPressed(BuildContext context) async {
+    final result = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => CheckoutScreen(item: item),
       ),
     );
+    
+    if (result == true) {
+      if (context.mounted) {
+        Navigator.pop(context, true);
+      }
+    }
   }
 
   @override
@@ -83,26 +90,22 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                                 : (item.decodedImages.isNotEmpty ? item.decodedImages.length : 1),
                             itemBuilder: (context, index) {
                               if (item.hasNetworkImages) {
-                                return Image.network(
-                                  item.imageUrls[index],
+                                return CachedNetworkImage(
+                                  imageUrl: item.imageUrls[index],
                                   fit: BoxFit.cover,
                                   width: double.infinity,
                                   height: 250,
-                                  loadingBuilder: (context, child, loadingProgress) {
-                                    if (loadingProgress == null) return child;
+                                  progressIndicatorBuilder: (context, url, downloadProgress) {
                                     return Center(
                                       child: CircularProgressIndicator(
-                                        value: loadingProgress.expectedTotalBytes != null
-                                            ? loadingProgress.cumulativeBytesLoaded /
-                                                loadingProgress.expectedTotalBytes!
-                                            : null,
+                                        value: downloadProgress.progress,
                                         color: isDark
                                             ? MarketplaceTheme.darkAccentCyan
                                             : MarketplaceTheme.lightAccent,
                                       ),
                                     );
                                   },
-                                  errorBuilder: (context, error, stackTrace) {
+                                  errorWidget: (context, url, error) {
                                     return Center(
                                       child: Icon(
                                         Icons.broken_image_outlined,

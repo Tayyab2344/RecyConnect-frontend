@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, compute;
 import 'package:flutter/services.dart';
 import 'dart:ui' as ui;
 
@@ -105,23 +105,8 @@ class ImageClassifierService {
       
       if (byteData == null) return null;
 
-      // Create input tensor: [1, 224, 224, 3] normalized to [0, 1]
-      final input = List.generate(
-        1,
-        (_) => List.generate(
-          inputSize,
-          (y) => List.generate(
-            inputSize,
-            (x) {
-              final offset = (y * inputSize + x) * 4; // RGBA stride
-              final r = byteData.getUint8(offset) / 255.0;
-              final g = byteData.getUint8(offset + 1) / 255.0;
-              final b = byteData.getUint8(offset + 2) / 255.0;
-              return [r, g, b];
-            },
-          ),
-        ),
-      );
+      // Create input tensor via background isolate to prevent UI frame drops
+      final input = await compute(_preprocessImage, byteData);
 
       // Run inference
       final output = List.generate(
@@ -168,6 +153,26 @@ class ImageClassifierService {
     _isInitialized = false;
     _instance = null;
   }
+}
+
+/// Static top-level/isolate-compatible function for parsing raw bytes into a TFLite tensor 
+List<List<List<List<double>>>> _preprocessImage(ByteData byteData) {
+  return List.generate(
+    1,
+    (_) => List.generate(
+      224,
+      (y) => List.generate(
+        224,
+        (x) {
+          final offset = (y * 224 + x) * 4; 
+          final r = byteData.getUint8(offset) / 255.0;
+          final g = byteData.getUint8(offset + 1) / 255.0;
+          final b = byteData.getUint8(offset + 2) / 255.0;
+          return [r, g, b];
+        },
+      ),
+    ),
+  );
 }
 
 /// Result of an image classification

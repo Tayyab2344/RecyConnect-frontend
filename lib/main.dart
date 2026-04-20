@@ -9,10 +9,15 @@ import 'core/providers/theme_provider.dart';
 import 'presentation/screens/onboarding/welcome_story_screen.dart';
 import 'presentation/screens/dashboard/dashboard_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'core/services/observability_service.dart';
+import 'core/services/sync_manager.dart';
+import 'core/services/complaint_service.dart';
 import 'presentation/screens/onboarding/onboarding_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Hive.initFlutter();
 
   if (AppConfig.hasStripePublishableKey) {
     Stripe.publishableKey = AppConfig.stripePublishableKey;
@@ -32,6 +37,15 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => AuthService()),
         ChangeNotifierProvider(create: (_) => AdminService()),
+        ChangeNotifierProxyProvider<AuthService, ObservabilityService>(
+          create: (context) => ObservabilityService(Provider.of<AuthService>(context, listen: false)),
+          update: (context, auth, previous) => previous ?? ObservabilityService(auth),
+        ),
+        ChangeNotifierProvider(create: (_) => SyncManager()),
+        ChangeNotifierProxyProvider<AuthService, ComplaintService>(
+          create: (context) => ComplaintService(Provider.of<AuthService>(context, listen: false)),
+          update: (context, auth, previous) => previous ?? ComplaintService(auth),
+        ),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {

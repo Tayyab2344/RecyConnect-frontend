@@ -1,4 +1,5 @@
 import 'dart:ui' as ui;
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../../core/theme/marketplace_theme.dart';
 import '../../../core/theme/app_theme.dart';
@@ -73,13 +74,18 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen> {
     }
   }
 
-  void _onItemTap(Listing item) {
-    Navigator.push(
+  void _onItemTap(Listing item) async {
+    final result = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => ItemDetailScreen(item: item),
       ),
-    ).then((_) => _loadItems()); // Refresh on return
+    );
+    
+    // Only reload if the detail screen specifically says it was modified (e.g., deleted or bought)
+    if (result == true) {
+      _loadItems();
+    }
   }
 
   @override
@@ -305,22 +311,21 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen> {
               child: ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
                 child: item.hasNetworkImages
-                    ? Image.network(
-                        item.imageUrls.first,
+                    ? CachedNetworkImage(
+                        imageUrl: item.imageUrls.first,
                         fit: BoxFit.cover,
                         width: double.infinity,
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Center(
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: isDark
-                                  ? MarketplaceTheme.darkAccentCyan
-                                  : MarketplaceTheme.lightAccent,
-                            ),
-                          );
-                        },
-                        errorBuilder: (context, error, stackTrace) {
+                        memCacheWidth: 400,
+                        memCacheHeight: 400,
+                        placeholder: (context, url) => Center(
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: isDark
+                                ? MarketplaceTheme.darkAccentCyan
+                                : MarketplaceTheme.lightAccent,
+                          ),
+                        ),
+                        errorWidget: (context, url, error) {
                           return Center(
                             child: Icon(
                               Icons.broken_image_outlined,

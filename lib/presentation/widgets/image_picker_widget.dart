@@ -1,7 +1,9 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/image_utils.dart';
 
 class ImagePickerWidget extends StatelessWidget {
   final String title;
@@ -118,10 +120,17 @@ class ImagePickerWidget extends StatelessWidget {
     if (pickedFile != null) {
       if (kIsWeb) {
         final bytes = await pickedFile.readAsBytes();
-        onImageSelected(bytes);
+        final compressedBytes = await ImageUtils.compressBytes(bytes);
+        onImageSelected(compressedBytes);
       } else {
-        // For mobile platforms, you would use File
-        onImageSelected(pickedFile.path);
+        // Apply compression before returning File path
+        final file = File(pickedFile.path);
+        final compressedFile = await ImageUtils.compressImage(file);
+        if (compressedFile != null) {
+           onImageSelected(compressedFile.path);
+        } else {
+           onImageSelected(pickedFile.path);
+        }
       }
     }
   }

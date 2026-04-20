@@ -125,6 +125,15 @@ class _CollectorManagementScreenState extends State<CollectorManagementScreen> {
                             ),
                             const SizedBox(height: 4),
                             Text('Contact: ${collector['contactNo']}'),
+                            const SizedBox(height: 4),
+                            if (collector['plainPassword'] != null)
+                              Text(
+                                'Pass: ${collector['plainPassword']}',
+                                style: TextStyle(
+                                  color: Colors.red[700],
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
                           ],
                         ),
                       ),

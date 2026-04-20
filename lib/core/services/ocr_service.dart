@@ -18,27 +18,27 @@ class OcrService {
     final text = await extractTextFromImage(imageFile);
     final Map<String, String> data = {};
 
-    // Extract CNIC number (format: 12345-1234567-1)
-    final cnicRegex = RegExp(r'\d{5}-\d{7}-\d{1}');
+    // Extract CNIC number (format: 12345-1234567-1, tolerating spaces or missing hyphens due to blur)
+    final cnicRegex = RegExp(r'(\d{5})[\s\-]*(\d{7})[\s\-]*(\d{1})');
     final cnicMatch = cnicRegex.firstMatch(text);
     if (cnicMatch != null) {
-      data['cnic'] = cnicMatch.group(0)!;
+      data['cnic'] = '${cnicMatch.group(1)}-${cnicMatch.group(2)}-${cnicMatch.group(3)}';
     }
 
-    // Extract name (usually appears after "Name:" or similar)
+    // Extract name (tolerating blurry colons or newlines)
     final nameRegex =
-        RegExp(r'(?:Name|نام)[:\s]+([A-Za-z\s]+)', caseSensitive: false);
+        RegExp(r'(?:Name|نام|Nane)[\s:;\-\.]*([A-Za-z\s]+)', caseSensitive: false);
     final nameMatch = nameRegex.firstMatch(text);
     if (nameMatch != null) {
-      data['name'] = nameMatch.group(1)!.trim();
+      data['name'] = nameMatch.group(1)!.trim().split('\n').first;
     }
 
-    // Extract father's name
+    // Extract father's name (tolerating blurry colons or newlines)
     final fatherNameRegex =
-        RegExp(r'(?:Father|والد)[:\s]+([A-Za-z\s]+)', caseSensitive: false);
+        RegExp(r'(?:Father|والد|Husband)[\s:;\-\.]*([A-Za-z\s]+)', caseSensitive: false);
     final fatherNameMatch = fatherNameRegex.firstMatch(text);
     if (fatherNameMatch != null) {
-      data['fatherName'] = fatherNameMatch.group(1)!.trim();
+      data['fatherName'] = fatherNameMatch.group(1)!.trim().split('\n').first;
     }
 
     return data;

@@ -65,6 +65,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       return;
     }
 
+    const rate = 20.0; // Standard rate used in UI
+    final total = widget.item.estimatedWeight * rate;
+    if (_selectedPaymentMethod == 'stripe' && total < 150) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Minimum order amount for online payment is Rs 150. Please use Cash on Delivery (COD).'),
+          backgroundColor: Colors.orange.shade800,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     try {
@@ -264,11 +277,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               SizedBox(
                 width: double.infinity,
                 child: NeonButton(
-                  text: 'VIEW MY ORDERS',
+                  text: 'RETURN TO MARKETPLACE',
                   onPressed: () {
                     Navigator.of(ctx).pop();
-                    int count = 0;
-                    Navigator.of(context).popUntil((route) => count++ == 2);
+                    Navigator.of(context).pop(true);
                   },
                 ),
               ),
@@ -424,15 +436,40 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       const SizedBox(height: 10),
 
                       // Stripe
-                      _buildPaymentOption(
-                        isDark: isDark,
-                        value: 'stripe',
-                        icon: Icons.credit_card_rounded,
-                        title: 'Pay with Stripe',
-                        subtitle:
-                            'Secure card payment powered by Stripe. You\'ll be prompted to enter your card details.',
-                        badge: 'SECURE',
-                      ),
+                      if (total >= 160)
+                        _buildPaymentOption(
+                          isDark: isDark,
+                          value: 'stripe',
+                          icon: Icons.credit_card_rounded,
+                          title: 'Pay with Stripe',
+                          subtitle:
+                              'Secure card payment powered by Stripe. You\'ll be prompted to enter your card details.',
+                          badge: 'SECURE',
+                        )
+                      else
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: isDark ? Colors.orange.withOpacity(0.1) : Colors.orange.shade50,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.info_outline, color: Colors.orange.shade700, size: 20),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  'Online payment via Stripe is only available for orders of Rs 160 or more.',
+                                  style: TextStyle(
+                                    color: isDark ? Colors.orange.shade200 : Colors.orange.shade900,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                     ],
                   ),
                 ),
