@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/services/item_service.dart';
 import '../../../core/services/auth_service.dart';
 
@@ -50,7 +51,14 @@ class _InventoryScreenState extends State<InventoryScreen> {
               margin: const EdgeInsets.all(8.0),
               child: ListTile(
                 leading: item['images'].isNotEmpty
-                    ? Image.network(item['images'][0], width: 50, height: 50, fit: BoxFit.cover)
+                    ? CachedNetworkImage(
+                        imageUrl: item['images'][0], 
+                        width: 50, 
+                        height: 50, 
+                        fit: BoxFit.cover,
+                        memCacheWidth: 150,
+                        memCacheHeight: 150,
+                      )
                     : const Icon(Icons.image),
                 title: Text(item['title']),
                 subtitle: Text('${item['quantity']} ${item['unit']} - \$${item['price']}'),

@@ -377,12 +377,6 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                                       : 'Location shared after purchase',
                                   isDark: isDark,
                                 ),
-                                const SizedBox(height: 12),
-                                _infoRow(
-                                  label: 'Location Method',
-                                  value: (widget.item.locationMethod ?? 'Manual').toUpperCase(),
-                                  isDark: isDark,
-                                ),
                                 if (widget.item.notes != null &&
                                     widget.item.notes!.isNotEmpty) ...[
                                   const SizedBox(height: 12),

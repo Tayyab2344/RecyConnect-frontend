@@ -5,7 +5,7 @@ import 'dart:async';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/auth_service.dart';
 import 'login_screen.dart';
-import '../dashboard/individual_dashboard.dart';
+import '../dashboard/dashboard_screen.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
   final String email;
@@ -140,7 +140,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
             if (loginSuccess && mounted) {
               Navigator.pushAndRemoveUntil(
                 context,
-                MaterialPageRoute(builder: (context) => const IndividualDashboard()),
+                MaterialPageRoute(builder: (context) => const DashboardScreen()),
                 (route) => false,
               );
               return;

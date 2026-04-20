@@ -321,13 +321,6 @@ class ListingDetailScreen extends StatelessWidget {
           _buildDetailRow(Icons.location_on_outlined, 'Pickup Location', listing.pickupAddress, isDark),
           const SizedBox(height: 16),
           _buildDetailRow(
-            Icons.my_location_outlined, 
-            'Location Method', 
-            (listing.locationMethod ?? 'manual').toUpperCase(), 
-            isDark,
-          ),
-          const SizedBox(height: 16),
-          _buildDetailRow(
             Icons.info_outline, 
             'Status', 
             listing.statusDisplay, 

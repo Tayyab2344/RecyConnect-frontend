@@ -496,18 +496,22 @@ class _RegistrationScreenState extends State<RegistrationScreen>
               ),
             ),
           ),
-          const Spacer(),
+          const SizedBox(width: 16),
           // Title
-          Text(
-            '${_getRoleDisplayName()} Registration',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: textColor,
+          Expanded(
+            child: Text(
+              '${_getRoleDisplayName()} Registration',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: textColor,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          const Spacer(),
-          const SizedBox(width: 40), // Balance the back button
+          const SizedBox(width: 54), // Balance the back button and spacing (38 + 16)
         ],
       ),
     );
@@ -1347,9 +1351,11 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                         color: AppTheme.primaryGreen,
                       ),
                       const SizedBox(width: 12),
-                      Text(
-                        'Automatic Document Processing',
-                        style: AppTheme.subHeadingStyle.copyWith(fontSize: 16),
+                      Expanded(
+                        child: Text(
+                          'Automatic Document Processing',
+                          style: AppTheme.subHeadingStyle.copyWith(fontSize: 16),
+                        ),
                       ),
                     ],
                   ),
@@ -1935,11 +1941,12 @@ class _RegistrationScreenState extends State<RegistrationScreen>
           );
 
           // Navigate to OTP verification screen
-          Navigator.pushReplacement(
+          Navigator.push(
             context,
             MaterialPageRoute(
               builder: (_) => OtpVerificationScreen(
                 email: _emailController.text.trim(),
+                password: _passwordController.text,
               ),
             ),
           );

@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../core/models/listing_model.dart';
@@ -368,20 +369,19 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
               child: listing.hasNetworkImages
                   ? ClipRRect(
                       borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                      child: Image.network(
-                        listing.imageUrls.first,
+                      child: CachedNetworkImage(
+                        imageUrl: listing.imageUrls.first,
                         fit: BoxFit.cover,
                         width: double.infinity,
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Center(
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: _getMaterialColor(listing.materialType),
-                            ),
-                          );
-                        },
-                        errorBuilder: (context, error, stackTrace) => Center(
+                        memCacheWidth: 400, // RAM protection
+                        memCacheHeight: 400, // RAM protection
+                        placeholder: (context, url) => Center(
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: _getMaterialColor(listing.materialType),
+                          ),
+                        ),
+                        errorWidget: (context, url, error) => Center(
                           child: Container(
                             padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
