@@ -305,7 +305,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     final hasProfileImage = user['profileImage'] != null &&
         (user['profileImage'] as String).isNotEmpty;
     final displayName = (user['role'] == 'warehouse' || user['role'] == 'company')
-        ? (user['businessName'] as String? ?? user['name'] as String? ?? 'Unknown Business')
+        ? (user['businessName'] as String? ?? user['companyName'] as String? ?? user['name'] as String? ?? 'Unknown Business')
         : (user['name'] as String? ?? 'Unknown User');
 
     return Padding(

@@ -45,7 +45,7 @@ class ObservabilityService extends ChangeNotifier {
       _syncLogs();
     } catch (e) {
       if (kDebugMode) {
-        print('Failed to save log observation: $e');
+        if (kDebugMode) print('Failed to save log observation: $e');
       }
     }
   }
@@ -81,12 +81,12 @@ class ObservabilityService extends ChangeNotifier {
         // Clear successfully synced logs
         await box.deleteAll(logKeys);
         if (kDebugMode) {
-          print('Synced ${logs.length} logs to admin board');
+          if (kDebugMode) print('Synced ${logs.length} logs to admin board');
         }
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Failed to sync logs: $e. Will retry later.');
+        if (kDebugMode) print('Failed to sync logs: $e. Will retry later.');
       }
     } finally {
       _isSyncing = false;

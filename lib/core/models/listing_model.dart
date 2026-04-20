@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 
 class ListingUser {
   final int id;
@@ -139,7 +140,7 @@ class Listing {
       try {
         return base64Decode(img);
       } catch (e) {
-        print('Error decoding image: $e');
+        if (kDebugMode) print('Error decoding image: $e');
         return Uint8List(0);
       }
     }).where((img) => img.isNotEmpty).toList();

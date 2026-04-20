@@ -6,6 +6,7 @@ import 'dart:ui' as ui;
 
 // Conditionally import tflite_flutter only on non-web platforms
 import 'package:tflite_flutter/tflite_flutter.dart'
+import 'package:flutter/foundation.dart';
     if (dart.library.html) 'image_classifier_service_web_stub.dart';
 
 /// Service for classifying images using the RecyConnect TFLite model.
@@ -49,7 +50,7 @@ class ImageClassifierService {
 
     // TFLite is not supported on web
     if (kIsWeb) {
-      print('ImageClassifierService: TFLite not supported on web, skipping initialization');
+      if (kDebugMode) print('ImageClassifierService: TFLite not supported on web, skipping initialization');
       _initFailed = true;
       return;
     }
@@ -71,9 +72,9 @@ class ImageClassifierService {
       );
 
       _isInitialized = true;
-      print('ImageClassifierService: Initialized with ${_labels.length} labels');
+      if (kDebugMode) print('ImageClassifierService: Initialized with ${_labels.length} labels');
     } catch (e) {
-      print('ImageClassifierService: Failed to initialize - $e');
+      if (kDebugMode) print('ImageClassifierService: Failed to initialize - $e');
       _initFailed = true;
     }
   }
@@ -136,7 +137,7 @@ class ImageClassifierService {
         confidence: confidence,
       );
     } catch (e) {
-      print('ImageClassifierService: Classification error - $e');
+      if (kDebugMode) print('ImageClassifierService: Classification error - $e');
       return null;
     }
   }

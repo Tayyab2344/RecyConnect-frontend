@@ -6,6 +6,7 @@ import '../../../core/services/order_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../widgets/recycle_loader.dart';
 import '../individual/browse_marketplace_screen.dart';
+import 'package:flutter/foundation.dart';
 
 /// Premium My Orders Screen with Glassmorphism Design
 /// Features: Glass cards, animated backgrounds, neon accents (dark), soft pastels (light)
@@ -61,7 +62,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
         _isLoading = false;
       });
     } catch (e) {
-      print('Error loading orders: $e');
+      if (kDebugMode) print('Error loading orders: $e');
       setState(() => _isLoading = false);
     }
   }

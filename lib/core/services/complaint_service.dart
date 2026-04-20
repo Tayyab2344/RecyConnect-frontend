@@ -41,7 +41,7 @@ class ComplaintService extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       if (kDebugMode) {
-        print('Failed to load complaints: $e');
+        if (kDebugMode) print('Failed to load complaints: $e');
       }
     }
   }
@@ -69,7 +69,7 @@ class ComplaintService extends ChangeNotifier {
       syncComplaints();
     } catch (e) {
       if (kDebugMode) {
-        print('Failed to save complaint locally: $e');
+        if (kDebugMode) print('Failed to save complaint locally: $e');
       }
     }
   }
@@ -149,13 +149,13 @@ class ComplaintService extends ChangeNotifier {
       if (allSynced) {
         _loadComplaints();
         if (kDebugMode) {
-          print('Synced ${pendingLogs.length} complaints to backend');
+          if (kDebugMode) print('Synced ${pendingLogs.length} complaints to backend');
         }
       }
     } catch (e) {
       // It's expected to fail if network is down
       if (kDebugMode) {
-        print('Network unavailable. Complaint queued for future sync: $e');
+        if (kDebugMode) print('Network unavailable. Complaint queued for future sync: $e');
       }
     } finally {
       _isSyncing = false;

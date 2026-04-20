@@ -63,7 +63,7 @@ class ApiService {
         options: refreshOptions,
       );
       if (kDebugMode) {
-        print('Background cache refreshed for $endpoint');
+        if (kDebugMode) print('Background cache refreshed for $endpoint');
       }
     } catch (e) {
       if (kDebugMode) print('Background refresh failed: $e');

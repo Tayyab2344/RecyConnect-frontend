@@ -279,8 +279,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 child: NeonButton(
                   text: 'RETURN TO MARKETPLACE',
                   onPressed: () {
+                    // Close the success dialog first
                     Navigator.of(ctx).pop();
-                    Navigator.of(context).pop(true);
+                    // Pop the CheckoutScreen and signal success (true) so that
+                    // ItemDetailScreen can pop itself and return to the marketplace.
+                    if (context.mounted) {
+                      Navigator.of(context).pop(true);
+                    }
                   },
                 ),
               ),

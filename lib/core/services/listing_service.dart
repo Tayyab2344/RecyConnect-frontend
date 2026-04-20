@@ -2,6 +2,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/listing_model.dart';
 import '../constants/api_constants.dart';
 import 'api_service.dart';
+import 'package:flutter/foundation.dart';
 
 class ListingService {
   final ApiService _apiService = ApiService();
@@ -10,8 +11,8 @@ class ListingService {
   Future<Listing> createListing(Listing listing) async {
     try {
       final jsonData = listing.toCreateJson();
-      print('DEBUG: Creating listing with data: $jsonData');
-      print('DEBUG: Images count: ${jsonData['images']?.length ?? 0}');
+      if (kDebugMode) print('DEBUG: Creating listing with data: $jsonData');
+      if (kDebugMode) print('DEBUG: Images count: ${jsonData['images']?.length ?? 0}');
       
       final response = await _apiService.post(
         '/listings',
@@ -24,7 +25,7 @@ class ListingService {
         throw Exception(response['message'] ?? 'Failed to create listing');
       }
     } catch (e) {
-      print('DEBUG: Error creating listing: $e');
+      if (kDebugMode) print('DEBUG: Error creating listing: $e');
       throw Exception('Error creating listing: $e');
     }
   }
@@ -161,7 +162,7 @@ class ListingService {
         throw Exception(response['message'] ?? 'Failed to fetch rates');
       }
     } catch (e) {
-      print('DEBUG: Error fetching rates: $e');
+      if (kDebugMode) print('DEBUG: Error fetching rates: $e');
       throw Exception('Error fetching rates: $e');
     }
   }

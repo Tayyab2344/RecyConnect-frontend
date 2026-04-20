@@ -105,7 +105,7 @@ class SyncManager extends ChangeNotifier with WidgetsBindingObserver {
       processQueue();
     } catch (e) {
       if (kDebugMode) {
-        print('Error queuing sync request: $e');
+        if (kDebugMode) print('Error queuing sync request: $e');
       }
     }
   }
@@ -170,7 +170,7 @@ class SyncManager extends ChangeNotifier with WidgetsBindingObserver {
           // Remote server accepted our request. Remove from local persistent queue.
           await box.delete(req.id);
           if (kDebugMode) {
-            print('Successfully synced: ${req.endpoint}');
+            if (kDebugMode) print('Successfully synced: ${req.endpoint}');
           }
         } else {
           // Increment retry count and mark failed
@@ -186,7 +186,7 @@ class SyncManager extends ChangeNotifier with WidgetsBindingObserver {
           await box.put(req.id, jsonEncode(updatedReq.toJson()));
           
           if (kDebugMode) {
-            print('Sync failed, paused queue: ${req.endpoint}');
+            if (kDebugMode) print('Sync failed, paused queue: ${req.endpoint}');
           }
           // Break the sequence - we pause queue processing to prevent cascading sequence errors
           break;
@@ -195,7 +195,7 @@ class SyncManager extends ChangeNotifier with WidgetsBindingObserver {
 
     } catch (e) {
       if (kDebugMode) {
-        print('Error processing sync queue: $e');
+        if (kDebugMode) print('Error processing sync queue: $e');
       }
     } finally {
       _isProcessing = false;

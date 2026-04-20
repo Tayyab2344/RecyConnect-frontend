@@ -1927,7 +1927,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
       if (_ntnImage != null) files['ntn'] = _ntnImage!;
       
       if (kDebugMode) {
-        print('Registration Files Check: ${files.keys.toList()}');
+        if (kDebugMode) print('Registration Files Check: ${files.keys.toList()}');
       }
 
       final response = await authService.register(userData, files);
