@@ -18,6 +18,7 @@ import '../warehouse/inventory_list_screen.dart';
 import '../warehouse/collector_performance_screen.dart';
 import '../warehouse/collector_management_screen.dart';
 import '../warehouse/my_earnings_screen.dart';
+import 'package:flutter/foundation.dart';
 
 class WarehouseDashboard extends StatefulWidget {
   const WarehouseDashboard({super.key});
@@ -63,7 +64,7 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
         _isLoading = false;
       });
     } catch (e) {
-      print('Error loading stats: $e');
+      if (kDebugMode) print('Error loading stats: $e');
       setState(() => _isLoading = false);
     }
   }

@@ -4,6 +4,7 @@ import '../../../core/services/transaction_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/error_message_helper.dart';
 import '../../widgets/recycle_loader.dart';
+import 'package:flutter/foundation.dart';
 
 class TransactionsScreen extends StatefulWidget {
   const TransactionsScreen({Key? key}) : super(key: key);
@@ -35,7 +36,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         });
       }
     } catch (e) {
-      print('Error loading transactions: $e');
+      if (kDebugMode) print('Error loading transactions: $e');
       if (mounted) {
         setState(() => _isLoading = false);
         ErrorMessageHelper.showErrorSnackBar(

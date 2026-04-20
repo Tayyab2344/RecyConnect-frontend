@@ -42,7 +42,7 @@ class AuthService extends ChangeNotifier {
   String _extractErrorMessage(dynamic body) {
     try {
       if (kDebugMode) {
-        print('Full API Response Error Body: $body');
+        if (kDebugMode) print('Full API Response Error Body: $body');
       }
 
       if (body is Map<String, dynamic>) {
@@ -90,7 +90,7 @@ class AuthService extends ChangeNotifier {
       return 'An unexpected error occurred';
     } catch (e) {
       if (kDebugMode) {
-        print('Error parsing response exception: $e');
+        if (kDebugMode) print('Error parsing response exception: $e');
       }
       return 'Error parsing response: $e';
     }
@@ -212,7 +212,7 @@ class AuthService extends ChangeNotifier {
         request.files.add(multipartFile);
       }
 
-      print('Sending registration request...'); 
+      if (kDebugMode) print('Sending registration request...'); 
       final streamedResponse = await request.send().timeout(
         const Duration(seconds: 30),
         onTimeout: () {
@@ -349,7 +349,7 @@ class AuthService extends ChangeNotifier {
       await SecureStorageService.saveToken(token);
     } catch (e) {
       if (kDebugMode) {
-        print('Error saving token: $e');
+        if (kDebugMode) print('Error saving token: $e');
       }
     }
   }
@@ -359,7 +359,7 @@ class AuthService extends ChangeNotifier {
       await SecureStorageService.saveUserData(userData);
     } catch (e) {
       if (kDebugMode) {
-        print('Error saving user data: $e');
+        if (kDebugMode) print('Error saving user data: $e');
       }
     }
   }
@@ -372,7 +372,7 @@ class AuthService extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       if (kDebugMode) {
-        print('Error loading token: $e');
+        if (kDebugMode) print('Error loading token: $e');
       }
     }
   }

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../constants/api_constants.dart';
 import 'auth_service.dart';
+import 'package:flutter/foundation.dart';
 
 class PaymentService {
   final AuthService _authService = AuthService();
@@ -24,7 +25,7 @@ class PaymentService {
       return jsonDecode(response.body);
     } else {
       // Log the full error for debugging
-      print('[PaymentService] createPaymentIntent FAILED: status=${response.statusCode}, body=${response.body}');
+      if (kDebugMode) print('[PaymentService] createPaymentIntent FAILED: status=${response.statusCode}, body=${response.body}');
       final errorBody = jsonDecode(response.body);
       final message = errorBody['message'] ?? 'Failed to create payment intent';
       throw Exception(message);

@@ -21,7 +21,7 @@ class ImageUtils {
         if (kDebugMode) {
           final original = await file.length();
           final compressed = await result.length();
-          print('Image compressed: ${original / 1024} KB -> ${compressed / 1024} KB');
+          if (kDebugMode) print('Image compressed: ${original / 1024} KB -> ${compressed / 1024} KB');
         }
         return File(result.path);
       }
@@ -41,7 +41,7 @@ class ImageUtils {
         minHeight: 800,
       );
       if (kDebugMode) {
-        print('Bytes compressed: ${bytes.lengthInBytes / 1024} KB -> ${result.lengthInBytes / 1024} KB');
+        if (kDebugMode) print('Bytes compressed: ${bytes.lengthInBytes / 1024} KB -> ${result.lengthInBytes / 1024} KB');
       }
       return result;
     } catch (e) {

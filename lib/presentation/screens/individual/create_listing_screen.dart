@@ -15,6 +15,7 @@ import 'package:recyconnect/core/services/listing_service.dart';
 import 'package:recyconnect/core/theme/marketplace_theme.dart';
 import 'package:recyconnect/presentation/widgets/marketplace/glass_card.dart';
 import 'package:recyconnect/presentation/widgets/marketplace/neon_button.dart';
+import 'package:flutter/foundation.dart';
 
 class CreateListingScreen extends StatefulWidget {
   const CreateListingScreen({Key? key}) : super(key: key);
@@ -186,11 +187,19 @@ class _CreateListingScreenState extends State<CreateListingScreen>
         if (!mounted) return;
 
         if (result != null) {
+          // Find the exact key in _materialRates that matches the AI result,
+          // using case-insensitive comparison to avoid DropdownButton crash.
+          final matchedKey = _materialRates.keys.firstWhere(
+            (k) => k.toLowerCase() == result.displayName.toLowerCase(),
+            orElse: () => _materialRates.keys.isNotEmpty
+                ? _materialRates.keys.first
+                : _selectedMaterial,
+          );
           setState(() {
             _isAnalyzing = false;
             _scanController.stop();
             _scanController.reset();
-            _selectedMaterial = result.displayName;
+            _selectedMaterial = matchedKey;
           });
 
           ScaffoldMessenger.of(context).showSnackBar(
@@ -214,7 +223,7 @@ class _CreateListingScreenState extends State<CreateListingScreen>
         }
       }
     } catch (e) {
-      print('AI Classification error: $e');
+      if (kDebugMode) print('AI Classification error: $e');
     }
 
     // Fallback if classification fails

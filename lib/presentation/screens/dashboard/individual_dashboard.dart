@@ -15,6 +15,7 @@ import '../individual/my_orders_screen.dart';
 import '../individual/seller_orders_screen.dart';
 import '../individual/transactions_screen.dart';
 import '../profile/profile_screen.dart';
+import 'package:flutter/foundation.dart';
 
 
 class IndividualDashboard extends StatefulWidget {
@@ -93,7 +94,7 @@ class _IndividualDashboardState extends State<IndividualDashboard> {
         _isLoading = false;
       });
     } catch (e) {
-      print('Error loading stats: $e');
+      if (kDebugMode) print('Error loading stats: $e');
       if (mounted) setState(() => _isLoading = false);
     }
   }

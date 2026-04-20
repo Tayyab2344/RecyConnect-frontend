@@ -10,6 +10,7 @@ import '../../widgets/recycle_loader.dart';
 import '../../../core/theme/marketplace_theme.dart';
 import 'create_listing_screen.dart';
 import 'listing_detail_screen.dart';
+import 'package:flutter/foundation.dart';
 
 class MyListingsScreen extends StatefulWidget {
   const MyListingsScreen({Key? key}) : super(key: key);
@@ -60,7 +61,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      print('Error loading listings: $e');
+      if (kDebugMode) print('Error loading listings: $e');
       setState(() => _isLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

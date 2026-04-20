@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:recyconnect/core/services/image_classifier_service.dart';
+import 'package:flutter/foundation.dart';
 
 class BulkSellScreen extends StatefulWidget {
   const BulkSellScreen({Key? key}) : super(key: key);
@@ -452,7 +453,7 @@ class _BulkSellScreenState extends State<BulkSellScreen> {
         }
       }
     } catch (e) {
-      print('AI Classification error: $e');
+      if (kDebugMode) print('AI Classification error: $e');
     }
   }
 

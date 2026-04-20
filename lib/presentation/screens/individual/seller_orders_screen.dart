@@ -5,6 +5,7 @@ import '../../../core/services/order_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/error_message_helper.dart';
 import '../../widgets/recycle_loader.dart';
+import 'package:flutter/foundation.dart';
 
 class SellerOrdersScreen extends StatefulWidget {
   const SellerOrdersScreen({Key? key}) : super(key: key);
@@ -40,7 +41,7 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
         });
       }
     } catch (e) {
-      print('Error loading seller orders: $e');
+      if (kDebugMode) print('Error loading seller orders: $e');
       if (mounted) {
         setState(() => _isLoading = false);
         ErrorMessageHelper.showErrorSnackBar(
