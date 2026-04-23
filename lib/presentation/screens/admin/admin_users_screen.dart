@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../../core/constants/admin_colors.dart';
-import '../../../core/constants/modern_colors.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../widgets/admin/admin_drawer.dart';
 import 'admin_user_profile_screen.dart';
 
@@ -585,7 +584,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
             ),
           ],
         ),
-        backgroundColor: AdminColors.success,
+        backgroundColor: AppColors.success,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         duration: const Duration(seconds: 2),
@@ -607,7 +606,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
             Text('Filter cleared', style: TextStyle(fontSize: 14)),
           ],
         ),
-        backgroundColor: AdminColors.textSecondary,
+        backgroundColor: Theme.of(context).textTheme.bodyMedium?.color,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         duration: const Duration(seconds: 2),
@@ -680,7 +679,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
                 child: Row(
                   children: [
                     const Icon(Icons.attach_money,
-                        size: 16, color: AdminColors.primaryGreen),
+                        size: 16, color: AppColors.primaryGreen),
                     const SizedBox(width: 8),
                     Text('Sales',
                         style: TextStyle(
@@ -694,12 +693,12 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
                 value: 'sales_high',
                 child: Row(
                   children: [
-                    const Icon(Icons.trending_up, color: Colors.green, size: 20),
+                    const Icon(Icons.trending_up, color: AppColors.success, size: 20),
                     const SizedBox(width: 12),
                     const Expanded(child: Text('Highest Sales First')),
                     if (_selectedSortOption == 'sales_high')
                       const Icon(Icons.check,
-                          color: AdminColors.success, size: 20),
+                          color: AppColors.success, size: 20),
                   ],
                 ),
               ),
@@ -708,12 +707,12 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
                 child: Row(
                   children: [
                     const Icon(Icons.trending_down,
-                        color: Colors.orange, size: 20),
+                        color: AppColors.accentOrange, size: 20),
                     const SizedBox(width: 12),
                     const Expanded(child: Text('Lowest Sales First')),
                     if (_selectedSortOption == 'sales_low')
                       const Icon(Icons.check,
-                          color: AdminColors.success, size: 20),
+                          color: AppColors.success, size: 20),
                   ],
                 ),
               ),
@@ -726,7 +725,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
                 child: Row(
                   children: [
                     const Icon(Icons.shopping_cart,
-                        size: 16, color: AdminColors.accentBlue),
+                        size: 16, color: AppColors.accentBlue),
                     const SizedBox(width: 8),
                     Text('Purchases',
                         style: TextStyle(
@@ -740,12 +739,12 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
                 value: 'purchases_high',
                 child: Row(
                   children: [
-                    const Icon(Icons.trending_up, color: Colors.green, size: 20),
+                    const Icon(Icons.trending_up, color: AppColors.success, size: 20),
                     const SizedBox(width: 12),
                     const Expanded(child: Text('Highest Purchases First')),
                     if (_selectedSortOption == 'purchases_high')
                       const Icon(Icons.check,
-                          color: AdminColors.success, size: 20),
+                          color: AppColors.success, size: 20),
                   ],
                 ),
               ),
@@ -754,12 +753,12 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
                 child: Row(
                   children: [
                     const Icon(Icons.trending_down,
-                        color: Colors.orange, size: 20),
+                        color: AppColors.accentOrange, size: 20),
                     const SizedBox(width: 12),
                     const Expanded(child: Text('Lowest Purchases First')),
                     if (_selectedSortOption == 'purchases_low')
                       const Icon(Icons.check,
-                          color: AdminColors.success, size: 20),
+                          color: AppColors.success, size: 20),
                   ],
                 ),
               ),
@@ -772,7 +771,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
                 child: Row(
                   children: [
                     const Icon(Icons.calendar_today,
-                        size: 16, color: AdminColors.accentPurple),
+                        size: 16, color: AppColors.accentPurple),
                     const SizedBox(width: 8),
                     Text('Join Date',
                         style: TextStyle(
@@ -786,12 +785,12 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
                 value: 'newest',
                 child: Row(
                   children: [
-                    const Icon(Icons.new_releases, color: Colors.blue, size: 20),
+                    const Icon(Icons.new_releases, color: AppColors.accentBlue, size: 20),
                     const SizedBox(width: 12),
                     const Expanded(child: Text('Newest Members First')),
                     if (_selectedSortOption == 'newest')
                       const Icon(Icons.check,
-                          color: AdminColors.success, size: 20),
+                          color: AppColors.success, size: 20),
                   ],
                 ),
               ),
@@ -799,12 +798,12 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
                 value: 'oldest',
                 child: Row(
                   children: [
-                    const Icon(Icons.history, color: Colors.grey, size: 20),
+                    const Icon(Icons.history, color: AppColors.textSecondary, size: 20),
                     const SizedBox(width: 12),
                     const Expanded(child: Text('Oldest Members First')),
                     if (_selectedSortOption == 'oldest')
                       const Icon(Icons.check,
-                          color: AdminColors.success, size: 20),
+                          color: AppColors.success, size: 20),
                   ],
                 ),
               ),
@@ -816,12 +815,12 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
                 value: 'reset',
                 child: Row(
                   children: [
-                    Icon(Icons.refresh, color: AdminColors.error, size: 20),
+                    Icon(Icons.refresh, color: AppColors.error, size: 20),
                     SizedBox(width: 12),
                     Text(
                       'Clear Filter',
                       style: TextStyle(
-                        color: AdminColors.error,
+                        color: AppColors.error,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -841,7 +840,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
               onTap: (index) {
                 setState(() {}); // Refresh to apply filter
               },
-              labelColor: AdminColors.primaryGreen,
+              labelColor: AppColors.primaryGreen,
               unselectedLabelColor: theme.textTheme.bodyMedium?.color,
               labelStyle: const TextStyle(
                 fontWeight: FontWeight.bold,
@@ -851,7 +850,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
                 fontWeight: FontWeight.normal,
                 fontSize: 14,
               ),
-              indicatorColor: AdminColors.primaryGreen,
+              indicatorColor: AppColors.primaryGreen,
               indicatorWeight: 3,
               tabs: const [
                 Tab(text: 'All Users'),
@@ -886,7 +885,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
                   ),
                   prefixIcon: const Icon(
                     Icons.search,
-                    color: AdminColors.primaryGreen,
+                    color: AppColors.primaryGreen,
                   ),
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
@@ -903,22 +902,22 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
                         )
                       : null,
                   filled: true,
-                  fillColor: AdminColors.surfaceLight,
+                  fillColor: theme.cardColor,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                      color: AdminColors.border,
+                    borderSide: BorderSide(
+                      color: theme.dividerColor,
                       width: 1,
                     ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: const BorderSide(
-                      color: AdminColors.primaryGreen,
+                      color: AppColors.primaryGreen,
                       width: 2,
                     ),
                   ),
@@ -936,7 +935,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             color: theme.brightness == Brightness.dark
                 ? const Color(0xFF1E293B)
-                : AdminColors.surfaceLight,
+                : theme.cardColor,
             child: Text(
               '${filteredUsers.length} ${filteredUsers.length == 1 ? 'User' : 'Users'} Found',
               style: TextStyle(
@@ -952,32 +951,32 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                color: AdminColors.primaryGreen.withOpacity(0.1),
-                border: const Border(
-                  bottom: BorderSide(color: AdminColors.border, width: 1),
+                color: AppColors.primaryGreen.withValues(alpha: 0.1),
+                border: Border(
+                  bottom: BorderSide(color: theme.dividerColor, width: 1),
                 ),
               ),
               child: Row(
                 children: [
                   const Icon(Icons.filter_alt,
-                      size: 18, color: AdminColors.primaryGreen),
+                      size: 18, color: AppColors.primaryGreen),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Sorted by: ${_getFilterLabel(_selectedSortOption)}',
                       style: const TextStyle(
                         fontSize: 14,
-                        color: AdminColors.primaryGreen,
+                        color: AppColors.primaryGreen,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
                   TextButton.icon(
                     onPressed: _resetSort,
-                    icon: const Icon(Icons.close, size: 16, color: AdminColors.error),
+                    icon: const Icon(Icons.close, size: 16, color: AppColors.error),
                     label: const Text(
                       'Clear',
-                      style: TextStyle(color: AdminColors.error, fontSize: 13),
+                      style: TextStyle(color: AppColors.error, fontSize: 13),
                     ),
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -1031,9 +1030,9 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
           color: cardTheme.cardColor,
           borderRadius: BorderRadius.circular(16),
           border: isSuspended
-              ? Border.all(color: Colors.red.withOpacity(0.3), width: 1.5)
-              : Border.all(color: Colors.grey.withOpacity(0.1), width: 1),
-          boxShadow: ModernColors.softShadow,
+              ? Border.all(color: AppColors.error.withValues(alpha: 0.3), width: 1.5)
+              : Border.all(color: AppColors.textSecondary.withValues(alpha: 0.1), width: 1),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: Offset(0, 4))],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1045,7 +1044,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
                   padding: const EdgeInsets.all(2),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [typeColor, typeColor.withOpacity(0.6)],
+                      colors: [typeColor, typeColor.withValues(alpha: 0.6)],
                     ),
                     shape: BoxShape.circle,
                   ),
@@ -1053,7 +1052,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
                     width: 50,
                     height: 50,
                     decoration: BoxDecoration(
-                      color: typeColor.withOpacity(0.1),
+                      color: typeColor.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.white, width: 2),
                     ),
@@ -1102,9 +1101,9 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.red.withOpacity(0.1),
+                            color: AppColors.error.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: Colors.red, width: 1),
+                            border: Border.all(color: AppColors.error, width: 1),
                           ),
                           child: const Row(
                             mainAxisSize: MainAxisSize.min,
@@ -1120,7 +1119,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.red,
+                                  color: AppColors.error,
                                 ),
                               ),
                             ],
@@ -1169,7 +1168,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
-                    color: AdminColors.success.withOpacity(0.1),
+                    color: AppColors.success.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Column(
@@ -1189,7 +1188,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: AdminColors.success,
+                          color: AppColors.success,
                         ),
                       ),
                     ],
@@ -1201,7 +1200,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
-                    color: AdminColors.accentBlue.withOpacity(0.1),
+                    color: AppColors.accentBlue.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Column(
@@ -1221,7 +1220,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: AdminColors.accentBlue,
+                          color: AppColors.accentBlue,
                         ),
                       ),
                     ],
@@ -1236,11 +1235,11 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
           Container(
             width: double.infinity,
             decoration: BoxDecoration(
-              gradient: ModernColors.primaryGradient,
+              gradient: AppColors.primaryGradient,
               borderRadius: BorderRadius.circular(10),
               boxShadow: [
                 BoxShadow(
-                  color: AdminColors.primaryGreen.withOpacity(0.3),
+                  color: AppColors.primaryGreen.withValues(alpha: 0.3),
                   offset: const Offset(0, 4),
                   blurRadius: 12,
                 ),
@@ -1297,7 +1296,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: _getUserTypeColor(type).withOpacity(0.15),
+        color: _getUserTypeColor(type).withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
@@ -1314,13 +1313,13 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
   Color _getUserTypeColor(String type) {
     switch (type) {
       case 'Individual':
-        return AdminColors.success;
+        return AppColors.success;
       case 'Warehouse':
-        return AdminColors.accentOrange;
+        return AppColors.accentOrange;
       case 'Company':
-        return AdminColors.accentPurple;
+        return AppColors.accentPurple;
       default:
-        return AdminColors.textSecondary;
+        return Theme.of(context).textTheme.bodyMedium?.color ?? Colors.grey;
     }
   }
 
@@ -1333,7 +1332,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
           Icon(
             Icons.person_off_outlined,
             size: 80,
-            color: emptyTheme.textTheme.bodySmall?.color?.withOpacity(0.5),
+            color: emptyTheme.textTheme.bodySmall?.color?.withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
           Text(

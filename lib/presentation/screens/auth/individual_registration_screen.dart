@@ -94,11 +94,12 @@ class _IndividualRegistrationScreenState extends State<IndividualRegistrationScr
 
           if (result['success'] == true) {
             // Navigate to OTP verification
-            Navigator.pushReplacement(
+            Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => OtpVerificationScreen(
                   email: _emailController.text.trim(),
+                  password: _passwordController.text,
                 ),
               ),
             );

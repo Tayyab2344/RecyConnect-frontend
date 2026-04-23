@@ -5,11 +5,13 @@ import 'dart:async';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/auth_service.dart';
 import 'login_screen.dart';
+import '../dashboard/dashboard_screen.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
   final String email;
+  final String? password;
 
-  const OtpVerificationScreen({super.key, required this.email});
+  const OtpVerificationScreen({super.key, required this.email, this.password});
 
   @override
   State<OtpVerificationScreen> createState() => _OtpVerificationScreenState();
@@ -132,7 +134,20 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
               margin: const EdgeInsets.all(16),
             ),
           );
-          // Navigate to home/dashboard after successful verification
+          // Auto-login if password is available
+          if (widget.password != null) {
+            final loginSuccess = await authService.login(widget.email, widget.password!);
+            if (loginSuccess && mounted) {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const DashboardScreen()),
+                (route) => false,
+              );
+              return;
+            }
+          }
+
+          // Fallback to login screen
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -599,7 +614,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Check your spam folder if you don\'t see the email',
+              'Check your spam folder if you don\'t see the email.\nCode expires in 15 minutes.',
               style: AppTheme.captionStyle.copyWith(
                 color: AppTheme.infoBlue,
                 height: 1.4,

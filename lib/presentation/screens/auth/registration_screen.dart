@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'dart:ui';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/services/auth_service.dart';
+import '../../../core/services/ocr_service.dart'; // Add OcrService import
 import '../../../core/utils/validators.dart';
 import '../../widgets/city_area_selector.dart';
 import 'otp_verification_screen.dart';
@@ -80,45 +81,79 @@ class _RegistrationScreenState extends State<RegistrationScreen>
   }
 
   Future<void> _analyzeDocument(XFile file, String docType) async {
-    final authService = Provider.of<AuthService>(context, listen: false);
+    // Client-side OCR implementation using OcrService
+    // This runs locally on the device (offline-capable) and avoids Vercel timeouts
     
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Analyzing document... please wait')),
+      const SnackBar(content: Text('Processing document...')),
     );
 
-    final result = await authService.analyzeDocument(file);
-
-    if (result['success'] == true) {
-      final data = result['data'];
-      final extracted = data['extracted'];
+    try {
+      final File imageFile = File(file.path);
       
-      setState(() {
-        if (docType == 'CNIC') {
-          if (extracted['cnic'] != null) {
-             _cnicController.text = extracted['cnic'];
-             _extractedCnicNumber = extracted['cnic'];
+      if (docType == 'CNIC') {
+        final extractedData = await OcrService.extractCnicData(imageFile);
+        
+        if (extractedData.containsKey('cnic')) {
+          setState(() {
+            _cnicController.text = extractedData['cnic']!; // The service already handles formatting? 
+            // OcrService regex: \d{5}-\d{7}-\d{1}. If it matches, it's formatted.
+            _extractedCnicNumber = extractedData['cnic'];
+          });
+          
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('CNIC Extracted: ${extractedData['cnic']}'),
+                backgroundColor: AppTheme.primaryGreen,
+              ),
+            );
           }
-        } else if (docType == 'NTN') {
-          if (extracted['ntn'] != null) {
-            _ntnController.text = extracted['ntn'];
-            _extractedNtnNumber = extracted['ntn'];
+        } else {
+           if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Could not detect CNIC number. Please enter manually.'),
+                backgroundColor: Colors.orange,
+              ),
+            );
           }
         }
-      });
-
+      } else if (docType == 'NTN') {
+        final extractedData = await OcrService.extractNtnData(imageFile);
+        
+        if (extractedData.containsKey('ntn')) {
+          setState(() {
+            _ntnController.text = extractedData['ntn']!;
+            _extractedNtnNumber = extractedData['ntn'];
+          });
+          
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('NTN Extracted: ${extractedData['ntn']}'),
+                backgroundColor: AppTheme.primaryGreen,
+              ),
+            );
+          }
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Could not detect NTN number. Please enter manually.'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+          }
+        }
+      } 
+      // Utility bill OCR is also available in OcrService if needed, but not requested specifically for this fix yet
+      
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Document analyzed. Extracted: ${extracted['cnic'] ?? extracted['ntn'] ?? "No specific data found"}'),
-            backgroundColor: AppTheme.primaryGreen,
-          ),
-        );
-      }
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Analysis failed: ${result['message']}'),
+            content: Text('OCR Failed: $e'),
             backgroundColor: AppTheme.errorRed,
           ),
         );
@@ -331,7 +366,13 @@ class _RegistrationScreenState extends State<RegistrationScreen>
     final isWeb = size.width > 800;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
+    return PopScope(
+      canPop: _currentStep == 0,
+      onPopInvoked: (didPop) {
+        if (didPop) return;
+        setState(() => _currentStep--);
+      },
+      child: Scaffold(
       body: Container(
         width: size.width,
         height: size.height,
@@ -414,6 +455,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
           ),
         ),
       ),
+      ),
     );
   }
 
@@ -454,18 +496,22 @@ class _RegistrationScreenState extends State<RegistrationScreen>
               ),
             ),
           ),
-          const Spacer(),
+          const SizedBox(width: 16),
           // Title
-          Text(
-            '${_getRoleDisplayName()} Registration',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: textColor,
+          Expanded(
+            child: Text(
+              '${_getRoleDisplayName()} Registration',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: textColor,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          const Spacer(),
-          const SizedBox(width: 40), // Balance the back button
+          const SizedBox(width: 54), // Balance the back button and spacing (38 + 16)
         ],
       ),
     );
@@ -1305,9 +1351,11 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                         color: AppTheme.primaryGreen,
                       ),
                       const SizedBox(width: 12),
-                      Text(
-                        'Automatic Document Processing',
-                        style: AppTheme.subHeadingStyle.copyWith(fontSize: 16),
+                      Expanded(
+                        child: Text(
+                          'Automatic Document Processing',
+                          style: AppTheme.subHeadingStyle.copyWith(fontSize: 16),
+                        ),
                       ),
                     ],
                   ),
@@ -1655,14 +1703,15 @@ class _RegistrationScreenState extends State<RegistrationScreen>
       ),
       child: Row(
         children: [
-          if (_currentStep > 0)
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () => setState(() => _currentStep--),
-                child: const Text('Previous'),
-              ),
-            ),
-          if (_currentStep > 0) const SizedBox(width: 16),
+          // Previous button removed as per request
+          // if (_currentStep > 0)
+          //   Expanded(
+          //     child: OutlinedButton(
+          //       onPressed: () => setState(() => _currentStep--),
+          //       child: const Text('Previous'),
+          //     ),
+          //   ),
+          // if (_currentStep > 0) const SizedBox(width: 16),
           Expanded(
             flex: 2,
             child: ElevatedButton(
@@ -1672,9 +1721,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                       if (isLastStep) {
                         _handleRegister();
                       } else {
-                        if (_validateCurrentStep()) {
-                          setState(() => _currentStep++);
-                        }
+                        _handleNextStep();
                       }
                     },
               child: _isLoading
@@ -1694,7 +1741,15 @@ class _RegistrationScreenState extends State<RegistrationScreen>
     );
   }
 
-  bool _validateCurrentStep() {
+  Future<void> _handleNextStep() async {
+    FocusScope.of(context).unfocus(); // Close keyboard
+    final isValid = await _validateCurrentStep();
+    if (isValid && mounted) {
+      setState(() => _currentStep++);
+    }
+  }
+
+  Future<bool> _validateCurrentStep() async {
     switch (_currentStep) {
       case 0:
         // Validate basic info
@@ -1737,13 +1792,39 @@ class _RegistrationScreenState extends State<RegistrationScreen>
           return false;
         }
         
-        // Profile image validation
-        if (widget.role != 'individual' && _profileImage == null) {
-           _showSnackBar('Profile picture is required for ${widget.role}', isError: true);
-           return false;
-        }
+         // Profile image is optional for Individuals again, as backend accepts it.
+         // if (_profileImage == null) {
+         //    _showSnackBar('Profile picture is required', isError: true);
+         //    return false;
+         // }
 
-        return _formKey.currentState?.validate() ?? false;
+         if (!(_formKey.currentState?.validate() ?? false)) {
+           return false;
+         }
+
+         // Check email existence asynchronously
+         setState(() => _isLoading = true);
+         try {
+           final authService = context.read<AuthService>();
+           final result = await authService.checkEmail(_emailController.text.trim());
+           if (result['success'] == true) {
+             final exists = result['data']['exists'] == true;
+             if (exists) {
+               _showSnackBar('Email already exists. Please login or use another email.', isError: true);
+               return false;
+             }
+           } else {
+             _showSnackBar('Failed to validate email: ${result['message']}', isError: true);
+             return false;
+           }
+         } catch (e) {
+           _showSnackBar('Error validating email', isError: true);
+           return false;
+         } finally {
+           if (mounted) setState(() => _isLoading = false);
+         }
+
+         return true;
       case 1:
         if (widget.role == 'warehouse' || widget.role == 'company') {
           if (_cnicImage == null) {
@@ -1824,6 +1905,10 @@ class _RegistrationScreenState extends State<RegistrationScreen>
         'name': _nameController.text.trim(), // Always include name
       };
 
+      if (_cnicController.text.isNotEmpty) {
+        userData['cnic'] = _cnicController.text.trim();
+      }
+
       if (widget.role == 'warehouse') {
         userData['businessName'] = _businessNameController.text.trim();
       } else if (widget.role == 'company') {
@@ -1832,10 +1917,18 @@ class _RegistrationScreenState extends State<RegistrationScreen>
       
       // Prepare files map
       final Map<String, XFile> files = {};
-      if (_profileImage != null) files['profileImage'] = _profileImage!;
+      
+      // Reverting to 'profileImage'
+      if (_profileImage != null) files['profileImage'] = _profileImage!; 
+      
+      // Restoring other files
       if (_cnicImage != null) files['cnic'] = _cnicImage!;
       if (_utilityImage != null) files['utility'] = _utilityImage!;
       if (_ntnImage != null) files['ntn'] = _ntnImage!;
+      
+      if (kDebugMode) {
+        if (kDebugMode) print('Registration Files Check: ${files.keys.toList()}');
+      }
 
       final response = await authService.register(userData, files);
 
@@ -1848,11 +1941,12 @@ class _RegistrationScreenState extends State<RegistrationScreen>
           );
 
           // Navigate to OTP verification screen
-          Navigator.pushReplacement(
+          Navigator.push(
             context,
             MaterialPageRoute(
               builder: (_) => OtpVerificationScreen(
                 email: _emailController.text.trim(),
+                password: _passwordController.text,
               ),
             ),
           );

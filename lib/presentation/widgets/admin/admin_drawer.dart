@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import '../../../core/constants/admin_colors.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/services/preferences_service.dart';
 import '../../screens/admin/admin_dashboard_screen.dart';
 import '../../screens/admin/admin_users_screen.dart';
@@ -9,7 +9,6 @@ import '../../screens/admin/admin_collectors_screen.dart';
 import '../../screens/admin/admin_orders_screen.dart';
 import '../../screens/admin/admin_pricing_screen.dart';
 import '../../screens/admin/admin_activities_screen.dart';
-import '../../screens/admin/admin_reports_screen.dart';
 import '../../screens/admin/admin_notifications_screen.dart';
 import '../../screens/admin/admin_settings_screen.dart';
 import '../../screens/auth/login_screen.dart';
@@ -36,7 +35,7 @@ class _AdminDrawerState extends State<AdminDrawer>
 
   // Admin info from preferences
   String _adminName = 'Admin User';
-  String _adminEmail = 'panel.quantix@gmail.com';
+  String _adminEmail = '';
   String? _profileImageBase64;
 
   @override
@@ -115,7 +114,7 @@ class _AdminDrawerState extends State<AdminDrawer>
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          backgroundColor: isDark ? AdminColors.darkCardBackground : Colors.white,
+          backgroundColor: isDark ? Theme.of(context).cardColor : Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
@@ -124,7 +123,7 @@ class _AdminDrawerState extends State<AdminDrawer>
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  gradient: AdminColors.redGradient,
+                  gradient: AppColors.redGradient,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(Icons.logout, color: Colors.white, size: 20),
@@ -135,7 +134,7 @@ class _AdminDrawerState extends State<AdminDrawer>
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AdminColors.getTextPrimary(isDark),
+                  color: Theme.of(context).textTheme.headlineSmall?.color,
                 ),
               ),
             ],
@@ -144,7 +143,7 @@ class _AdminDrawerState extends State<AdminDrawer>
             'Are you sure you want to logout from the admin panel?',
             style: TextStyle(
               fontSize: 14,
-              color: AdminColors.getTextSecondary(isDark),
+              color: Theme.of(context).textTheme.bodyMedium?.color,
             ),
           ),
           actions: [
@@ -156,16 +155,16 @@ class _AdminDrawerState extends State<AdminDrawer>
               child: Text(
                 'Cancel',
                 style: TextStyle(
-                  color: AdminColors.getTextSecondary(isDark),
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ),
             Container(
               decoration: BoxDecoration(
-                gradient: AdminColors.redGradient,
+                gradient: AppColors.redGradient,
                 borderRadius: BorderRadius.circular(10),
-                boxShadow: AdminColors.getGlowShadow(AdminColors.error, intensity: 0.3),
+                boxShadow: [BoxShadow(color: AppColors.error.withValues(alpha: 0.3), blurRadius: 20, spreadRadius: 2)],
               ),
               child: ElevatedButton(
                 onPressed: () {
@@ -208,7 +207,7 @@ class _AdminDrawerState extends State<AdminDrawer>
       child: Container(
         decoration: BoxDecoration(
           gradient: isDark
-              ? AdminColors.darkBackgroundGradient
+              ? AppColors.darkBackgroundGradient
               : const LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
@@ -231,7 +230,7 @@ class _AdminDrawerState extends State<AdminDrawer>
                   margin: const EdgeInsets.only(top: 10),
                   decoration: BoxDecoration(
                     color: isDark 
-                        ? AdminColors.darkCardBackground.withValues(alpha: 0.95)
+                        ? Theme.of(context).cardColor.withValues(alpha: 0.95)
                         : Colors.white,
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(30),
@@ -290,13 +289,6 @@ class _AdminDrawerState extends State<AdminDrawer>
                               title: 'Activity Logs',
                               route: 'logs',
                               screen: const AdminActivitiesScreen(),
-                              isDark: isDark,
-                            ),
-                            _buildModernMenuItem(
-                              icon: Icons.bar_chart_rounded,
-                              title: 'Reports & Analytics',
-                              route: 'reports',
-                              screen: const AdminReportsScreen(),
                               isDark: isDark,
                             ),
                             _buildModernMenuItem(
@@ -366,11 +358,11 @@ class _AdminDrawerState extends State<AdminDrawer>
                         shape: BoxShape.circle,
                         gradient: LinearGradient(
                           colors: isDark
-                              ? [AdminColors.neonCyan, AdminColors.neonGreen]
+                              ? [AppColors.neonCyan, AppColors.neonGreen]
                               : [Colors.white.withValues(alpha: 0.8), Colors.white.withValues(alpha: 0.4)],
                         ),
                         boxShadow: isDark
-                            ? AdminColors.getGlowShadow(AdminColors.neonCyan, intensity: 0.4)
+                            ? [BoxShadow(color: AppColors.neonCyan.withValues(alpha: 0.4), blurRadius: 20, spreadRadius: 2)]
                             : [
                                 BoxShadow(
                                   color: Colors.black.withValues(alpha: 0.2),
@@ -381,7 +373,7 @@ class _AdminDrawerState extends State<AdminDrawer>
                       ),
                       child: Container(
                         decoration: BoxDecoration(
-                          color: isDark ? AdminColors.darkCardBackground : Colors.white,
+                          color: isDark ? Theme.of(context).cardColor : Colors.white,
                           shape: BoxShape.circle,
                         ),
                         child: _profileImageBase64 != null
@@ -398,7 +390,7 @@ class _AdminDrawerState extends State<AdminDrawer>
                                         style: TextStyle(
                                           fontSize: 32,
                                           fontWeight: FontWeight.bold,
-                                          color: isDark ? AdminColors.neonCyan : AdminColors.primaryGreen,
+                                          color: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
                                         ),
                                       ),
                                     );
@@ -411,7 +403,7 @@ class _AdminDrawerState extends State<AdminDrawer>
                                   style: TextStyle(
                                     fontSize: 32,
                                     fontWeight: FontWeight.bold,
-                                    color: isDark ? AdminColors.neonCyan : AdminColors.primaryGreen,
+                                    color: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
                                   ),
                                 ),
                               ),
@@ -425,13 +417,13 @@ class _AdminDrawerState extends State<AdminDrawer>
                         width: 20,
                         height: 20,
                         decoration: BoxDecoration(
-                          color: AdminColors.success,
+                          color: AppColors.success,
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: isDark ? AdminColors.darkCardBackground : Colors.white,
+                            color: isDark ? Theme.of(context).cardColor : Colors.white,
                             width: 3,
                           ),
-                          boxShadow: AdminColors.getGlowShadow(AdminColors.success, intensity: 0.5),
+                          boxShadow: [BoxShadow(color: AppColors.success.withValues(alpha: 0.5), blurRadius: 20, spreadRadius: 2)],
                         ),
                       ),
                     ),
@@ -500,7 +492,7 @@ class _AdminDrawerState extends State<AdminDrawer>
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: isDark 
-                            ? AdminColors.neonCyan.withValues(alpha: 0.5)
+                            ? AppColors.neonCyan.withValues(alpha: 0.5)
                             : Colors.white.withValues(alpha: 0.3),
                       ),
                     ),
@@ -542,18 +534,18 @@ class _AdminDrawerState extends State<AdminDrawer>
     String? badge,
   }) {
     final isSelected = _selectedItem == route;
-    final accentColor = isDark ? AdminColors.neonCyan : AdminColors.primaryGreen;
+    final accentColor = isDark ? AppColors.neonCyan : AppColors.primaryGreen;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
         gradient: isSelected
-            ? (isDark ? AdminColors.neonGradient : AdminColors.primaryGradient)
+            ? (isDark ? AppColors.neonGradient : AppColors.primaryGradient)
             : null,
         borderRadius: BorderRadius.circular(14),
         boxShadow: isSelected
-            ? AdminColors.getGlowShadow(accentColor, intensity: 0.3)
+            ? [BoxShadow(color: accentColor.withValues(alpha: 0.3), blurRadius: 20, spreadRadius: 2)]
             : null,
       ),
       child: Material(
@@ -586,7 +578,7 @@ class _AdminDrawerState extends State<AdminDrawer>
                     icon,
                     size: 20,
                     color: isSelected 
-                        ? (isDark ? AdminColors.darkBackground : Colors.white)
+                        ? (isDark ? AppColors.loginNavyDeep : Colors.white)
                         : accentColor,
                   ),
                 ),
@@ -600,8 +592,8 @@ class _AdminDrawerState extends State<AdminDrawer>
                       fontSize: 14,
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                       color: isSelected 
-                          ? (isDark ? AdminColors.darkBackground : Colors.white)
-                          : AdminColors.getTextPrimary(isDark),
+                          ? (isDark ? AppColors.loginNavyDeep : Colors.white)
+                          : Theme.of(context).textTheme.bodyLarge?.color,
                     ),
                   ),
                 ),
@@ -613,7 +605,7 @@ class _AdminDrawerState extends State<AdminDrawer>
                     decoration: BoxDecoration(
                       gradient: isSelected
                           ? null
-                          : AdminColors.redGradient,
+                          : AppColors.redGradient,
                       color: isSelected ? Colors.white.withValues(alpha: 0.3) : null,
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -623,7 +615,7 @@ class _AdminDrawerState extends State<AdminDrawer>
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
                         color: isSelected 
-                            ? (isDark ? AdminColors.darkBackground : Colors.white)
+                            ? (isDark ? AppColors.loginNavyDeep : Colors.white)
                             : Colors.white,
                       ),
                     ),
@@ -634,7 +626,7 @@ class _AdminDrawerState extends State<AdminDrawer>
                   Icon(
                     Icons.arrow_forward_ios_rounded,
                     size: 14,
-                    color: isDark ? AdminColors.darkBackground : Colors.white,
+                    color: isDark ? AppColors.loginNavyDeep : Colors.white,
                   ),
               ],
             ),
@@ -655,7 +647,7 @@ class _AdminDrawerState extends State<AdminDrawer>
         child: InkWell(
           onTap: _showLogoutDialog,
           borderRadius: BorderRadius.circular(14),
-          splashColor: AdminColors.error.withValues(alpha: 0.1),
+          splashColor: AppColors.error.withValues(alpha: 0.1),
           highlightColor: Colors.transparent,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -664,16 +656,16 @@ class _AdminDrawerState extends State<AdminDrawer>
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AdminColors.error.withValues(alpha: 0.1),
+                    color: AppColors.error.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                     border: isDark
-                        ? Border.all(color: AdminColors.error.withValues(alpha: 0.3))
+                        ? Border.all(color: AppColors.error.withValues(alpha: 0.3))
                         : null,
                   ),
                   child: const Icon(
                     Icons.logout_rounded,
                     size: 20,
-                    color: AdminColors.error,
+                    color: AppColors.error,
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -682,7 +674,7 @@ class _AdminDrawerState extends State<AdminDrawer>
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: AdminColors.error,
+                    color: AppColors.error,
                   ),
                 ),
               ],
@@ -698,7 +690,7 @@ class _AdminDrawerState extends State<AdminDrawer>
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
         color: isDark 
-            ? AdminColors.darkCardBackground.withValues(alpha: 0.95)
+            ? Theme.of(context).cardColor.withValues(alpha: 0.95)
             : Colors.white,
         boxShadow: [
           BoxShadow(
@@ -714,13 +706,13 @@ class _AdminDrawerState extends State<AdminDrawer>
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              gradient: isDark ? AdminColors.neonGradient : AdminColors.primaryGradient,
+              gradient: isDark ? AppColors.neonGradient : AppColors.primaryGradient,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
               Icons.recycling,
               size: 16,
-              color: isDark ? AdminColors.darkBackground : Colors.white,
+              color: isDark ? AppColors.loginNavyDeep : Colors.white,
             ),
           ),
           const SizedBox(width: 10),
@@ -733,14 +725,14 @@ class _AdminDrawerState extends State<AdminDrawer>
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: AdminColors.getTextPrimary(isDark),
+                  color: Theme.of(context).textTheme.headlineSmall?.color,
                 ),
               ),
               Text(
                 'Version 1.0.0',
                 style: TextStyle(
                   fontSize: 10,
-                  color: AdminColors.getTextSecondary(isDark),
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
                 ),
               ),
             ],

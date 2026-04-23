@@ -1,0 +1,7 @@
+clothing
+e-waste
+glass
+metal
+other
+paper
+plastic

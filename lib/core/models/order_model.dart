@@ -2,56 +2,61 @@ class Order {
   final int id;
   final int buyerId;
   final int sellerId;
-  final String materialType;
-  final double weight;
-  final String pickupAddress;
-  final double? latitude;
-  final double? longitude;
-  final String? locationMethod;
-  final String paymentMethod;
   final String status;
+  final double totalAmount;
+  final String? paymentMethod;
   final DateTime createdAt;
   final DateTime updatedAt;
-  
+
   // Optional nested user data
   final OrderUser? buyer;
   final OrderUser? seller;
+
+  // Optional order items (from backend items array)
+  final List<OrderItem>? items;
 
   Order({
     required this.id,
     required this.buyerId,
     required this.sellerId,
-    required this.materialType,
-    required this.weight,
-    required this.pickupAddress,
-    this.latitude,
-    this.longitude,
-    this.locationMethod,
-    required this.paymentMethod,
     required this.status,
+    required this.totalAmount,
+    this.paymentMethod,
     required this.createdAt,
     required this.updatedAt,
     this.buyer,
     this.seller,
+    this.items,
   });
 
+  /// Parse the actual backend response shape:
+  /// { id, buyerId, sellerId, status, totalAmount, createdAt, updatedAt,
+  ///   buyer:{...}, seller:{...}, items:[{listingId, quantity, price, listing:{...}}] }
   factory Order.fromJson(Map<String, dynamic> json) {
     return Order(
-      id: json['id'],
-      buyerId: json['buyerId'],
-      sellerId: json['sellerId'],
-      materialType: json['materialType'],
-      weight: (json['weight'] as num).toDouble(),
-      pickupAddress: json['pickupAddress'],
-      latitude: json['latitude'] != null ? (json['latitude'] as num).toDouble() : null,
-      longitude: json['longitude'] != null ? (json['longitude'] as num).toDouble() : null,
-      locationMethod: json['locationMethod'],
-      paymentMethod: json['paymentMethod'],
-      status: json['status'],
-      createdAt: DateTime.parse(json['createdAt']),
-      updatedAt: DateTime.parse(json['updatedAt']),
-      buyer: json['buyer'] != null ? OrderUser.fromJson(json['buyer']) : null,
-      seller: json['seller'] != null ? OrderUser.fromJson(json['seller']) : null,
+      id: json['id'] as int,
+      buyerId: json['buyerId'] as int,
+      sellerId: json['sellerId'] as int,
+      status: json['status'] as String? ?? 'CREATED',
+      totalAmount: json['totalAmount'] != null
+          ? (json['totalAmount'] as num).toDouble()
+          : 0.0,
+      paymentMethod: json['paymentMethod'] as String?,
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'] as String)
+          : DateTime.now(),
+      updatedAt: json['updatedAt'] != null
+          ? DateTime.parse(json['updatedAt'] as String)
+          : DateTime.now(),
+      buyer:
+          json['buyer'] != null ? OrderUser.fromJson(json['buyer']) : null,
+      seller:
+          json['seller'] != null ? OrderUser.fromJson(json['seller']) : null,
+      items: json['items'] != null
+          ? (json['items'] as List)
+              .map((i) => OrderItem.fromJson(i))
+              .toList()
+          : null,
     );
   }
 
@@ -60,57 +65,39 @@ class Order {
       'id': id,
       'buyerId': buyerId,
       'sellerId': sellerId,
-      'materialType': materialType,
-      'weight': weight,
-      'pickupAddress': pickupAddress,
-      'latitude': latitude,
-      'longitude': longitude,
-      'locationMethod': locationMethod,
-      'paymentMethod': paymentMethod,
       'status': status,
+      'totalAmount': totalAmount,
+      if (paymentMethod != null) 'paymentMethod': paymentMethod,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
   }
 
-  // Helper to create a new order for API POST
-  Map<String, dynamic> toCreateJson() {
-    return {
-      'sellerId': sellerId,
-      'materialType': materialType,
-      'weight': weight,
-      'pickupAddress': pickupAddress,
-      if (latitude != null) 'latitude': latitude,
-      if (longitude != null) 'longitude': longitude,
-      if (locationMethod != null) 'locationMethod': locationMethod,
-      'paymentMethod': paymentMethod,
-    };
+  // Convenience getters derived from items
+  String get materialType {
+    if (items != null && items!.isNotEmpty) {
+      return items!.first.listing?['materialType'] as String? ?? '';
+    }
+    return '';
+  }
+
+  double get weight {
+    if (items != null && items!.isNotEmpty) {
+      return items!.fold(0.0, (sum, i) => sum + i.quantity);
+    }
+    return 0.0;
   }
 
   String get statusDisplay {
-    switch (status) {
-      case 'PENDING':
-        return 'Pending';
-      case 'COLLECTED':
-        return 'Collected';
-      case 'COMPLETED':
-        return 'Completed';
-      case 'CANCELLED':
-        return 'Cancelled';
-      default:
-        return status;
-    }
-  }
+    const labels = {
+      'CREATED': 'Pending',
+      'CONFIRMED': 'Confirmed',
+      'COMPLETED': 'Completed',
+      'CANCELLED': 'Cancelled',
+    };
 
-  String get paymentMethodDisplay {
-    switch (paymentMethod) {
-      case 'COD':
-        return 'Cash on Delivery';
-      case 'WALLET':
-        return 'Wallet';
-      default:
-        return paymentMethod;
-    }
+    final normalizedStatus = status.trim().toUpperCase();
+    return labels[normalizedStatus] ?? normalizedStatus;
   }
 
   String get materialTypeDisplay {
@@ -123,9 +110,65 @@ class Order {
         return 'Metal';
       case 'e-waste':
         return 'E-Waste';
+      case 'glass':
+        return 'Glass';
+      case 'clothing':
+        return 'Clothing';
+      case 'other':
+        return 'Other';
       default:
+        if (materialType.isEmpty) return 'Unknown';
+        // Capitalize first letter as fallback
+        if (materialType.length > 1) {
+          return materialType[0].toUpperCase() + materialType.substring(1);
+        }
         return materialType;
     }
+  }
+
+  String get paymentMethodDisplay {
+    if (paymentMethod == null) return 'N/A';
+    switch (paymentMethod!.toLowerCase()) {
+      case 'card':
+        return 'Card';
+      case 'bank_transfer':
+        return 'Bank Transfer';
+      case 'cod':
+      case 'cash':
+        return 'Cash on Delivery';
+      default:
+        // Capitalize first letter as fallback
+        if (paymentMethod!.length > 1) {
+          return paymentMethod![0].toUpperCase() + paymentMethod!.substring(1);
+        }
+        return paymentMethod!;
+    }
+  }
+}
+
+class OrderItem {
+  final int? id;
+  final int listingId;
+  final double quantity;
+  final double price;
+  final Map<String, dynamic>? listing;
+
+  OrderItem({
+    this.id,
+    required this.listingId,
+    required this.quantity,
+    required this.price,
+    this.listing,
+  });
+
+  factory OrderItem.fromJson(Map<String, dynamic> json) {
+    return OrderItem(
+      id: json['id'] as int?,
+      listingId: json['listingId'] as int,
+      quantity: (json['quantity'] as num).toDouble(),
+      price: (json['price'] as num).toDouble(),
+      listing: json['listing'] as Map<String, dynamic>?,
+    );
   }
 }
 
@@ -146,11 +189,11 @@ class OrderUser {
 
   factory OrderUser.fromJson(Map<String, dynamic> json) {
     return OrderUser(
-      id: json['id'],
-      name: json['name'],
-      email: json['email'],
-      contactNo: json['contactNo'],
-      address: json['address'],
+      id: json['id'] as int,
+      name: json['name'] as String?,
+      email: json['email'] as String?,
+      contactNo: json['contactNo'] as String?,
+      address: json['address'] as String?,
     );
   }
 

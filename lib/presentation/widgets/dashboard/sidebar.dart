@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
+// dart:ui import removed - BackdropFilter no longer used for performance
 import '../../../core/theme/marketplace_theme.dart';
 
 class Sidebar extends StatelessWidget {
   final int selectedIndex;
-  final Function(int) onItemSelected;
+  final ValueChanged<int> onItemSelected;
   final bool isDark;
 
   const Sidebar({
-    Key? key,
+    super.key,
     required this.selectedIndex,
     required this.onItemSelected,
     required this.isDark,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -23,36 +23,32 @@ class Sidebar extends StatelessWidget {
         color: isDark ? MarketplaceTheme.darkSidebarBg : MarketplaceTheme.lightSidebarBg,
         border: Border(
           right: BorderSide(
-            color: isDark 
-              ? MarketplaceTheme.darkAccentGreen.withOpacity(0.2) 
-              : Colors.white.withOpacity(0.5),
+            color: isDark
+                ? MarketplaceTheme.darkAccentGreen.withValues(alpha: 0.2)
+                : Colors.white.withValues(alpha: 0.5),
             width: 1,
           ),
         ),
       ),
-      child: ClipRRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Column(
-            children: [
-              const SizedBox(height: 40),
-              // App Logo / Branding Icon
-              _buildLogo(),
-              const SizedBox(height: 40),
-              
-              // Navigation Items
-              _buildNavItem(0, Icons.home_rounded, 'Home'),
-              _buildNavItem(1, Icons.storefront_rounded, 'Market'),
-              _buildNavItem(2, Icons.add_circle_outline, 'Sell', isHighlight: true),
-              _buildNavItem(3, Icons.receipt_long_rounded, 'Orders'),
-              _buildNavItem(4, Icons.person_rounded, 'Profile'),
-              
-              const Spacer(),
-              _buildNavItem(5, Icons.settings_rounded, 'Settings'),
-              const SizedBox(height: 20),
-            ],
-          ),
-        ),
+      // Performance optimization: Removed BackdropFilter blur for low-end device support
+      child: Column(
+        children: [
+          const SizedBox(height: 40),
+          // App Logo / Branding Icon
+          _buildLogo(),
+          const SizedBox(height: 40),
+          
+          // Navigation Items
+          _buildNavItem(0, Icons.home_rounded, 'Home'),
+          _buildNavItem(1, Icons.storefront_rounded, 'Market'),
+          _buildNavItem(2, Icons.add_circle_outline, 'Sell', isHighlight: true),
+          _buildNavItem(3, Icons.receipt_long_rounded, 'Orders'),
+          _buildNavItem(4, Icons.person_rounded, 'Profile'),
+          
+          const Spacer(),
+          _buildNavItem(5, Icons.settings_rounded, 'Settings'),
+          const SizedBox(height: 20),
+        ],
       ),
     );
   }
@@ -62,7 +58,9 @@ class Sidebar extends StatelessWidget {
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: isDark ? MarketplaceTheme.darkAccentGreen.withOpacity(0.1) : MarketplaceTheme.lightAccent.withOpacity(0.1),
+        color: isDark
+            ? MarketplaceTheme.darkAccentGreen.withValues(alpha: 0.1)
+            : MarketplaceTheme.lightAccent.withValues(alpha: 0.1),
         border: Border.all(
           color: isDark ? MarketplaceTheme.darkAccentGreen : MarketplaceTheme.lightAccent,
           width: 1.5,
@@ -84,7 +82,7 @@ class Sidebar extends StatelessWidget {
 
     return InkWell(
       onTap: () => onItemSelected(index),
-      child: Container(
+      child: SizedBox(
         height: 70,
         width: double.infinity,
         child: Column(
@@ -92,13 +90,21 @@ class Sidebar extends StatelessWidget {
           children: [
             Container(
               padding: const EdgeInsets.all(8),
-              decoration: isSelected ? BoxDecoration(
-                color: color.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: isDark && isSelected ? [
-                  BoxShadow(color: color.withOpacity(0.4), blurRadius: 8, spreadRadius: 0)
-                ] : [],
-              ) : null,
+              decoration: isSelected
+                  ? BoxDecoration(
+                      color: color.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: isDark && isSelected
+                          ? [
+                              BoxShadow(
+                                color: color.withValues(alpha: 0.4),
+                                blurRadius: 8,
+                                spreadRadius: 0,
+                              ),
+                            ]
+                          : const [],
+                    )
+                  : null,
               child: Icon(icon, color: color, size: 26),
             ),
             const SizedBox(height: 4),

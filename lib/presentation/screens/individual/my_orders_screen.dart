@@ -4,7 +4,9 @@ import 'package:intl/intl.dart';
 import '../../../core/models/order_model.dart';
 import '../../../core/services/order_service.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../widgets/recycle_loader.dart';
 import '../individual/browse_marketplace_screen.dart';
+import 'package:flutter/foundation.dart';
 
 /// Premium My Orders Screen with Glassmorphism Design
 /// Features: Glass cards, animated backgrounds, neon accents (dark), soft pastels (light)
@@ -60,7 +62,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
         _isLoading = false;
       });
     } catch (e) {
-      print('Error loading orders: $e');
+      if (kDebugMode) print('Error loading orders: $e');
       setState(() => _isLoading = false);
     }
   }
@@ -68,10 +70,14 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
   void _filterOrders() {
     setState(() {
       _filteredOrders = _orders.where((order) {
-        // Filter by status
+        // Filter by status — backend statuses: CREATED, CONFIRMED, COMPLETED, CANCELLED
         bool matchesStatus = false;
         if (_selectedStatus == 'Active') {
-          matchesStatus = order.status == 'PENDING' || order.status == 'COLLECTED';
+          // "Active" includes newly created orders and confirmed-in-progress orders
+          matchesStatus = order.status == 'CREATED' ||
+              order.status == 'CONFIRMED' ||
+              order.status == 'PENDING' ||
+              order.status == 'COLLECTED';
         } else if (_selectedStatus == 'Completed') {
           matchesStatus = order.status == 'COMPLETED';
         } else if (_selectedStatus == 'Cancelled') {
@@ -118,7 +124,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
                 Expanded(
                   child: _isLoading
                       ? Center(
-                          child: CircularProgressIndicator(
+                          child: RecycleLoader(
                             color: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
                           ),
                         )
@@ -175,18 +181,20 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
       child: Row(
         children: [
-          // Back button
-          _buildIconButton(
-            icon: Icons.arrow_back_ios_new_rounded,
-            isDark: isDark,
-            onTap: () => Navigator.pop(context),
-          ),
-          const SizedBox(width: 16),
-          
+          // Back button — only show when navigated to (not embedded as a tab)
+          if (Navigator.canPop(context))
+            _buildIconButton(
+              icon: Icons.arrow_back_ios_new_rounded,
+              isDark: isDark,
+              onTap: () => Navigator.pop(context),
+            ),
+          if (Navigator.canPop(context))
+            const SizedBox(width: 16),
+
           // Title
           Expanded(
             child: Text(
-              'My Orders',
+              'My Purchases',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -743,6 +751,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
 
   Map<String, dynamic> _getStatusInfo(String status, bool isDark) {
     switch (status) {
+      case 'CREATED':
       case 'PENDING':
         return {
           'color': const Color(0xFFF59E0B),
@@ -753,6 +762,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
           ),
           'textColor': isDark ? const Color(0xFFFBBF24) : const Color(0xFFF57C00),
         };
+      case 'CONFIRMED':
       case 'COLLECTED':
         return {
           'color': const Color(0xFF3B82F6),
@@ -796,6 +806,10 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
 
   String _getStatusText(String status) {
     switch (status) {
+      case 'CREATED':
+        return 'Pending';
+      case 'CONFIRMED':
+        return 'Confirmed';
       case 'PENDING':
         return 'Pending';
       case 'COLLECTED':

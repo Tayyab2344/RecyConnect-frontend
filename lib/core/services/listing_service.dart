@@ -1,6 +1,8 @@
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/listing_model.dart';
 import '../constants/api_constants.dart';
 import 'api_service.dart';
+import 'package:flutter/foundation.dart';
 
 class ListingService {
   final ApiService _apiService = ApiService();
@@ -9,8 +11,8 @@ class ListingService {
   Future<Listing> createListing(Listing listing) async {
     try {
       final jsonData = listing.toCreateJson();
-      print('DEBUG: Creating listing with data: $jsonData');
-      print('DEBUG: Images count: ${jsonData['images']?.length ?? 0}');
+      if (kDebugMode) print('DEBUG: Creating listing with data: $jsonData');
+      if (kDebugMode) print('DEBUG: Images count: ${jsonData['images']?.length ?? 0}');
       
       final response = await _apiService.post(
         '/listings',
@@ -23,7 +25,7 @@ class ListingService {
         throw Exception(response['message'] ?? 'Failed to create listing');
       }
     } catch (e) {
-      print('DEBUG: Error creating listing: $e');
+      if (kDebugMode) print('DEBUG: Error creating listing: $e');
       throw Exception('Error creating listing: $e');
     }
   }
@@ -41,7 +43,7 @@ class ListingService {
   }) async {
     try {
       final queryParams = <String, String>{};
-      if (material != null) queryParams['material'] = material;
+      if (material != null) queryParams['materialType'] = material;
       if (status != null) queryParams['status'] = status;
       if (startDate != null) queryParams['startDate'] = startDate;
       if (endDate != null) queryParams['endDate'] = endDate;
@@ -50,6 +52,20 @@ class ListingService {
       queryParams['limit'] = limit.toString();
       if (isMarketplace) queryParams['view'] = 'marketplace';
 
+      // Advanced Delta Sync Logic (DISABLED: Needs local caching database to merge deltas)
+      /*
+      final prefs = await SharedPreferences.getInstance();
+      final lastUpdatedKey = isMarketplace ? 'delta_sync_marketplace' : 'delta_sync_own';
+      
+      // If we are on page 1 and no search filters, attempt a Delta Sync
+      if (page == 1 && search == null && material == null && status == null) {
+         final lastUpdated = prefs.getString(lastUpdatedKey);
+         if (lastUpdated != null) {
+           queryParams['lastUpdated'] = lastUpdated;
+         }
+      }
+      */
+
       final queryString = queryParams.entries
           .map((e) => '${e.key}=${Uri.encodeComponent(e.value)}')
           .join('&');
@@ -57,6 +73,13 @@ class ListingService {
       final response = await _apiService.get('/listings?$queryString');
 
       if (response['success'] == true) {
+        // Update Delta Sync timestamp on success (DISABLED)
+        /*
+        if (page == 1 && search == null && material == null && status == null) {
+           await prefs.setString(lastUpdatedKey, DateTime.now().toUtc().toIso8601String());
+        }
+        */
+
         final listings = (response['data'] as List)
             .map((json) => Listing.fromJson(json))
             .toList();
@@ -118,6 +141,29 @@ class ListingService {
       }
     } catch (e) {
       throw Exception('Error deleting listing: $e');
+    }
+  }
+
+  // Fetch dynamic material rates from backend
+  Future<Map<String, double>> fetchMaterialRates() async {
+    try {
+      final response = await _apiService.get('/app/rates');
+      
+      if (response['success'] == true && response['data'] != null) {
+        final ratesList = response['data'] as List;
+        final Map<String, double> ratesMap = {};
+        for (var rateObj in ratesList) {
+          final category = rateObj['category'] as String;
+          final price = (rateObj['pricePerUnit'] as num).toDouble();
+          ratesMap[category] = price;
+        }
+        return ratesMap;
+      } else {
+        throw Exception(response['message'] ?? 'Failed to fetch rates');
+      }
+    } catch (e) {
+      if (kDebugMode) print('DEBUG: Error fetching rates: $e');
+      throw Exception('Error fetching rates: $e');
     }
   }
 

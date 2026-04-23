@@ -15,12 +15,21 @@ dependencies:
   
   # HTTP & API
   http: ^1.2.2
-  
+
+  # Stripe Payment
+  flutter_stripe: ^10.1.1
+
   # Local Storage
   shared_preferences: ^2.3.2
+  flutter_secure_storage: ^9.2.2
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
   
   # Image & Camera
   image_picker: ^1.1.2
+
+  # TFLite for on-device AI classification
+  tflite_flutter: ^0.11.0
   
   # OCR
   google_mlkit_commons: ^0.11.0
@@ -75,6 +84,12 @@ dependencies:
   flutter_staggered_animations: ^1.1.1
   glassmorphism: ^3.0.0
   blur: ^3.1.0
+  dio: ^5.9.2
+  dio_cache_interceptor: ^3.5.1
+  dio_cache_interceptor_hive_store: ^4.0.0
+  connectivity_plus: ^7.1.1
+  flutter_image_compress: ^2.4.0
+  cached_network_image: ^3.4.1
 
 dev_dependencies:
   flutter_test:
@@ -98,3 +113,5 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
+    - assets/recyconnect_outputs/labels.txt
+    - assets/recyconnect_outputs/recyconnect_model_quantized.tflite

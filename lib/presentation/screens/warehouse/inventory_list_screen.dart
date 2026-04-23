@@ -1,6 +1,7 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
-import '../../../core/models/warehouse_inventory.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/app_colors.dart';
 import 'add_warehouse_item_screen.dart';
 
 class InventoryListScreen extends StatefulWidget {
@@ -158,31 +159,52 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
         border: Border(
           bottom: BorderSide(
             color: (isDark ? AppTheme.darkSecondaryGreen : AppTheme.lightGray)
-                .withOpacity(0.3),
+                .withValues(alpha: 0.3),
           ),
         ),
       ),
       child: Column(
         children: [
-          // Search bar
-          TextField(
-            onChanged: (value) => setState(() => _searchQuery = value),
-            decoration: InputDecoration(
-              hintText: 'Search materials or categories...',
-              prefixIcon: Icon(
-                Icons.search,
-                color: isDark ? AppTheme.darkTextSecondary : AppTheme.textLight,
-              ),
-              filled: true,
-              fillColor: isDark ? AppTheme.darkBackground : AppTheme.backgroundLight,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
+          // Search bar - Premium Glassmorphism Style
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.08)
+                      : Colors.white.withValues(alpha: 0.8),
+                  border: Border.all(
+                    color: isDark
+                        ? AppColors.neonCyan.withValues(alpha: 0.2)
+                        : Colors.black.withValues(alpha: 0.05),
+                  ),
+                ),
+                child: TextField(
+                  onChanged: (value) => setState(() => _searchQuery = value),
+                  style: TextStyle(
+                    color: isDark ? Colors.white : const Color(0xFF1A1A1A),
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'Search materials or categories...',
+                    hintStyle: TextStyle(
+                      color: isDark ? Colors.white54 : Colors.grey,
+                    ),
+                    prefixIcon: Icon(
+                      Icons.search,
+                      color: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  ),
+                ),
               ),
             ),
           ),
           const SizedBox(height: 12),
-          // Filter chips
+          // Filter chips - Premium Style
           Row(
             children: [
               _buildFilterChip('All', isDark),
@@ -199,27 +221,50 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
 
   Widget _buildFilterChip(String label, bool isDark) {
     final isSelected = _filterStatus == label;
-    
-    return FilterChip(
-      label: Text(label),
-      selected: isSelected,
-      onSelected: (selected) {
-        setState(() => _filterStatus = label);
-      },
-      backgroundColor: isDark ? AppTheme.darkCardSurface : Colors.white,
-      selectedColor: (isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen)
-          .withOpacity(0.2),
-      labelStyle: TextStyle(
-        color: isSelected
-            ? (isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen)
-            : (isDark ? AppTheme.darkTextSecondary : AppTheme.textLight),
-        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-      ),
-      side: BorderSide(
-        color: isSelected
-            ? (isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen)
-            : (isDark ? AppTheme.darkSecondaryGreen : AppTheme.lightGray)
-                .withOpacity(0.3),
+    final accentColor = isDark ? AppColors.neonCyan : AppColors.primaryGreen;
+
+    return GestureDetector(
+      onTap: () => setState(() => _filterStatus = label),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+        decoration: BoxDecoration(
+          gradient: isSelected
+              ? LinearGradient(
+                  colors: isDark
+                      ? [AppColors.neonGreen, AppColors.neonCyan]
+                      : [AppColors.primaryGreen, const Color(0xFF45A049)],
+                )
+              : null,
+          color: isSelected
+              ? null
+              : (isDark ? Colors.white.withValues(alpha: 0.08) : Colors.white.withValues(alpha: 0.8)),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected
+                ? Colors.transparent
+                : (isDark ? accentColor.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.1)),
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: accentColor.withValues(alpha: 0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : null,
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+            color: isSelected
+                ? (isDark ? const Color(0xFF0A1628) : Colors.white)
+                : (isDark ? Colors.white : const Color(0xFF1A1A1A)),
+          ),
+        ),
       ),
     );
   }
@@ -240,7 +285,7 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
         border: Border(
           bottom: BorderSide(
             color: (isDark ? AppTheme.darkSecondaryGreen : AppTheme.lightGray)
-                .withOpacity(0.3),
+                .withValues(alpha: 0.3),
           ),
         ),
       ),
@@ -302,13 +347,13 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isLowStock
-              ? AppTheme.errorRed.withOpacity(0.3)
+              ? AppTheme.errorRed.withValues(alpha: 0.3)
               : (isDark ? AppTheme.darkSecondaryGreen : AppTheme.lightGray)
-                  .withOpacity(0.3),
+                  .withValues(alpha: 0.3),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -340,7 +385,7 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             color: (isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen)
-                                .withOpacity(0.1),
+                                .withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
@@ -369,7 +414,7 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    color: AppTheme.errorRed.withOpacity(0.1),
+                    color: AppTheme.errorRed.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
@@ -481,7 +526,8 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
         color: isDark ? AppTheme.darkCardSurface : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: (isDark ? AppTheme.darkSecondaryGreen : AppTheme.lightGray).withOpacity(0.3),
+          color: (isDark ? AppTheme.darkSecondaryGreen : AppTheme.lightGray)
+              .withValues(alpha: 0.3),
         ),
       ),
       child: Column(
@@ -542,7 +588,7 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
           const SizedBox(height: 8),
           LinearProgressIndicator(
             value: progress,
-            backgroundColor: color.withOpacity(0.1),
+            backgroundColor: color.withValues(alpha: 0.1),
             valueColor: AlwaysStoppedAnimation<Color>(color),
             minHeight: 4,
             borderRadius: BorderRadius.circular(2),
@@ -561,7 +607,7 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
             Icons.inventory_2_outlined,
             size: 64,
             color: (isDark ? AppTheme.darkTextSecondary : AppTheme.textLight)
-                .withOpacity(0.5),
+                .withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
           Text(
