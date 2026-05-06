@@ -2,10 +2,11 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import '../constants/api_constants.dart';
+import '../di/service_locator.dart';
 import 'auth_service.dart';
 
 class CollectorService {
-  final AuthService _authService = AuthService();
+  final AuthService _authService = sl<AuthService>();
 
   // Get all collectors for the warehouse
   Future<List<dynamic>> getCollectors() async {

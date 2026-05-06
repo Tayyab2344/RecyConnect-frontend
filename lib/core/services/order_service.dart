@@ -1,37 +1,32 @@
-import 'package:flutter/foundation.dart';
 import '../models/order_model.dart';
-import '../constants/api_constants.dart';
-import 'api_service.dart';
+import '../../core/di/service_locator.dart';
+import '../../features/order/domain/repositories/order_repository.dart';
+import '../../core/network/api_result.dart';
 
+/// OrderService now delegates to the clean architecture OrderRepository.
+/// All existing screens continue to work with no changes.
 class OrderService {
-  final ApiService _apiService = ApiService();
+  final OrderRepository _repository = sl<OrderRepository>();
+
+  /// Unwraps an ApiResult into a Map or throws on failure.
+  Map<String, dynamic> _unwrapMap(ApiResult<Map<String, dynamic>> result, String fallback) {
+    if (result.isSuccess && result.data != null) return result.data!;
+    throw Exception(result.message ?? fallback);
+  }
 
   // Create a new order from a listing
-  // paymentMethod: 'cod' (Cash on Delivery) or 'stripe' (Online card payment)
-  Future<Order> createOrder(int listingId, double weight, {String paymentMethod = 'cod'}) async {
-    try {
-      final response = await _apiService.post(
-        '/orders',
-        {
-          'listingId': listingId,
-          'weight': weight,
-          'paymentMethod': paymentMethod,
-        },
-      );
-
-      if (response['success'] == true && response['data'] != null) {
-        return Order.fromJson(response['data']);
-      } else {
-        throw Exception(response['message'] ?? 'Failed to create order');
-      }
-    } catch (e) {
-      throw Exception('Error creating order: $e');
-    }
+  Future<Order> createOrder(int listingId, double weight,
+      {String paymentMethod = 'cod'}) async {
+    final data = _unwrapMap(
+      await _repository.createOrder(listingId, weight, paymentMethod: paymentMethod),
+      'Failed to create order'
+    );
+    return Order.fromJson(data);
   }
 
   // Get user's orders with optional filters
   Future<Map<String, dynamic>> getOrders({
-    String? role, // 'buyer' or 'seller'
+    String? role,
     String? material,
     String? status,
     String? startDate,
@@ -40,84 +35,44 @@ class OrderService {
     int page = 1,
     int limit = 10,
   }) async {
-    try {
-      final queryParams = <String, String>{};
-      if (role != null) queryParams['role'] = role;
-      if (material != null) queryParams['material'] = material;
-      if (status != null) queryParams['status'] = status;
-      if (startDate != null) queryParams['startDate'] = startDate;
-      if (endDate != null) queryParams['endDate'] = endDate;
-      if (search != null) queryParams['search'] = search;
-      queryParams['page'] = page.toString();
-      queryParams['limit'] = limit.toString();
+    final data = _unwrapMap(
+      await _repository.getOrders(
+        role: role,
+        material: material,
+        status: status,
+        startDate: startDate,
+        endDate: endDate,
+        search: search,
+        page: page,
+        limit: limit,
+      ),
+      'Failed to fetch orders'
+    );
 
-      final queryString = queryParams.entries
-          .map((e) => '${e.key}=${Uri.encodeComponent(e.value)}')
-          .join('&');
-
-      final response = await _apiService.get('/orders?$queryString');
-
-      if (response['success'] == true) {
-        final orders = (response['data'] as List)
-            .map((json) => Order.fromJson(json))
-            .toList();
-        
-        return {
-          'orders': orders,
-          'pagination': response['pagination'],
-        };
-      } else {
-        throw Exception(response['message'] ?? 'Failed to fetch orders');
-      }
-    } catch (e) {
-      throw Exception('Error fetching orders: $e');
-    }
+    final orders = (data['data'] as List)
+        .map((json) => Order.fromJson(json))
+        .toList();
+    return {
+      'orders': orders,
+      'pagination': data['pagination'],
+    };
   }
 
   // Get order statistics
   Future<Map<String, dynamic>> getOrderStats({String role = 'buyer'}) async {
-    try {
-      final response = await _apiService.get('/orders/stats?role=$role');
-      
-      if (response['success'] == true && response['data'] != null) {
-        return response['data'];
-      } else {
-        throw Exception(response['message'] ?? 'Failed to fetch statistics');
-      }
-    } catch (e) {
-      throw Exception('Error fetching stats: $e');
-    }
+    return _unwrapMap(await _repository.getOrderStats(role: role), 'Failed to fetch statistics');
   }
 
   // Update order status
   Future<Order> updateOrderStatus(int id, String status) async {
-    try {
-      final response = await _apiService.put(
-        '/orders/$id/status',
-        {'status': status},
-      );
-      
-      if (response['success'] == true && response['data'] != null) {
-        return Order.fromJson(response['data']);
-      } else {
-        throw Exception(response['message'] ?? 'Failed to update order');
-      }
-    } catch (e) {
-      throw Exception('Error updating order: $e');
-    }
+    final data = _unwrapMap(await _repository.updateOrderStatus(id, status), 'Failed to update order');
+    return Order.fromJson(data);
   }
 
-  // Cancel an order (used when Stripe payment is cancelled/failed)
-  Future<void> cancelOrder(int orderId, {String reason = 'Payment cancelled by user'}) async {
-    try {
-      await _apiService.post(
-        '/orders/$orderId/cancel',
-        {'reason': reason},
-      );
-    } catch (e) {
-      debugPrint('Error cancelling order: $e');
-      // Don't rethrow — cancellation is best-effort cleanup
-    }
+  // Cancel an order
+  Future<void> cancelOrder(int orderId,
+      {String reason = 'Payment cancelled by user'}) async {
+    await _repository.cancelOrder(orderId, reason: reason);
   }
 
   // Get export URL for CSV download
@@ -128,17 +83,12 @@ class OrderService {
     String? startDate,
     String? endDate,
   }) {
-    final queryParams = <String, String>{};
-    if (role != null) queryParams['role'] = role;
-    if (material != null) queryParams['material'] = material;
-    if (status != null) queryParams['status'] = status;
-    if (startDate != null) queryParams['startDate'] = startDate;
-    if (endDate != null) queryParams['endDate'] = endDate;
-
-    final queryString = queryParams.entries
-        .map((e) => '${e.key}=${Uri.encodeComponent(e.value)}')
-        .join('&');
-
-    return '${ApiConstants.baseUrl}/orders/export${queryString.isNotEmpty ? "?$queryString" : ""}';
+    return _repository.getExportUrl(
+      role: role,
+      material: material,
+      status: status,
+      startDate: startDate,
+      endDate: endDate,
+    );
   }
 }

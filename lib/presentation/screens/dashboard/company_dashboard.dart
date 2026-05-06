@@ -1,32 +1,77 @@
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:provider/provider.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../../core/theme/app_colors.dart';
+import 'package:flutter/foundation.dart';
 import '../../../core/services/auth_service.dart';
+import '../../../core/services/listing_service.dart';
+import '../../../core/services/order_service.dart';
+import '../../../core/services/report_service.dart';
+import '../../../core/services/app_service.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../widgets/curved/curved_bottom_nav.dart';
+import '../../widgets/skeleton_loader.dart';
 
-import '../company/bulk_sell_screen.dart';
-import '../marketplace/marketplace_screen.dart';
+import '../individual/create_listing_screen.dart';
+import '../individual/browse_marketplace_screen.dart';
+import '../individual/my_listings_screen.dart';
 import '../individual/my_orders_screen.dart';
+import '../individual/seller_orders_screen.dart';
 import '../individual/transactions_screen.dart';
 import '../profile/profile_screen.dart';
 
 class CompanyDashboard extends StatefulWidget {
-  const CompanyDashboard({Key? key}) : super(key: key);
+  const CompanyDashboard({super.key});
 
   @override
   State<CompanyDashboard> createState() => _CompanyDashboardState();
 }
 
 class _CompanyDashboardState extends State<CompanyDashboard> {
+  final ListingService _listingService = ListingService();
+  final OrderService _orderService = OrderService();
+  final ReportService _reportService = ReportService();
+  final AppService _appService = AppService();
+
   int _selectedIndex = 0;
   final PageController _pageController = PageController();
+
+  Map<String, dynamic>? _stats;
+  List<dynamic>? _recentActivity;
+  List<dynamic>? _marketRates;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDashboardStats();
+  }
 
   @override
   void dispose() {
     _pageController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadDashboardStats() async {
+    setState(() => _isLoading = true);
+    try {
+      final listingStats = await _listingService.getListingStats();
+      final orderStats = await _orderService.getOrderStats();
+      final activity = await _reportService.getActivity(limit: 5);
+      final rates = await _appService.getPublicRates();
+
+      setState(() {
+        _stats = {
+          'listings': listingStats,
+          'orders': orderStats,
+        };
+        _recentActivity = activity;
+        _marketRates = rates;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (kDebugMode) print('Error loading company dashboard stats: $e');
+      setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -40,8 +85,8 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
         },
         children: [
           _buildHomeTab(),
-          const MarketplaceScreen(),
-          const BulkSellScreen(),
+          const BrowseMarketplaceScreen(),
+          const CreateListingScreen(),
           const MyOrdersScreen(),
           const ProfileScreen(),
         ],
@@ -64,28 +109,42 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
       ),
       child: SafeArea(
         child: RefreshIndicator(
-          onRefresh: () async {
-            await Future.delayed(const Duration(seconds: 1));
-          },
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader(),
-                const SizedBox(height: 24),
-                _buildBrandingTitle(),
-                const SizedBox(height: 24),
-                _buildActionCards(),
-                const SizedBox(height: 32),
-                _buildRecentActivity(),
-                const SizedBox(height: 24),
-                _buildNotifications(),
-                const SizedBox(height: 80),
-              ],
-            ),
-          ),
+          onRefresh: _loadDashboardStats,
+          child: _isLoading
+              ? Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 24),
+                      SkeletonLoader.card(),
+                      const SizedBox(height: 16),
+                      SkeletonLoader.card(),
+                      const SizedBox(height: 16),
+                      SkeletonLoader.card(),
+                    ],
+                  ),
+                )
+              : SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildHeader(),
+                      const SizedBox(height: 24),
+                      _buildBrandingTitle(),
+                      const SizedBox(height: 24),
+                      _buildStatsOverview(),
+                      const SizedBox(height: 24),
+                      _buildQuickActions(),
+                      const SizedBox(height: 24),
+                      _buildMarketRates(),
+                      const SizedBox(height: 24),
+                      _buildRecentActivity(),
+                      const SizedBox(height: 80),
+                    ],
+                  ),
+                ),
         ),
       ),
     );
@@ -101,8 +160,8 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
             const SizedBox(width: 8),
             Consumer<AuthService>(
               builder: (context, authService, _) {
-                final businessName = authService.currentUser?['companyName'] 
-                    ?? authService.currentUser?['businessName'] 
+                final businessName = authService.currentUser?['companyName']
+                    ?? authService.currentUser?['businessName']
                     ?? 'Company Operations';
                 return Text(
                   businessName,
@@ -130,7 +189,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
               color: Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: Theme.of(context).dividerColor.withOpacity(0.1),
+                color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
               ),
             ),
             child: Icon(Icons.person, color: Theme.of(context).iconTheme.color, size: 20),
@@ -157,7 +216,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
         Text(
           'B2B Supply Chain',
           style: TextStyle(
-            color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.textDark).withOpacity(0.7),
+            color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.textDark).withValues(alpha: 0.7),
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -166,184 +225,38 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
     );
   }
 
-  Widget _buildActionCards() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Quick Actions',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Theme.of(context).textTheme.bodyLarge?.color,
-          ),
-        ),
-        const SizedBox(height: 16),
-        GridView.count(
-          crossAxisCount: 3,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          childAspectRatio: 1.0,
-          children: [
-            _buildQuickActionCard('Browse', Icons.search, const Color(0xFF4CAF50), () {
-              _pageController.animateToPage(1, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
-            }),
-            _buildQuickActionCard('Bulk Sell', Icons.sell_outlined, const Color(0xFF2196F3), () {
-              _pageController.animateToPage(2, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
-            }),
-            _buildQuickActionCard('My Orders', Icons.receipt_long_outlined, const Color(0xFFFFA726), () {
-              _pageController.animateToPage(3, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
-            }),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildRecentActivity() {
-    final activities = [
-      {'title': 'Order #ORD-2401 shipped', 'time': '2 hours ago', 'icon': Icons.local_shipping, 'color': const Color(0xFF4CAF50)},
-      {'title': 'New quote received', 'time': '5 hours ago', 'icon': Icons.request_quote, 'color': const Color(0xFF2196F3)},
-      {'title': 'Payment confirmed', 'time': '1 day ago', 'icon': Icons.payment, 'color': const Color(0xFFFFA726)},
-    ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Recent Activity',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Theme.of(context).textTheme.bodyLarge?.color,
-          ),
-        ),
-        const SizedBox(height: 12),
-        ...activities.map((activity) => Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: Theme.of(context).dividerColor.withOpacity(0.1),
-            ),
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: (activity['color'] as Color).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(activity['icon'] as IconData, color: activity['color'] as Color, size: 20),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      activity['title'] as String,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).textTheme.bodyLarge?.color,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      activity['time'] as String,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        )),
-      ],
-    );
-  }
-
-  Widget _buildNotifications() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF4CAF50).withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: const Color(0xFF4CAF50).withOpacity(0.3),
-        ),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.notifications_active, color: Color(0xFF4CAF50), size: 24),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'You have 3 new notifications',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).textTheme.bodyLarge?.color,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Tap to view all notifications',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Icon(Icons.chevron_right, color: Color(0xFF4CAF50)),
-        ],
-      ),
-    );
-  }
-
   Widget _buildStatsOverview() {
+    final listings = _stats?['listings'] as Map?;
+    final orders = _stats?['orders'] as Map?;
+
     final stats = [
       {
-        'title': 'Total Bought',
-        'value': '2,450 tons',
-        'change': '+12%',
-        'icon': Icons.shopping_cart,
+        'title': 'Total Listings',
+        'value': '${listings?['totalListings'] ?? 0}',
+        'change': '+${listings?['activeListings'] ?? 0} active',
+        'icon': Icons.inventory_2,
         'color': const Color(0xFF4CAF50),
       },
       {
-        'title': 'Total Sold',
-        'value': '1,890 tons',
-        'change': '+8%',
-        'icon': Icons.sell,
+        'title': 'Total Orders',
+        'value': '${orders?['totalOrders'] ?? 0}',
+        'change': '${orders?['confirmedCount'] ?? 0} confirmed',
+        'icon': Icons.shopping_cart,
         'color': const Color(0xFF2196F3),
       },
       {
-        'title': 'Active Contracts',
-        'value': '24',
-        'change': '+3',
-        'icon': Icons.description,
+        'title': 'Active Orders',
+        'value': '${orders?['pendingCount'] ?? 0}',
+        'change': 'needs action',
+        'icon': Icons.assignment_turned_in,
         'color': const Color(0xFFFFA726),
       },
       {
-        'title': 'Carbon Saved',
-        'value': '480 tons',
-        'change': '+15%',
-        'icon': Icons.eco,
-        'color': const Color(0xFF66BB6A),
+        'title': 'Total Weight',
+        'value': '${listings?['totalWeight'] ?? 0}kg',
+        'change': 'all time',
+        'icon': Icons.scale,
+        'color': const Color(0xFF9C27B0),
       },
     ];
 
@@ -365,11 +278,11 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
             color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: Theme.of(context).dividerColor.withOpacity(0.1),
+              color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -386,7 +299,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: (stat['color'] as Color).withOpacity(0.1),
+                      color: (stat['color'] as Color).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -416,7 +329,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                     stat['title'] as String,
                     style: TextStyle(
                       fontSize: 12,
-                      color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
+                      color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
                     ),
                   ),
                 ],
@@ -442,27 +355,27 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
         ),
         const SizedBox(height: 16),
         GridView.count(
-          crossAxisCount: 4,
+          crossAxisCount: 3,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           mainAxisSpacing: 12,
           crossAxisSpacing: 12,
-          childAspectRatio: 0.8,
+          childAspectRatio: 1.0,
           children: [
-            _buildQuickActionCard('Browse', Icons.search, const Color(0xFF4CAF50), () {
-              _pageController.animateToPage(1, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
-            }),
-            _buildQuickActionCard('Bulk Sell', Icons.sell_outlined, const Color(0xFF2196F3), () {
+            _buildQuickActionCard('Sell Items', Icons.add_circle_outline, const Color(0xFF4CAF50), () {
               _pageController.animateToPage(2, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
             }),
-            _buildQuickActionCard('Orders', Icons.receipt_long_outlined, const Color(0xFFFFA726), () {
-              _pageController.animateToPage(3, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+            _buildQuickActionCard('Browse', Icons.search, const Color(0xFF2196F3), () {
+              _pageController.animateToPage(1, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
             }),
-            _buildQuickActionCard('Wallet', Icons.account_balance_wallet, const Color(0xFF9C27B0), () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const TransactionsScreen()),
-              );
+            _buildQuickActionCard('My Listings', Icons.local_offer_outlined, const Color(0xFFFFA726), () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const MyListingsScreen()));
+            }),
+            _buildQuickActionCard('Manage Sales', Icons.point_of_sale_outlined, Colors.orange, () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const SellerOrdersScreen()));
+            }),
+            _buildQuickActionCard('My Earnings', Icons.monetization_on_outlined, const Color(0xFF9C27B0), () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const TransactionsScreen()));
             }),
           ],
         ),
@@ -478,7 +391,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
           color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: Theme.of(context).dividerColor.withOpacity(0.1),
+            color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
           ),
         ),
         child: Column(
@@ -493,6 +406,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                 fontWeight: FontWeight.w600,
                 color: Theme.of(context).textTheme.bodyLarge?.color,
               ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
@@ -501,13 +415,19 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   }
 
   Widget _buildMarketRates() {
+    final rates = _marketRates ?? [];
+
+    if (rates.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Theme.of(context).dividerColor.withOpacity(0.1),
+          color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
         ),
       ),
       child: Column(
@@ -517,7 +437,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Market Rates (Last 7 Days)',
+                'Current Market Rates',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -527,273 +447,76 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF4CAF50).withOpacity(0.1),
+                  color: const Color(0xFF2196F3).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text(
-                  'Trending ↗',
+                child: const Text(
+                  'Live',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFF4CAF50),
+                    color: Color(0xFF2196F3),
                   ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 20),
-          SizedBox(
-            height: 150,
-            child: LineChart(
-              LineChartData(
-                gridData: FlGridData(
-                  show: true,
-                  drawVerticalLine: false,
-                  horizontalInterval: 20,
-                  getDrawingHorizontalLine: (value) {
-                    return FlLine(
-                      color: Theme.of(context).dividerColor.withOpacity(0.1),
-                      strokeWidth: 1,
-                    );
-                  },
-                ),
-                titlesData: FlTitlesData(
-                  show: true,
-                  rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      interval: 20,
-                      getTitlesWidget: (value, meta) {
-                        return Text(
-                          '\$${value.toInt()}',
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.5),
-                          ),
-                        );
-                      },
-                      reservedSize: 40,
-                    ),
-                  ),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      getTitlesWidget: (value, meta) {
-                        const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-                        if (value.toInt() < days.length) {
-                          return Text(
-                            days[value.toInt()],
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.5),
-                            ),
-                          );
-                        }
-                        return const Text('');
-                      },
-                    ),
+          ...rates.map((rate) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  rate['category'] ?? 'Unknown',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
                   ),
                 ),
-                borderData: FlBorderData(show: false),
-                minX: 0,
-                maxX: 6,
-                minY: 40,
-                maxY: 100,
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: [
-                      const FlSpot(0, 65),
-                      const FlSpot(1, 70),
-                      const FlSpot(2, 68),
-                      const FlSpot(3, 75),
-                      const FlSpot(4, 72),
-                      const FlSpot(5, 80),
-                      const FlSpot(6, 85),
-                    ],
-                    isCurved: true,
-                    color: const Color(0xFF4CAF50),
-                    barWidth: 3,
-                    isStrokeCapRound: true,
-                    dotData: FlDotData(show: false),
-                    belowBarData: BarAreaData(
-                      show: true,
-                      color: const Color(0xFF4CAF50).withOpacity(0.1),
-                    ),
+                Text(
+                  'Rs ${rate['pricePerUnit'] ?? 0} / ${rate['unit'] ?? 'kg'}',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF4CAF50),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ),
+          )),
         ],
       ),
     );
   }
 
-  Widget _buildPendingOrders() {
-    final orders = [
-      {
-        'id': '#ORD-2401',
-        'material': 'Aluminum Scrap',
-        'quantity': '50 tons',
-        'status': 'Awaiting Pickup',
-        'supplier': 'Green Warehouse Co.',
-        'date': '2 days ago',
-      },
-      {
-        'id': '#ORD-2402',
-        'material': 'Plastic Mix',
-        'quantity': '30 tons',
-        'status': 'In Transit',
-        'supplier': 'EcoSupply Ltd.',
-        'date': '1 day ago',
-      },
-      {
-        'id': '#ORD-2403',
-        'material': 'Glass Bottles',
-        'quantity': '20 tons',
-        'status': 'Processing',
-        'supplier': 'RecyclePro Inc.',
-        'date': '3 hours ago',
-      },
-    ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Pending Orders',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).textTheme.bodyLarge?.color,
-              ),
-            ),
-            TextButton(
-              onPressed: () {},
-              child: const Text('View All', style: TextStyle(color: Color(0xFF4CAF50))),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        ...orders.map((order) => Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: Theme.of(context).dividerColor.withOpacity(0.1),
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    order['id'] as String,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF4CAF50),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFFA726).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      order['status'] as String,
-                      style: const TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFFFFA726),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                order['material'] as String,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).textTheme.bodyLarge?.color,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Icon(Icons.scale, size: 14, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6)),
-                  const SizedBox(width: 4),
-                  Text(
-                    order['quantity'] as String,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Icon(Icons.business, size: 14, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6)),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      order['supplier'] as String,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        )),
-      ],
-    );
+  String _formatTime(String isoString) {
+    if (isoString.isEmpty) return '';
+    try {
+      final date = DateTime.parse(isoString);
+      final difference = DateTime.now().difference(date);
+      if (difference.inDays > 0) return '${difference.inDays}d ago';
+      if (difference.inHours > 0) return '${difference.inHours}h ago';
+      if (difference.inMinutes > 0) return '${difference.inMinutes}m ago';
+      return 'just now';
+    } catch (e) {
+      return '';
+    }
   }
 
-  Widget _buildAvailableSuppliers() {
-    final suppliers = [
-      {
-        'name': 'Green Warehouse Co.',
-        'rating': 4.8,
-        'materials': 'Aluminum, Plastic, Glass',
-        'location': 'New York, NY',
-        'verified': true,
-      },
-      {
-        'name': 'EcoSupply Ltd.',
-        'rating': 4.6,
-        'materials': 'Cardboard, Paper, Metal',
-        'location': 'Los Angeles, CA',
-        'verified': true,
-      },
-      {
-        'name': 'RecyclePro Inc.',
-        'rating': 4.9,
-        'materials': 'E-Waste, Batteries',
-        'location': 'Chicago, IL',
-        'verified': false,
-      },
-    ];
+  Widget _buildRecentActivity() {
+    final activities = _recentActivity ?? [];
+
+    if (activities.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Available Suppliers',
+          'Recent Activity',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -801,84 +524,59 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
           ),
         ),
         const SizedBox(height: 12),
-        ...suppliers.map((supplier) => Container(
+        ...activities.map((activity) => Container(
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: Theme.of(context).dividerColor.withOpacity(0.1),
+              color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
             ),
           ),
           child: Row(
             children: [
               Container(
-                width: 50,
-                height: 50,
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF4CAF50).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  color: const Color(0xFF4CAF50).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.business, color: Color(0xFF4CAF50), size: 24),
+                child: const Icon(
+                  Icons.notifications_active_outlined,
+                  color: Color(0xFF4CAF50),
+                  size: 22,
+                ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            supplier['name'] as String,
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Theme.of(context).textTheme.bodyLarge?.color,
-                            ),
-                          ),
-                        ),
-                        if (supplier['verified'] as bool)
-                          const Icon(Icons.verified, color: Color(0xFF4CAF50), size: 16),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        const Icon(Icons.star, color: Color(0xFFFFA726), size: 14),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${supplier['rating']}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: Theme.of(context).textTheme.bodyMedium?.color,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Icon(Icons.location_on, size: 14, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6)),
-                        const SizedBox(width: 4),
-                        Text(
-                          supplier['location'] as String,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
                     Text(
-                      supplier['materials'] as String,
+                      activity['action'] ?? activity['title'] ?? 'Activity',
                       style: TextStyle(
-                        fontSize: 11,
-                        color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.5),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      activity['details'] ?? activity['description'] ?? '',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                      ),
                     ),
                   ],
+                ),
+              ),
+              Text(
+                _formatTime(activity['createdAt'] ?? ''),
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
                 ),
               ),
             ],
@@ -895,7 +593,6 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
         setState(() => _selectedIndex = index);
         _pageController.jumpToPage(index);
       },
-      activeColor: AppColors.roleCompany,
       items: const [
         CurvedBottomNavItem(
           icon: Icons.home_outlined,
@@ -922,6 +619,14 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
           label: 'Profile',
         ),
       ],
+      floatingButton: CurvedNavFAB(
+        icon: Icons.add,
+        isSelected: _selectedIndex == 2,
+        onTap: () {
+          setState(() => _selectedIndex = 2);
+          _pageController.jumpToPage(2);
+        },
+      ),
     );
   }
 }

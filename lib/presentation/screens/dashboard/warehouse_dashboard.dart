@@ -4,9 +4,12 @@ import 'package:fl_chart/fl_chart.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../core/services/listing_service.dart';
 import '../../../core/services/order_service.dart';
+import '../../../core/services/report_service.dart';
+import '../../../core/services/app_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../widgets/curved/curved_bottom_nav.dart';
 import '../../widgets/recycle_loader.dart';
+import '../../widgets/skeleton_loader.dart';
 
 import '../individual/create_listing_screen.dart';
 import '../individual/browse_marketplace_screen.dart';
@@ -30,12 +33,16 @@ class WarehouseDashboard extends StatefulWidget {
 class _WarehouseDashboardState extends State<WarehouseDashboard> {
   final ListingService _listingService = ListingService();
   final OrderService _orderService = OrderService();
+  final ReportService _reportService = ReportService();
+  final AppService _appService = AppService();
   
   int _selectedIndex = 0;
   final PageController _pageController = PageController();
 
   // Real data from APIs
   Map<String, dynamic>? _stats;
+  List<dynamic>? _recentActivity;
+  List<dynamic>? _marketRates;
   bool _isLoading = true;
 
   @override
@@ -55,16 +62,20 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
     try {
       final listingStats = await _listingService.getListingStats();
       final orderStats = await _orderService.getOrderStats();
+      final activity = await _reportService.getActivity(limit: 5);
+      final rates = await _appService.getPublicRates();
       
       setState(() {
         _stats = {
           'listings': listingStats,
           'orders': orderStats,
         };
+        _recentActivity = activity;
+        _marketRates = rates;
         _isLoading = false;
       });
     } catch (e) {
-      if (kDebugMode) print('Error loading stats: $e');
+      if (kDebugMode) print('Error loading stats: ');
       setState(() => _isLoading = false);
     }
   }
@@ -106,7 +117,19 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
         child: RefreshIndicator(
           onRefresh: _loadDashboardStats,
           child: _isLoading 
-              ? const RecycleLoadingScreen(message: 'Loading your dashboard...')
+              ? Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 24),
+                      SkeletonLoader.card(),
+                      const SizedBox(height: 16),
+                      SkeletonLoader.card(),
+                      const SizedBox(height: 16),
+                      SkeletonLoader.card(),
+                    ],
+                  ),
+                )
               : SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(20),
@@ -397,6 +420,12 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
   }
 
   Widget _buildMarketRates() {
+    final rates = _marketRates ?? [];
+    
+    if (rates.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -413,7 +442,7 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Market Rates (Last 7 Days)',
+                'Current Market Rates',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -423,105 +452,45 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF4CAF50).withOpacity(0.1),
+                  color: const Color(0xFF2196F3).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  'Trending ↗',
+                  'Live',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFF4CAF50),
+                    color: const Color(0xFF2196F3),
                   ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 20),
-          SizedBox(
-            height: 150,
-            child: LineChart(
-              LineChartData(
-                gridData: FlGridData(
-                  show: true,
-                  drawVerticalLine: false,
-                  horizontalInterval: 20,
-                  getDrawingHorizontalLine: (value) {
-                    return FlLine(
-                      color: Theme.of(context).dividerColor.withOpacity(0.1),
-                      strokeWidth: 1,
-                    );
-                  },
-                ),
-                titlesData: FlTitlesData(
-                  show: true,
-                  rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      interval: 20,
-                      getTitlesWidget: (value, meta) {
-                        return Text(
-                          '\$${value.toInt()}',
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.5),
-                          ),
-                        );
-                      },
-                      reservedSize: 40,
-                    ),
-                  ),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      getTitlesWidget: (value, meta) {
-                        const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-                        if (value.toInt() < days.length) {
-                          return Text(
-                            days[value.toInt()],
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.5),
-                            ),
-                          );
-                        }
-                        return const Text('');
-                      },
-                    ),
+          ...rates.map((rate) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  rate['category'] ?? 'Unknown',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
                   ),
                 ),
-                borderData: FlBorderData(show: false),
-                minX: 0,
-                maxX: 6,
-                minY: 40,
-                maxY: 100,
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: [
-                      const FlSpot(0, 65),
-                      const FlSpot(1, 70),
-                      const FlSpot(2, 68),
-                      const FlSpot(3, 75),
-                      const FlSpot(4, 72),
-                      const FlSpot(5, 80),
-                      const FlSpot(6, 85),
-                    ],
-                    isCurved: true,
+                Text(
+                  'Rs ${rate['pricePerUnit'] ?? 0} / ${rate['unit'] ?? 'kg'}',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
                     color: const Color(0xFF4CAF50),
-                    barWidth: 3,
-                    isStrokeCapRound: true,
-                    dotData: FlDotData(show: false),
-                    belowBarData: BarAreaData(
-                      show: true,
-                      color: const Color(0xFF4CAF50).withOpacity(0.1),
-                    ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ),
+          )).toList(),
         ],
       ),
     );
@@ -660,30 +629,26 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
     );
   }
 
+  String _formatTime(String isoString) {
+    if (isoString.isEmpty) return '';
+    try {
+      final date = DateTime.parse(isoString);
+      final difference = DateTime.now().difference(date);
+      if (difference.inDays > 0) return '${difference.inDays}d ago';
+      if (difference.inHours > 0) return '${difference.inHours}h ago';
+      if (difference.inMinutes > 0) return '${difference.inMinutes}m ago';
+      return 'just now';
+    } catch (e) {
+      return '';
+    }
+  }
+
   Widget _buildRecentActivity() {
-    final activities = [
-      {
-        'title': 'New Order Received',
-        'subtitle': 'Plastic (PET) - 50kg',
-        'time': '2h ago',
-        'icon': Icons.shopping_bag_outlined,
-        'iconBg': const Color(0xFF4CAF50),
-      },
-      {
-        'title': 'Low Stock Alert',
-        'subtitle': 'Metal (Aluminum) below 100kg',
-        'time': '5h ago',
-        'icon': Icons.warning_amber_outlined,
-        'iconBg': const Color(0xFFFF9800),
-      },
-      {
-        'title': 'Payment Received',
-        'subtitle': 'Order #WH-1234 - Rs 12,500',
-        'time': '1d ago',
-        'icon': Icons.payment,
-        'iconBg': const Color(0xFF2196F3),
-      },
-    ];
+    final activities = _recentActivity ?? [];
+    
+    if (activities.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -712,12 +677,12 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: (activity['iconBg'] as Color).withOpacity(0.1),
+                  color: const Color(0xFF4CAF50).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(
-                  activity['icon'] as IconData,
-                  color: activity['iconBg'] as Color,
+                child: const Icon(
+                  Icons.notifications_active_outlined,
+                  color: Color(0xFF4CAF50),
                   size: 22,
                 ),
               ),
@@ -727,7 +692,7 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      activity['title'] as String,
+                      activity['action'] ?? activity['title'] ?? 'Activity',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -736,7 +701,7 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      activity['subtitle'] as String,
+                      activity['details'] ?? activity['description'] ?? '',
                       style: TextStyle(
                         fontSize: 12,
                         color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
@@ -746,7 +711,7 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
                 ),
               ),
               Text(
-                activity['time'] as String,
+                _formatTime(activity['createdAt'] ?? ''),
                 style: TextStyle(
                   fontSize: 11,
                   color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.5),

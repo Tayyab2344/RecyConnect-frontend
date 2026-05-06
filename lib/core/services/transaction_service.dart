@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../constants/api_constants.dart';
+import '../di/service_locator.dart';
 import 'auth_service.dart';
 
 class TransactionService {
-  final AuthService _authService = AuthService();
+  final AuthService _authService = sl<AuthService>();
 
   // Create a new transaction record
   Future<Map<String, dynamic>> createTransaction(Map<String, dynamic> data) async {

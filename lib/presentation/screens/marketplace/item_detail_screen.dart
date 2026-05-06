@@ -4,6 +4,7 @@ import '../../../core/theme/marketplace_theme.dart';
 import '../../../core/models/listing_model.dart';
 import '../../widgets/marketplace/glass_card.dart';
 import '../../widgets/marketplace/neon_button.dart';
+import '../../widgets/full_screen_image_viewer.dart';
 import '../individual/marketplace/checkout_screen.dart'; // Route to the checkout screen
 
 class ItemDetailScreen extends StatefulWidget {
@@ -89,42 +90,10 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                                 ? item.imageUrls.length
                                 : (item.decodedImages.isNotEmpty ? item.decodedImages.length : 1),
                             itemBuilder: (context, index) {
-                              if (item.hasNetworkImages) {
-                                return CachedNetworkImage(
-                                  imageUrl: item.imageUrls[index],
-                                  fit: BoxFit.cover,
-                                  width: double.infinity,
-                                  height: 250,
-                                  progressIndicatorBuilder: (context, url, downloadProgress) {
-                                    return Center(
-                                      child: CircularProgressIndicator(
-                                        value: downloadProgress.progress,
-                                        color: isDark
-                                            ? MarketplaceTheme.darkAccentCyan
-                                            : MarketplaceTheme.lightAccent,
-                                      ),
-                                    );
-                                  },
-                                  errorWidget: (context, url, error) {
-                                    return Center(
-                                      child: Icon(
-                                        Icons.broken_image_outlined,
-                                        size: 60,
-                                        color: isDark
-                                            ? MarketplaceTheme.darkAccentCyan
-                                            : MarketplaceTheme.lightAccent,
-                                      ),
-                                    );
-                                  },
-                                );
-                              } else if (item.decodedImages.isNotEmpty) {
-                                return Image.memory(
-                                  item.decodedImages[index],
-                                  fit: BoxFit.cover,
-                                  width: double.infinity,
-                                  height: 250,
-                                );
-                              } else {
+                              final isNetwork = item.hasNetworkImages;
+                              final hasDecoded = item.decodedImages.isNotEmpty;
+                              
+                              if (!isNetwork && !hasDecoded) {
                                 return Center(
                                   child: Icon(
                                     Icons.recycling,
@@ -135,6 +104,63 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                                   ),
                                 );
                               }
+
+                              final imageProvider = isNetwork
+                                  ? CachedNetworkImageProvider(item.imageUrls[index]) as ImageProvider
+                                  : MemoryImage(item.decodedImages[index]) as ImageProvider;
+                              
+                              final heroTag = 'market_item_${item.id}_$index';
+
+                              return GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => FullScreenImageViewer(
+                                        imageProvider: imageProvider,
+                                        heroTag: heroTag,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: Hero(
+                                  tag: heroTag,
+                                  child: isNetwork
+                                      ? CachedNetworkImage(
+                                          imageUrl: item.imageUrls[index],
+                                          fit: BoxFit.cover,
+                                          width: double.infinity,
+                                          height: 250,
+                                          progressIndicatorBuilder: (context, url, downloadProgress) {
+                                            return Center(
+                                              child: CircularProgressIndicator(
+                                                value: downloadProgress.progress,
+                                                color: isDark
+                                                    ? MarketplaceTheme.darkAccentCyan
+                                                    : MarketplaceTheme.lightAccent,
+                                              ),
+                                            );
+                                          },
+                                          errorWidget: (context, url, error) {
+                                            return Center(
+                                              child: Icon(
+                                                Icons.broken_image_outlined,
+                                                size: 60,
+                                                color: isDark
+                                                    ? MarketplaceTheme.darkAccentCyan
+                                                    : MarketplaceTheme.lightAccent,
+                                              ),
+                                            );
+                                          },
+                                        )
+                                      : Image.memory(
+                                          item.decodedImages[index],
+                                          fit: BoxFit.cover,
+                                          width: double.infinity,
+                                          height: 250,
+                                        ),
+                                ),
+                              );
                             },
                           ),
                           // Dot Indicators

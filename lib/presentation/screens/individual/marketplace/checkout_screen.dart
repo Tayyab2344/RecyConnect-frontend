@@ -46,10 +46,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       final authService = Provider.of<AuthService>(context, listen: false);
       final response = await authService.fetchProfile();
       if (response['success'] == true) {
-        final data = response['data']['data'];
+        final data = response['data'] as Map<String, dynamic>;
         final addressParts = <String>[];
-        if (data['address'] != null) addressParts.add(data['address']);
-        if (data['city'] != null) addressParts.add(data['city']);
+        final address = data['address']?.toString().trim();
+        final area = data['area']?.toString().trim();
+        final city = data['city']?.toString().trim();
+        if (address != null && address.isNotEmpty) addressParts.add(address);
+        if (area != null && area.isNotEmpty && !addressParts.contains(area)) {
+          addressParts.add(area);
+        }
+        if (city != null && city.isNotEmpty && !addressParts.contains(city)) {
+          addressParts.add(city);
+        }
         if (addressParts.isNotEmpty && mounted) {
           setState(() => _addressController.text = addressParts.join(', '));
         }

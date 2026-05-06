@@ -8,6 +8,7 @@ import '../../../core/models/order_model.dart';
 import '../../../core/utils/static_data.dart';
 import '../../widgets/curved/curved_bottom_nav.dart';
 import '../../widgets/recycle_loader.dart';
+import '../../widgets/skeleton_loader.dart';
 import '../individual/create_listing_screen.dart';
 import '../individual/browse_marketplace_screen.dart';
 import '../individual/my_listings_screen.dart';
@@ -58,7 +59,7 @@ class _IndividualDashboardState extends State<IndividualDashboard> {
 
       String location = 'Unknown Location';
       if (profile['success'] == true) {
-        final userData = profile['data']['data'];
+        final userData = profile['data'];
         final city = userData['city'];
         final area = userData['area'] ?? userData['address'];
         if (city != null && city.toString().isNotEmpty) {
@@ -136,7 +137,19 @@ class _IndividualDashboardState extends State<IndividualDashboard> {
         child: RefreshIndicator(
           onRefresh: _loadDashboardStats,
           child: _isLoading
-              ? const RecycleLoadingScreen(message: 'Loading your dashboard...')
+              ? Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 24),
+                      SkeletonLoader.card(),
+                      const SizedBox(height: 16),
+                      SkeletonLoader.card(),
+                      const SizedBox(height: 16),
+                      SkeletonLoader.card(),
+                    ],
+                  ),
+                )
               : SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.all(20),

@@ -1,0 +1,296 @@
+@startuml RecyConnect_Flutter_Class_Diagram
+
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+skinparam defaultFontSize 11
+
+package "Domain Layer (Entities)" {
+  class UserEntity {
+    + id: int?
+    + name: String?
+    + email: String?
+    + role: String?
+    + phone: String?
+    + address: String?
+    + city: String?
+    + area: String?
+    + profileImage: String?
+    + collectorId: int?
+    + verificationStatus: String?
+    + kycStage: String?
+    + rejectionReason: String?
+    + businessName: String?
+    + companyName: String?
+    + businessType: String?
+    + registrationNumber: String?
+    + displayName: String
+    + isVerified: bool
+    + isPending: bool
+  }
+}
+
+package "Data Layer (Models)" {
+  class UserModel {
+    + fromJson(json: Map<String, dynamic>): UserModel
+    + toJson(): Map<String, dynamic>
+    + toStorageMap(userData: Map<String, dynamic>): Map<String, dynamic>
+  }
+  UserModel -up-|> UserEntity
+
+  class ListingUser {
+    + id: int
+    + name: String?
+    + email: String?
+    + contactNo: String?
+    + createdAt: DateTime?
+    + fromJson(json: Map<String, dynamic>): ListingUser
+  }
+
+  class Listing {
+    + id: int
+    + userId: int
+    + materialType: String
+    + estimatedWeight: double
+    + pickupAddress: String
+    + latitude: double?
+    + longitude: double?
+    + locationMethod: String?
+    + title: String?
+    + notes: String?
+    + status: String
+    + buyerInfo: String?
+    + createdAt: DateTime
+    + updatedAt: DateTime
+    + user: ListingUser?
+    + images: List<String>?
+    + fromJson(json: Map<String, dynamic>): Listing
+    + toJson(): Map<String, dynamic>
+    + toCreateJson(): Map<String, dynamic>
+    + hasNetworkImages: bool
+    + imageUrls: List<String>
+    + decodedImages: List<Uint8List>
+    + statusDisplay: String
+    + materialTypeDisplay: String
+    + displayTitle: String
+  }
+  Listing "1" *-- "0..1" ListingUser : contains >
+
+  class Order {
+    + id: int
+    + buyerId: int
+    + sellerId: int
+    + status: String
+    + totalAmount: double
+    + paymentMethod: String?
+    + createdAt: DateTime
+    + updatedAt: DateTime
+    + buyer: OrderUser?
+    + seller: OrderUser?
+    + items: List<OrderItem>?
+    + fromJson(json: Map<String, dynamic>): Order
+    + toJson(): Map<String, dynamic>
+  }
+
+  class OrderItem {
+    + id: int?
+    + listingId: int
+    + quantity: double
+    + price: double
+    + listing: Map<String, dynamic>?
+    + fromJson(json: Map<String, dynamic>): OrderItem
+  }
+
+  class OrderUser {
+    + id: int
+    + name: String?
+    + email: String?
+    + contactNo: String?
+    + address: String?
+    + fromJson(json: Map<String, dynamic>): OrderUser
+    + toJson(): Map<String, dynamic>
+  }
+  
+  Order "1" *-- "0..1" OrderUser : buyer >
+  Order "1" *-- "0..1" OrderUser : seller >
+  Order "1" *-- "0..*" OrderItem : items >
+
+  class DashboardStats {
+    + totalRevenue: double
+    + totalExpenses: double
+    + netProfit: double
+    + profitMargin: double
+    + activeOrders: int
+    + inventoryValue: double
+    + totalInventoryItems: int
+    + lowStockItems: int
+    + revenueHistory: List<RevenueDataPoint>
+    + materialDistribution: List<MaterialDistribution>
+    + expenseBreakdown: List<ExpenseBreakdown>
+    + fromJson(json: Map<String, dynamic>): DashboardStats
+  }
+
+  class Expense {
+    + id: int
+    + warehouseId: int
+    + category: String
+    + amount: double
+    + description: String?
+    + date: DateTime
+    + receipt: String?
+    + createdAt: DateTime
+    + updatedAt: DateTime
+    + fromJson(json: Map<String, dynamic>): Expense
+    + toJson(): Map<String, dynamic>
+  }
+
+  class FinancialTransaction {
+    + id: int
+    + warehouseId: int
+    + type: String
+    + amount: double
+    + orderId: int?
+    + description: String?
+    + stripeFee: double?
+    + netAmount: double
+    + metadata: Map<String, dynamic>?
+    + createdAt: DateTime
+    + fromJson(json: Map<String, dynamic>): FinancialTransaction
+  }
+
+  class WarehouseInventory {
+    + id: int
+    + warehouseId: int
+    + materialType: String
+    + category: String
+    + quantityInStock: double
+    + reorderLevel: double?
+    + purchasePrice: double
+    + sellingPrice: double
+    + supplierId: int?
+    + supplierName: String?
+    + location: String?
+    + notes: String?
+    + createdAt: DateTime
+    + updatedAt: DateTime
+    + profitPerKg: double
+    + marginPercent: double
+    + totalValue: double
+    + isLowStock: bool
+    + fromJson(json: Map<String, dynamic>): WarehouseInventory
+    + toJson(): Map<String, dynamic>
+  }
+}
+
+package "Core Infrastructure & Services" {
+  class ApiService {
+    + get(endpoint: String, query: Map, requiresAuth: bool): Future<Map>
+    + post(endpoint: String, data: Map, requiresAuth: bool): Future<Map>
+    + put(endpoint: String, data: Map, requiresAuth: bool): Future<Map>
+    + delete(endpoint: String, requiresAuth: bool): Future<Map>
+  }
+
+  class SecureStorageService {
+    + saveToken(token: String): Future<void>
+    + readToken(): Future<String?>
+    + deleteToken(): Future<void>
+    + saveUserData(userData: Map): Future<void>
+    + readUserData(): Future<Map?>
+    + deleteUserData(): Future<void>
+  }
+
+  class PreferencesService {
+    + saveAdminName(name: String): Future<void>
+    + getAdminName(): Future<String>
+    + saveDarkMode(isDark: bool): Future<void>
+    + getDarkMode(): Future<bool>
+    + clearAll(): Future<void>
+  }
+
+  class LocationService {
+    + getCurrentLocation(): Future<Map<String, double>?>
+    + getAddressFromCoordinates(lat: double, lon: double): Future<Map<String, String>?>
+    + detectLocationAndMatch(): Future<Map<String, dynamic>?>
+  }
+
+  class OcrService {
+    + extractTextFromImage(file: File): Future<String>
+    + extractCnicData(file: File): Future<Map<String, String>>
+    + extractNtnData(file: File): Future<Map<String, String>>
+    + extractUtilityBillData(file: File): Future<Map<String, String>>
+  }
+
+  class ImageClassifierService {
+    + initialize(): Future<void>
+    + classifyImage(imageFile: File): Future<ClassificationResult?>
+    + dispose(): void
+  }
+}
+
+package "Domain Layer (Repositories)" {
+  interface AuthRepository {
+    + login(identifier: String, password: String): Future<ApiResult<dynamic>>
+    + register(userData: Map, files: Map): Future<ApiResult<dynamic>>
+  }
+  
+  interface ListingRepository {
+    + createListing(listingData: Map): Future<ApiResult<Map>>
+    + getListings(): Future<ApiResult<Map>>
+  }
+
+  interface OrderRepository {
+    + createOrder(listingId: int, weight: double): Future<ApiResult<Map>>
+    + getOrders(): Future<ApiResult<Map>>
+  }
+
+  interface PaymentRepository {
+    + createPaymentIntent(orderId: int): Future<ApiResult<Map>>
+    + confirmCodPayment(id: int): Future<ApiResult<Map>>
+  }
+}
+
+package "Application Layer (Services & Providers)" {
+  class AuthProvider {
+    + login(identifier, password): Future<void>
+    + register(...): Future<void>
+  }
+  AuthProvider --> AuthRepository
+
+  class ListingService {
+    + createListing(listing: Listing): Future<Listing>
+    + getListings(): Future<Map>
+  }
+  ListingService --> ListingRepository
+
+  class OrderService {
+    + createOrder(listingId: int, weight: double): Future<Order>
+    + getOrders(): Future<Map>
+  }
+  OrderService --> OrderRepository
+
+  class PaymentService {
+    + createPaymentIntent(orderId: int): Future<Map>
+  }
+  PaymentService --> PaymentRepository
+  
+  class ComplaintService {
+    + submitComplaint(data: Map): Future<void>
+    + syncComplaints(): Future<void>
+  }
+  
+  class AdminService {
+    + getLogs(): Future<void>
+    + getDashboardStats(): Future<Map>
+  }
+  
+  class SyncManager {
+    + queueRequest(endpoint: String, method: String, payload: Map): Future<void>
+    + processQueue(): Future<void>
+  }
+  
+  class ObservabilityService {
+    + logObservation(...): Future<void>
+    + forceSync(): Future<void>
+  }
+}
+
+@enduml

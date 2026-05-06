@@ -1,33 +1,29 @@
-import 'package:shared_preferences/shared_preferences.dart';
 import '../models/listing_model.dart';
-import '../constants/api_constants.dart';
-import 'api_service.dart';
-import 'package:flutter/foundation.dart';
+import '../../core/di/service_locator.dart';
+import '../../features/listing/domain/repositories/listing_repository.dart';
+import '../../core/network/api_result.dart';
 
+/// ListingService now delegates to the clean architecture ListingRepository.
+/// All existing screens continue to work with no changes.
 class ListingService {
-  final ApiService _apiService = ApiService();
+  final ListingRepository _repository = sl<ListingRepository>();
+
+  /// Unwraps an ApiResult into a Map or throws on failure.
+  Map<String, dynamic> _unwrapMap(ApiResult<Map<String, dynamic>> result, String fallback) {
+    if (result.isSuccess && result.data != null) return result.data!;
+    throw Exception(result.message ?? fallback);
+  }
 
   // Create a new listing
   Future<Listing> createListing(Listing listing) async {
-    try {
-      final jsonData = listing.toCreateJson();
-      if (kDebugMode) print('DEBUG: Creating listing with data: $jsonData');
-      if (kDebugMode) print('DEBUG: Images count: ${jsonData['images']?.length ?? 0}');
-      
-      final response = await _apiService.post(
-        '/listings',
-        jsonData,
-      );
-      
-      if (response['success'] == true && response['data'] != null) {
-        return Listing.fromJson(response['data']);
-      } else {
-        throw Exception(response['message'] ?? 'Failed to create listing');
-      }
-    } catch (e) {
-      if (kDebugMode) print('DEBUG: Error creating listing: $e');
-      throw Exception('Error creating listing: $e');
-    }
+    final data = _unwrapMap(await _repository.createListing(listing.toCreateJson()), 'Failed to create listing');
+    return Listing.fromJson(data);
+  }
+
+  // Update an existing listing
+  Future<Listing> updateListing(int id, Listing listing) async {
+    final data = _unwrapMap(await _repository.updateListing(id, listing.toCreateJson()), 'Failed to update listing');
+    return Listing.fromJson(data);
   }
 
   // Get user's listings with optional filters
@@ -41,149 +37,65 @@ class ListingService {
     int limit = 10,
     bool isMarketplace = false,
   }) async {
-    try {
-      final queryParams = <String, String>{};
-      if (material != null) queryParams['materialType'] = material;
-      if (status != null) queryParams['status'] = status;
-      if (startDate != null) queryParams['startDate'] = startDate;
-      if (endDate != null) queryParams['endDate'] = endDate;
-      if (search != null) queryParams['search'] = search;
-      queryParams['page'] = page.toString();
-      queryParams['limit'] = limit.toString();
-      if (isMarketplace) queryParams['view'] = 'marketplace';
+    final data = _unwrapMap(await _repository.getListings(
+      material: material,
+      status: status,
+      startDate: startDate,
+      endDate: endDate,
+      search: search,
+      page: page,
+      limit: limit,
+      isMarketplace: isMarketplace,
+    ), 'Failed to fetch listings');
 
-      // Advanced Delta Sync Logic (DISABLED: Needs local caching database to merge deltas)
-      /*
-      final prefs = await SharedPreferences.getInstance();
-      final lastUpdatedKey = isMarketplace ? 'delta_sync_marketplace' : 'delta_sync_own';
-      
-      // If we are on page 1 and no search filters, attempt a Delta Sync
-      if (page == 1 && search == null && material == null && status == null) {
-         final lastUpdated = prefs.getString(lastUpdatedKey);
-         if (lastUpdated != null) {
-           queryParams['lastUpdated'] = lastUpdated;
-         }
-      }
-      */
-
-      final queryString = queryParams.entries
-          .map((e) => '${e.key}=${Uri.encodeComponent(e.value)}')
-          .join('&');
-
-      final response = await _apiService.get('/listings?$queryString');
-
-      if (response['success'] == true) {
-        // Update Delta Sync timestamp on success (DISABLED)
-        /*
-        if (page == 1 && search == null && material == null && status == null) {
-           await prefs.setString(lastUpdatedKey, DateTime.now().toUtc().toIso8601String());
-        }
-        */
-
-        final listings = (response['data'] as List)
-            .map((json) => Listing.fromJson(json))
-            .toList();
-        
-        return {
-          'listings': listings,
-          'pagination': response['pagination'],
-        };
-      } else {
-        throw Exception(response['message'] ?? 'Failed to fetch listings');
-      }
-    } catch (e) {
-      throw Exception('Error fetching listings: $e');
-    }
+    final listings = (data['data'] as List)
+        .map((json) => Listing.fromJson(json))
+        .toList();
+    return {
+      'listings': listings,
+      'pagination': data['pagination'],
+    };
   }
 
   // Get listing statistics
   Future<Map<String, dynamic>> getListingStats() async {
-    try {
-      final response = await _apiService.get('/listings/stats');
-      
-      if (response['success'] == true && response['data'] != null) {
-        return response['data'];
-      } else {
-        throw Exception(response['message'] ?? 'Failed to fetch statistics');
-      }
-    } catch (e) {
-      throw Exception('Error fetching stats: $e');
-    }
+    return _unwrapMap(await _repository.getListingStats(), 'Failed to fetch statistics');
   }
 
   // Update listing status
-  Future<Listing> updateListingStatus(int id, String status, {String? buyerInfo}) async {
-    try {
-      final data = {'status': status};
-      if (buyerInfo != null) {
-        data['buyerInfo'] = buyerInfo;
-      }
-
-      final response = await _apiService.put('/listings/$id', data);
-      
-      if (response['success'] == true && response['data'] != null) {
-        return Listing.fromJson(response['data']);
-      } else {
-        throw Exception(response['message'] ?? 'Failed to update listing');
-      }
-    } catch (e) {
-      throw Exception('Error updating listing: $e');
-    }
+  Future<Listing> updateListingStatus(int id, String status,
+      {String? buyerInfo}) async {
+    final data = _unwrapMap(await _repository.updateListingStatus(id, status, buyerInfo: buyerInfo), 'Failed to update listing');
+    return Listing.fromJson(data);
   }
 
   // Delete a listing
   Future<void> deleteListing(int id) async {
-    try {
-      final response = await _apiService.delete('/listings/$id');
-      
-      if (response['success'] != true) {
-        throw Exception(response['message'] ?? 'Failed to delete listing');
-      }
-    } catch (e) {
-      throw Exception('Error deleting listing: $e');
+    final result = await _repository.deleteListing(id);
+    if (result.isFailure) {
+      throw Exception(result.message ?? 'Failed to delete listing');
     }
   }
 
   // Fetch dynamic material rates from backend
   Future<Map<String, double>> fetchMaterialRates() async {
-    try {
-      final response = await _apiService.get('/app/rates');
-      
-      if (response['success'] == true && response['data'] != null) {
-        final ratesList = response['data'] as List;
-        final Map<String, double> ratesMap = {};
-        for (var rateObj in ratesList) {
-          final category = rateObj['category'] as String;
-          final price = (rateObj['pricePerUnit'] as num).toDouble();
-          ratesMap[category] = price;
-        }
-        return ratesMap;
-      } else {
-        throw Exception(response['message'] ?? 'Failed to fetch rates');
-      }
-    } catch (e) {
-      if (kDebugMode) print('DEBUG: Error fetching rates: $e');
-      throw Exception('Error fetching rates: $e');
-    }
+    final result = await _repository.fetchMaterialRates();
+    if (result.isSuccess && result.data != null) return result.data!;
+    throw Exception(result.message ?? 'Failed to fetch rates');
   }
 
-  // Get export URL for CSV download (returns URL, actual download handled by UI)
+  // Get export URL for CSV download
   String getExportUrl({
     String? material,
     String? status,
     String? startDate,
     String? endDate,
   }) {
-    final queryParams = <String, String>{};
-    if (material != null) queryParams['material'] = material;
-    if (status != null) queryParams['status'] = status;
-    if (startDate != null) queryParams['startDate'] = startDate;
-    if (endDate != null) queryParams['endDate'] = endDate;
-
-    final queryString = queryParams.entries
-        .map((e) => '${e.key}=${Uri.encodeComponent(e.value)}')
-        .join('&');
-
-    return '${ApiConstants.baseUrl}/listings/export${queryString.isNotEmpty ? "?$queryString" : ""}';
+    return _repository.getExportUrl(
+      material: material,
+      status: status,
+      startDate: startDate,
+      endDate: endDate,
+    );
   }
 }

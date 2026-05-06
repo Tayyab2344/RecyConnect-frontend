@@ -4,6 +4,7 @@ import '../../../core/services/transaction_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/error_message_helper.dart';
 import '../../widgets/recycle_loader.dart';
+import '../../widgets/skeleton_loader.dart';
 import 'package:flutter/foundation.dart';
 
 class TransactionsScreen extends StatefulWidget {
@@ -63,11 +64,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         elevation: 0,
       ),
       body: _isLoading
-          ? Center(
-              child: RecycleLoader(
-                color: isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen,
-              ),
-            )
+          ? SkeletonLoader.list()
           : _transactions.isEmpty
               ? Center(
                   child: Column(

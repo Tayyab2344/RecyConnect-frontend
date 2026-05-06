@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/services/auth_service.dart';
+import '../../../core/di/service_locator.dart';
 import '../auth/login_screen.dart';
 import 'marketplace_screen.dart';
 import 'buyer_orders_screen.dart';
@@ -12,7 +13,7 @@ class BuyerDashboard extends StatefulWidget {
 }
 
 class _BuyerDashboardState extends State<BuyerDashboard> {
-  final AuthService _authService = AuthService();
+  final AuthService _authService = sl<AuthService>();
   int _selectedIndex = 0;
 
   static const List<Widget> _widgetOptions = <Widget>[

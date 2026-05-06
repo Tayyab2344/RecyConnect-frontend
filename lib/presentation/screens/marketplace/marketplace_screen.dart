@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/services/listing_service.dart';
 import '../../../core/models/listing_model.dart';
 import '../../../core/theme/app_colors.dart';
-// Note: Removed design_tokens.dart assuming it's replaced by direct values or not widely used in this new custom UI due to specific Glass requirements.
+import '../../widgets/skeleton_loader.dart';
 // import '../../../core/theme/design_tokens.dart'; 
 
 /// futuristic Marketplace Screen
@@ -15,7 +15,10 @@ class MarketplaceScreen extends StatefulWidget {
   State<MarketplaceScreen> createState() => _MarketplaceScreenState();
 }
 
-class _MarketplaceScreenState extends State<MarketplaceScreen> with SingleTickerProviderStateMixin {
+class _MarketplaceScreenState extends State<MarketplaceScreen> with SingleTickerProviderStateMixin, AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
   final ListingService _listingService = ListingService();
   late Future<Map<String, dynamic>> _listingsFuture;
   final TextEditingController _searchController = TextEditingController();
@@ -52,6 +55,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> with SingleTicker
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -229,9 +233,11 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> with SingleTicker
       future: _listingsFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return SliverToBoxAdapter(
-              child: Center(
-                  child: CircularProgressIndicator(color: isDark ? AppColors.neonCyan : AppColors.primaryGreen)));
+          return SliverFillRemaining(
+            child: IgnorePointer(
+              child: SkeletonLoader.grid(),
+            ),
+          );
         }
         
         // Error or Empty handling simplified for brevity

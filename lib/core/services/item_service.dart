@@ -3,10 +3,11 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import '../constants/api_constants.dart';
+import '../di/service_locator.dart';
 import 'auth_service.dart';
 
 class ItemService {
-  final AuthService _authService = AuthService();
+  final AuthService _authService = sl<AuthService>();
 
   Future<Map<String, dynamic>> createItem({
     required String title,

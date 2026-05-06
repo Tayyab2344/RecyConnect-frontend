@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../constants/api_constants.dart';
+import '../di/service_locator.dart';
 import 'auth_service.dart';
 
 class ReservationService {
-  final AuthService _authService = AuthService();
+  final AuthService _authService = sl<AuthService>();
 
   // Reserve a specific quantity of a listing
   Future<Map<String, dynamic>> reserveListing(int listingId, double quantity) async {

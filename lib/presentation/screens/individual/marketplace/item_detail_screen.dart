@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/models/listing_model.dart';
 import '../../../../core/services/auth_service.dart';
+import '../../../widgets/full_screen_image_viewer.dart';
 import 'checkout_screen.dart';
 
 class ItemDetailScreen extends StatefulWidget {
@@ -62,26 +63,47 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           onPageChanged: (index) => setState(() => _currentImageIndex = index),
           itemCount: imageCount,
           itemBuilder: (context, index) {
-            if (widget.item.hasNetworkImages) {
-              return Image.network(
-                widget.item.imageUrls[index],
-                fit: BoxFit.cover,
-                width: double.infinity,
-                height: double.infinity,
-                loadingBuilder: (context, child, progress) {
-                  if (progress == null) return child;
-                  return _buildImagePlaceholder(isDark);
-                },
-                errorBuilder: (_, __, ___) => _buildImagePlaceholder(isDark),
-              );
-            } else {
-              return Image.memory(
-                widget.item.decodedImages[index],
-                fit: BoxFit.cover,
-                width: double.infinity,
-                height: double.infinity,
-              );
-            }
+            final isNetwork = widget.item.hasNetworkImages;
+            final imageProvider = isNetwork
+                ? NetworkImage(widget.item.imageUrls[index]) as ImageProvider
+                : MemoryImage(widget.item.decodedImages[index]) as ImageProvider;
+            
+            final heroTag = 'item_image_${widget.item.id}_$index';
+
+            return GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => FullScreenImageViewer(
+                      imageProvider: imageProvider,
+                      heroTag: heroTag,
+                    ),
+                  ),
+                );
+              },
+              child: Hero(
+                tag: heroTag,
+                child: isNetwork
+                    ? Image.network(
+                        widget.item.imageUrls[index],
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        height: double.infinity,
+                        loadingBuilder: (context, child, progress) {
+                          if (progress == null) return child;
+                          return _buildImagePlaceholder(isDark);
+                        },
+                        errorBuilder: (_, __, ___) => _buildImagePlaceholder(isDark),
+                      )
+                    : Image.memory(
+                        widget.item.decodedImages[index],
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        height: double.infinity,
+                      ),
+              ),
+            );
           },
         ),
         if (imageCount > 1)

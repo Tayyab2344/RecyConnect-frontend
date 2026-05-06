@@ -13,6 +13,7 @@ import '../../widgets/empty_state_widget.dart';
 import '../../widgets/marketplace/glass_card.dart';
 import '../../widgets/marketplace/neon_button.dart';
 import '../../widgets/recycle_loader.dart';
+import '../../widgets/skeleton_loader.dart';
 import 'marketplace/item_detail_screen.dart';
 
 class BrowseMarketplaceScreen extends StatefulWidget {
@@ -23,7 +24,10 @@ class BrowseMarketplaceScreen extends StatefulWidget {
       _BrowseMarketplaceScreenState();
 }
 
-class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen> {
+class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
   final ListingService _listingService = ListingService();
   final OrderService _orderService = OrderService();
   List<Listing> _items = [];
@@ -90,6 +94,7 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -134,7 +139,7 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen> {
               _buildStickyFilterBar(isDark),
               Expanded(
                 child: _isLoading
-                    ? RecycleLoader.centered()
+                    ? SkeletonLoader.grid()
                     : _errorMessage != null
                         ? Center(child: Text(_errorMessage!))
                         : _items.isEmpty

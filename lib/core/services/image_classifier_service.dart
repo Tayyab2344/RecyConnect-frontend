@@ -1,13 +1,11 @@
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:flutter/foundation.dart' show kIsWeb, compute;
+import 'package:flutter/foundation.dart' show kIsWeb, compute, kDebugMode;
 import 'package:flutter/services.dart';
 import 'dart:ui' as ui;
 
 // Conditionally import tflite_flutter only on non-web platforms
-import 'package:tflite_flutter/tflite_flutter.dart'
-import 'package:flutter/foundation.dart';
-    if (dart.library.html) 'image_classifier_service_web_stub.dart';
+import 'image_classifier_service_web_stub.dart' if (dart.library.io) 'package:tflite_flutter/tflite_flutter.dart';
 
 /// Service for classifying images using the RecyConnect TFLite model.
 /// Uses the quantized MobileNetV2-based model for material classification.
@@ -23,12 +21,11 @@ class ImageClassifierService {
   static const int numChannels = 3;
 
   // Mapping from model labels to UI display names
+  // New model (recyconnect_outputs) — 4 classes
+  // Old model (recyconnect_outputs_old) had 7 classes: clothing, e-waste, glass, metal, other, paper, plastic
   static const Map<String, String> _labelToDisplayName = {
-    'clothing': 'Clothing',
-    'e-waste': 'E-Waste',
-    'glass': 'Glass',
+    'ewaste': 'E-Waste',
     'metal': 'Metal',
-    'other': 'Other',
     'paper': 'Paper',
     'plastic': 'Plastic',
   };

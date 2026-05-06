@@ -38,21 +38,23 @@ class _ProfileScreenState extends State<ProfileScreen>
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
 
-    // Pulse animation for glowing effects
+    // Pulse animation for glowing effects (stopped continuous repeat for performance)
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2000),
-    )..repeat(reverse: true);
+      value: 1.0,
+    );
 
     _pulseAnimation = Tween<double>(begin: 0.6, end: 1.0).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
 
-    // Background animation
+    // Background animation (stopped continuous repeat for performance)
     _bgAnimController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 8),
-    )..repeat();
+      value: 0.5,
+    );
 
     // Defer the profile fetch to avoid setState during build
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -540,21 +542,18 @@ class _ProfileScreenState extends State<ProfileScreen>
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: TabBar(
-            controller: _tabController,
-            labelColor: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
-            unselectedLabelColor: isDark ? Colors.white54 : Colors.grey.shade600,
-            indicatorColor: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
-            indicatorWeight: 3,
-            indicatorPadding: const EdgeInsets.symmetric(horizontal: 16),
-            labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-            tabs: const [
-              Tab(text: 'Personal'),
-              Tab(text: 'Activity'),
-            ],
-          ),
+        child: TabBar(
+          controller: _tabController,
+          labelColor: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
+          unselectedLabelColor: isDark ? Colors.white54 : Colors.grey.shade600,
+          indicatorColor: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
+          indicatorWeight: 3,
+          indicatorPadding: const EdgeInsets.symmetric(horizontal: 16),
+          labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          tabs: const [
+            Tab(text: 'Personal'),
+            Tab(text: 'Activity'),
+          ],
         ),
       ),
     );
@@ -1310,56 +1309,50 @@ class _GlassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: borderRadius ?? BorderRadius.circular(20),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: borderRadius ?? BorderRadius.circular(20),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: isDark
-                  ? [
-                      Colors.white.withValues(alpha: 0.12),
-                      Colors.white.withValues(alpha: 0.05),
-                    ]
-                  : [
-                      Colors.white.withValues(alpha: 0.85),
-                      Colors.white.withValues(alpha: 0.65),
-                    ],
-            ),
-            border: Border.all(
-              color: isDark
-                  ? AppColors.neonCyan.withValues(alpha: 0.15 + 0.1 * pulseValue)
-                  : Colors.white.withValues(alpha: 0.6),
-              width: 1.5,
-            ),
-            boxShadow: isDark
-                ? [
-                    BoxShadow(
-                      color: AppColors.neonCyan.withValues(alpha: 0.08 * pulseValue),
-                      blurRadius: 20,
-                      spreadRadius: 0,
-                    ),
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.3),
-                      blurRadius: 15,
-                      offset: const Offset(0, 8),
-                    ),
-                  ]
-                : [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.08),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-          ),
-          child: child,
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: borderRadius ?? BorderRadius.circular(20),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? [
+                  Colors.white.withValues(alpha: 0.12),
+                  Colors.white.withValues(alpha: 0.05),
+                ]
+              : [
+                  Colors.white.withValues(alpha: 0.85),
+                  Colors.white.withValues(alpha: 0.65),
+                ],
         ),
+        border: Border.all(
+          color: isDark
+              ? AppColors.neonCyan.withValues(alpha: 0.15 + 0.1 * pulseValue)
+              : Colors.white.withValues(alpha: 0.6),
+          width: 1.5,
+        ),
+        boxShadow: isDark
+            ? [
+                BoxShadow(
+                  color: AppColors.neonCyan.withValues(alpha: 0.08 * pulseValue),
+                  blurRadius: 20,
+                  spreadRadius: 0,
+                ),
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.3),
+                  blurRadius: 15,
+                  offset: const Offset(0, 8),
+                ),
+              ]
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
       ),
+      child: child,
     );
   }
 }

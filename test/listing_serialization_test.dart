@@ -53,4 +53,24 @@ void main() {
     expect(map.containsKey('images'), true);
     expect(map['images'], equals(['img1', 'img2']));
   });
+
+  test('Listing.fromJson tolerates marketplace responses missing optional fields', () {
+    final listing = Listing.fromJson({
+      'id': 10,
+      'materialType': 'plastic',
+      'estimatedWeight': 5,
+      'status': 'PUBLISHED',
+      'createdAt': '2026-04-26T08:00:00.000Z',
+      'images': ['https://example.com/listing.jpg'],
+      'user': {
+        'id': 7,
+        'name': 'Seller Account',
+      },
+    });
+
+    expect(listing.userId, 7);
+    expect(listing.pickupAddress, '');
+    expect(listing.updatedAt, listing.createdAt);
+    expect(listing.user?.name, 'Seller Account');
+  });
 }

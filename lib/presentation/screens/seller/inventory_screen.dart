@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/services/item_service.dart';
 import '../../../core/services/auth_service.dart';
+import '../../../core/di/service_locator.dart';
 
 class InventoryScreen extends StatefulWidget {
   const InventoryScreen({super.key});
@@ -12,7 +13,7 @@ class InventoryScreen extends StatefulWidget {
 
 class _InventoryScreenState extends State<InventoryScreen> {
   final ItemService _itemService = ItemService();
-  final AuthService _authService = AuthService();
+  final AuthService _authService = sl<AuthService>();
   late Future<List<dynamic>> _itemsFuture;
 
   @override

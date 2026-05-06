@@ -18,7 +18,9 @@ import 'package:recyconnect/presentation/widgets/marketplace/neon_button.dart';
 import 'package:flutter/foundation.dart';
 
 class CreateListingScreen extends StatefulWidget {
-  const CreateListingScreen({Key? key}) : super(key: key);
+  final Listing? listing;
+
+  const CreateListingScreen({Key? key, this.listing}) : super(key: key);
 
   @override
   State<CreateListingScreen> createState() => _CreateListingScreenState();
@@ -42,11 +44,14 @@ class _CreateListingScreenState extends State<CreateListingScreen>
 
   // State Variables
   List<XFile> _selectedImages = [];
+  List<String> _existingImages = [];
   String _selectedMaterial = 'Plastic';
   String _locationMethod = 'manual';
   bool _requestCollector = false;
   bool _isAnalyzing = false;
   bool _isSubmitting = false;
+
+  bool get _isEditing => widget.listing != null;
 
   // Animation for "AI Scanning"
   late AnimationController _scanController;
@@ -61,8 +66,26 @@ class _CreateListingScreenState extends State<CreateListingScreen>
       vsync: this,
       duration: const Duration(seconds: 2),
     );
+    _prefillForEdit();
     _loadRates();
-    _loadUserLocation();
+    if (!_isEditing) {
+      _loadUserLocation();
+    }
+  }
+
+  void _prefillForEdit() {
+    final listing = widget.listing;
+    if (listing == null) return;
+
+    _titleController.text = listing.title ?? '';
+    _descriptionController.text = listing.notes ?? '';
+    _weightController.text = listing.displayWeight.toStringAsFixed(
+      listing.displayWeight.truncateToDouble() == listing.displayWeight ? 0 : 1,
+    );
+    _addressController.text = listing.pickupAddress;
+    _selectedMaterial = listing.materialType;
+    _locationMethod = listing.locationMethod ?? 'manual';
+    _existingImages = listing.images ?? [];
   }
 
   Future<void> _loadRates() async {
@@ -71,8 +94,13 @@ class _CreateListingScreenState extends State<CreateListingScreen>
       if (mounted) {
         setState(() {
           _materialRates = rates;
-          if (rates.isNotEmpty) {
+          if (!_isEditing && rates.isNotEmpty) {
             _selectedMaterial = rates.keys.first;
+          } else if (_isEditing && rates.isNotEmpty) {
+            _selectedMaterial = rates.keys.firstWhere(
+              (key) => key.toLowerCase() == _selectedMaterial.toLowerCase(),
+              orElse: () => rates.keys.first,
+            );
           }
           _isLoadingRates = false;
         });
@@ -106,10 +134,18 @@ class _CreateListingScreenState extends State<CreateListingScreen>
       final authService = Provider.of<AuthService>(context, listen: false);
       final response = await authService.fetchProfile();
       if (response['success'] == true) {
-        final data = response['data']['data'];
+        final data = response['data'] as Map<String, dynamic>;
         final addressParts = <String>[];
-        if (data['address'] != null) addressParts.add(data['address']);
-        if (data['city'] != null) addressParts.add(data['city']);
+        final address = data['address']?.toString().trim();
+        final area = data['area']?.toString().trim();
+        final city = data['city']?.toString().trim();
+        if (address != null && address.isNotEmpty) addressParts.add(address);
+        if (area != null && area.isNotEmpty && !addressParts.contains(area)) {
+          addressParts.add(area);
+        }
+        if (city != null && city.isNotEmpty && !addressParts.contains(city)) {
+          addressParts.add(city);
+        }
         
         if (addressParts.isNotEmpty) {
           setState(() {
@@ -252,7 +288,7 @@ class _CreateListingScreenState extends State<CreateListingScreen>
        // Scroll to top to show errors if needed, or rely on field error text
        return;
     }
-    if (_selectedImages.isEmpty) {
+    if (_selectedImages.isEmpty && _existingImages.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please upload at least one image.')),
       );
@@ -263,7 +299,7 @@ class _CreateListingScreenState extends State<CreateListingScreen>
 
     try {
       // 1. Compress Images then Convert to Base64 (OOM Protection)
-      List<String> base64Images = [];
+      List<String> base64Images = List<String>.from(_existingImages);
       for (var img in _selectedImages) {
         // Compress native payload to save hundreds of MBs in memory allocation
         final Uint8List? compressedBytes = await FlutterImageCompress.compressWithFile(
@@ -294,14 +330,25 @@ class _CreateListingScreenState extends State<CreateListingScreen>
       );
 
       // 3. API Call
-      await _listingService.createListing(listing);
+      if (_isEditing) {
+        await _listingService.updateListing(widget.listing!.id, listing);
+      } else {
+        await _listingService.createListing(listing);
+      }
 
       if (mounted) {
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (ctx) => _buildSuccessDialog(ctx),
-        );
+        if (_isEditing) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Listing updated successfully')),
+          );
+          Navigator.pop(context, true);
+        } else {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (ctx) => _buildSuccessDialog(ctx),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -408,7 +455,7 @@ class _CreateListingScreenState extends State<CreateListingScreen>
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(
-          'New Listing',
+          _isEditing ? 'Edit Listing' : 'New Listing',
           style: TextStyle(
             color: isDark ? MarketplaceTheme.darkTextPrimary : MarketplaceTheme.lightTextPrimary,
             fontWeight: FontWeight.bold,
@@ -713,6 +760,75 @@ class _CreateListingScreenState extends State<CreateListingScreen>
           isDark: isDark,
           validator: (v) => v!.isEmpty ? 'Address is required' : null,
         ),
+        const SizedBox(height: 16),
+
+        // Pickup Required Radio Button
+        GlassCard(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.local_shipping_outlined,
+                      color: isDark ? Colors.white54 : Colors.black38, size: 20),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Pickup Required?',
+                    style: TextStyle(
+                      color: isDark ? Colors.white60 : Colors.black45,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: RadioListTile<bool>(
+                      title: Text(
+                        'Yes',
+                        style: TextStyle(
+                          color: isDark ? Colors.white : Colors.black87,
+                          fontSize: 14,
+                        ),
+                      ),
+                      value: true,
+                      groupValue: _requestCollector,
+                      activeColor: isDark
+                          ? MarketplaceTheme.darkAccentCyan
+                          : MarketplaceTheme.lightAccent,
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                      onChanged: (val) => setState(() => _requestCollector = val!),
+                    ),
+                  ),
+                  Expanded(
+                    child: RadioListTile<bool>(
+                      title: Text(
+                        'No',
+                        style: TextStyle(
+                          color: isDark ? Colors.white : Colors.black87,
+                          fontSize: 14,
+                        ),
+                      ),
+                      value: false,
+                      groupValue: _requestCollector,
+                      activeColor: isDark
+                          ? MarketplaceTheme.darkAccentCyan
+                          : MarketplaceTheme.lightAccent,
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                      onChanged: (val) => setState(() => _requestCollector = val!),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -808,7 +924,7 @@ class _CreateListingScreenState extends State<CreateListingScreen>
           SizedBox(
             width: double.infinity,
             child: NeonButton(
-              text: 'PUBLISH LISTING',
+              text: _isEditing ? 'UPDATE LISTING' : 'PUBLISH LISTING',
               isLoading: _isSubmitting,
               onPressed: _publishListing,
             ),

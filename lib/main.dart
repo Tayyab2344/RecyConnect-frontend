@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:provider/provider.dart';
 import 'core/constants/app_config.dart';
-import 'core/services/auth_service.dart';
+import 'core/di/service_locator.dart';
+import 'core/services/auth_service.dart'; // Bridge: AuthService = AuthProvider
 import 'core/services/admin_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/providers/theme_provider.dart';
@@ -13,11 +15,18 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'core/services/observability_service.dart';
 import 'core/services/sync_manager.dart';
 import 'core/services/complaint_service.dart';
+import 'core/services/notification_service.dart';
 import 'presentation/screens/onboarding/onboarding_screen.dart';
+import 'presentation/widgets/skeleton_loader.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  await NotificationService.initialize();
   await Hive.initFlutter();
+
+  // Initialize Dependency Injection (Clean Architecture)
+  await initDependencies();
 
   if (AppConfig.hasStripePublishableKey) {
     Stripe.publishableKey = AppConfig.stripePublishableKey;
@@ -35,7 +44,9 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ChangeNotifierProvider(create: (_) => AuthService()),
+        // AuthService is now a typedef for AuthProvider (Clean Architecture)
+        // Created via get_it service locator instead of direct instantiation
+        ChangeNotifierProvider<AuthService>(create: (_) => sl<AuthService>()),
         ChangeNotifierProvider(create: (_) => AdminService()),
         ChangeNotifierProxyProvider<AuthService, ObservabilityService>(
           create: (context) => ObservabilityService(Provider.of<AuthService>(context, listen: false)),
@@ -116,6 +127,8 @@ class _AuthWrapperState extends State<AuthWrapper> {
             // Auth error (401, token expired) — force re-login
             await authService.logout();
           }
+        } else {
+          await NotificationService.registerDeviceToken();
         }
       } catch (e) {
         // Network exception — keep session alive
@@ -134,7 +147,21 @@ class _AuthWrapperState extends State<AuthWrapper> {
   @override
   Widget build(BuildContext context) {
     if (_isCheckingAuth || _hasSeenOnboarding == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return Scaffold(
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              children: [
+                const SizedBox(height: 40),
+                SkeletonLoader.card(),
+                const SizedBox(height: 20),
+                SkeletonLoader.card(),
+              ],
+            ),
+          ),
+        ),
+      );
     }
 
     return Consumer<AuthService>(

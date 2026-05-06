@@ -7,6 +7,7 @@ import '../../../core/services/listing_service.dart';
 import '../../../core/utils/static_data.dart';
 import '../../widgets/marketplace/glass_card.dart';
 import '../../widgets/recycle_loader.dart';
+import '../../widgets/skeleton_loader.dart';
 import '../../../core/theme/marketplace_theme.dart';
 import 'create_listing_screen.dart';
 import 'listing_detail_screen.dart';
@@ -111,6 +112,19 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
     }
   }
 
+  Future<void> _editListing(Listing listing) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CreateListingScreen(listing: listing),
+      ),
+    );
+
+    if (result == true) {
+      _loadListings();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -164,7 +178,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
             child: RefreshIndicator(
               onRefresh: _loadListings,
               child: _isLoading
-                  ? RecycleLoader.centered()
+                  ? SkeletonLoader.grid()
                   : Column(
                       children: [
                         _buildStatsCard(isDark),
@@ -319,7 +333,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        childAspectRatio: 0.65,
+        childAspectRatio: 0.56,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
       ),
@@ -332,6 +346,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
   }
 
   Widget _buildListingCard(Listing listing, bool isDark) {
+    final statusColor = _getStatusColor(listing.statusDisplay);
     return GestureDetector(
       onTap: () => _showListingDetails(listing),
       child: GlassCard(
@@ -348,16 +363,16 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: _getStatusColor(listing.status).withOpacity(0.2),
+                      color: statusColor.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: _getStatusColor(listing.status).withOpacity(0.5)),
+                      border: Border.all(color: statusColor.withOpacity(0.5)),
                     ),
                     child: Text(
                       listing.statusDisplay,
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
-                        color: _getStatusColor(listing.status),
+                        color: statusColor,
                       ),
                     ),
                   ),
@@ -459,7 +474,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                       Icon(Icons.scale, size: 14, color: isDark ? Colors.white60 : Colors.grey),
                       const SizedBox(width: 4),
                       Text(
-                        '${listing.estimatedWeight} kg',
+                        '${listing.displayWeight.toStringAsFixed(1)} kg',
                         style: TextStyle(
                           fontSize: 12,
                           color: isDark ? Colors.white70 : Colors.grey[700],
@@ -475,11 +490,40 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                           color: isDark ? Colors.white54 : Colors.grey[600],
                         ),
                       ),
-                    ],
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: listing.status == 'SOLD'
+                          ? null
+                          : () => _editListing(listing),
+                      icon: const Icon(Icons.edit_outlined, size: 14),
+                      label: const Text('Edit'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    visualDensity: VisualDensity.compact,
+                    tooltip: 'Delete',
+                    onPressed: listing.hasOrders ? null : () => _deleteListing(listing.id),
+                    icon: Icon(
+                      Icons.delete_outline,
+                      size: 20,
+                      color: listing.hasOrders ? Colors.grey : Colors.redAccent,
+                    ),
                   ),
                 ],
               ),
-            ),
+            ],
+          ),
+        ),
           ],
         ),
       ),
@@ -609,6 +653,10 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
       MaterialPageRoute(
         builder: (context) => ListingDetailScreen(
           listing: listing,
+          onEdit: () {
+            Navigator.pop(context);
+            _editListing(listing);
+          },
           onDelete: () {
             Navigator.pop(context);
             _deleteListing(listing.id);
@@ -631,6 +679,20 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
 
   Color _getStatusColor(String status) {
     switch (status) {
+      case 'Active':
+      case 'PUBLISHED':
+        return Colors.green;
+      case 'Paused':
+      case 'PAUSED':
+        return Colors.blueGrey;
+      case 'Sold':
+      case 'SOLD':
+        return Colors.green;
+      case 'Order Pending':
+        return Colors.orange;
+      case 'Draft':
+      case 'DRAFT':
+        return Colors.grey;
       case 'PENDING': return Colors.orange;
       case 'COLLECTED': return Colors.blue;
       case 'COMPLETED': return Colors.green;

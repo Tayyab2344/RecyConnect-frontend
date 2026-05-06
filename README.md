@@ -1,338 +1,172 @@
-# RecyConnect Frontend
+<div align="center">
+  <img src="assets/icons/app_icon.png" alt="RecyConnect Logo" width="120"/>
+  <h1>♻️ RecyConnect Mobile</h1>
+  <p><strong>A Next-Generation Sustainable Waste Management & Recycling Platform</strong></p>
 
-A Flutter-based mobile application for the RecyConnect waste management and recycling platform.
+  [![Flutter Version](https://img.shields.io/badge/Flutter-3.0+-02569B?logo=flutter)](https://flutter.dev/)
+  [![Dart Version](https://img.shields.io/badge/Dart-3.0+-0175C2?logo=dart)](https://dart.dev/)
+  [![Platform](https://img.shields.io/badge/Platform-iOS%20%7C%20Android-lightgrey)](#)
+  [![License](https://img.shields.io/badge/License-ISC-green.svg)](#)
+</div>
 
-## Prerequisites
+---
 
+## 📖 Overview
+
+**RecyConnect** is a state-of-the-art Flutter mobile application designed to bridge the gap between individual recyclers, warehouses, and enterprise recycling companies. It provides a robust, gamified marketplace for buying and selling recyclable materials while leveraging cutting-edge on-device AI for material classification.
+
+---
+
+## ✨ Key Features
+
+### 🏢 Multi-Tier Architecture
+- **Individual Users:** Sell personal recyclables, track environmental impact, and earn eco-points.
+- **Warehouse Managers:** Handle bulk inventory, manage logistics, and procure from individuals.
+- **Enterprise Companies:** Monitor corporate sustainability metrics and purchase industrial-scale materials.
+- **Admin Dashboard:** System analytics, user moderation, and comprehensive activity logging.
+
+### 🧠 Smart AI Integration
+- **On-Device TFLite Classification:** Instantly classify materials (Plastic, Metal, Paper, E-Waste) using an offline Edge AI model.
+- **OCR Document Scanning:** Seamlessly scan receipts and invoices using Google ML Kit.
+
+### 💸 FinTech Capabilities
+- **Stripe Integration:** Secure, instant transactions for buying and selling bulk materials in the marketplace.
+- **Financial Dashboards:** Interactive charts and earning reports powered by `fl_chart`.
+
+### 🎨 Premium UI/UX Design
+- **Glassmorphism:** Modern, frosted-glass aesthetics with soft shadows ensuring a premium feel.
+- **Dynamic Theming:** Deeply integrated Light and Dark modes with dynamic color palettes based on materials.
+- **Micro-Animations:** Fluid transitions, hero animations, and staggered lists utilizing `flutter_animate` and Lottie.
+
+---
+
+## 🛠 Technology Stack
+
+### Core Framework
+* **Flutter** (UI Toolkit)
+* **Dart** (Programming Language)
+
+### Major Packages
+* **State Management:** `provider`
+* **Networking:** `dio`, `http`, `connectivity_plus`
+* **Local Storage:** `hive`, `flutter_secure_storage`, `shared_preferences`
+* **Machine Learning:** `tflite_flutter`, `google_mlkit_text_recognition`
+* **Payments:** `flutter_stripe`
+* **Location:** `geolocator`, `geocoding`
+* **UI/UX:** `flutter_animate`, `glassmorphism`, `fl_chart`, `shimmer`
+
+---
+
+## 📸 Screenshots
+<div align="center">
+  <img src="flutter_01.png" alt="Screenshot 1" width="250"/>
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="flutter_02.png" alt="Screenshot 2" width="250"/>
+</div>
+
+*(Note: Make sure `flutter_01.png` and `flutter_02.png` reflect the latest UI)*
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
 Before you begin, ensure you have the following installed:
-
-- **Flutter SDK** (v3.0.0 or higher)
-- **Dart SDK** (v3.0.0 or higher)
-- **Android Studio** (for Android development)
-- **Xcode** (for iOS development - macOS only)
-- **Git**
-- **A code editor** (VS Code, Android Studio, or IntelliJ IDEA)
-
-## Quick Start
+- [Flutter SDK](https://flutter.dev/docs/get-started/install) (v3.0.0 or higher)
+- Android Studio / VS Code
+- Git
 
 ### 1. Clone the Repository
-
 ```bash
 git clone <repository-url>
 cd RecyConnect-frontend
 ```
 
-### 2. Install Flutter Dependencies
-
+### 2. Install Dependencies
 ```bash
 flutter pub get
 ```
 
-### 3. Runtime Configuration
+### 3. Environment Configuration
+The app uses `--dart-define` for secure compile-time environment variables.
 
-This project now uses `--dart-define` for environment-specific values.
-
-Local development example:
-
+**For Local Development:**
 ```bash
-flutter run --dart-define=API_URL=http://192.168.1.13:5000/api
+flutter run --dart-define=API_URL=http://YOUR_LOCAL_IP:5000/api
 ```
+*(Make sure your backend is listening on `0.0.0.0` and both your development machine and test device share the same Wi-Fi network).*
 
-Release example:
-
+**For Production Build:**
 ```bash
 flutter build apk --release \
-  --dart-define=API_URL=https://your-production-api.example.com/api \
-  --dart-define=STRIPE_PUBLISHABLE_KEY=pk_live_your_publishable_key
+  --dart-define=API_URL=https://your-production-api.com/api \
+  --dart-define=STRIPE_PUBLISHABLE_KEY=pk_live_xxxxxx
 ```
 
-The runtime configuration lives in `lib/core/constants/app_config.dart`.
+---
 
-### 5. Run the Application
+## 🏗 Project Structure
 
-**For Android Emulator:**
+```text
+lib/
+├── core/
+│   ├── constants/         # App constants, Configs, API endpoints
+│   ├── models/            # Data transfer objects
+│   ├── services/          # Business logic, networking, external APIs
+│   ├── theme/             # Design system (Colors, Typography, Themes)
+│   └── utils/             # Helper functions and extensions
+├── presentation/
+│   ├── screens/           # Feature-based UI screens
+│   │   ├── auth/          # Authentication flows
+│   │   ├── dashboard/     # Role-specific dashboards
+│   │   ├── marketplace/   # Item browsing and details
+│   │   └── ...
+│   └── widgets/           # Highly reusable UI components
+└── main.dart              # App entry point & dependency injection
+```
+
+---
+
+## 🧪 Testing
+
+We ensure code reliability through comprehensive testing.
 ```bash
-flutter run
-```
-
-**For Physical Device (USB Debugging):**
-```bash
-# Connect your device via USB and enable USB debugging
-flutter devices  # List available devices
-flutter run -d <device-id>
-```
-
-**For iOS Simulator (macOS only):**
-```bash
-flutter run -d iphone
-```
-
-## Building the App
-
-### Android APK (Debug)
-
-```bash
-flutter build apk --debug
-```
-
-The APK will be located at: `build/app/outputs/flutter-apk/app-debug.apk`
-
-### Android APK (Release)
-
-```bash
-flutter build apk --release --dart-define=API_URL=https://your-production-api.example.com/api --dart-define=STRIPE_PUBLISHABLE_KEY=pk_live_your_publishable_key
-```
-
-The APK will be located at: `build/app/outputs/flutter-apk/app-release.apk`
-
-### Android App Bundle (For Google Play Store)
-
-```bash
-flutter build appbundle --release --dart-define=API_URL=https://your-production-api.example.com/api --dart-define=STRIPE_PUBLISHABLE_KEY=pk_live_your_publishable_key
-```
-
-### iOS App (macOS only)
-
-```bash
-flutter build ios --release
-```
-
-## Project Structure
-
-```
-RecyConnect-frontend/
-├── lib/
-│   ├── core/
-│   │   ├── constants/         # App constants and API config
-│   │   ├── models/            # Data models
-│   │   ├── services/          # API and business logic services
-│   │   ├── theme/             # App theme and styling
-│   │   ├── utils/             # Utility functions
-│   │   └── providers/         # State management providers
-│   ├── presentation/
-│   │   ├── screens/           # All app screens
-│   │   │   ├── auth/          # Login, registration, OTP
-│   │   │   ├── dashboard/     # Main dashboards
-│   │   │   ├── individual/    # Individual user features
-│   │   │   ├── onboarding/    # First-time user experience
-│   │   │   ├── profile/       # User profile screens
-│   │   │   └── ...
-│   │   └── widgets/           # Reusable UI components
-│   └── main.dart              # Application entry point
-├── assets/
-│   ├── images/                # Image assets
-│   └── icons/                 # Icon assets
-├── pubspec.yaml               # Dependencies configuration
-├── .env                       # Environment variables
-└── README.md
-```
-
-## Key Features
-
-### User Roles
-- **Individual Users:** Sell recyclables, browse marketplace
-- **Warehouse Users:** Bulk operations, view all listings
-- **Company Users:** Corporate recycling management
-- **Admin Users:** User management, analytics dashboard
-
-### Features by Role
-
-#### Individual Users
-- Create and manage recyclable listings (max 20kg)
-- Browse marketplace for materials
-- Track earnings and sales
-- Manage purchases and orders
-
-#### Warehouse Users
-- List bulk recyclables (min 10kg)
-- View listings from all user types
-- Advanced inventory management
-
-#### Company Users
-- List bulk recyclables (min 10kg)
-- View company and warehouse listings
-- Corporate-level reporting
-
-#### Admin
-- User management and suspension
-- System analytics and reporting
-- Activity logs and monitoring
-
-## Key Dependencies
-
-| Package | Purpose |
-|---------|---------|
-| `provider` | State management |
-| `http` | API communication |
-| `shared_preferences` | Local storage |
-| `image_picker` | Image uploads |
-| `google_mlkit_text_recognition` | OCR for document scanning |
-| `fl_chart` | Charts and graphs |
-| `geolocator` & `geocoding` | Location services |
-| `flutter_animate` | Animations |
-| `glassmorphism` | Modern UI effects |
-| `intl` | Internationalization |
-
-## Configuration
-
-### Connecting to Local Backend
-
-1. Find your computer's local IP address:
-   - **Windows:** Run `ipconfig` in Command Prompt
-   - **macOS/Linux:** Run `ifconfig` in Terminal
-
-2. Run with your local backend URL:
-   ```bash
-   flutter run --dart-define=API_URL=http://YOUR_LOCAL_IP:5000/api
-   ```
-
-3. Ensure your backend is running and listening on `0.0.0.0`
-
-4. Both devices (development machine and test device) must be on the same Wi-Fi network
-
-### Android Permissions
-
-The app requires the following permissions (configured in `android/app/src/main/AndroidManifest.xml`):
-- Internet access
-- Camera (for profile pictures and document scanning)
-- Media/image access for uploads
-
-### iOS Permissions
-
-Configure permissions in `ios/Runner/Info.plist`:
-- NSCameraUsageDescription
-- NSPhotoLibraryUsageDescription
-- NSLocationWhenInUseUsageDescription
-
-## Testing
-
-```bash
-# Run all tests
+# Run all unit and widget tests
 flutter test
 
-# Run tests with coverage
+# Generate coverage report
 flutter test --coverage
-
-# View coverage report
 genhtml coverage/lcov.info -o coverage/html
 open coverage/html/index.html
 ```
 
-## Themes
+---
 
-The app supports both **Light** and **Dark** themes:
+## 📦 Deployment Pipeline
 
-- **Light Mode:** Glassmorphism with soft pastels
-- **Dark Mode:** Neon accents with deep backgrounds
+### Android (Play Store)
+1. Configure your release keystore in `android/key.properties`.
+2. Generate an App Bundle:
+   ```bash
+   flutter build appbundle --release --dart-define=API_URL=... --dart-define=STRIPE_PUBLISHABLE_KEY=...
+   ```
+3. Upload the `.aab` file to the Google Play Console.
 
-Toggle themes from the Profile → Settings screen.
-
-## Special Features
-
-### Onboarding Experience
-First-time users see a 3-slide introduction explaining core features. This appears only once and is managed via `SharedPreferences`.
-
-### Glassmorphism UI
-Modern frosted-glass effect used throughout the app for cards and panels, providing a premium feel.
-
-### Role-Based UI
-Different dashboards and features based on user role (Individual, Warehouse, Company, Admin).
-
-### Smart Location Detection
-Automatic location detection with manual fallback using Pakistan cities and areas.
-
-## Troubleshooting
-
-### Common Issues
-
-**1. "Connection timeout" error**
-- Ensure backend is running
-- Verify API base URL matches your backend IP
-- Check both devices are on the same network
-
-**2. Flutter doctor warnings**
-```bash
-flutter doctor -v  # Detailed diagnostics
-flutter doctor --android-licenses  # Accept Android licenses
-```
-
-**3. Dependency conflicts**
-```bash
-flutter pub get
-flutter clean
-flutter pub get
-```
-
-**4. Build failures**
-```bash
-flutter clean
-cd android && ./gradlew clean
-cd ..
-flutter build apk
-```
-
-**5. Hot reload not working**
-```bash
-# Stop and restart
-flutter run
-```
-
-## Running on Physical Device
-
-### Android
-
-1. Enable Developer Options on your device
-2. Enable USB Debugging
-3. Connect via USB
-4. Run: `flutter devices` to verify connection
-5. Run: `flutter run`
-
-### iOS (macOS only)
-
-1. Open project in Xcode: `open ios/Runner.xcworkspace`
-2. Select your device
-3. Trust the developer certificate on device
-4. Run from Xcode or use `flutter run`
-
-## Deployment
-
-### Google Play Store (Android)
-
-1. Create a real release keystore
-2. Copy `android/key.properties.example` to `android/key.properties` and fill in your values
-3. Build app bundle:
-   `flutter build appbundle --release --dart-define=API_URL=https://your-production-api.example.com/api --dart-define=STRIPE_PUBLISHABLE_KEY=pk_live_your_publishable_key`
-4. Upload the `.aab` to Google Play Console
-
-### Apple App Store (iOS)
-
-1. Open in Xcode: `open ios/Runner.xcworkspace`
-2. Configure signing and capabilities
-3. Archive and upload via Xcode
-
-## Performance Tips
-
-- Use `const` constructors where possible
-- Implement pagination for large lists
-- Optimize images before uploading
-- Use `ListView.builder` for long lists
-- Enable code shrinking in release builds
-
-## Security
-
-- All API calls use HTTPS in production
-- JWT tokens stored using secure device storage
-- Sensitive data never logged in release builds
-- Input validation on all forms
-
-## Support
-
-For issues, questions, or contributions, please contact the development team.
-
-## License
-
-This project is licensed under the ISC License.
+### iOS (App Store)
+1. Open `ios/Runner.xcworkspace` in Xcode.
+2. Setup your provisioning profiles and signing certificates.
+3. Archive the build and distribute via TestFlight or the App Store.
 
 ---
 
-**Built with Flutter**
+## 🛡 Security Practices
+* **Zero Hardcoded Secrets:** All sensitive API keys and URLs are injected at compile-time via `--dart-define`.
+* **Encrypted Storage:** JWTs and authentication states are secured using `flutter_secure_storage`.
+* **HTTPS Protocol:** Strict enforcement of secure transport for all network communications.
+* **Granular Permissions:** Clean manifest declarations for Camera, Location, and Storage access.
+
+---
+
+<div align="center">
+  <p>Built with ❤️ by the RecyConnect Team.</p>
+</div>

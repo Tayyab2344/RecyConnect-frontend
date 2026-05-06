@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/services/admin_service.dart';
 import '../../widgets/admin/admin_drawer.dart';
 import 'admin_user_profile_screen.dart';
 
@@ -18,462 +19,71 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
   bool _isSearchVisible = false;
   String _searchQuery = '';
 
-  // Sample user data - 40 users with varied data
+  final AdminService _adminService = AdminService();
   List<Map<String, dynamic>> _allUsers = [];
+  bool _isLoading = true;
+  String? _error;
   String? _selectedSortOption;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
-    _generateDummyUsers();
+    _fetchUsers();
   }
 
-  void _generateDummyUsers() {
-    _allUsers = [
-      // Original users
-      {
-        'name': 'Ahmed Khan',
-        'email': 'ahmed.khan@email.com',
-        'contact': '+92 300 1234567',
-        'type': 'Individual',
-        'sales': 25000,
-        'purchases': 15000,
-        'initials': 'AK',
-        'isSuspended': false,
-        'joinedDate': DateTime(2024, 6, 15),
-      },
-      {
-        'name': 'Green Warehouse Ltd',
-        'email': 'contact@greenwarehouse.com',
-        'contact': '+92 321 9876543',
-        'type': 'Warehouse',
-        'sales': 150000,
-        'purchases': 80000,
-        'initials': 'GW',
-        'isSuspended': true,
-        'joinedDate': DateTime(2024, 3, 10),
-      },
-      {
-        'name': 'Fatima Ali',
-        'email': 'fatima.ali@email.com',
-        'contact': '+92 333 4567890',
-        'type': 'Individual',
-        'sales': 12500,
-        'purchases': 8000,
-        'initials': 'FA',
-        'isSuspended': false,
-        'joinedDate': DateTime(2024, 8, 20),
-      },
-      {
-        'name': 'EcoTech Industries',
-        'email': 'info@ecotech.com',
-        'contact': '+92 42 12345678',
-        'type': 'Company',
-        'sales': 450000,
-        'purchases': 200000,
-        'initials': 'ET',
-        'isSuspended': false,
-        'joinedDate': DateTime(2025, 2, 5),
-      },
-      {
-        'name': 'Hassan Raza',
-        'email': 'hassan.raza@email.com',
-        'contact': '+92 345 7890123',
-        'type': 'Individual',
-        'sales': 18000,
-        'purchases': 10500,
-        'initials': 'HR',
-        'isSuspended': true,
-        'joinedDate': DateTime(2024, 7, 12),
-      },
-      {
-        'name': 'City Waste Solutions',
-        'email': 'admin@citywaste.com',
-        'contact': '+92 51 8765432',
-        'type': 'Warehouse',
-        'sales': 320000,
-        'purchases': 180000,
-        'initials': 'CW',
-        'isSuspended': false,
-        'joinedDate': DateTime(2024, 4, 18),
-      },
-      // 20 NEW USERS with varied data
-      {
-        'name': 'Ahmed Ali',
-        'email': 'ahmed.ali@email.com',
-        'contact': '+92 301 1111111',
-        'type': 'Individual',
-        'sales': 1500,
-        'purchases': 800,
-        'initials': 'AA',
-        'isSuspended': false,
-        'joinedDate': DateTime(2023, 1, 10),
-      },
-      {
-        'name': 'Fatima Khan',
-        'email': 'fatima.khan@email.com',
-        'contact': '+92 302 2222222',
-        'type': 'Individual',
-        'sales': 25000,
-        'purchases': 15000,
-        'initials': 'FK',
-        'isSuspended': false,
-        'joinedDate': DateTime(2024, 12, 15),
-      },
-      {
-        'name': 'GreenHub Warehouse',
-        'email': 'contact@greenhub.com',
-        'contact': '+92 303 3333333',
-        'type': 'Warehouse',
-        'sales': 80000,
-        'purchases': 50000,
-        'initials': 'GH',
-        'isSuspended': false,
-        'joinedDate': DateTime(2024, 3, 20),
-      },
-      {
-        'name': 'EcoTech Solutions',
-        'email': 'info@ecotechsol.com',
-        'contact': '+92 304 4444444',
-        'type': 'Company',
-        'sales': 150000,
-        'purchases': 100000,
-        'initials': 'ES',
-        'isSuspended': false,
-        'joinedDate': DateTime(2025, 2, 28),
-      },
-      {
-        'name': 'Zain Ahmed',
-        'email': 'zain.ahmed@email.com',
-        'contact': '+92 305 5555555',
-        'type': 'Individual',
-        'sales': 5000,
-        'purchases': 3000,
-        'initials': 'ZA',
-        'isSuspended': false,
-        'joinedDate': DateTime(2024, 5, 8),
-      },
-      {
-        'name': 'Sara Malik',
-        'email': 'sara.malik@email.com',
-        'contact': '+92 306 6666666',
-        'type': 'Individual',
-        'sales': 9500,
-        'purchases': 6000,
-        'initials': 'SM',
-        'isSuspended': false,
-        'joinedDate': DateTime(2023, 11, 22),
-      },
-      {
-        'name': 'RecyclePoint Hub',
-        'email': 'info@recyclepoint.com',
-        'contact': '+92 307 7777777',
-        'type': 'Warehouse',
-        'sales': 65000,
-        'purchases': 40000,
-        'initials': 'RP',
-        'isSuspended': false,
-        'joinedDate': DateTime(2024, 6, 30),
-      },
-      {
-        'name': 'PlasticCorp Industries',
-        'email': 'contact@plasticcorp.com',
-        'contact': '+92 308 8888888',
-        'type': 'Company',
-        'sales': 95000,
-        'purchases': 60000,
-        'initials': 'PC',
-        'isSuspended': false,
-        'joinedDate': DateTime(2024, 9, 14),
-      },
-      {
-        'name': 'Ali Hassan',
-        'email': 'ali.hassan@email.com',
-        'contact': '+92 309 9999999',
-        'type': 'Individual',
-        'sales': 15500,
-        'purchases': 9000,
-        'initials': 'AH',
-        'isSuspended': true,
-        'joinedDate': DateTime(2024, 1, 5),
-      },
-      {
-        'name': 'Maria Fatima',
-        'email': 'maria.fatima@email.com',
-        'contact': '+92 310 1010101',
-        'type': 'Individual',
-        'sales': 22000,
-        'purchases': 13500,
-        'initials': 'MF',
-        'isSuspended': false,
-        'joinedDate': DateTime(2024, 10, 18),
-      },
-      {
-        'name': 'EcoHub Storage',
-        'email': 'admin@ecohub.com',
-        'contact': '+92 311 1111222',
-        'type': 'Warehouse',
-        'sales': 45000,
-        'purchases': 28000,
-        'initials': 'EH',
-        'isSuspended': false,
-        'joinedDate': DateTime(2024, 2, 14),
-      },
-      {
-        'name': 'GreenTech Ltd',
-        'email': 'info@greentech.com',
-        'contact': '+92 312 2222333',
-        'type': 'Company',
-        'sales': 120000,
-        'purchases': 75000,
-        'initials': 'GT',
-        'isSuspended': false,
-        'joinedDate': DateTime(2024, 11, 8),
-      },
-      {
-        'name': 'Usman Ali',
-        'email': 'usman.ali@email.com',
-        'contact': '+92 313 3333444',
-        'type': 'Individual',
-        'sales': 8500,
-        'purchases': 5000,
-        'initials': 'UA',
-        'isSuspended': false,
-        'joinedDate': DateTime(2023, 7, 25),
-      },
-      {
-        'name': 'Ayesha Khan',
-        'email': 'ayesha.khan@email.com',
-        'contact': '+92 314 4444555',
-        'type': 'Individual',
-        'sales': 19500,
-        'purchases': 12000,
-        'initials': 'AYK',
-        'isSuspended': false,
-        'joinedDate': DateTime(2024, 4, 9),
-      },
-      {
-        'name': 'WasteHub Facility',
-        'email': 'contact@wastehub.com',
-        'contact': '+92 315 5555666',
-        'type': 'Warehouse',
-        'sales': 55000,
-        'purchases': 35000,
-        'initials': 'WH',
-        'isSuspended': false,
-        'joinedDate': DateTime(2023, 12, 3),
-      },
-      {
-        'name': 'Tech Recyclers Inc',
-        'email': 'info@techrecyclers.com',
-        'contact': '+92 316 6666777',
-        'type': 'Company',
-        'sales': 85000,
-        'purchases': 52000,
-        'initials': 'TR',
-        'isSuspended': false,
-        'joinedDate': DateTime(2024, 7, 21),
-      },
-      {
-        'name': 'Bilal Ahmed',
-        'email': 'bilal.ahmed@email.com',
-        'contact': '+92 317 7777888',
-        'type': 'Individual',
-        'sales': 11000,
-        'purchases': 7000,
-        'initials': 'BA',
-        'isSuspended': false,
-        'joinedDate': DateTime(2023, 9, 16),
-      },
-      {
-        'name': 'Hina Malik',
-        'email': 'hina.malik@email.com',
-        'contact': '+92 318 8888999',
-        'type': 'Individual',
-        'sales': 17500,
-        'purchases': 10000,
-        'initials': 'HM',
-        'isSuspended': false,
-        'joinedDate': DateTime(2024, 5, 27),
-      },
-      {
-        'name': 'CleanPoint Warehouse',
-        'email': 'admin@cleanpoint.com',
-        'contact': '+92 319 9990000',
-        'type': 'Warehouse',
-        'sales': 72000,
-        'purchases': 45000,
-        'initials': 'CP',
-        'isSuspended': true,
-        'joinedDate': DateTime(2024, 8, 11),
-      },
-      {
-        'name': 'MetalWorks Corp',
-        'email': 'contact@metalworks.com',
-        'contact': '+92 320 0001111',
-        'type': 'Company',
-        'sales': 135000,
-        'purchases': 82000,
-        'initials': 'MW',
-        'isSuspended': false,
-        'joinedDate': DateTime(2025, 1, 19),
-      },
-      {
-        'name': 'Farhan Rashid',
-        'email': 'farhan.rashid@email.com',
-        'contact': '+92 321 1112222',
-        'type': 'Individual',
-        'sales': 6500,
-        'purchases': 4000,
-        'initials': 'FR',
-        'isSuspended': false,
-        'joinedDate': DateTime(2023, 6, 8),
-      },
-      {
-        'name': 'Sana Ahmed',
-        'email': 'sana.ahmed@email.com',
-        'contact': '+92 322 2223333',
-        'type': 'Individual',
-        'sales': 14000,
-        'purchases': 8500,
-        'initials': 'SA',
-        'isSuspended': false,
-        'joinedDate': DateTime(2024, 9, 22),
-      },
-      {
-        'name': 'RecycleMax Depot',
-        'email': 'info@recyclemax.com',
-        'contact': '+92 323 3334444',
-        'type': 'Warehouse',
-        'sales': 88000,
-        'purchases': 54000,
-        'initials': 'RM',
-        'isSuspended': false,
-        'joinedDate': DateTime(2024, 1, 28),
-      },
-      {
-        'name': 'Polymer Industries',
-        'email': 'contact@polymer.com',
-        'contact': '+92 324 4445555',
-        'type': 'Company',
-        'sales': 105000,
-        'purchases': 65000,
-        'initials': 'PI',
-        'isSuspended': false,
-        'joinedDate': DateTime(2024, 10, 5),
-      },
-      {
-        'name': 'Omar Khan',
-        'email': 'omar.khan@email.com',
-        'contact': '+92 325 5556666',
-        'type': 'Individual',
-        'sales': 20000,
-        'purchases': 12500,
-        'initials': 'OK',
-        'isSuspended': false,
-        'joinedDate': DateTime(2024, 3, 17),
-      },
-      {
-        'name': 'Nida Fatima',
-        'email': 'nida.fatima@email.com',
-        'contact': '+92 326 6667777',
-        'type': 'Individual',
-        'sales': 3500,
-        'purchases': 2000,
-        'initials': 'NF',
-        'isSuspended': false,
-        'joinedDate': DateTime(2023, 4, 12),
-      },
-      {
-        'name': 'GreenStore Warehouse',
-        'email': 'admin@greenstore.com',
-        'contact': '+92 327 7778888',
-        'type': 'Warehouse',
-        'sales': 60000,
-        'purchases': 38000,
-        'initials': 'GS',
-        'isSuspended': false,
-        'joinedDate': DateTime(2024, 7, 6),
-      },
-      {
-        'name': 'Sustainable Solutions',
-        'email': 'info@sustainable.com',
-        'contact': '+92 328 8889999',
-        'type': 'Company',
-        'sales': 98000,
-        'purchases': 61000,
-        'initials': 'SS',
-        'isSuspended': false,
-        'joinedDate': DateTime(2024, 12, 2),
-      },
-      {
-        'name': 'Imran Ali',
-        'email': 'imran.ali@email.com',
-        'contact': '+92 329 9990001',
-        'type': 'Individual',
-        'sales': 13500,
-        'purchases': 8000,
-        'initials': 'IA',
-        'isSuspended': false,
-        'joinedDate': DateTime(2023, 10, 14),
-      },
-      {
-        'name': 'Maryam Hassan',
-        'email': 'maryam.hassan@email.com',
-        'contact': '+92 330 0001112',
-        'type': 'Individual',
-        'sales': 16000,
-        'purchases': 9500,
-        'initials': 'MH',
-        'isSuspended': false,
-        'joinedDate': DateTime(2024, 6, 24),
-      },
-      {
-        'name': 'EcoCenter Warehouse',
-        'email': 'contact@ecocenter.com',
-        'contact': '+92 331 1112223',
-        'type': 'Warehouse',
-        'sales': 75000,
-        'purchases': 47000,
-        'initials': 'EC',
-        'isSuspended': false,
-        'joinedDate': DateTime(2024, 2, 19),
-      },
-      {
-        'name': 'Waste Management Inc',
-        'email': 'info@wastemanagement.com',
-        'contact': '+92 332 2223334',
-        'type': 'Company',
-        'sales': 112000,
-        'purchases': 70000,
-        'initials': 'WM',
-        'isSuspended': false,
-        'joinedDate': DateTime(2024, 11, 26),
-      },
-      {
-        'name': 'Kamran Ahmed',
-        'email': 'kamran.ahmed@email.com',
-        'contact': '+92 333 3334445',
-        'type': 'Individual',
-        'sales': 10500,
-        'purchases': 6500,
-        'initials': 'KA',
-        'isSuspended': false,
-        'joinedDate': DateTime(2023, 8, 7),
-      },
-      {
-        'name': 'Rabia Khan',
-        'email': 'rabia.khan@email.com',
-        'contact': '+92 334 4445556',
-        'type': 'Individual',
-        'sales': 21000,
-        'purchases': 13000,
-        'initials': 'RK',
-        'isSuspended': false,
-        'joinedDate': DateTime(2024, 4, 3),
-      },
-    ];
+  Future<void> _fetchUsers() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      final users = await _adminService.getUsers();
+      setState(() {
+        _allUsers = users.map<Map<String, dynamic>>((u) {
+          final map = Map<String, dynamic>.from(u);
+          // Normalize role to display label
+          final role = (map['role'] ?? '').toString().toLowerCase();
+          String type;
+          switch (role) {
+            case 'warehouse':
+              type = 'Warehouse';
+              break;
+            case 'company':
+              type = 'Company';
+              break;
+            case 'collector':
+              type = 'Collector';
+              break;
+            default:
+              type = 'Individual';
+          }
+          map['type'] = type;
+          // Build display name
+          final name = (map['name'] ?? map['businessName'] ?? map['companyName'] ?? map['email'] ?? 'Unknown').toString();
+          map['name'] = name;
+          // Generate initials
+          final parts = name.trim().split(' ');
+          map['initials'] = parts.length >= 2
+              ? '${parts[0][0]}${parts[1][0]}'.toUpperCase()
+              : name.substring(0, name.length >= 2 ? 2 : 1).toUpperCase();
+          // Map suspended status
+          map['isSuspended'] = map['verificationStatus'] == 'SUSPENDED';
+          // Parse date
+          map['joinedDate'] = DateTime.tryParse(map['createdAt']?.toString() ?? '') ?? DateTime.now();
+          // Contact
+          map['contact'] = map['contactNo'] ?? '';
+          map['email'] = map['email'] ?? '';
+          return map;
+        }).toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString().replaceFirst('Exception: ', '');
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -512,17 +122,11 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
     // Apply sorting
     if (_selectedSortOption != null) {
       switch (_selectedSortOption!) {
-        case 'sales_high':
-          filtered.sort((a, b) => (b['sales'] as int).compareTo(a['sales'] as int));
+        case 'name_asc':
+          filtered.sort((a, b) => (a['name'] ?? '').toString().compareTo((b['name'] ?? '').toString()));
           break;
-        case 'sales_low':
-          filtered.sort((a, b) => (a['sales'] as int).compareTo(b['sales'] as int));
-          break;
-        case 'purchases_high':
-          filtered.sort((a, b) => (b['purchases'] as int).compareTo(a['purchases'] as int));
-          break;
-        case 'purchases_low':
-          filtered.sort((a, b) => (a['purchases'] as int).compareTo(b['purchases'] as int));
+        case 'name_desc':
+          filtered.sort((a, b) => (b['name'] ?? '').toString().compareTo((a['name'] ?? '').toString()));
           break;
         case 'newest':
           filtered.sort((a, b) => (b['joinedDate'] as DateTime).compareTo(a['joinedDate'] as DateTime));
@@ -548,14 +152,10 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
 
   String _getFilterLabel(String? option) {
     switch (option) {
-      case 'sales_high':
-        return 'Highest Sales';
-      case 'sales_low':
-        return 'Lowest Sales';
-      case 'purchases_high':
-        return 'Highest Purchases';
-      case 'purchases_low':
-        return 'Lowest Purchases';
+      case 'name_asc':
+        return 'Name (A-Z)';
+      case 'name_desc':
+        return 'Name (Z-A)';
       case 'newest':
         return 'Newest Members';
       case 'oldest':
@@ -990,16 +590,40 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
 
           // User Cards List
           Expanded(
-            child: filteredUsers.isEmpty
-                ? _buildEmptyState()
-                : ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: filteredUsers.length,
-                    itemBuilder: (context, index) {
-                      final user = filteredUsers[index];
-                      return _buildUserCard(user);
-                    },
-                  ),
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator(color: AppColors.primaryGreen))
+                : _error != null
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.error_outline, size: 48, color: AppColors.error),
+                            const SizedBox(height: 12),
+                            Text(_error!, style: TextStyle(color: theme.textTheme.bodyMedium?.color)),
+                            const SizedBox(height: 12),
+                            ElevatedButton.icon(
+                              onPressed: _fetchUsers,
+                              icon: const Icon(Icons.refresh),
+                              label: const Text('Retry'),
+                              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryGreen),
+                            ),
+                          ],
+                        ),
+                      )
+                    : filteredUsers.isEmpty
+                        ? _buildEmptyState()
+                        : RefreshIndicator(
+                            onRefresh: _fetchUsers,
+                            color: AppColors.primaryGreen,
+                            child: ListView.builder(
+                              padding: const EdgeInsets.all(16),
+                              itemCount: filteredUsers.length,
+                              itemBuilder: (context, index) {
+                                final user = filteredUsers[index];
+                                return _buildUserCard(user);
+                              },
+                            ),
+                          ),
           ),
         ],
       ),
@@ -1161,7 +785,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
           ),
           const SizedBox(height: 12),
 
-          // Stats Row
+          // Info Row
           Row(
             children: [
               Expanded(
@@ -1175,7 +799,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Sales',
+                        'Location',
                         style: TextStyle(
                           fontSize: 11,
                           color: cardTheme.textTheme.bodyMedium?.color,
@@ -1184,12 +808,16 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '${_formatCurrency(user['sales'])} PKR',
+                        [user['city'], user['area']].where((e) => e != null && e.toString().isNotEmpty).join(', ').isNotEmpty
+                            ? [user['city'], user['area']].where((e) => e != null && e.toString().isNotEmpty).join(', ')
+                            : 'Not set',
                         style: const TextStyle(
-                          fontSize: 14,
+                          fontSize: 13,
                           fontWeight: FontWeight.bold,
                           color: AppColors.success,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
@@ -1207,7 +835,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Purchases',
+                        'Joined',
                         style: TextStyle(
                           fontSize: 11,
                           color: cardTheme.textTheme.bodyMedium?.color,
@@ -1216,9 +844,9 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '${_formatCurrency(user['purchases'])} PKR',
+                        DateFormat('dd MMM yyyy').format(user['joinedDate'] as DateTime),
                         style: const TextStyle(
-                          fontSize: 14,
+                          fontSize: 13,
                           fontWeight: FontWeight.bold,
                           color: AppColors.accentBlue,
                         ),
@@ -1254,7 +882,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
                     PageRouteBuilder(
                       pageBuilder: (context, animation, secondaryAnimation) =>
                         AdminUserProfileScreen(
-                          userId: user['email'],
+                          userId: user['id']?.toString() ?? user['email'],
                           userName: user['name'],
                           userType: user['type'],
                         ),
@@ -1356,10 +984,4 @@ class _AdminUsersScreenState extends State<AdminUsersScreen>
     );
   }
 
-  String _formatCurrency(dynamic value) {
-    if (value is int) {
-      return NumberFormat('#,###').format(value);
-    }
-    return value.toString();
-  }
 }

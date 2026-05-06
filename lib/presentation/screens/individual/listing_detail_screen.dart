@@ -5,15 +5,18 @@ import '../../../core/models/listing_model.dart';
 import '../../../core/theme/marketplace_theme.dart';
 import '../../../core/utils/static_data.dart';
 import '../../widgets/marketplace/glass_card.dart';
+import '../../widgets/full_screen_image_viewer.dart';
 
 class ListingDetailScreen extends StatelessWidget {
   final Listing listing;
   final VoidCallback onDelete;
+  final VoidCallback onEdit;
 
   const ListingDetailScreen({
     Key? key,
     required this.listing,
     required this.onDelete,
+    required this.onEdit,
   }) : super(key: key);
 
   Color _getMaterialColor(String material) {
@@ -29,6 +32,15 @@ class ListingDetailScreen extends StatelessWidget {
 
   Color _getStatusColor(String status) {
     switch (status) {
+      case 'Active':
+      case 'PUBLISHED': return Colors.green;
+      case 'Paused':
+      case 'PAUSED': return Colors.blueGrey;
+      case 'Sold':
+      case 'SOLD': return Colors.green;
+      case 'Order Pending': return Colors.orange;
+      case 'Draft':
+      case 'DRAFT': return Colors.grey;
       case 'PENDING': return Colors.orange;
       case 'COLLECTED': return Colors.blue;
       case 'COMPLETED': return Colors.green;
@@ -65,7 +77,13 @@ class ListingDetailScreen extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
-          if (listing.status == 'PENDING')
+          if (listing.status != 'SOLD')
+            IconButton(
+              icon: Icon(Icons.edit_outlined, color: isDark ? Colors.white : Colors.black87),
+              onPressed: onEdit,
+              tooltip: 'Edit Listing',
+            ),
+          if (!listing.hasOrders)
             IconButton(
               icon: Icon(Icons.delete_outline, color: Colors.red[400]),
               onPressed: onDelete,
@@ -124,19 +142,38 @@ class ListingDetailScreen extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              if (listing.hasNetworkImages)
-                Image.network(
-                  listing.imageUrls.first,
-                  fit: BoxFit.cover,
-                  loadingBuilder: (context, child, p) => p == null 
-                      ? child 
-                      : const Center(child: CircularProgressIndicator()),
-                  errorBuilder: (_, __, ___) => _buildFallbackIcon(),
-                )
-              else if (listing.decodedImages.isNotEmpty)
-                Image.memory(
-                  listing.decodedImages.first,
-                  fit: BoxFit.cover,
+              if (listing.hasNetworkImages || listing.decodedImages.isNotEmpty)
+                GestureDetector(
+                  onTap: () {
+                    final imageProvider = listing.hasNetworkImages
+                        ? NetworkImage(listing.imageUrls.first) as ImageProvider
+                        : MemoryImage(listing.decodedImages.first) as ImageProvider;
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => FullScreenImageViewer(
+                          imageProvider: imageProvider,
+                          heroTag: 'listing_${listing.id}_image',
+                        ),
+                      ),
+                    );
+                  },
+                  child: Hero(
+                    tag: 'listing_${listing.id}_image',
+                    child: listing.hasNetworkImages
+                        ? Image.network(
+                            listing.imageUrls.first,
+                            fit: BoxFit.cover,
+                            loadingBuilder: (context, child, p) => p == null 
+                                ? child 
+                                : const Center(child: CircularProgressIndicator()),
+                            errorBuilder: (_, __, ___) => _buildFallbackIcon(),
+                          )
+                        : Image.memory(
+                            listing.decodedImages.first,
+                            fit: BoxFit.cover,
+                          ),
+                  ),
                 )
               else
                 _buildFallbackIcon(),
@@ -163,7 +200,7 @@ class ListingDetailScreen extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: _getStatusColor(listing.status).withOpacity(0.9),
+                    color: _getStatusColor(listing.statusDisplay).withOpacity(0.9),
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 4, offset: const Offset(0, 2))
@@ -267,7 +304,7 @@ class ListingDetailScreen extends StatelessWidget {
             children: [
               _buildInfoItem(Icons.category_outlined, 'Material', listing.materialTypeDisplay, isDark),
               Container(width: 1, height: 40, color: isDark ? Colors.white24 : Colors.black12),
-              _buildInfoItem(Icons.scale, 'Weight', '${listing.estimatedWeight} kg', isDark),
+              _buildInfoItem(Icons.scale, 'Weight', '${listing.displayWeight.toStringAsFixed(1)} kg', isDark),
               Container(width: 1, height: 40, color: isDark ? Colors.white24 : Colors.black12),
               _buildInfoItem(Icons.calendar_today, 'Date', DateFormat('MMM dd, yyyy').format(listing.createdAt), isDark),
             ],
@@ -325,7 +362,7 @@ class ListingDetailScreen extends StatelessWidget {
             'Status', 
             listing.statusDisplay, 
             isDark,
-            valueColor: _getStatusColor(listing.status),
+            valueColor: _getStatusColor(listing.statusDisplay),
           ),
           const SizedBox(height: 16),
           _buildDetailRow(

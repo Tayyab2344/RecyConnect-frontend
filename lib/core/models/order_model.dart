@@ -81,6 +81,19 @@ class Order {
     return '';
   }
 
+  String? get imageUrl {
+    if (items != null && items!.isNotEmpty) {
+      final listing = items!.first.listing;
+      if (listing != null && listing['images'] != null) {
+        final images = listing['images'] as List;
+        if (images.isNotEmpty) {
+          return images.first as String;
+        }
+      }
+    }
+    return null;
+  }
+
   double get weight {
     if (items != null && items!.isNotEmpty) {
       return items!.fold(0.0, (sum, i) => sum + i.quantity);
@@ -97,7 +110,7 @@ class Order {
     };
 
     final normalizedStatus = status.trim().toUpperCase();
-    return labels[normalizedStatus] ?? normalizedStatus;
+    return labels[normalizedStatus] ?? (normalizedStatus.isNotEmpty ? normalizedStatus : 'Unknown');
   }
 
   String get materialTypeDisplay {
@@ -162,12 +175,13 @@ class OrderItem {
   });
 
   factory OrderItem.fromJson(Map<String, dynamic> json) {
+    final listing = json['listing'] as Map<String, dynamic>?;
     return OrderItem(
       id: json['id'] as int?,
-      listingId: json['listingId'] as int,
+      listingId: (json['listingId'] ?? listing?['id'] ?? 0) as int,
       quantity: (json['quantity'] as num).toDouble(),
       price: (json['price'] as num).toDouble(),
-      listing: json['listing'] as Map<String, dynamic>?,
+      listing: listing,
     );
   }
 }
