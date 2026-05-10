@@ -33,4 +33,11 @@ abstract class ListingRepository {
     String? startDate,
     String? endDate,
   });
+
+  /// Classify a recyclable material image using cloud AI (Groq → Gemini).
+  /// Returns null/failure if cloud is unavailable — caller should use TFLite.
+  Future<ApiResult<Map<String, dynamic>>> classifyImage({
+    String? imageUrl,
+    String? imageBase64,
+  });
 }

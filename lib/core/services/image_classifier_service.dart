@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb, compute, kDebugMode;
 import 'package:flutter/services.dart';
@@ -7,8 +8,12 @@ import 'dart:ui' as ui;
 // Conditionally import tflite_flutter only on non-web platforms
 import 'image_classifier_service_web_stub.dart' if (dart.library.io) 'package:tflite_flutter/tflite_flutter.dart';
 
-/// Service for classifying images using the RecyConnect TFLite model.
-/// Uses the quantized MobileNetV2-based model for material classification.
+import '../../features/listing/data/repositories/listing_repository_impl.dart';
+
+/// Service for classifying images using a 3-tier fallback strategy:
+///   Tier 1: Groq Vision API (via backend)
+///   Tier 2: Google Gemini API (via backend)
+///   Tier 3: On-device TFLite model (offline fallback)
 class ImageClassifierService {
   static ImageClassifierService? _instance;
   dynamic _interpreter;
@@ -38,10 +43,10 @@ class ImageClassifierService {
     return _instance!;
   }
 
-  /// Whether the service is ready for classification
+  /// Whether the TFLite service is ready for on-device classification
   bool get isReady => _isInitialized && !_initFailed;
 
-  /// Initialize the model and labels. Call once at app start or before first use.
+  /// Initialize the TFLite model and labels. Call once at app start or before first use.
   Future<void> initialize() async {
     if (_isInitialized || _initFailed) return;
 
@@ -76,9 +81,74 @@ class ImageClassifierService {
     }
   }
 
-  /// Classify an image file and return the result.
-  /// Returns null if the service is not initialized or classification fails.
+  /// Smart classification with 3-tier fallback:
+  ///   1. Cloud API (Groq → Gemini via backend)
+  ///   2. On-device TFLite
+  ///
+  /// [imageFile] is required for TFLite fallback.
+  /// [imageBase64] is optional — if null, will be generated from imageFile for cloud API.
+  Future<ClassificationResult?> classifyImageSmart(File imageFile, {String? imageBase64}) async {
+    // ── Tier 1 & 2: Try cloud API (backend orchestrates Groq → Gemini) ──
+    try {
+      if (kDebugMode) print('ImageClassifierService: Trying cloud classification...');
+
+      // Generate base64 from file if not provided
+      String? base64ForCloud = imageBase64;
+      if (base64ForCloud == null) {
+        final bytes = await imageFile.readAsBytes();
+        base64ForCloud = base64Encode(bytes);
+      }
+
+      final repository = ListingRepositoryImpl();
+      final result = await repository.classifyImage(imageBase64: base64ForCloud);
+
+      if (result.isSuccess && result.data != null) {
+        final data = result.data!;
+        final materialType = (data['materialType'] as String?)?.toLowerCase() ?? '';
+        final confidence = (data['confidence'] as num?)?.toDouble() ?? 0.0;
+        final source = data['source'] as String? ?? 'cloud';
+        final description = data['description'] as String? ?? '';
+        final category = data['category'] as String? ?? materialType;
+        final condition = data['condition'] as String? ?? 'fair';
+        final isRecyclable = data['isRecyclable'] as bool? ?? true;
+
+        // Map to display name
+        final displayName = _labelToDisplayName[materialType] ??
+            materialType[0].toUpperCase() + materialType.substring(1);
+
+        if (kDebugMode) {
+          print('ImageClassifierService: Cloud ($source) classified as $displayName ($confidence)');
+        }
+
+        return ClassificationResult(
+          label: materialType,
+          displayName: displayName,
+          confidence: confidence,
+          source: source,
+          description: description,
+          category: category,
+          condition: condition,
+          isRecyclable: isRecyclable,
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) print('ImageClassifierService: Cloud classification failed - $e');
+    }
+
+    // ── Tier 3: On-device TFLite fallback ──────────────────────────
+    if (kDebugMode) print('ImageClassifierService: Falling back to TFLite on-device...');
+    return _classifyWithTFLite(imageFile);
+  }
+
+  /// Original TFLite-only classification (now used as Tier 3 fallback).
+  /// Kept public for backward compatibility.
   Future<ClassificationResult?> classifyImage(File imageFile) async {
+    // Use the smart 3-tier fallback
+    return classifyImageSmart(imageFile);
+  }
+
+  /// Pure TFLite on-device classification.
+  Future<ClassificationResult?> _classifyWithTFLite(File imageFile) async {
     if (!_isInitialized || _interpreter == null) {
       await initialize();
       if (!_isInitialized) return null;
@@ -128,13 +198,18 @@ class ImageClassifierService {
       final displayName = _labelToDisplayName[label] ?? label;
       final confidence = maxProb;
 
+      if (kDebugMode) {
+        print('ImageClassifierService: TFLite classified as $displayName (${(confidence * 100).toStringAsFixed(0)}%)');
+      }
+
       return ClassificationResult(
         label: label,
         displayName: displayName,
         confidence: confidence,
+        source: 'tflite',
       );
     } catch (e) {
-      if (kDebugMode) print('ImageClassifierService: Classification error - $e');
+      if (kDebugMode) print('ImageClassifierService: TFLite classification error - $e');
       return null;
     }
   }
@@ -175,19 +250,43 @@ List<List<List<List<double>>>> _preprocessImage(ByteData byteData) {
 
 /// Result of an image classification
 class ClassificationResult {
-  final String label;        // Raw model label (e.g., "e-waste")
+  final String label;        // Raw model label (e.g., "ewaste")
   final String displayName;  // UI display name (e.g., "E-Waste")
   final double confidence;   // 0.0 to 1.0
+  final String source;       // "groq", "gemini", or "tflite"
+  final String? description; // AI-generated description (cloud only)
+  final String? category;    // Sub-category (cloud only)
+  final String? condition;   // Condition assessment (cloud only)
+  final bool? isRecyclable;  // Recyclability flag (cloud only)
 
   ClassificationResult({
     required this.label,
     required this.displayName,
     required this.confidence,
+    this.source = 'tflite',
+    this.description,
+    this.category,
+    this.condition,
+    this.isRecyclable,
   });
+
+  /// Human-readable source name for UI display
+  String get sourceDisplay {
+    switch (source) {
+      case 'groq':
+        return 'Groq AI';
+      case 'gemini':
+        return 'Gemini AI';
+      case 'tflite':
+        return 'Device AI';
+      default:
+        return 'AI';
+    }
+  }
 
   /// Confidence as a percentage string (e.g., "94%")
   String get confidencePercent => '${(confidence * 100).toStringAsFixed(0)}%';
 
   @override
-  String toString() => '$displayName ($confidencePercent)';
+  String toString() => '$displayName ($confidencePercent via $sourceDisplay)';
 }

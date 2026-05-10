@@ -207,7 +207,6 @@ class _CreateListingScreenState extends State<CreateListingScreen>
       );
     }
   }
-
   Future<void> _runAIClassification() async {
     setState(() => _isAnalyzing = true);
     _scanController.repeat(reverse: true);
@@ -216,7 +215,7 @@ class _CreateListingScreenState extends State<CreateListingScreen>
       final classifier = ImageClassifierService.instance;
       await classifier.initialize();
 
-      if (_selectedImages.isNotEmpty && classifier.isReady) {
+      if (_selectedImages.isNotEmpty) {
         final imageFile = File(_selectedImages.first.path);
         final result = await classifier.classifyImage(imageFile);
 
@@ -246,7 +245,7 @@ class _CreateListingScreenState extends State<CreateListingScreen>
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'AI Detected: ${result.displayName} (${result.confidencePercent} confidence)',
+                      'AI Detected (${result.sourceDisplay}): ${result.displayName} (${result.confidencePercent})',
                     ),
                   ),
                 ],

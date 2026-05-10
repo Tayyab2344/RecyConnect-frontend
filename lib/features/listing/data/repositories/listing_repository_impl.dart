@@ -189,4 +189,28 @@ class ListingRepositoryImpl implements ListingRepository {
 
     return '${ApiConstants.baseUrl}/listings/export${queryString.isNotEmpty ? "?$queryString" : ""}';
   }
+
+  @override
+  Future<ApiResult<Map<String, dynamic>>> classifyImage({
+    String? imageUrl,
+    String? imageBase64,
+  }) async {
+    try {
+      final body = <String, dynamic>{};
+      if (imageUrl != null) body['imageUrl'] = imageUrl;
+      if (imageBase64 != null) body['imageBase64'] = imageBase64;
+
+      final response = await _apiService.post('/listings/classify', body);
+
+      if (response['success'] == true && response['data'] != null) {
+        return ApiResult.success(data: response['data'] as Map<String, dynamic>);
+      } else {
+        return ApiResult.failure(
+            response['message'] as String? ?? 'Cloud classification unavailable');
+      }
+    } catch (e) {
+      if (kDebugMode) print('DEBUG: Cloud classify error: $e');
+      return ApiResult.failure('Cloud classification unavailable: $e');
+    }
+  }
 }

@@ -435,22 +435,20 @@ class _BulkSellScreenState extends State<BulkSellScreen> {
       final classifier = ImageClassifierService.instance;
       await classifier.initialize();
 
-      if (classifier.isReady) {
-        final result = await classifier.classifyImage(File(imagePath));
-        if (result != null && mounted) {
-          setState(() {
-            _selectedMaterial = result.displayName;
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'AI Detected: ${result.displayName} (${result.confidencePercent} confidence)',
-              ),
-              backgroundColor: const Color(0xFF9C27B0),
-              duration: const Duration(seconds: 3),
+      final result = await classifier.classifyImage(File(imagePath));
+      if (result != null && mounted) {
+        setState(() {
+          _selectedMaterial = result.displayName;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'AI Detected (${result.sourceDisplay}): ${result.displayName} (${result.confidencePercent})',
             ),
-          );
-        }
+            backgroundColor: const Color(0xFF9C27B0),
+            duration: const Duration(seconds: 3),
+          ),
+        );
       }
     } catch (e) {
       if (kDebugMode) print('AI Classification error: $e');
