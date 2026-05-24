@@ -25,6 +25,7 @@ import '../services/app_service.dart';
 import '../services/report_service.dart';
 import '../services/batch_service.dart';
 import '../services/api_notification_service.dart';
+import '../services/rewards_service.dart';
 import '../../features/notification/presentation/providers/notification_provider.dart';
 
 /// Global service locator instance.
@@ -99,6 +100,7 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton(() => AppService());
   sl.registerLazySingleton(() => ReportService());
   sl.registerLazySingleton(() => BatchService());
+  sl.registerLazySingleton(() => RewardsService());
   
   // ─── Notification Feature ───────────────────────────────
   sl.registerLazySingleton(() => ApiNotificationService());

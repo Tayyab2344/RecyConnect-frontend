@@ -21,6 +21,7 @@ import '../warehouse/inventory_list_screen.dart';
 import '../warehouse/collector_performance_screen.dart';
 import '../warehouse/collector_management_screen.dart';
 import '../warehouse/my_earnings_screen.dart';
+import '../rewards/rewards_screen.dart';
 import 'package:flutter/foundation.dart';
 
 class WarehouseDashboard extends StatefulWidget {
@@ -381,6 +382,9 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
             }),
             _buildQuickActionCard('My Earnings', Icons.monetization_on_outlined, const Color(0xFF9C27B0), () {
               Navigator.push(context, MaterialPageRoute(builder: (context) => const MyEarningsScreen()));
+            }),
+            _buildQuickActionCard('My Rewards', Icons.emoji_events_outlined, const Color(0xFFFF9800), () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const RewardsScreen()));
             }),
           ],
         ),

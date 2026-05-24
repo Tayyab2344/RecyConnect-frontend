@@ -101,6 +101,9 @@ class AuthProvider extends ChangeNotifier {
       'verificationStatus': user.verificationStatus,
       'kycStage': user.kycStage,
       'rejectionReason': user.rejectionReason,
+      'ecoPoints': user.ecoPoints,
+      'currentLevel': user.currentLevel,
+      'dailyStreak': user.dailyStreak,
     };
     if (full) {
       map.addAll({

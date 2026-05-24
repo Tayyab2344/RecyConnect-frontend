@@ -17,6 +17,7 @@ import '../individual/my_orders_screen.dart';
 import '../individual/seller_orders_screen.dart';
 import '../individual/transactions_screen.dart';
 import '../profile/profile_screen.dart';
+import '../rewards/rewards_screen.dart';
 
 class CompanyDashboard extends StatefulWidget {
   const CompanyDashboard({super.key});
@@ -376,6 +377,9 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
             }),
             _buildQuickActionCard('My Earnings', Icons.monetization_on_outlined, const Color(0xFF9C27B0), () {
               Navigator.push(context, MaterialPageRoute(builder: (context) => const TransactionsScreen()));
+            }),
+            _buildQuickActionCard('My Rewards', Icons.emoji_events_outlined, const Color(0xFFFF9800), () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const RewardsScreen()));
             }),
           ],
         ),

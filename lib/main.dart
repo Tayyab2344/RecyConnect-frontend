@@ -16,6 +16,7 @@ import 'core/services/observability_service.dart';
 import 'core/services/sync_manager.dart';
 import 'core/services/complaint_service.dart';
 import 'core/services/notification_service.dart';
+import 'core/services/rewards_service.dart';
 import 'presentation/screens/onboarding/onboarding_screen.dart';
 import 'presentation/widgets/skeleton_loader.dart';
 import 'features/notification/presentation/providers/notification_provider.dart';
@@ -59,6 +60,7 @@ class MyApp extends StatelessWidget {
           update: (context, auth, previous) => previous ?? ComplaintService(auth),
         ),
         ChangeNotifierProvider(create: (_) => sl<NotificationProvider>()),
+        ChangeNotifierProvider(create: (_) => sl<RewardsService>()),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {

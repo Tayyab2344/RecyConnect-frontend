@@ -24,6 +24,9 @@ class UserModel extends UserEntity {
     super.companyName,
     super.businessType,
     super.registrationNumber,
+    super.ecoPoints,
+    super.currentLevel,
+    super.dailyStreak,
   });
 
   /// Create a UserModel from a JSON map (API response).
@@ -46,6 +49,9 @@ class UserModel extends UserEntity {
       companyName: json['companyName'] as String?,
       businessType: json['businessType'] as String?,
       registrationNumber: json['registrationNumber'] as String?,
+      ecoPoints: (json['ecoPoints'] as num?)?.toInt(),
+      currentLevel: json['currentLevel'] as String?,
+      dailyStreak: (json['dailyStreak'] as num?)?.toInt(),
     );
   }
 
@@ -69,6 +75,9 @@ class UserModel extends UserEntity {
       if (companyName != null) 'companyName': companyName,
       if (businessType != null) 'businessType': businessType,
       if (registrationNumber != null) 'registrationNumber': registrationNumber,
+      if (ecoPoints != null) 'ecoPoints': ecoPoints,
+      if (currentLevel != null) 'currentLevel': currentLevel,
+      if (dailyStreak != null) 'dailyStreak': dailyStreak,
     };
   }
 

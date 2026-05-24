@@ -19,6 +19,9 @@ class UserEntity {
   final String? companyName;
   final String? businessType;
   final String? registrationNumber;
+  final int? ecoPoints;
+  final String? currentLevel;
+  final int? dailyStreak;
 
   const UserEntity({
     this.id,
@@ -38,6 +41,9 @@ class UserEntity {
     this.companyName,
     this.businessType,
     this.registrationNumber,
+    this.ecoPoints,
+    this.currentLevel,
+    this.dailyStreak,
   });
 
   /// Get the display name (handles different user types)
