@@ -22,6 +22,12 @@ import '../warehouse/collector_performance_screen.dart';
 import '../warehouse/collector_management_screen.dart';
 import '../warehouse/my_earnings_screen.dart';
 import '../rewards/rewards_screen.dart';
+import '../warehouse/financial_dashboard_screen.dart';
+import '../warehouse/expense_management_screen.dart';
+import '../warehouse/customer_management_screen.dart';
+import '../warehouse/ai_insights_screen.dart';
+import '../warehouse/ai_assistant_screen.dart';
+import '../warehouse/business_reports_screen.dart';
 import 'package:flutter/foundation.dart';
 
 class WarehouseDashboard extends StatefulWidget {
@@ -144,6 +150,8 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
                 _buildStatsOverview(),
                 const SizedBox(height: 24),
                 _buildQuickActions(),
+                const SizedBox(height: 24),
+                _buildSmartBusinessSuite(),
                 const SizedBox(height: 24),
                 _buildMarketRates(),
                 const SizedBox(height: 24),
@@ -385,6 +393,80 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
             }),
             _buildQuickActionCard('My Rewards', Icons.emoji_events_outlined, const Color(0xFFFF9800), () {
               Navigator.push(context, MaterialPageRoute(builder: (context) => const RewardsScreen()));
+            }),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSmartBusinessSuite() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final erpColor = isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Smart Business Suite (ERP)',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: erpColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.auto_awesome, color: erpColor, size: 12),
+                  const SizedBox(width: 4),
+                  Text(
+                    'AI Powered',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: erpColor,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          ],
+        ),
+        const SizedBox(height: 16),
+        GridView.count(
+          crossAxisCount: 3,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
+          childAspectRatio: 1.0,
+          children: [
+            _buildQuickActionCard('Financials', Icons.donut_large, Colors.teal, () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const FinancialDashboardScreen()));
+            }),
+            _buildQuickActionCard('Expenses', Icons.account_balance_wallet_outlined, Colors.deepOrange, () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const ExpenseManagementScreen()));
+            }),
+            _buildQuickActionCard('Customers', Icons.assignment_ind_outlined, Colors.indigo, () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const CustomerManagementScreen()));
+            }),
+            _buildQuickActionCard('AI Insights', Icons.insights, Colors.purple, () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const AIInsightsScreen()));
+            }),
+            _buildQuickActionCard('AI Partner', Icons.psychology_outlined, Colors.emerald, () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const AIAssistantScreen()));
+            }),
+            _buildQuickActionCard('Reports', Icons.analytics_outlined, Colors.blueGrey, () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const BusinessReportsScreen()));
             }),
           ],
         ),
