@@ -18,6 +18,7 @@ import 'core/services/complaint_service.dart';
 import 'core/services/notification_service.dart';
 import 'presentation/screens/onboarding/onboarding_screen.dart';
 import 'presentation/widgets/skeleton_loader.dart';
+import 'features/notification/presentation/providers/notification_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -57,6 +58,7 @@ class MyApp extends StatelessWidget {
           create: (context) => ComplaintService(Provider.of<AuthService>(context, listen: false)),
           update: (context, auth, previous) => previous ?? ComplaintService(auth),
         ),
+        ChangeNotifierProvider(create: (_) => sl<NotificationProvider>()),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {

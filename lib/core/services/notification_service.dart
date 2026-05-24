@@ -8,6 +8,10 @@ import 'package:http/http.dart' as http;
 
 import '../constants/api_constants.dart';
 import 'secure_storage_service.dart';
+import '../di/service_locator.dart';
+import '../../features/notification/data/models/notification_model.dart';
+import '../../features/notification/presentation/providers/notification_provider.dart';
+
 
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -100,6 +104,29 @@ class NotificationService {
     final notification = message.notification;
     if (notification == null) {
       return;
+    }
+
+    try {
+      final dataId = message.data['id'];
+      final id = dataId != null ? (int.tryParse(dataId) ?? DateTime.now().millisecondsSinceEpoch) : DateTime.now().millisecondsSinceEpoch;
+      
+      final model = NotificationModel(
+        id: id,
+        userId: 0,
+        title: notification.title ?? '',
+        message: notification.body ?? '',
+        type: message.data['type'] ?? 'SYSTEM',
+        priority: message.data['priority'] ?? 'MEDIUM',
+        isRead: false,
+        actionUrl: message.data['actionUrl'],
+        createdAt: DateTime.now(),
+      );
+
+      sl<NotificationProvider>().addNotification(model);
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error parsing real-time notification in service: $e');
+      }
     }
 
     await _localNotifications.show(

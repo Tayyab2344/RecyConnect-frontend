@@ -130,6 +130,23 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>> patch(String endpoint, Map<String, dynamic> data, {bool requiresAuth = true}) async {
+    if (_dio == null) await _init();
+    try {
+      final response = await _dio!.patch(
+        endpoint,
+        data: data,
+        options: Options(extra: {'requiresAuth': requiresAuth}),
+      );
+      return _handleResponse(response);
+    } on DioException catch (e) {
+      return _handleResponse(e.response);
+    } catch (e) {
+      throw Exception('Network error: $e');
+    }
+  }
+
+
   Future<Map<String, dynamic>> delete(String endpoint, {bool requiresAuth = true}) async {
     if (_dio == null) await _init();
     try {

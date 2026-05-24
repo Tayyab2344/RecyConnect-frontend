@@ -137,7 +137,23 @@ class _CollectorManagementScreenState extends State<CollectorManagementScreen> {
                           ],
                         ),
                       ),
-                      // Actions (Edit/Delete could be added here)
+                      IconButton.filledTonal(
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) => DispatchTaskDialog(collector: collector),
+                          ).then((dispatched) {
+                            if (dispatched == true) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("Task dispatched successfully!")),
+                              );
+                            }
+                          });
+                        },
+                        icon: const Icon(Icons.send_rounded),
+                        color: AppTheme.primaryGreen,
+                        tooltip: "Dispatch Task",
+                      ),
                     ],
                   ),
                 ),
@@ -370,6 +386,236 @@ class _AddCollectorDialogState extends State<AddCollectorDialog> {
                     child: _isLoading
                         ? const CircularProgressIndicator(color: Colors.white)
                         : const Text('Create Collector'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class DispatchTaskDialog extends StatefulWidget {
+  final Map<String, dynamic> collector;
+  const DispatchTaskDialog({super.key, required this.collector});
+
+  @override
+  State<DispatchTaskDialog> createState() => _DispatchTaskDialogState();
+}
+
+class _DispatchTaskDialogState extends State<DispatchTaskDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final CollectorService _collectorService = CollectorService();
+  bool _isLoading = false;
+
+  String _taskType = 'SELLER_TO_WAREHOUSE';
+  String _sourceType = 'individual';
+  final _sourceNameController = TextEditingController();
+  final _sourceAddressController = TextEditingController();
+  final _sourceContactController = TextEditingController();
+
+  String _destinationType = 'warehouse';
+  final _destinationNameController = TextEditingController();
+  final _destinationAddressController = TextEditingController();
+  final _destinationContactController = TextEditingController();
+
+  final _categoryController = TextEditingController(text: 'Plastic');
+  final _materialTypeController = TextEditingController(text: 'PET Bottles');
+  final _weightController = TextEditingController(text: '15');
+  final _priceController = TextEditingController(text: '45');
+  final _instructionsController = TextEditingController();
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _isLoading = true);
+
+    try {
+      final user = widget.collector['user'] as Map<String, dynamic>? ?? widget.collector;
+      final int collectorId = user['id'] as int;
+
+      await _collectorService.assignTask(
+        collectorId: collectorId,
+        taskType: _taskType,
+        sourceType: _sourceType,
+        sourceAddress: _sourceAddressController.text.trim(),
+        sourceName: _sourceNameController.text.trim(),
+        sourceContact: _sourceContactController.text.trim(),
+        destinationType: _destinationType,
+        destinationAddress: _destinationAddressController.text.trim(),
+        destinationName: _destinationNameController.text.trim(),
+        destinationContact: _destinationContactController.text.trim(),
+        materialCategory: _categoryController.text.trim(),
+        estimatedWeight: double.parse(_weightController.text.trim()),
+        materialType: _materialTypeController.text.trim(),
+        pricePerUnit: double.tryParse(_priceController.text.trim()),
+        instructions: _instructionsController.text.trim(),
+      );
+
+      if (mounted) {
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to dispatch task: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        constraints: const BoxConstraints(maxWidth: 450),
+        child: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Dispatch Task',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.primaryGreen,
+                  ),
+                ),
+                Text(
+                  'Assigning to: ${widget.collector['name']}',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.grey[600],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Task Type Dropdown
+                DropdownButtonFormField<String>(
+                  value: _taskType,
+                  decoration: const InputDecoration(labelText: 'Task Type', border: OutlineInputBorder()),
+                  items: const [
+                    DropdownMenuItem(value: 'SELLER_TO_WAREHOUSE', child: Text('Seller to Warehouse')),
+                    DropdownMenuItem(value: 'SELLER_TO_BUYER', child: Text('Seller to Buyer')),
+                    DropdownMenuItem(value: 'WAREHOUSE_TO_BUYER', child: Text('Warehouse to Buyer')),
+                    DropdownMenuItem(value: 'BUYER_REQUESTED_PICKUP', child: Text('Buyer Requested Pickup')),
+                  ],
+                  onChanged: (v) => setState(() => _taskType = v!),
+                ),
+                const SizedBox(height: 16),
+
+                // Source Info Section
+                Text('Pickup Source', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _sourceNameController,
+                  decoration: const InputDecoration(labelText: 'Source Name (e.g. Seller Name)', border: OutlineInputBorder()),
+                  validator: (v) => v?.isEmpty == true ? 'Required' : null,
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _sourceAddressController,
+                  decoration: const InputDecoration(labelText: 'Pickup Address', border: OutlineInputBorder()),
+                  validator: (v) => v?.isEmpty == true ? 'Required' : null,
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _sourceContactController,
+                  decoration: const InputDecoration(labelText: 'Source Contact', border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 16),
+
+                // Destination Info Section
+                Text('Delivery Destination', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _destinationNameController,
+                  decoration: const InputDecoration(labelText: 'Destination Name', border: OutlineInputBorder()),
+                  validator: (v) => v?.isEmpty == true ? 'Required' : null,
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _destinationAddressController,
+                  decoration: const InputDecoration(labelText: 'Dropoff Address', border: OutlineInputBorder()),
+                  validator: (v) => v?.isEmpty == true ? 'Required' : null,
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _destinationContactController,
+                  decoration: const InputDecoration(labelText: 'Destination Contact', border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 16),
+
+                // Material Info Section
+                Text('Material Details', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _categoryController,
+                        decoration: const InputDecoration(labelText: 'Category', border: OutlineInputBorder()),
+                        validator: (v) => v?.isEmpty == true ? 'Required' : null,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _materialTypeController,
+                        decoration: const InputDecoration(labelText: 'Type', border: OutlineInputBorder()),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _weightController,
+                        decoration: const InputDecoration(labelText: 'Est. Weight (kg)', border: OutlineInputBorder()),
+                        keyboardType: TextInputType.number,
+                        validator: (v) => v?.isEmpty == true ? 'Required' : null,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _priceController,
+                        decoration: const InputDecoration(labelText: 'Price / kg', border: OutlineInputBorder()),
+                        keyboardType: TextInputType.number,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _instructionsController,
+                  decoration: const InputDecoration(labelText: 'Instructions / Notes', border: OutlineInputBorder()),
+                  maxLines: 2,
+                ),
+                const SizedBox(height: 24),
+
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _submit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryGreen,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: _isLoading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text('Dispatch Task'),
                   ),
                 ),
               ],

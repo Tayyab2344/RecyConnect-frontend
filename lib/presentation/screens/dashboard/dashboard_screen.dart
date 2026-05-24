@@ -55,6 +55,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               return const WarehouseDashboard();
             case 'company':
               return const CompanyDashboard();
+            case 'collector':
+              return const CollectorDashboard();
             case 'buyer':
               return const BuyerDashboard();
             case 'admin':

@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../widgets/curved/curved_card.dart';
+import '../../../features/notification/data/models/notification_model.dart';
+import '../../../features/notification/presentation/providers/notification_provider.dart';
 
-/// Notifications Screen - Premium curvy design with categorized notifications
+/// Notifications Screen - Premium curvy design with real-time categorized notifications
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
 
@@ -16,41 +19,6 @@ class _NotificationsScreenState extends State<NotificationsScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _animController;
 
-  final List<Map<String, dynamic>> _notifications = [
-    {
-      'id': '1',
-      'title': 'Order Delivered',
-      'message': 'Your order #ORD-2024-001 has been successfully delivered.',
-      'time': '2 hours ago',
-      'type': 'order',
-      'read': false,
-    },
-    {
-      'id': '2',
-      'title': 'New Message',
-      'message': 'Green Earth Recyclers sent you a message.',
-      'time': '5 hours ago',
-      'type': 'message',
-      'read': false,
-    },
-    {
-      'id': '3',
-      'title': 'Price Alert',
-      'message': 'Plastic prices have increased by 5% today.',
-      'time': '1 day ago',
-      'type': 'alert',
-      'read': true,
-    },
-    {
-      'id': '4',
-      'title': 'System Update',
-      'message': 'We have updated our privacy policy.',
-      'time': '2 days ago',
-      'type': 'system',
-      'read': true,
-    },
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -58,12 +26,34 @@ class _NotificationsScreenState extends State<NotificationsScreen>
       vsync: this,
       duration: const Duration(milliseconds: 600),
     )..forward();
+
+    // Fetch user notifications from backend on screen load
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<NotificationProvider>().fetchNotifications();
+    });
   }
 
   @override
   void dispose() {
     _animController.dispose();
     super.dispose();
+  }
+
+  String _formatTime(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+
+    if (difference.inSeconds < 60) {
+      return 'Just now';
+    } else if (difference.inMinutes < 60) {
+      return '${difference.inMinutes}m ago';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours}h ago';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays}d ago';
+    } else {
+      return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
+    }
   }
 
   @override
@@ -78,30 +68,57 @@ class _NotificationsScreenState extends State<NotificationsScreen>
         backgroundColor: isDark ? AppColors.darkBackground : AppColors.primaryGreen,
         foregroundColor: Colors.white,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.done_all_rounded),
-            onPressed: _markAllAsRead,
-            tooltip: 'Mark all as read',
+          Consumer<NotificationProvider>(
+            builder: (context, provider, child) {
+              if (provider.notifications.isEmpty) return const SizedBox.shrink();
+              return IconButton(
+                icon: const Icon(Icons.done_all_rounded),
+                onPressed: () => _markAllAsRead(provider),
+                tooltip: 'Mark all as read',
+              );
+            },
           ),
         ],
       ),
-      body: _notifications.isEmpty
-          ? _buildEmptyState(isDark)
-          : ListView.builder(
+      body: Consumer<NotificationProvider>(
+        builder: (context, provider, child) {
+          if (provider.isLoading && provider.notifications.isEmpty) {
+            return Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryGreen),
+              ),
+            );
+          }
+
+          if (provider.error != null && provider.notifications.isEmpty) {
+            return _buildErrorState(provider.error!, provider, isDark);
+          }
+
+          if (provider.notifications.isEmpty) {
+            return _buildEmptyState(isDark);
+          }
+
+          return RefreshIndicator(
+            onRefresh: provider.fetchNotifications,
+            color: AppColors.primaryGreen,
+            child: ListView.builder(
+              physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(DesignTokens.spacing16),
-              itemCount: _notifications.length,
+              itemCount: provider.notifications.length,
               itemBuilder: (context, index) =>
-                  _buildNotificationCard(_notifications[index], index, isDark),
+                  _buildNotificationCard(provider.notifications[index], index, provider, isDark),
             ),
+          );
+        },
+      ),
     );
   }
 
   Widget _buildNotificationCard(
-      Map<String, dynamic> notification, int index, bool isDark) {
-    final isUnread = !notification['read'];
-    final type = notification['type'] as String;
-    final iconData = _getNotificationIcon(type);
-    final iconColor = _getNotificationColor(type);
+      NotificationModel notification, int index, NotificationProvider provider, bool isDark) {
+    final isUnread = !notification.isRead;
+    final iconData = _getNotificationIcon(notification.type);
+    final iconColor = _getNotificationColor(notification.type);
 
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.0, end: 1.0),
@@ -119,7 +136,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
       child: Padding(
         padding: const EdgeInsets.only(bottom: DesignTokens.spacing12),
         child: Dismissible(
-          key: Key(notification['id']),
+          key: Key(notification.id.toString()),
           direction: DismissDirection.endToStart,
           background: Container(
             alignment: Alignment.centerRight,
@@ -130,27 +147,27 @@ class _NotificationsScreenState extends State<NotificationsScreen>
             ),
             child: const Icon(Icons.delete_outline, color: Colors.white),
           ),
-          onDismissed: (_) => _dismissNotification(notification['id']),
+          onDismissed: (_) => _dismissNotification(notification.id, provider),
           child: CurvedCard(
             radius: DesignTokens.radiusMedium,
             backgroundColor: isDark
                 ? (isUnread
-                    ? AppColors.darkCard.withValues(alpha: 0.9)
+                    ? AppColors.darkCard.withOpacity(0.9)
                     : AppColors.darkCard)
                 : (isUnread
                     ? Colors.white
-                    : Colors.white.withValues(alpha: 0.7)),
+                    : Colors.white.withOpacity(0.7)),
             shadows: isUnread
                 ? [
                     BoxShadow(
-                      color: iconColor.withValues(alpha: 0.15),
+                      color: iconColor.withOpacity(0.15),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
                   ]
                 : null,
             child: InkWell(
-              onTap: () => _handleNotificationTap(notification),
+              onTap: () => _handleNotificationTap(notification, provider),
               borderRadius: BorderRadius.circular(DesignTokens.radiusMedium),
               child: Padding(
                 padding: const EdgeInsets.all(DesignTokens.spacing16),
@@ -161,7 +178,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: iconColor.withValues(alpha: 0.12),
+                        color: iconColor.withOpacity(0.12),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -181,7 +198,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                             children: [
                               Expanded(
                                 child: Text(
-                                  notification['title'],
+                                  notification.title,
                                   style: TextStyle(
                                     fontSize: 15,
                                     fontWeight:
@@ -205,7 +222,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            notification['message'],
+                            notification.message,
                             style: TextStyle(
                               fontSize: 13,
                               color: isDark
@@ -226,7 +243,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                notification['time'],
+                                _formatTime(notification.createdAt),
                                 style: TextStyle(
                                   fontSize: 11,
                                   color: isDark
@@ -257,7 +274,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
           Container(
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: AppColors.primaryGreen.withValues(alpha: 0.1),
+              color: AppColors.primaryGreen.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -288,64 +305,161 @@ class _NotificationsScreenState extends State<NotificationsScreen>
     );
   }
 
-  void _markAllAsRead() {
-    setState(() {
-      for (var notification in _notifications) {
-        notification['read'] = true;
-      }
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('All notifications marked as read'),
-        backgroundColor: AppColors.primaryGreen,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(DesignTokens.radiusSmall),
+  Widget _buildErrorState(String message, NotificationProvider provider, bool isDark) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(DesignTokens.spacing24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline_rounded,
+              size: 64,
+              color: AppColors.error,
+            ),
+            const SizedBox(height: DesignTokens.spacing24),
+            Text(
+              'Failed to load notifications',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: isDark ? AppColors.darkTextPrimary : AppColors.darkText,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: isDark ? AppColors.darkTextSecondary : AppColors.mediumGrey,
+              ),
+            ),
+            const SizedBox(height: DesignTokens.spacing24),
+            ElevatedButton(
+              onPressed: provider.fetchNotifications,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryGreen,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusMedium),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+              child: const Text('Retry'),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  void _dismissNotification(String id) {
-    setState(() {
-      _notifications.removeWhere((n) => n['id'] == id);
-    });
+  void _markAllAsRead(NotificationProvider provider) async {
+    await provider.markAllAsRead();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('All notifications marked as read'),
+          backgroundColor: AppColors.primaryGreen,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(DesignTokens.radiusSmall),
+          ),
+        ),
+      );
+    }
   }
 
-  void _handleNotificationTap(Map<String, dynamic> notification) {
-    if (!notification['read']) {
-      setState(() => notification['read'] = true);
+  void _dismissNotification(int id, NotificationProvider provider) async {
+    await provider.deleteNotification(id);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Notification deleted'),
+          backgroundColor: Colors.grey.shade800,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(DesignTokens.radiusSmall),
+          ),
+        ),
+      );
     }
-    // Handle navigation based on type
+  }
+
+  void _handleNotificationTap(NotificationModel notification, NotificationProvider provider) {
+    if (!notification.isRead) {
+      provider.markAsRead(notification.id);
+    }
+
+    // Trigger action URL / Deep Link navigation if present
+    if (notification.actionUrl != null && notification.actionUrl!.isNotEmpty) {
+      final route = notification.actionUrl!;
+      
+      // Smart router pattern matching
+      if (route.startsWith('/orders/')) {
+        final orderId = route.substring(8);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Navigating to Order #$orderId')),
+        );
+        // Example: Navigator.pushNamed(context, '/order_details', arguments: orderId);
+      } else if (route.startsWith('/chat/')) {
+        final conversationId = route.substring(6);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Opening Chat #$conversationId')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Action: $route')),
+        );
+      }
+    }
   }
 
   IconData _getNotificationIcon(String type) {
-    switch (type) {
-      case 'order':
+    switch (type.toUpperCase()) {
+      case 'ORDER':
         return Icons.local_shipping_rounded;
-      case 'message':
+      case 'PAYMENT':
+        return Icons.account_balance_wallet_rounded;
+      case 'CHAT':
         return Icons.message_rounded;
-      case 'alert':
-        return Icons.trending_up_rounded;
-      case 'system':
-        return Icons.info_outline_rounded;
+      case 'PICKUP':
+        return Icons.rv_hookup_rounded;
+      case 'AI':
+        return Icons.psychology_rounded;
+      case 'REWARD':
+        return Icons.emoji_events_rounded;
+      case 'SECURITY':
+        return Icons.security_rounded;
+      case 'TRACKING':
+        return Icons.my_location_rounded;
+      case 'SYSTEM':
       default:
-        return Icons.notifications_rounded;
+        return Icons.info_outline_rounded;
     }
   }
 
   Color _getNotificationColor(String type) {
-    switch (type) {
-      case 'order':
+    switch (type.toUpperCase()) {
+      case 'ORDER':
         return AppColors.primaryGreen;
-      case 'message':
+      case 'PAYMENT':
+        return Colors.blue;
+      case 'CHAT':
         return AppColors.info;
-      case 'alert':
-        return AppColors.warning;
-      case 'system':
-        return AppColors.ecoTeal;
+      case 'PICKUP':
+        return Colors.orange;
+      case 'AI':
+        return Colors.purple;
+      case 'REWARD':
+        return Colors.amber;
+      case 'SECURITY':
+        return AppColors.error;
+      case 'TRACKING':
+        return Colors.teal;
+      case 'SYSTEM':
       default:
-        return AppColors.primaryGreen;
+        return AppColors.ecoTeal;
     }
   }
 }
