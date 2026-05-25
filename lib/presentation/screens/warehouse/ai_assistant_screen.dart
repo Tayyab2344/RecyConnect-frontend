@@ -9,7 +9,7 @@ class AIAssistantScreen extends StatefulWidget {
   State<AIAssistantScreen> createState() => _AIAssistantScreenState();
 }
 
-class _AIAssistantScreenState extends State<AIAssistantScreen> {
+class _AIAssistantScreenState extends State<AIAssistantScreen> with TickerProviderStateMixin {
   final WarehouseService _warehouseService = WarehouseService();
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
@@ -24,6 +24,7 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> {
   ];
 
   bool _isTyping = false;
+  late AnimationController _typingController;
 
   final List<String> _shortcutPrompts = [
     'What is my current net profit estimate?',
@@ -33,9 +34,19 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _typingController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
+  }
+
+  @override
   void dispose() {
     _messageController.dispose();
     _scrollController.dispose();
+    _typingController.dispose();
     super.dispose();
   }
 
@@ -74,6 +85,7 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -83,9 +95,9 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> {
         title: Row(
           children: [
             CircleAvatar(
-              backgroundColor: (isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen).withOpacity(0.1),
+              backgroundColor: primaryColor.withOpacity(0.1),
               radius: 18,
-              child: Icon(Icons.psychology, color: isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen),
+              child: Icon(Icons.psychology, color: primaryColor),
             ),
             const SizedBox(width: 10),
             Column(
@@ -118,7 +130,7 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> {
           ],
         ),
         iconTheme: IconThemeData(
-          color: isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen,
+          color: primaryColor,
         ),
       ),
       body: Column(
@@ -126,83 +138,232 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> {
           Expanded(
             child: ListView.builder(
               controller: _scrollController,
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
               itemCount: _messages.length,
               itemBuilder: (context, index) {
                 final msg = _messages[index];
-                return _buildMessageBubble(msg, isDark);
+                return _buildMessageBubble(msg, isDark, primaryColor);
               },
             ),
           ),
-          if (_isTyping) _buildTypingIndicator(isDark),
+          if (_isTyping) _buildTypingIndicator(isDark, primaryColor),
           _buildShortcutBar(isDark),
-          _buildInputBar(isDark),
+          _buildInputBar(isDark, primaryColor),
         ],
       ),
     );
   }
 
-  Widget _buildMessageBubble(Map<String, dynamic> msg, bool isDark) {
+  Widget _buildMessageBubble(Map<String, dynamic> msg, bool isDark, Color primaryColor) {
     final isUser = msg['isUser'] as bool;
+    final text = msg['text'] as String;
     final alignment = isUser ? Alignment.centerRight : Alignment.centerLeft;
-    final bgColor = isUser
-        ? (isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen)
-        : (isDark ? AppTheme.darkCardSurface : Colors.white);
-    final textColor = isUser
-        ? Colors.white
-        : (isDark ? AppTheme.darkTextPrimary : AppTheme.textDark);
-    final border = Border.all(
-      color: isUser
-          ? Colors.transparent
-          : (isDark ? AppTheme.darkSecondaryGreen : AppTheme.lightGray).withOpacity(0.3),
-    );
 
     return Align(
       alignment: alignment,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(16),
-            topRight: const Radius.circular(16),
-            bottomLeft: isUser ? const Radius.circular(16) : Radius.zero,
-            bottomRight: isUser ? Radius.zero : const Radius.circular(16),
-          ),
-          border: border,
-        ),
-        child: Text(
-          msg['text'],
-          style: TextStyle(color: textColor, fontSize: 13, height: 1.4),
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 16.0),
+        child: Column(
+          crossAxisAlignment: isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          children: [
+            Container(
+              constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.8),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                gradient: isUser
+                    ? LinearGradient(
+                        colors: [primaryColor, primaryColor.withOpacity(0.85)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      )
+                    : null,
+                color: isUser ? null : (isDark ? AppTheme.darkCardSurface : Colors.white),
+                borderRadius: BorderRadius.only(
+                  topLeft: const Radius.circular(20),
+                  topRight: const Radius.circular(20),
+                  bottomLeft: isUser ? const Radius.circular(20) : Radius.zero,
+                  bottomRight: isUser ? Radius.zero : const Radius.circular(20),
+                ),
+                border: isUser
+                    ? null
+                    : Border.all(
+                        color: isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.05),
+                        width: 1,
+                      ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.02),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  )
+                ],
+              ),
+              child: _buildFormattedText(text, isUser, isDark),
+            ),
+            // Dynamic Context Card injections based on text matching patterns
+            if (!isUser) ..._injectContextCards(text, isDark, primaryColor),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildTypingIndicator(bool isDark) {
+  Widget _buildFormattedText(String content, bool isUser, bool isDark) {
+    final defaultColor = isUser
+        ? Colors.white
+        : (isDark ? AppTheme.darkTextPrimary : AppTheme.textDark);
+    
+    // Simple inline parser for bold markdown: **bold text**
+    final parts = content.split('**');
+    if (parts.length > 1) {
+      final textSpans = <TextSpan>[];
+      for (var i = 0; i < parts.length; i++) {
+        final isBold = i % 2 == 1;
+        textSpans.add(
+          TextSpan(
+            text: parts[i],
+            style: TextStyle(
+              fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+              color: defaultColor,
+            ),
+          ),
+        );
+      }
+      return RichText(
+        text: TextSpan(
+          style: TextStyle(fontSize: 13, height: 1.4, fontFamily: 'Outfit'),
+          children: textSpans,
+        ),
+      );
+    }
+
+    return Text(
+      content,
+      style: TextStyle(color: defaultColor, fontSize: 13, height: 1.4, fontFamily: 'Outfit'),
+    );
+  }
+
+  // Parses content to render structured UI components dynamically in chat
+  List<Widget> _injectContextCards(String content, bool isDark, Color primaryColor) {
+    final widgets = <Widget>[];
+
+    // 1. Finance Card Injection (if response mentions profit numbers)
+    if (content.contains('PKR') && (content.contains('Profit') || content.contains('profit'))) {
+      widgets.add(
+        Container(
+          width: MediaQuery.of(context).size.width * 0.75,
+          margin: const EdgeInsets.only(top: 8),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: (isDark ? AppTheme.darkCardSurface : Colors.white),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.emerald.withOpacity(0.3), width: 1.5),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.analytics_outlined, color: Colors.emerald, size: 16),
+                  const SizedBox(width: 8),
+                  Text(
+                    'FINANCIAL INSIGHT SUMMARY',
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.emerald),
+                  ),
+                ],
+              ),
+              const Divider(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: const [
+                  Text('Balance Health:', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                  Text('Calculated ✅', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.green)),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // 2. Alert Warning Card Injection (if warnings or low stock detected)
+    if (content.contains('⚠️') || content.contains('low') || content.contains('Low')) {
+      widgets.add(
+        Container(
+          width: MediaQuery.of(context).size.width * 0.75,
+          margin: const EdgeInsets.only(top: 8),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: (isDark ? AppTheme.darkCardSurface : Colors.white),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.orange.withOpacity(0.3), width: 1.5),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 16),
+                  const SizedBox(width: 8),
+                  Text(
+                    'INVENTORY WARNING ALERT',
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.orange),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Some waste categories are below reorder thresholds. Auditing is recommended.',
+                style: TextStyle(fontSize: 11, color: Colors.grey),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return widgets;
+  }
+
+  Widget _buildTypingIndicator(bool isDark, Color primaryColor) {
     return Padding(
-      padding: const EdgeInsets.only(left: 16.0, bottom: 8.0),
+      padding: const EdgeInsets.only(left: 16.0, bottom: 12.0),
       child: Align(
         alignment: Alignment.centerLeft,
         child: Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
             color: isDark ? AppTheme.darkCardSurface : Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.withOpacity(0.2)),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.grey.withOpacity(0.15)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
-            children: const [
-              SizedBox(
-                width: 12,
-                height: 12,
-                child: CircularProgressIndicator(strokeWidth: 1.5),
+            children: [
+              AnimatedBuilder(
+                animation: _typingController,
+                builder: (context, child) {
+                  return Row(
+                    children: List.generate(3, (index) {
+                      final offset = (index * 0.2);
+                      var value = _typingController.value + offset;
+                      if (value > 1.0) value -= 1.0;
+                      final size = 4.0 + (value < 0.5 ? value * 6.0 : (1.0 - value) * 6.0);
+                      return Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 2.0),
+                        width: size,
+                        height: size,
+                        decoration: BoxDecoration(
+                          color: primaryColor.withOpacity(0.7),
+                          shape: BoxShape.circle,
+                        ),
+                      );
+                    }),
+                  );
+                },
               ),
-              SizedBox(width: 8),
-              Text('Thinking...', style: TextStyle(fontSize: 11)),
+              const SizedBox(width: 10),
+              const Text('Partner thinking...', style: TextStyle(fontSize: 11, color: Colors.grey)),
             ],
           ),
         ),
@@ -213,7 +374,7 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> {
   Widget _buildShortcutBar(bool isDark) {
     return Container(
       height: 44,
-      margin: const EdgeInsets.only(bottom: 4),
+      margin: const EdgeInsets.only(bottom: 6),
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         scrollDirection: Axis.horizontal,
@@ -223,7 +384,16 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> {
           return Padding(
             padding: const EdgeInsets.only(right: 8.0),
             child: ActionChip(
+              elevation: 0,
+              pressElevation: 1,
+              shadowColor: Colors.transparent,
               backgroundColor: isDark ? AppTheme.darkCardSurface : Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(
+                  color: isDark ? Colors.white10 : Colors.black12,
+                ),
+              ),
               label: Text(
                 prompt,
                 style: TextStyle(
@@ -239,7 +409,7 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> {
     );
   }
 
-  Widget _buildInputBar(bool isDark) {
+  Widget _buildInputBar(bool isDark, Color primaryColor) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -257,26 +427,30 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> {
               child: Container(
                 decoration: BoxDecoration(
                   color: isDark ? AppTheme.darkBackground : AppTheme.backgroundLight,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.05),
+                  ),
                 ),
                 child: TextField(
                   controller: _messageController,
                   textInputAction: TextInputAction.send,
                   onSubmitted: _sendMessage,
-                  style: TextStyle(color: isDark ? Colors.white : Colors.black),
+                  style: TextStyle(color: isDark ? Colors.white : Colors.black, fontSize: 13),
                   decoration: const InputDecoration(
                     hintText: 'Ask business partner...',
                     border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                   ),
                 ),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
             CircleAvatar(
-              backgroundColor: isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen,
+              backgroundColor: primaryColor,
+              radius: 20,
               child: IconButton(
-                icon: const Icon(Icons.send, color: Colors.white, size: 18),
+                icon: const Icon(Icons.send, color: Colors.white, size: 16),
                 onPressed: () => _sendMessage(_messageController.text),
               ),
             )
