@@ -7,6 +7,9 @@ import '../../../core/services/order_service.dart';
 import '../../../core/models/order_model.dart';
 import '../../../core/services/collector_service.dart';
 import '../../../core/theme/app_theme.dart';
+import 'order_assignment_screen.dart';
+import 'collector_tracking_screen.dart';
+import 'assignment_history_screen.dart';
 
 class CollectorManagementScreen extends StatefulWidget {
   const CollectorManagementScreen({super.key});
@@ -90,73 +93,223 @@ class _CollectorManagementScreenState extends State<CollectorManagementScreen> {
             itemCount: collectors.length,
             itemBuilder: (context, index) {
               final collector = collectors[index];
+              final profile = collector['collectorProfile'] ?? {};
+              final availability = profile['availabilityStatus'] ?? 'OFFLINE';
+              
+              final isBusy = availability == 'BUSY';
+              final isOffline = availability == 'OFFLINE';
+              final isIdle = !isBusy && !isOffline;
+
+              final completedTasks = profile['completedTasks'] ?? 0;
+              final totalCollectedKg = (profile['totalCollectedKg'] ?? 0).toDouble();
+
+              Color statusColor = Colors.grey;
+              String statusText = 'Offline';
+              if (isBusy) {
+                statusColor = Colors.orange[800]!;
+                statusText = 'On Assignment';
+              } else if (isIdle) {
+                statusColor = Colors.green[700]!;
+                statusText = 'Idle';
+              }
+
               return Card(
-                elevation: 2,
+                elevation: 3,
                 margin: const EdgeInsets.only(bottom: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 child: Padding(
                   padding: const EdgeInsets.all(16),
-                  child: Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      CircleAvatar(
-                        radius: 30,
-                        backgroundImage: collector['profileImage'] != null
-                            ? NetworkImage(collector['profileImage'])
-                            : null,
-                        child: collector['profileImage'] == null
-                            ? const Icon(Icons.person, size: 30)
-                            : null,
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              collector['name'],
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'ID: ${collector['collectorId']}',
-                              style: TextStyle(
-                                color: AppTheme.primaryGreen,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text('Contact: ${collector['contactNo']}'),
-                            const SizedBox(height: 4),
-                            if (collector['plainPassword'] != null)
-                              Text(
-                                'Pass: ${collector['plainPassword']}',
-                                style: TextStyle(
-                                  color: Colors.red[700],
-                                  fontWeight: FontWeight.w500,
+                      // Header: Avatar, Name, Status Badge
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 28,
+                            backgroundImage: collector['profileImage'] != null
+                                ? NetworkImage(collector['profileImage'])
+                                : null,
+                            child: collector['profileImage'] == null
+                                ? const Icon(Icons.person, size: 28)
+                                : null,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  collector['name'],
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'ID: ${collector['collectorId']}',
+                                  style: TextStyle(
+                                    color: AppTheme.primaryGreen,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: statusColor.withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: statusColor.withOpacity(0.3)),
+                            ),
+                            child: Text(
+                              statusText,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: statusColor,
                               ),
-                          ],
-                        ),
+                            ),
+                          ),
+                        ],
                       ),
-                      IconButton.filledTonal(
-                        onPressed: () {
-                          showDialog(
-                            context: context,
-                            builder: (context) => DispatchTaskDialog(collector: collector),
-                          ).then((dispatched) {
-                            if (dispatched == true) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text("Task dispatched successfully!")),
-                              );
-                            }
-                          });
-                        },
-                        icon: const Icon(Icons.send_rounded),
-                        color: AppTheme.primaryGreen,
-                        tooltip: "Dispatch Task",
+                      const SizedBox(height: 12),
+                      
+                      // Contact & Stats
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(Icons.phone, size: 14, color: Colors.grey),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    '${collector['contactNo']}',
+                                    style: TextStyle(color: Colors.grey[700], fontSize: 13),
+                                  ),
+                                ],
+                              ),
+                              if (collector['plainPassword'] != null) ...[
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    const Icon(Icons.lock_open, size: 14, color: Colors.grey),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'Pass: ${collector['plainPassword']}',
+                                      style: TextStyle(
+                                        color: Colors.red[700],
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ],
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                'Completed: $completedTasks tasks',
+                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                              ),
+                              Text(
+                                'Collected: ${totalCollectedKg.toStringAsFixed(1)} kg',
+                                style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      const Divider(height: 24),
+                      
+                      // Actions row
+                      Row(
+                        children: [
+                          // 1. Assign Orders
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: isBusy
+                                  ? null
+                                  : () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => OrderAssignmentScreen(collector: collector),
+                                        ),
+                                      ).then((value) {
+                                        if (value == true) {
+                                          _loadCollectors();
+                                        }
+                                      });
+                                    },
+                              icon: const Icon(Icons.assignment_add, size: 16),
+                              label: const Text('Assign', style: TextStyle(fontSize: 12)),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                foregroundColor: AppTheme.primaryGreen,
+                                side: BorderSide(color: AppTheme.primaryGreen.withOpacity(0.5)),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          
+                          // 2. Track Live
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: !isBusy
+                                  ? null
+                                  : () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => CollectorTrackingScreen(collector: collector),
+                                        ),
+                                      );
+                                    },
+                              icon: const Icon(Icons.location_searching, size: 16),
+                              label: const Text('Track Live', style: TextStyle(fontSize: 12)),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                foregroundColor: Colors.blue[700],
+                                side: BorderSide(color: Colors.blue.withOpacity(0.5)),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          
+                          // 3. View History
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const AssignmentHistoryScreen(),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.history, size: 16),
+                              label: const Text('History', style: TextStyle(fontSize: 12)),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                foregroundColor: Colors.grey[800],
+                                side: BorderSide(color: Colors.grey.withOpacity(0.5)),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
