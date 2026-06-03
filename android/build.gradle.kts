@@ -16,6 +16,12 @@ subprojects {
     project.evaluationDependsOn(":app")
 }
 
+subprojects {
+    tasks.withType<JavaCompile>().configureEach {
+        options.compilerArgs.add("-Xlint:-options")
+    }
+}
+
 // Fix for packages missing namespace (required for AGP 8.0+)
 subprojects {
     val configureNamespace = {

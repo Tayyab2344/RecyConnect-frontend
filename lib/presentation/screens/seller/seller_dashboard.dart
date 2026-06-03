@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/services/auth_service.dart';
+import '../../../core/di/service_locator.dart';
 import '../auth/login_screen.dart';
 import 'add_item_screen.dart';
 import 'inventory_screen.dart';
@@ -12,7 +13,7 @@ class SellerDashboard extends StatefulWidget {
 }
 
 class _SellerDashboardState extends State<SellerDashboard> {
-  final AuthService _authService = AuthService();
+  final AuthService _authService = sl<AuthService>();
   int _selectedIndex = 0;
 
   static const List<Widget> _widgetOptions = <Widget>[
@@ -36,12 +37,11 @@ class _SellerDashboardState extends State<SellerDashboard> {
             icon: const Icon(Icons.logout),
             onPressed: () async {
               await _authService.logout();
-              if (mounted) {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LoginScreen()),
-                );
-              }
+              if (!mounted) return;
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
+              );
             },
           ),
         ],

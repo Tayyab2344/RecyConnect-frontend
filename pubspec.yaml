@@ -15,12 +15,24 @@ dependencies:
   
   # HTTP & API
   http: ^1.2.2
-  
+
+  # Stripe Payment
+  flutter_stripe: ^11.5.0
+  firebase_core: ^3.15.2
+  firebase_messaging: ^15.2.10
+  flutter_local_notifications: ^18.0.1
+
   # Local Storage
   shared_preferences: ^2.3.2
+  flutter_secure_storage: ^10.0.0
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
   
   # Image & Camera
   image_picker: ^1.1.2
+
+  # TFLite for on-device AI classification
+  tflite_flutter: ^0.12.1
   
   # OCR
   google_mlkit_commons: ^0.11.0
@@ -30,7 +42,7 @@ dependencies:
   cupertino_icons: ^1.0.6
 
   # Charts & Graphs
-  fl_chart: ^0.69.0
+  fl_chart: ^0.69.2
 
   # Fonts
 
@@ -42,7 +54,7 @@ dependencies:
   path_provider: ^2.1.1
 
   # Internationalization & Date Formatting
-  intl: ^0.19.0
+  intl: ^0.20.2
   google_fonts: ^6.3.2
   
 
@@ -53,9 +65,11 @@ dependencies:
 
   
   # Location & Permissions
-  geolocator: ^10.1.0
-  geocoding: ^3.0.0
-  permission_handler: ^11.1.0
+  geolocator: ^14.0.2
+  geocoding: ^4.0.0
+  permission_handler: ^12.0.1
+  flutter_map: ^6.1.0
+  latlong2: ^0.9.1
   
   # Data Export
   csv: ^6.0.0
@@ -74,12 +88,21 @@ dependencies:
   lottie: ^3.1.0
   flutter_staggered_animations: ^1.1.1
   glassmorphism: ^3.0.0
-  blur: ^3.1.0
+  blur: ^4.0.2
+  # Dependency Injection
+  get_it: ^9.2.1
+
+  dio: ^5.9.2
+  dio_cache_interceptor: ^3.5.1
+  dio_cache_interceptor_hive_store: ^4.0.0
+  connectivity_plus: ^7.1.1
+  flutter_image_compress: ^2.4.0
+  cached_network_image: ^3.4.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^3.0.0
+  flutter_lints: ^5.0.0
   flutter_launcher_icons: ^0.14.1
 
 # App Icon Configuration
@@ -98,3 +121,9 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
+    # New model (4 classes: ewaste, metal, paper, plastic)
+    - assets/recyconnect_outputs/labels.txt
+    - assets/recyconnect_outputs/recyconnect_model_quantized.tflite
+    # Old model backup (7 classes) - switch paths to rollback
+    - assets/recyconnect_outputs_old/labels.txt
+    - assets/recyconnect_outputs_old/recyconnect_model_quantized.tflite

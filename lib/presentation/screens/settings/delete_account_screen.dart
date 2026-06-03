@@ -96,35 +96,57 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
     if (confirmed == true) {
       setState(() => _isDeleting = true);
       
-      // Simulate deletion process
-      await Future.delayed(const Duration(seconds: 2));
+      try {
+        final authService = Provider.of<AuthService>(context, listen: false);
+        final result = await authService.deleteAccount(
+          _passwordController.text,
+          reason: _selectedReason,
+        );
 
-      if (mounted) {
-        // Show success and logout
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            title: const Text('Account Deleted'),
-            content: const Text(
-              'Your account has been successfully deleted. We\'re sorry to see you go. You can create a new account anytime.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  // Logout and return to welcome screen
-                  final authService = Provider.of<AuthService>(context, listen: false);
-                  authService.logout();
-                  Navigator.of(context).popUntil((route) => route.isFirst);
-                },
-                child: const Text('OK'),
+        if (!mounted) return;
+
+        if (result['success'] == true) {
+          // Show success and navigate to welcome screen
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
               ),
-            ],
+              title: const Text('Account Deleted'),
+              content: const Text(
+                'Your account has been successfully deleted. We\'re sorry to see you go. You can create a new account anytime.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).popUntil((route) => route.isFirst);
+                  },
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+          );
+        } else {
+          // Show error
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result['message'] ?? 'Failed to delete account'),
+              backgroundColor: AppTheme.errorRed,
+            ),
+          );
+        }
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: AppTheme.errorRed,
           ),
         );
+      } finally {
+        if (mounted) setState(() => _isDeleting = false);
       }
     }
   }

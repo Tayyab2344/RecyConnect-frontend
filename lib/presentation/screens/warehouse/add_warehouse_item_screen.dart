@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/services/warehouse_service.dart';
 
 class AddWarehouseItemScreen extends StatefulWidget {
   const AddWarehouseItemScreen({super.key});
@@ -488,26 +489,52 @@ class _AddWarehouseItemScreenState extends State<AddWarehouseItemScreen> {
     );
   }
 
+  Future<void> _saveItem() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isProcessing = true);
+    
+    final warehouseService = WarehouseService();
+    final result = await warehouseService.addInventoryItem(
+      materialType: _materialController.text,
+      category: _categoryController.text,
+      quantity: double.tryParse(_quantityController.text) ?? 0.0,
+      reorderLevel: double.tryParse(_reorderLevelController.text) ?? 100.0,
+      purchasePrice: double.tryParse(_purchasePriceController.text) ?? 0.0,
+      sellingPrice: double.tryParse(_sellingPriceController.text) ?? 0.0,
+      notes: _categoryController.text.isNotEmpty ? 'AI Detected Category' : null,
+      image: _selectedImage,
+    );
+
+    setState(() => _isProcessing = false);
+
+    if (result['success'] == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Item added to inventory successfully!\n'
+            'Profit: PKR ${_profitPerKg.toStringAsFixed(2)}/kg (${_profitMargin.toStringAsFixed(1)}% margin)',
+          ),
+          backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen,
+        ),
+      );
+      Navigator.pop(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['message'] ?? 'Failed to add item to inventory'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   Widget _buildSubmitButton(bool isDark) {
     return SizedBox(
       width: double.infinity,
       height: 52,
       child: ElevatedButton(
-        onPressed: () {
-          if (_formKey.currentState!.validate()) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  'Item added successfully!\n'
-                  'Profit: PKR ${_profitPerKg.toStringAsFixed(2)}/kg (${_profitMargin.toStringAsFixed(1)}% margin)',
-                ),
-                backgroundColor: isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen,
-                duration: const Duration(seconds: 3),
-              ),
-            );
-            Navigator.pop(context);
-          }
-        },
+        onPressed: _isProcessing ? null : _saveItem,
         style: ElevatedButton.styleFrom(
           backgroundColor: isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen,
           foregroundColor: Colors.white,
@@ -516,13 +543,19 @@ class _AddWarehouseItemScreenState extends State<AddWarehouseItemScreen> {
             borderRadius: BorderRadius.circular(12),
           ),
         ),
-        child: const Text(
-          'Add to Inventory',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        child: _isProcessing
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+              )
+            : const Text(
+                'Add to Inventory',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
       ),
     );
   }

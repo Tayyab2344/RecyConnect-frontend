@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/services/admin_service.dart';
 import '../../../core/services/auth_service.dart';
+import '../../../core/di/service_locator.dart';
 import '../auth/login_screen.dart';
 import 'user_management_screen.dart';
 
@@ -13,7 +14,7 @@ class AdminDashboard extends StatefulWidget {
 
 class _AdminDashboardState extends State<AdminDashboard> {
   final AdminService _adminService = AdminService();
-  final AuthService _authService = AuthService();
+  final AuthService _authService = sl<AuthService>();
   Map<String, dynamic> _stats = {};
   bool _isLoading = true;
 

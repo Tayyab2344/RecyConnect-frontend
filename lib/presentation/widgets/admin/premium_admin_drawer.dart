@@ -7,10 +7,10 @@ import '../../../core/constants/admin_colors.dart';
 import '../../screens/admin/admin_dashboard_screen.dart';
 import '../../screens/admin/admin_users_screen.dart';
 import '../../screens/admin/admin_collectors_screen.dart';
+import '../../screens/admin/admin_logs_screen.dart';
 import '../../screens/admin/admin_orders_screen.dart';
 import '../../screens/admin/admin_pricing_screen.dart';
 import '../../screens/admin/admin_activities_screen.dart';
-import '../../screens/admin/admin_reports_screen.dart';
 import '../../screens/admin/admin_notifications_screen.dart';
 import '../../screens/admin/admin_settings_screen.dart';
 import '../../screens/auth/login_screen.dart';
@@ -88,7 +88,7 @@ class _PremiumAdminDrawerState extends State<PremiumAdminDrawer>
       'icon': Icons.bar_chart_rounded,
       'title': 'Reports & Analytics',
       'route': 'reports',
-      'screen': const AdminReportsScreen(),
+      'screen': const AdminLogsScreen(),
       'gradient': PremiumDesignSystem.purpleGradient,
     },
     {
@@ -431,8 +431,8 @@ class _PremiumAdminDrawerState extends State<PremiumAdminDrawer>
                           padding: const EdgeInsets.symmetric(horizontal: 8),
                           child: Divider(
                             color: isDark
-                                ? Colors.white.withOpacity(0.1)
-                                : Colors.grey.withOpacity(0.2),
+                                ? Colors.white.withValues(alpha: 0.1)
+                                : Colors.grey.withValues(alpha: 0.2),
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -463,8 +463,8 @@ class _PremiumAdminDrawerState extends State<PremiumAdminDrawer>
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  PremiumDesignSystem.primary.withOpacity(0.2),
-                  PremiumDesignSystem.primaryDark.withOpacity(0.1),
+                  PremiumDesignSystem.primary.withValues(alpha: 0.2),
+                  PremiumDesignSystem.primaryDark.withValues(alpha: 0.1),
                 ],
               )
             : PremiumDesignSystem.primaryGradient,
@@ -510,7 +510,7 @@ class _PremiumAdminDrawerState extends State<PremiumAdminDrawer>
             child: Text(
               _adminEmail,
               style: PremiumDesignSystem.caption.copyWith(
-                color: Colors.white.withOpacity(0.8),
+                color: Colors.white.withValues(alpha: 0.8),
               ),
               textAlign: TextAlign.center,
             ),
@@ -523,10 +523,10 @@ class _PremiumAdminDrawerState extends State<PremiumAdminDrawer>
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
+                color: Colors.white.withValues(alpha: 0.2),
                 borderRadius: PremiumDesignSystem.borderRadiusXLarge,
                 border: Border.all(
-                  color: Colors.white.withOpacity(0.3),
+                  color: Colors.white.withValues(alpha: 0.3),
                   width: 1.5,
                 ),
                 boxShadow: PremiumDesignSystem.glowEffect(
@@ -540,13 +540,13 @@ class _PremiumAdminDrawerState extends State<PremiumAdminDrawer>
                   Icon(
                     Icons.verified_rounded,
                     size: 14,
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                   ),
                   const SizedBox(width: 6),
                   Text(
                     'Administrator',
                     style: PremiumDesignSystem.caption.copyWith(
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha: 0.9),
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -567,13 +567,13 @@ class _PremiumAdminDrawerState extends State<PremiumAdminDrawer>
         shape: BoxShape.circle,
         gradient: LinearGradient(
           colors: [
-            Colors.white.withOpacity(0.3),
-            Colors.white.withOpacity(0.1),
+            Colors.white.withValues(alpha: 0.3),
+            Colors.white.withValues(alpha: 0.1),
           ],
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -685,8 +685,8 @@ class _PremiumAdminDrawerState extends State<PremiumAdminDrawer>
         border: Border(
           top: BorderSide(
             color: isDark
-                ? Colors.white.withOpacity(0.05)
-                : Colors.grey.withOpacity(0.1),
+                ? Colors.white.withValues(alpha: 0.05)
+                : Colors.grey.withValues(alpha: 0.1),
             width: 1,
           ),
         ),
@@ -821,8 +821,8 @@ class _PremiumDrawerItemState extends State<_PremiumDrawerItem>
                   ? null
                   : (_isHovered
                       ? (widget.isDark
-                          ? Colors.white.withOpacity(0.05)
-                          : Colors.black.withOpacity(0.03))
+                          ? Colors.white.withValues(alpha: 0.05)
+                          : Colors.black.withValues(alpha: 0.03))
                       : null),
               borderRadius: PremiumDesignSystem.borderRadiusMedium,
               boxShadow: widget.isSelected
@@ -852,17 +852,17 @@ class _PremiumDrawerItemState extends State<_PremiumDrawerItem>
                           gradient: widget.isSelected
                               ? LinearGradient(
                                   colors: [
-                                    Colors.white.withOpacity(0.3),
-                                    Colors.white.withOpacity(0.1),
+                                    Colors.white.withValues(alpha: 0.3),
+                                    Colors.white.withValues(alpha: 0.1),
                                   ],
                                 )
                               : null,
                           color: widget.isSelected
                               ? null
                               : (widget.isLogout
-                                  ? PremiumDesignSystem.error.withOpacity(0.1)
+                                  ? PremiumDesignSystem.error.withValues(alpha: 0.1)
                                   : PremiumDesignSystem.primary
-                                      .withOpacity(0.1)),
+                                      .withValues(alpha: 0.1)),
                           borderRadius: PremiumDesignSystem.borderRadiusSmall,
                         ),
                         child: Icon(
@@ -908,7 +908,7 @@ class _PremiumDrawerItemState extends State<_PremiumDrawerItem>
                                 ? null
                                 : PremiumDesignSystem.errorGradient,
                             color: widget.isSelected
-                                ? Colors.white.withOpacity(0.3)
+                                ? Colors.white.withValues(alpha: 0.3)
                                 : null,
                             borderRadius:
                                 PremiumDesignSystem.borderRadiusSmall,
@@ -926,7 +926,7 @@ class _PremiumDrawerItemState extends State<_PremiumDrawerItem>
                         Icon(
                           Icons.arrow_forward_ios_rounded,
                           size: 14,
-                          color: Colors.white.withOpacity(0.7),
+                          color: Colors.white.withValues(alpha: 0.7),
                         ),
                     ],
                   ),

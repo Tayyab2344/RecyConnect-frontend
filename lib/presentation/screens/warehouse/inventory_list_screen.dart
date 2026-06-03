@@ -1,8 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import '../../../core/models/warehouse_inventory.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/services/warehouse_service.dart';
 import 'add_warehouse_item_screen.dart';
 
 class InventoryListScreen extends StatefulWidget {
@@ -13,88 +13,148 @@ class InventoryListScreen extends StatefulWidget {
 }
 
 class _InventoryListScreenState extends State<InventoryListScreen> {
+  final WarehouseService _warehouseService = WarehouseService();
   String _searchQuery = '';
   String _filterStatus = 'All';
-  
-  // Mock inventory data
-  final List<Map<String, dynamic>> _mockInventory = [
-    {
-      'id': 1,
-      'materialType': 'Plastic',
-      'category': 'PET',
-      'quantityInStock': 250.0,
-      'purchasePrice': 50.0,
-      'sellingPrice': 100.0,
-      'reorderLevel': 100.0,
-      'supplierName': 'ABC Traders',
-    },
-    {
-      'id': 2,
-      'materialType': 'Paper',
-      'category': 'Cardboard',
-      'quantityInStock': 500.0,
-      'purchasePrice': 30.0,
-      'sellingPrice': 60.0,
-      'reorderLevel': 200.0,
-      'supplierName': 'Paper Suppliers',
-    },
-    {
-      'id': 3,
-      'materialType': 'Metal',
-      'category': 'Aluminum',
-      'quantityInStock': 150.0,
-      'purchasePrice': 180.0,
-      'sellingPrice': 300.0,
-      'reorderLevel': 100.0,
-      'supplierName': 'Metal Corp',
-    },
-    {
-      'id': 4,
-      'materialType': 'Plastic',
-      'category': 'HDPE',
-      'quantityInStock': 80.0,
-      'purchasePrice': 45.0,
-      'sellingPrice': 90.0,
-      'reorderLevel': 100.0,
-      'supplierName': 'Plastic Inc',
-    },
-    {
-      'id': 5,
-      'materialType': 'Glass',
-      'category': 'Clear Glass',
-      'quantityInStock': 300.0,
-      'purchasePrice': 20.0,
-      'sellingPrice': 40.0,
-      'reorderLevel': 150.0,
-      'supplierName': 'Glass Works',
-    },
-  ];
+  List<dynamic> _inventory = [];
+  bool _isLoading = true;
 
-  List<Map<String, dynamic>> get _filteredInventory {
-    var items = _mockInventory;
+  @override
+  void initState() {
+    super.initState();
+    _loadInventory();
+  }
+
+  Future<void> _loadInventory() async {
+    setState(() => _isLoading = true);
     
-    // Apply search
-    if (_searchQuery.isNotEmpty) {
-      items = items.where((item) {
-        final material = item['materialType'].toString().toLowerCase();
-        final category = item['category'].toString().toLowerCase();
-        final query = _searchQuery.toLowerCase();
-        return material.contains(query) || category.contains(query);
-      }).toList();
-    }
-    
-    // Apply filter
+    String? statusParam;
     if (_filterStatus == 'Low Stock') {
-      items = items.where((item) {
-        return item['quantityInStock'] <= item['reorderLevel'];
-      }).toList();
+      statusParam = 'low_stock';
     } else if (_filterStatus == 'In Stock') {
-      items = items.where((item) {
-        return item['quantityInStock'] > item['reorderLevel'];
-      }).toList();
+      statusParam = 'in_stock';
     }
-    
-    return items;
+
+    final data = await _warehouseService.getInventory(
+      search: _searchQuery.isEmpty ? null : _searchQuery,
+      status: statusParam,
+    );
+
+    setState(() {
+      _inventory = data;
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _deleteItem(int id) async {
+    final success = await _warehouseService.deleteInventoryItem(id);
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Item deleted successfully')),
+      );
+      _loadInventory();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to delete item')),
+      );
+    }
+  }
+
+  Future<void> _showEditDialog(dynamic item) async {
+    final qtyController = TextEditingController(text: item['quantityInStock'].toString());
+    final reorderController = TextEditingController(text: (item['reorderLevel'] ?? 100).toString());
+    final buyController = TextEditingController(text: item['purchasePrice'].toString());
+    final sellController = TextEditingController(text: item['sellingPrice'].toString());
+    final locationController = TextEditingController(text: item['location'] ?? '');
+    final notesController = TextEditingController(text: item['notes'] ?? '');
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: isDark ? AppTheme.darkCardSurface : Colors.white,
+          title: Text('Edit ${item['materialType']} (${item['category']})'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: qtyController,
+                  decoration: const InputDecoration(labelText: 'Quantity (kg)'),
+                  keyboardType: TextInputType.number,
+                ),
+                TextField(
+                  controller: reorderController,
+                  decoration: const InputDecoration(labelText: 'Reorder Level (kg)'),
+                  keyboardType: TextInputType.number,
+                ),
+                TextField(
+                  controller: buyController,
+                  decoration: const InputDecoration(labelText: 'Purchase Price (PKR/kg)'),
+                  keyboardType: TextInputType.number,
+                ),
+                TextField(
+                  controller: sellController,
+                  decoration: const InputDecoration(labelText: 'Selling Price (PKR/kg)'),
+                  keyboardType: TextInputType.number,
+                ),
+                TextField(
+                  controller: locationController,
+                  decoration: const InputDecoration(labelText: 'Warehouse Location (Bin)'),
+                ),
+                TextField(
+                  controller: notesController,
+                  decoration: const InputDecoration(labelText: 'Notes'),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _deleteItem(item['id']);
+              },
+              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                setState(() => _isLoading = true);
+                
+                final res = await _warehouseService.updateInventoryItem(
+                  item['id'],
+                  quantity: double.tryParse(qtyController.text),
+                  reorderLevel: double.tryParse(reorderController.text),
+                  purchasePrice: double.tryParse(buyController.text),
+                  sellingPrice: double.tryParse(sellController.text),
+                  location: locationController.text,
+                  notes: notesController.text,
+                );
+
+                if (res['success'] == true) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Item updated successfully')),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(res['message'] ?? 'Failed to update item')),
+                  );
+                }
+                _loadInventory();
+              },
+              child: const Text('Save'),
+            )
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -123,27 +183,33 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
           _buildStatsBar(isDark),
           _buildInventoryTurnover(isDark),
           Expanded(
-            child: _filteredInventory.isEmpty
-                ? _buildEmptyState(isDark)
-                : ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _filteredInventory.length,
-                    itemBuilder: (context, index) {
-                      final item = _filteredInventory[index];
-                      return _buildInventoryCard(item, isDark);
-                    },
-                  ),
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _inventory.isEmpty
+                    ? _buildEmptyState(isDark)
+                    : RefreshIndicator(
+                        onRefresh: _loadInventory,
+                        child: ListView.builder(
+                          padding: const EdgeInsets.all(16),
+                          itemCount: _inventory.length,
+                          itemBuilder: (context, index) {
+                            final item = _inventory[index];
+                            return _buildInventoryCard(item, isDark);
+                          },
+                        ),
+                      ),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.push(
+        onPressed: () async {
+          await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => const AddWarehouseItemScreen(),
             ),
           );
+          _loadInventory();
         },
         backgroundColor: isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen,
         icon: const Icon(Icons.add, color: Colors.white),
@@ -166,7 +232,6 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
       ),
       child: Column(
         children: [
-          // Search bar - Premium Glassmorphism Style
           ClipRRect(
             borderRadius: BorderRadius.circular(16),
             child: BackdropFilter(
@@ -175,16 +240,19 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
                   color: isDark
-                      ? Colors.white.withValues(alpha: 0.08)
-                      : Colors.white.withValues(alpha: 0.8),
+                      ? Colors.white.withOpacity(0.08)
+                      : Colors.white.withOpacity(0.8),
                   border: Border.all(
                     color: isDark
-                        ? AppColors.neonCyan.withValues(alpha: 0.2)
-                        : Colors.black.withValues(alpha: 0.05),
+                        ? AppColors.neonCyan.withOpacity(0.2)
+                        : Colors.black.withOpacity(0.05),
                   ),
                 ),
                 child: TextField(
-                  onChanged: (value) => setState(() => _searchQuery = value),
+                  onChanged: (value) {
+                    setState(() => _searchQuery = value);
+                    _loadInventory();
+                  },
                   style: TextStyle(
                     color: isDark ? Colors.white : const Color(0xFF1A1A1A),
                   ),
@@ -205,7 +273,6 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          // Filter chips - Premium Style
           Row(
             children: [
               _buildFilterChip('All', isDark),
@@ -225,7 +292,10 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
     final accentColor = isDark ? AppColors.neonCyan : AppColors.primaryGreen;
 
     return GestureDetector(
-      onTap: () => setState(() => _filterStatus = label),
+      onTap: () {
+        setState(() => _filterStatus = label);
+        _loadInventory();
+      },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
@@ -239,17 +309,17 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
               : null,
           color: isSelected
               ? null
-              : (isDark ? Colors.white.withValues(alpha: 0.08) : Colors.white.withValues(alpha: 0.8)),
+              : (isDark ? Colors.white.withOpacity(0.08) : Colors.white.withOpacity(0.8)),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected
                 ? Colors.transparent
-                : (isDark ? accentColor.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.1)),
+                : (isDark ? accentColor.withOpacity(0.3) : Colors.black.withOpacity(0.1)),
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: accentColor.withValues(alpha: 0.3),
+                    color: accentColor.withOpacity(0.3),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -271,12 +341,12 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
   }
 
   Widget _buildStatsBar(bool isDark) {
-    final totalItems = _mockInventory.length;
-    final lowStockItems = _mockInventory.where((item) {
-      return item['quantityInStock'] <= item['reorderLevel'];
+    final totalItems = _inventory.length;
+    final lowStockItems = _inventory.where((item) {
+      return (item['quantityInStock'] as num) <= (item['reorderLevel'] ?? 0.0);
     }).length;
-    final totalValue = _mockInventory.fold<double>(0, (sum, item) {
-      return sum + (item['quantityInStock'] * item['sellingPrice']);
+    final totalValue = _inventory.fold<double>(0, (sum, item) {
+      return sum + ((item['quantityInStock'] as num) * (item['sellingPrice'] as num));
     });
     
     return Container(
@@ -334,12 +404,19 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
     );
   }
 
-  Widget _buildInventoryCard(Map<String, dynamic> item, bool isDark) {
-    final isLowStock = item['quantityInStock'] <= item['reorderLevel'];
-    final profit = item['sellingPrice'] - item['purchasePrice'];
-    final margin = (profit / item['sellingPrice'] * 100);
-    final totalValue = item['quantityInStock'] * item['sellingPrice'];
+  Widget _buildInventoryCard(dynamic item, bool isDark) {
+    final double qty = (item['quantityInStock'] as num).toDouble();
+    final double reorder = (item['reorderLevel'] ?? 0.0).toDouble();
+    final isLowStock = qty <= reorder;
+
+    final double buy = (item['purchasePrice'] as num).toDouble();
+    final double sell = (item['sellingPrice'] as num).toDouble();
+    final profit = sell - buy;
+    final margin = sell > 0 ? (profit / sell * 100) : 0.0;
+    final totalValue = qty * sell;
     
+    final supplierName = item['supplier']?['businessName'] ?? item['supplier']?['name'] ?? 'N/A';
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -363,7 +440,6 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header Row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -374,7 +450,7 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
                     Row(
                       children: [
                         Text(
-                          item['materialType'],
+                          item['materialType'].toString().toUpperCase(),
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -390,7 +466,7 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
-                            item['category'],
+                            item['category'] ?? '',
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
@@ -402,7 +478,7 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Supplier: ${item['supplierName']}',
+                      'Supplier: $supplierName',
                       style: TextStyle(
                         fontSize: 12,
                         color: isDark ? AppTheme.darkTextSecondary : AppTheme.textLight,
@@ -436,17 +512,15 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          // Stats Row
           Row(
             children: [
-              _buildMetric('Stock', '${item['quantityInStock'].toInt()}kg', isDark),
-              _buildMetric('Buy', 'PKR ${item['purchasePrice'].toInt()}', isDark),
-              _buildMetric('Sell', 'PKR ${item['sellingPrice'].toInt()}', isDark),
+              _buildMetric('Stock', '${qty.toInt()} kg', isDark),
+              _buildMetric('Buy', 'PKR ${buy.toInt()}', isDark),
+              _buildMetric('Sell', 'PKR ${sell.toInt()}', isDark),
               _buildMetric('Margin', '${margin.toStringAsFixed(1)}%', isDark),
             ],
           ),
           const SizedBox(height: 12),
-          // Value and Actions
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -461,26 +535,10 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
               Row(
                 children: [
                   IconButton(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Edit ${item['materialType']}')),
-                      );
-                    },
+                    onPressed: () => _showEditDialog(item),
                     icon: Icon(
                       Icons.edit_outlined,
                       size: 20,
-                      color: isDark ? AppTheme.darkTextSecondary : AppTheme.textLight,
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('View details for ${item['materialType']}')),
-                      );
-                    },
-                    icon: Icon(
-                      Icons.arrow_forward_ios,
-                      size: 16,
                       color: isDark ? AppTheme.darkTextSecondary : AppTheme.textLight,
                     ),
                   ),
@@ -521,64 +579,21 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
 
   Widget _buildInventoryTurnover(bool isDark) {
     return Container(
-      margin: const EdgeInsets.all(16),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isDark ? AppTheme.darkCardSurface : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: (isDark ? AppTheme.darkSecondaryGreen : AppTheme.lightGray).withOpacity(0.3),
+          color: (isDark ? AppTheme.darkSecondaryGreen : AppTheme.lightGray)
+              .withOpacity(0.3),
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Inventory Turnover',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: isDark ? AppTheme.darkTextPrimary : AppTheme.textDark,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              _buildTurnoverItem('Fast Moving', 'Plastic (PET)', 0.8, Colors.green, isDark),
-              const SizedBox(width: 12),
-              _buildTurnoverItem('Slow Moving', 'Glass', 0.3, Colors.orange, isDark),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTurnoverItem(String label, String item, double progress, Color color, bool isDark) {
-    return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: isDark ? AppTheme.darkTextSecondary : AppTheme.textLight,
-                ),
-              ),
-              Icon(
-                progress > 0.5 ? Icons.trending_up : Icons.trending_down,
-                size: 16,
-                color: color,
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            item,
+            'Inventory Status Alert',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
@@ -586,13 +601,15 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          LinearProgressIndicator(
-            value: progress,
-            backgroundColor: color.withOpacity(0.1),
-            valueColor: AlwaysStoppedAnimation<Color>(color),
-            minHeight: 4,
-            borderRadius: BorderRadius.circular(2),
-          ),
+          Text(
+            _inventory.any((item) => (item['quantityInStock'] as num) <= (item['reorderLevel'] ?? 0.0))
+                ? '⚠️ You have items below the reorder point. Check Low Stock items.'
+                : '✅ All materials stock levels are healthy.',
+            style: TextStyle(
+              fontSize: 12,
+              color: isDark ? Colors.white70 : Colors.black87,
+            ),
+          )
         ],
       ),
     );

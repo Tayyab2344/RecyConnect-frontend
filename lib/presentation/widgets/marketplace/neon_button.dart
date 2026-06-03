@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/marketplace_theme.dart';
+import '../../../core/theme/marketplace_theme.dart';
 
 class NeonButton extends StatelessWidget {
   final String text;

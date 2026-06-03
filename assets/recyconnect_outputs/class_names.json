@@ -1,0 +1,6 @@
+{
+  "ewaste": 0,
+  "metal": 1,
+  "paper": 2,
+  "plastic": 3
+}

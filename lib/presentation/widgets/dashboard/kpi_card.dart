@@ -9,13 +9,13 @@ class KPICard extends StatelessWidget {
   final bool isDark;
 
   const KPICard({
-    Key? key,
+    super.key,
     required this.title,
     required this.value,
     required this.subtitle,
     required this.icon,
     required this.isDark,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -28,14 +28,14 @@ class KPICard extends StatelessWidget {
           gradient: MarketplaceTheme.getKPIGradient(isDark),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isDark 
-              ? MarketplaceTheme.darkAccentGreen.withOpacity(0.3) 
-              : Colors.grey.withOpacity(0.1),
+            color: isDark
+                ? MarketplaceTheme.darkAccentGreen.withValues(alpha: 0.3)
+                : Colors.grey.withValues(alpha: 0.1),
             width: 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: isDark ? Colors.black26 : Colors.grey.withOpacity(0.1),
+              color: isDark ? Colors.black26 : Colors.grey.withValues(alpha: 0.1),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
@@ -51,10 +51,12 @@ class KPICard extends StatelessWidget {
                 Icon(
                   icon,
                   size: 18,
-                  color: isDark ? MarketplaceTheme.darkAccentGreen : MarketplaceTheme.lightAccent,
+                  color: isDark
+                      ? MarketplaceTheme.darkAccentGreen
+                      : MarketplaceTheme.lightAccent,
                 ),
                 if (isDark)
-                  Icon(Icons.arrow_outward, size: 12, color: Colors.white38),
+                  const Icon(Icons.arrow_outward, size: 12, color: Colors.white38),
               ],
             ),
             Column(

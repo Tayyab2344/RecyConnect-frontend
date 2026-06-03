@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/services/complaint_service.dart';
 
 class ReportProblemScreen extends StatefulWidget {
   const ReportProblemScreen({Key? key}) : super(key: key);
@@ -13,7 +16,6 @@ class _ReportProblemScreenState extends State<ReportProblemScreen> {
   final _descriptionController = TextEditingController();
   
   String? _selectedCategory;
-  bool _isSubmitting = false;
   
   final List<Map<String, dynamic>> _problemCategories = [
     {
@@ -72,15 +74,20 @@ class _ReportProblemScreenState extends State<ReportProblemScreen> {
     }
 
     if (_formKey.currentState!.validate()) {
-      setState(() => _isSubmitting = true);
-
-      // Simulate API call
-      Future.delayed(const Duration(seconds: 1), () {
-        if (mounted) {
-          setState(() => _isSubmitting = false);
-          _showSuccessDialog();
-        }
+      // Submit offline instantly
+      final complaintService = Provider.of<ComplaintService>(context, listen: false);
+      
+      complaintService.submitComplaint({
+        'category': _selectedCategory,
+        'description': _descriptionController.text,
       });
+
+      _descriptionController.clear();
+      setState(() {
+        _selectedCategory = null;
+      });
+
+      _showSuccessDialog();
     }
   }
 
@@ -130,7 +137,6 @@ class _ReportProblemScreenState extends State<ReportProblemScreen> {
           TextButton(
             onPressed: () {
               Navigator.pop(context); // Close dialog
-              Navigator.pop(context); // Go back
             },
             child: const Text('Close'),
           ),
@@ -335,23 +341,14 @@ class _ReportProblemScreenState extends State<ReportProblemScreen> {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: _isSubmitting ? null : _submitReport,
-                  child: _isSubmitting
-                      ? const SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2.5,
-                          ),
-                        )
-                      : const Text(
-                          'Submit Report',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                  onPressed: _submitReport,
+                  child: const Text(
+                    'Submit Report',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -386,6 +383,118 @@ class _ReportProblemScreenState extends State<ReportProblemScreen> {
                     ),
                   ],
                 ),
+              ),
+              const SizedBox(height: 32),
+
+              // RECENT REPORTS SECTION (Offline-First Viewer)
+              Consumer<ComplaintService>(
+                builder: (context, complaintService, child) {
+                  final complaints = complaintService.complaints;
+                  if (complaints.isEmpty) return const SizedBox.shrink();
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Recent Reports',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? AppTheme.darkTextPrimary : AppTheme.textDark,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      ListView.separated(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: complaints.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 12),
+                        itemBuilder: (context, index) {
+                          final complaint = complaints[index];
+                          final dateStr = complaint['timestamp'];
+                          final date = DateTime.tryParse(dateStr ?? '') ?? DateTime.now();
+                          final formattedDate = DateFormat('MMM d, yyyy • h:mm a').format(date);
+                          final isSynced = complaint['status'] == 'synced';
+
+                          return Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: isDark ? AppTheme.darkCardSurface : Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: isDark
+                                    ? AppTheme.darkSecondaryGreen.withOpacity(0.3)
+                                    : AppTheme.lightGray,
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      complaint['category'] ?? 'General',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: isDark ? AppTheme.darkTextPrimary : AppTheme.textDark,
+                                      ),
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: isSynced
+                                            ? AppTheme.primaryGreen.withOpacity(0.1)
+                                            : Colors.orange.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            isSynced ? Icons.cloud_done : Icons.cloud_upload,
+                                            size: 14,
+                                            color: isSynced ? AppTheme.primaryGreen : Colors.orange,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            isSynced ? 'Synced' : 'Pending',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                              color: isSynced ? AppTheme.primaryGreen : Colors.orange,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  complaint['description'] ?? '',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: isDark ? AppTheme.darkTextSecondary : AppTheme.textLight,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  formattedDate,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  );
+                },
               ),
             ],
           ),

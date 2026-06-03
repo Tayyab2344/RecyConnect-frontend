@@ -80,9 +80,11 @@ class _CityAreaSelectorState extends State<CityAreaSelector> {
           ),
         if (widget.showLabels) const SizedBox(height: 8),
         
-        // Searchable City Selector
         GestureDetector(
-          onTap: () => _showCitySearchDialog(isDark),
+          onTap: () {
+            FocusScope.of(context).unfocus();
+            _showCitySearchDialog(isDark);
+          },
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
@@ -152,9 +154,11 @@ class _CityAreaSelectorState extends State<CityAreaSelector> {
           ),
         if (widget.showLabels) const SizedBox(height: 8),
         
-        // Searchable Area Selector
         GestureDetector(
-          onTap: isEnabled ? () => _showAreaSearchDialog(isDark, areas) : null,
+          onTap: isEnabled ? () {
+            FocusScope.of(context).unfocus();
+            _showAreaSearchDialog(isDark, areas);
+          } : null,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(

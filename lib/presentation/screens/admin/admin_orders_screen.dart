@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../../../core/constants/admin_colors.dart';
 import '../../../core/constants/modern_colors.dart';
 import '../../widgets/admin/admin_drawer.dart';
+import '../../../core/services/admin_service.dart';
 
 // OrderData Model
 class OrderData {
@@ -13,9 +14,9 @@ class OrderData {
   final String collectorName;
   final String collectorContact;
   final String materialType;
-  final int weight;
-  final int pricePerKg;
-  final int totalAmount;
+  final double weight;
+  final double pricePerKg;
+  final double totalAmount;
   String status;
   final DateTime orderDate;
   final String location;
@@ -46,7 +47,13 @@ class AdminOrdersScreen extends StatefulWidget {
   State<AdminOrdersScreen> createState() => _AdminOrdersScreenState();
 }
 
-class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
+
+
+class _AdminOrdersScreenState extends State<AdminOrdersScreen> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  final AdminService _adminService = AdminService();
+  bool _isLoading = true;
+  String? _error;
   final TextEditingController _searchController = TextEditingController();
   bool _isSearchVisible = false;
   String _searchQuery = '';
@@ -57,89 +64,72 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
   @override
   void initState() {
     super.initState();
-    _generateDummyOrders();
-    _filteredOrders = List.from(_allOrders);
+    _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(_applyFilters);
+    _fetchOrders();
   }
 
-  void _generateDummyOrders() {
-    final users = [
-      {'name': 'John Doe', 'contact': '+92-300-1111111'},
-      {'name': 'Sarah Ali', 'contact': '+92-301-2222222'},
-      {'name': 'Mike Wilson', 'contact': '+92-302-3333333'},
-      {'name': 'Lisa Brown', 'contact': '+92-303-4444444'},
-      {'name': 'Ahmed Raza', 'contact': '+92-304-5555555'},
-      {'name': 'Fatima Noor', 'contact': '+92-305-6666666'},
-      {'name': 'Hassan Shah', 'contact': '+92-306-7777777'},
-      {'name': 'Zara Malik', 'contact': '+92-307-8888888'},
-      {'name': 'Bilal Khan', 'contact': '+92-308-9999999'},
-      {'name': 'Ayesha Tariq', 'contact': '+92-309-0000000'},
-    ];
-
-    final collectors = [
-      {'name': 'Ahmed Khan', 'contact': '+92-310-1234567'},
-      {'name': 'Fatima Khan', 'contact': '+92-311-2345678'},
-      {'name': 'Hassan Raza', 'contact': '+92-312-3456789'},
-      {'name': 'Zara Sheikh', 'contact': '+92-313-4567890'},
-      {'name': 'Usman Ali', 'contact': '+92-314-5678901'},
-    ];
-
-    final locations = [
-      {'location': 'Downtown', 'address': 'Block A, Downtown, Lahore'},
-      {'location': 'Gulberg', 'address': 'Main Boulevard, Gulberg III, Lahore'},
-      {'location': 'DHA', 'address': 'Phase 5, DHA, Lahore'},
-      {'location': 'Model Town', 'address': 'Model Town Extension, Lahore'},
-      {'location': 'Johar Town', 'address': 'Block E, Johar Town, Lahore'},
-      {'location': 'Bahria Town', 'address': 'Sector C, Bahria Town, Lahore'},
-    ];
-
-    final materials = [
-      {'type': 'Plastic', 'price': 100},
-      {'type': 'Paper', 'price': 50},
-      {'type': 'Metal', 'price': 150},
-      {'type': 'E-Waste', 'price': 200},
-    ];
-
-    final statuses = ['completed', 'completed', 'completed', 'pending', 'pending', 'cancelled'];
-
-    _allOrders = List.generate(30, (index) {
-      final user = users[index % users.length];
-      final collector = collectors[index % collectors.length];
-      final loc = locations[index % locations.length];
-      final material = materials[index % materials.length];
-      final status = statuses[index % statuses.length];
-      final weight = 10 + (index * 3) % 91;
-      final pricePerKg = material['price'] as int;
-
-      return OrderData(
-        id: 'ID${10001 + index}',
-        orderId: 'ORD-${10001 + index}',
-        userName: user['name']!,
-        userContact: user['contact']!,
-        collectorName: collector['name']!,
-        collectorContact: collector['contact']!,
-        materialType: material['type'] as String,
-        weight: weight,
-        pricePerKg: pricePerKg,
-        totalAmount: weight * pricePerKg,
-        status: status,
-        orderDate: DateTime(2025, 1, 1).add(Duration(days: index % 30)),
-        location: loc['location']!,
-        address: loc['address']!,
-      );
+  Future<void> _fetchOrders() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
     });
-
-    // Sort by newest first
-    _allOrders.sort((a, b) => b.orderDate.compareTo(a.orderDate));
+    try {
+      final orders = await _adminService.getAdminOrders(limit: 100);
+      setState(() {
+        _allOrders = orders.map<OrderData>((o) {
+          final items = o['items'] as List?;
+          final item = (items != null && items.isNotEmpty) ? items[0] : null;
+          final listing = item?['listing'];
+          
+          final buyer = o['buyer'] ?? {};
+          final seller = o['seller'] ?? {};
+          
+          return OrderData(
+            id: o['id']?.toString() ?? '',
+            orderId: o['id']?.toString() ?? '',
+            userName: buyer['name'] ?? 'Unknown Buyer',
+            userContact: buyer['email'] ?? '',
+            collectorName: seller['name'] ?? 'Unknown Seller',
+            collectorContact: seller['email'] ?? '',
+            materialType: listing?['materialType'] ?? listing?['category'] ?? 'Unknown',
+            weight: (item?['quantity'] ?? 0).toDouble(),
+            pricePerKg: (item?['pricePerUnit'] ?? 0).toDouble(),
+            totalAmount: (o['totalAmount'] ?? 0).toDouble(),
+            status: o['status']?.toString().toLowerCase() ?? 'pending',
+            orderDate: DateTime.tryParse(o['createdAt']?.toString() ?? '') ?? DateTime.now(),
+            location: buyer['city'] ?? 'Unknown',
+            address: buyer['area'] ?? 'Unknown',
+          );
+        }).toList();
+        _applyFilters();
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _tabController.dispose();
     super.dispose();
   }
 
   void _applyFilters() {
     List<OrderData> result = List.from(_allOrders);
+
+    // Apply tab filter if needed (currently all tabs show the same data but let's leave it extensible)
+    final tabIndex = _tabController.index;
+    if (tabIndex == 1) {
+      // Buyer View - maybe just show all orders, but could be filtered
+    } else if (tabIndex == 2) {
+      // Seller View - same
+    }
 
     // Apply search filter
     if (_searchQuery.isNotEmpty) {
@@ -259,11 +249,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
   }
 
   Future<void> _onRefresh() async {
-    await Future.delayed(const Duration(seconds: 1));
-    setState(() {
-      _generateDummyOrders();
-      _applyFilters();
-    });
+    await _fetchOrders();
   }
 
   Color _getStatusColor(String status) {
@@ -494,6 +480,26 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
             ],
           ),
         ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(48),
+          child: Container(
+            color: theme.cardColor,
+            child: TabBar(
+              controller: _tabController,
+              labelColor: AdminColors.primaryGreen,
+              unselectedLabelColor: theme.textTheme.bodyMedium?.color,
+              labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal, fontSize: 14),
+              indicatorColor: AdminColors.primaryGreen,
+              indicatorWeight: 3,
+              tabs: const [
+                Tab(text: 'All Orders'),
+                Tab(text: 'Buyer View'),
+                Tab(text: 'Seller View'),
+              ],
+            ),
+          ),
+        ),
       ),
       drawer: const AdminDrawer(currentRoute: 'orders'),
       body: Column(
@@ -615,20 +621,40 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
 
           // Order Cards List
           Expanded(
-            child: _filteredOrders.isEmpty
-                ? _buildEmptyState()
-                : RefreshIndicator(
-                    onRefresh: _onRefresh,
-                    color: AdminColors.primaryGreen,
-                    child: ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: _filteredOrders.length,
-                      itemBuilder: (context, index) {
-                        final order = _filteredOrders[index];
-                        return _buildOrderCard(order);
-                      },
-                    ),
-                  ),
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator(color: AdminColors.primaryGreen))
+                : _error != null
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.error_outline, size: 48, color: AdminColors.error),
+                            const SizedBox(height: 12),
+                            Text(_error!, style: const TextStyle(color: AdminColors.textSecondary)),
+                            const SizedBox(height: 12),
+                            ElevatedButton.icon(
+                              onPressed: _fetchOrders,
+                              icon: const Icon(Icons.refresh),
+                              label: const Text('Retry'),
+                              style: ElevatedButton.styleFrom(backgroundColor: AdminColors.primaryGreen),
+                            ),
+                          ],
+                        ),
+                      )
+                    : _filteredOrders.isEmpty
+                        ? _buildEmptyState()
+                        : RefreshIndicator(
+                            onRefresh: _onRefresh,
+                            color: AdminColors.primaryGreen,
+                            child: ListView.builder(
+                              padding: const EdgeInsets.all(16),
+                              itemCount: _filteredOrders.length,
+                              itemBuilder: (context, index) {
+                                final order = _filteredOrders[index];
+                                return _buildOrderCard(order);
+                              },
+                            ),
+                          ),
           ),
         ],
       ),

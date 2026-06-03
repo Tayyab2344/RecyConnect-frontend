@@ -1,12 +1,17 @@
 import 'dart:ui';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../core/models/listing_model.dart';
 import '../../../core/services/listing_service.dart';
 import '../../../core/utils/static_data.dart';
 import '../../widgets/marketplace/glass_card.dart';
+import '../../widgets/recycle_loader.dart';
+import '../../widgets/skeleton_loader.dart';
 import '../../../core/theme/marketplace_theme.dart';
 import 'create_listing_screen.dart';
+import 'listing_detail_screen.dart';
+import 'package:flutter/foundation.dart';
 
 class MyListingsScreen extends StatefulWidget {
   const MyListingsScreen({Key? key}) : super(key: key);
@@ -57,7 +62,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      print('Error loading listings: $e');
+      if (kDebugMode) print('Error loading listings: $e');
       setState(() => _isLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -107,6 +112,19 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
     }
   }
 
+  Future<void> _editListing(Listing listing) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CreateListingScreen(listing: listing),
+      ),
+    );
+
+    if (result == true) {
+      _loadListings();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -114,7 +132,13 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('My Listings'),
+        title: Text(
+          'My Listings',
+          style: TextStyle(
+            color: isDark ? Colors.white : Colors.black87,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
@@ -154,7 +178,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
             child: RefreshIndicator(
               onRefresh: _loadListings,
               child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? SkeletonLoader.grid()
                   : Column(
                       children: [
                         _buildStatsCard(isDark),
@@ -309,7 +333,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        childAspectRatio: 0.75,
+        childAspectRatio: 0.56,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
       ),
@@ -322,6 +346,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
   }
 
   Widget _buildListingCard(Listing listing, bool isDark) {
+    final statusColor = _getStatusColor(listing.statusDisplay);
     return GestureDetector(
       onTap: () => _showListingDetails(listing),
       child: GlassCard(
@@ -338,16 +363,16 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: _getStatusColor(listing.status).withOpacity(0.2),
+                      color: statusColor.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: _getStatusColor(listing.status).withOpacity(0.5)),
+                      border: Border.all(color: statusColor.withOpacity(0.5)),
                     ),
                     child: Text(
                       listing.statusDisplay,
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
-                        color: _getStatusColor(listing.status),
+                        color: statusColor,
                       ),
                     ),
                   ),
@@ -355,28 +380,67 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
               ),
             ),
             
-            // Icon
+            // Image or Icon
             Expanded(
-              child: Center(
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [
-                        _getMaterialColor(listing.materialType).withOpacity(0.3),
-                        _getMaterialColor(listing.materialType).withOpacity(0.1),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                  ),
-                  child: Text(
-                    StaticDataHelper.getMaterialIcon(listing.materialType),
-                    style: const TextStyle(fontSize: 40),
-                  ),
-                ),
-              ),
+              child: listing.hasNetworkImages
+                  ? ClipRRect(
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                      child: CachedNetworkImage(
+                        imageUrl: listing.imageUrls.first,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        memCacheWidth: 400, // RAM protection
+                        memCacheHeight: 400, // RAM protection
+                        placeholder: (context, url) => Center(
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: _getMaterialColor(listing.materialType),
+                          ),
+                        ),
+                        errorWidget: (context, url, error) => Center(
+                          child: Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: _getMaterialColor(listing.materialType).withOpacity(0.15),
+                            ),
+                            child: Text(
+                              StaticDataHelper.getMaterialIcon(listing.materialType),
+                              style: const TextStyle(fontSize: 40),
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
+                  : listing.decodedImages.isNotEmpty
+                      ? ClipRRect(
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                          child: Image.memory(
+                            listing.decodedImages.first,
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                          ),
+                        )
+                      : Center(
+                          child: Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: LinearGradient(
+                                colors: [
+                                  _getMaterialColor(listing.materialType).withOpacity(0.3),
+                                  _getMaterialColor(listing.materialType).withOpacity(0.1),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                            ),
+                            child: Text(
+                              StaticDataHelper.getMaterialIcon(listing.materialType),
+                              style: const TextStyle(fontSize: 40),
+                            ),
+                          ),
+                        ),
             ),
             
             // Details
@@ -386,11 +450,22 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    listing.materialTypeDisplay,
+                    listing.displayTitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: isDark ? Colors.white : const Color(0xFF2C3E50),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    listing.materialTypeDisplay,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: _getMaterialColor(listing.materialType),
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -399,31 +474,56 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                       Icon(Icons.scale, size: 14, color: isDark ? Colors.white60 : Colors.grey),
                       const SizedBox(width: 4),
                       Text(
-                        '${listing.estimatedWeight} kg',
+                        '${listing.displayWeight.toStringAsFixed(1)} kg',
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 12,
                           color: isDark ? Colors.white70 : Colors.grey[700],
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(Icons.calendar_today, size: 14, color: isDark ? Colors.white60 : Colors.grey),
+                      const Spacer(),
+                      Icon(Icons.calendar_today, size: 12, color: isDark ? Colors.white60 : Colors.grey),
                       const SizedBox(width: 4),
                       Text(
                         DateFormat('MMM dd').format(listing.createdAt),
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 11,
                           color: isDark ? Colors.white54 : Colors.grey[600],
                         ),
                       ),
-                    ],
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: listing.status == 'SOLD'
+                          ? null
+                          : () => _editListing(listing),
+                      icon: const Icon(Icons.edit_outlined, size: 14),
+                      label: const Text('Edit'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    visualDensity: VisualDensity.compact,
+                    tooltip: 'Delete',
+                    onPressed: listing.hasOrders ? null : () => _deleteListing(listing.id),
+                    icon: Icon(
+                      Icons.delete_outline,
+                      size: 20,
+                      color: listing.hasOrders ? Colors.grey : Colors.redAccent,
+                    ),
                   ),
                 ],
               ),
-            ),
+            ],
+          ),
+        ),
           ],
         ),
       ),
@@ -548,61 +648,20 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
   }
 
   void _showListingDetails(Listing listing) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Theme.of(context).cardColor,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-             Text(StaticDataHelper.getMaterialIcon(listing.materialType), style: const TextStyle(fontSize: 24)),
-             const SizedBox(width: 8),
-             Expanded(child: Text('${listing.materialTypeDisplay} Listing')),
-          ],
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ListingDetailScreen(
+          listing: listing,
+          onEdit: () {
+            Navigator.pop(context);
+            _editListing(listing);
+          },
+          onDelete: () {
+            Navigator.pop(context);
+            _deleteListing(listing.id);
+          },
         ),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildDetailRow('Weight', '${listing.estimatedWeight} kg'),
-              _buildDetailRow('Status', listing.statusDisplay),
-              _buildDetailRow('Address', listing.pickupAddress),
-              _buildDetailRow('Created', DateFormat('MMM dd, yyyy').format(listing.createdAt)),
-              if (listing.notes != null && listing.notes!.isNotEmpty)
-                _buildDetailRow('Notes', listing.notes!),
-            ],
-          ),
-        ),
-         actions: [
-          if (listing.status == 'PENDING')
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _deleteListing(listing.id);
-              },
-              child: const Text('Delete', style: TextStyle(color: Colors.red)),
-            ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF4CAF50), foregroundColor: Colors.white),
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey)),
-          Text(value, style: const TextStyle(fontSize: 15)),
-          const Divider(),
-        ],
       ),
     );
   }
@@ -620,6 +679,20 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
 
   Color _getStatusColor(String status) {
     switch (status) {
+      case 'Active':
+      case 'PUBLISHED':
+        return Colors.green;
+      case 'Paused':
+      case 'PAUSED':
+        return Colors.blueGrey;
+      case 'Sold':
+      case 'SOLD':
+        return Colors.green;
+      case 'Order Pending':
+        return Colors.orange;
+      case 'Draft':
+      case 'DRAFT':
+        return Colors.grey;
       case 'PENDING': return Colors.orange;
       case 'COLLECTED': return Colors.blue;
       case 'COMPLETED': return Colors.green;

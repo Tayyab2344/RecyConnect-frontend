@@ -1,6 +1,7 @@
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:flutter/foundation.dart';
 
 class LocationService {
   // Request location permission
@@ -47,7 +48,7 @@ class LocationService {
         'longitude': position.longitude,
       };
     } catch (e) {
-      print('Error getting location: $e');
+      if (kDebugMode) print('Error getting location: $e');
       return null;
     }
   }
@@ -62,7 +63,7 @@ class LocationService {
         onTimeout: () => null,
       );
     } catch (e) {
-      print('Location timeout: $e');
+      if (kDebugMode) print('Location timeout: $e');
       return null;
     }
   }
@@ -93,7 +94,7 @@ class LocationService {
       }
       return null;
     } catch (e) {
-      print('Error reverse geocoding: $e');
+      if (kDebugMode) print('Error reverse geocoding: $e');
       return null;
     }
   }

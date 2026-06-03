@@ -1,9 +1,13 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../core/models/order_model.dart';
 import '../../../core/services/order_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/error_message_helper.dart';
+import '../../widgets/recycle_loader.dart';
+import '../../widgets/skeleton_loader.dart';
+import 'package:flutter/foundation.dart';
 
 class SellerOrdersScreen extends StatefulWidget {
   const SellerOrdersScreen({Key? key}) : super(key: key);
@@ -39,7 +43,7 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
         });
       }
     } catch (e) {
-      print('Error loading seller orders: $e');
+      if (kDebugMode) print('Error loading seller orders: $e');
       if (mounted) {
         setState(() => _isLoading = false);
         ErrorMessageHelper.showErrorSnackBar(
@@ -105,7 +109,7 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
         showDialog(
           context: context,
           barrierDismissible: false,
-          builder: (context) => const Center(child: CircularProgressIndicator()),
+          builder: (context) => const Center(child: RecycleLoader()),
         );
 
         await _orderService.updateOrderStatus(order.id, newStatus);
@@ -147,7 +151,7 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
     return Scaffold(
       backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.backgroundLight,
       appBar: AppBar(
-        title: const Text('Seller Orders'),
+        title: const Text('Manage Sales'),
         centerTitle: true,
         backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.primaryGreen,
         foregroundColor: Colors.white,
@@ -227,11 +231,7 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
           // Orders List
           Expanded(
             child: _isLoading
-                ? Center(
-                    child: CircularProgressIndicator(
-                      color: isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen,
-                    ),
-                  )
+                ? SkeletonLoader.list()
                 : _filteredOrders.isEmpty
                     ? Center(
                         child: Column(
@@ -365,12 +365,9 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
                   decoration: BoxDecoration(
                     color: materialColor.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Center(
-                    child: Icon(
-                      _getMaterialIcon(order.materialType),
-                      color: materialColor,
-                      size: 24,
+                    image: DecorationImage(
+                      image: _getImageProvider(order.imageUrl, order.materialType),
+                      fit: BoxFit.cover,
                     ),
                   ),
                 ),
@@ -615,6 +612,37 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
         return Icons.devices;
       default:
         return Icons.inventory_2;
+    }
+  }
+
+  ImageProvider _getImageProvider(String? imageUrl, String material) {
+    if (imageUrl != null && imageUrl.isNotEmpty) {
+      if (imageUrl.startsWith('http')) {
+        return NetworkImage(imageUrl);
+      } else {
+        try {
+          return MemoryImage(base64Decode(imageUrl.contains(',') ? imageUrl.split(',').last : imageUrl));
+        } catch (e) {
+          // Fallback
+        }
+      }
+    }
+    
+    switch (material.toLowerCase()) {
+      case 'plastic':
+        return const NetworkImage('https://images.unsplash.com/photo-1605600659873-d808a13e4d2a?auto=format&fit=crop&q=80&w=400');
+      case 'paper':
+        return const NetworkImage('https://images.unsplash.com/photo-1603398938378-e54eab446dde?auto=format&fit=crop&q=80&w=400');
+      case 'metal':
+        return const NetworkImage('https://images.unsplash.com/photo-1558231268-b80cbf376a88?auto=format&fit=crop&q=80&w=400');
+      case 'e-waste':
+        return const NetworkImage('https://images.unsplash.com/photo-1550005973-58ce3e70cc3d?auto=format&fit=crop&q=80&w=400');
+      case 'glass':
+        return const NetworkImage('https://images.unsplash.com/photo-1521124443916-29111c1e57bc?auto=format&fit=crop&q=80&w=400');
+      case 'clothing':
+        return const NetworkImage('https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&q=80&w=400');
+      default:
+        return const NetworkImage('https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?auto=format&fit=crop&q=80&w=400');
     }
   }
 

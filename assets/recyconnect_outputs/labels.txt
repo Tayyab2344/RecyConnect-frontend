@@ -1,0 +1,4 @@
+ewaste
+metal
+paper
+plastic

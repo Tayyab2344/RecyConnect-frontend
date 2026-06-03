@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/api_constants.dart';
+import 'secure_storage_service.dart';
 
 class AdminService extends ChangeNotifier {
   // Update the baseUrl in lib/core/constants/api_constants.dart
@@ -27,8 +27,7 @@ class AdminService extends ChangeNotifier {
   }
 
   Future<void> _loadToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    _token = prefs.getString('auth_token');
+    _token = await SecureStorageService.readToken();
   }
 
   void _setLoading(bool loading) {
@@ -223,6 +222,45 @@ class AdminService extends ChangeNotifier {
       }
     } catch (e) {
       throw Exception('Error fetching stats: ${e.toString()}');
+    }
+  }
+  Future<List<dynamic>> getAdminOrders({
+    String? status,
+    String? paymentMethod,
+    String? city,
+    int page = 1,
+    int limit = 50,
+  }) async {
+    try {
+      if (_token == null) await _loadToken();
+
+      final queryParams = <String, String>{
+        'page': page.toString(),
+        'limit': limit.toString(),
+      };
+      if (status != null) queryParams['status'] = status;
+      if (paymentMethod != null) queryParams['paymentMethod'] = paymentMethod;
+      if (city != null) queryParams['city'] = city;
+
+      final uri = Uri.parse('${ApiConstants.baseUrl}/admin/orders')
+          .replace(queryParameters: queryParams);
+
+      final response = await http.get(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_token',
+        },
+      );
+
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200 && data['success']) {
+        return data['data']['items'] ?? data['data'] ?? [];
+      } else {
+        throw Exception(data['error']?['message'] ?? 'Failed to fetch orders');
+      }
+    } catch (e) {
+      throw Exception('Error fetching orders: ${e.toString()}');
     }
   }
 }

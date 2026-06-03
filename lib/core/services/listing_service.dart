@@ -1,31 +1,29 @@
 import '../models/listing_model.dart';
-import '../constants/api_constants.dart';
-import 'api_service.dart';
+import '../../core/di/service_locator.dart';
+import '../../features/listing/domain/repositories/listing_repository.dart';
+import '../../core/network/api_result.dart';
 
+/// ListingService now delegates to the clean architecture ListingRepository.
+/// All existing screens continue to work with no changes.
 class ListingService {
-  final ApiService _apiService = ApiService();
+  final ListingRepository _repository = sl<ListingRepository>();
+
+  /// Unwraps an ApiResult into a Map or throws on failure.
+  Map<String, dynamic> _unwrapMap(ApiResult<Map<String, dynamic>> result, String fallback) {
+    if (result.isSuccess && result.data != null) return result.data!;
+    throw Exception(result.message ?? fallback);
+  }
 
   // Create a new listing
   Future<Listing> createListing(Listing listing) async {
-    try {
-      final jsonData = listing.toCreateJson();
-      print('DEBUG: Creating listing with data: $jsonData');
-      print('DEBUG: Images count: ${jsonData['images']?.length ?? 0}');
-      
-      final response = await _apiService.post(
-        '/listings',
-        jsonData,
-      );
-      
-      if (response['success'] == true && response['data'] != null) {
-        return Listing.fromJson(response['data']);
-      } else {
-        throw Exception(response['message'] ?? 'Failed to create listing');
-      }
-    } catch (e) {
-      print('DEBUG: Error creating listing: $e');
-      throw Exception('Error creating listing: $e');
-    }
+    final data = _unwrapMap(await _repository.createListing(listing.toCreateJson()), 'Failed to create listing');
+    return Listing.fromJson(data);
+  }
+
+  // Update an existing listing
+  Future<Listing> updateListing(int id, Listing listing) async {
+    final data = _unwrapMap(await _repository.updateListing(id, listing.toCreateJson()), 'Failed to update listing');
+    return Listing.fromJson(data);
   }
 
   // Get user's listings with optional filters
@@ -39,105 +37,65 @@ class ListingService {
     int limit = 10,
     bool isMarketplace = false,
   }) async {
-    try {
-      final queryParams = <String, String>{};
-      if (material != null) queryParams['material'] = material;
-      if (status != null) queryParams['status'] = status;
-      if (startDate != null) queryParams['startDate'] = startDate;
-      if (endDate != null) queryParams['endDate'] = endDate;
-      if (search != null) queryParams['search'] = search;
-      queryParams['page'] = page.toString();
-      queryParams['limit'] = limit.toString();
-      if (isMarketplace) queryParams['view'] = 'marketplace';
+    final data = _unwrapMap(await _repository.getListings(
+      material: material,
+      status: status,
+      startDate: startDate,
+      endDate: endDate,
+      search: search,
+      page: page,
+      limit: limit,
+      isMarketplace: isMarketplace,
+    ), 'Failed to fetch listings');
 
-      final queryString = queryParams.entries
-          .map((e) => '${e.key}=${Uri.encodeComponent(e.value)}')
-          .join('&');
-
-      final response = await _apiService.get('/listings?$queryString');
-
-      if (response['success'] == true) {
-        final listings = (response['data'] as List)
-            .map((json) => Listing.fromJson(json))
-            .toList();
-        
-        return {
-          'listings': listings,
-          'pagination': response['pagination'],
-        };
-      } else {
-        throw Exception(response['message'] ?? 'Failed to fetch listings');
-      }
-    } catch (e) {
-      throw Exception('Error fetching listings: $e');
-    }
+    final listings = (data['data'] as List)
+        .map((json) => Listing.fromJson(json))
+        .toList();
+    return {
+      'listings': listings,
+      'pagination': data['pagination'],
+    };
   }
 
   // Get listing statistics
   Future<Map<String, dynamic>> getListingStats() async {
-    try {
-      final response = await _apiService.get('/listings/stats');
-      
-      if (response['success'] == true && response['data'] != null) {
-        return response['data'];
-      } else {
-        throw Exception(response['message'] ?? 'Failed to fetch statistics');
-      }
-    } catch (e) {
-      throw Exception('Error fetching stats: $e');
-    }
+    return _unwrapMap(await _repository.getListingStats(), 'Failed to fetch statistics');
   }
 
   // Update listing status
-  Future<Listing> updateListingStatus(int id, String status, {String? buyerInfo}) async {
-    try {
-      final data = {'status': status};
-      if (buyerInfo != null) {
-        data['buyerInfo'] = buyerInfo;
-      }
-
-      final response = await _apiService.put('/listings/$id', data);
-      
-      if (response['success'] == true && response['data'] != null) {
-        return Listing.fromJson(response['data']);
-      } else {
-        throw Exception(response['message'] ?? 'Failed to update listing');
-      }
-    } catch (e) {
-      throw Exception('Error updating listing: $e');
-    }
+  Future<Listing> updateListingStatus(int id, String status,
+      {String? buyerInfo}) async {
+    final data = _unwrapMap(await _repository.updateListingStatus(id, status, buyerInfo: buyerInfo), 'Failed to update listing');
+    return Listing.fromJson(data);
   }
 
   // Delete a listing
   Future<void> deleteListing(int id) async {
-    try {
-      final response = await _apiService.delete('/listings/$id');
-      
-      if (response['success'] != true) {
-        throw Exception(response['message'] ?? 'Failed to delete listing');
-      }
-    } catch (e) {
-      throw Exception('Error deleting listing: $e');
+    final result = await _repository.deleteListing(id);
+    if (result.isFailure) {
+      throw Exception(result.message ?? 'Failed to delete listing');
     }
   }
 
-  // Get export URL for CSV download (returns URL, actual download handled by UI)
+  // Fetch dynamic material rates from backend
+  Future<Map<String, double>> fetchMaterialRates() async {
+    final result = await _repository.fetchMaterialRates();
+    if (result.isSuccess && result.data != null) return result.data!;
+    throw Exception(result.message ?? 'Failed to fetch rates');
+  }
+
+  // Get export URL for CSV download
   String getExportUrl({
     String? material,
     String? status,
     String? startDate,
     String? endDate,
   }) {
-    final queryParams = <String, String>{};
-    if (material != null) queryParams['material'] = material;
-    if (status != null) queryParams['status'] = status;
-    if (startDate != null) queryParams['startDate'] = startDate;
-    if (endDate != null) queryParams['endDate'] = endDate;
-
-    final queryString = queryParams.entries
-        .map((e) => '${e.key}=${Uri.encodeComponent(e.value)}')
-        .join('&');
-
-    return '${ApiConstants.baseUrl}/listings/export${queryString.isNotEmpty ? "?$queryString" : ""}';
+    return _repository.getExportUrl(
+      material: material,
+      status: status,
+      startDate: startDate,
+      endDate: endDate,
+    );
   }
 }

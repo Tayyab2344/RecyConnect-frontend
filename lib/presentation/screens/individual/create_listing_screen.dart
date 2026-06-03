@@ -1,20 +1,26 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:math';
+import 'dart:typed_data';
+
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:recyconnect/core/models/listing_model.dart';
 import 'package:recyconnect/core/services/auth_service.dart';
+import 'package:recyconnect/core/services/image_classifier_service.dart';
 import 'package:recyconnect/core/services/listing_service.dart';
 import 'package:recyconnect/core/theme/marketplace_theme.dart';
 import 'package:recyconnect/presentation/widgets/marketplace/glass_card.dart';
 import 'package:recyconnect/presentation/widgets/marketplace/neon_button.dart';
+import 'package:flutter/foundation.dart';
 
 class CreateListingScreen extends StatefulWidget {
-  const CreateListingScreen({Key? key}) : super(key: key);
+  final Listing? listing;
+
+  const CreateListingScreen({Key? key, this.listing}) : super(key: key);
 
   @override
   State<CreateListingScreen> createState() => _CreateListingScreenState();
@@ -38,23 +44,20 @@ class _CreateListingScreenState extends State<CreateListingScreen>
 
   // State Variables
   List<XFile> _selectedImages = [];
+  List<String> _existingImages = [];
   String _selectedMaterial = 'Plastic';
   String _locationMethod = 'manual';
   bool _requestCollector = false;
   bool _isAnalyzing = false;
   bool _isSubmitting = false;
 
+  bool get _isEditing => widget.listing != null;
+
   // Animation for "AI Scanning"
   late AnimationController _scanController;
 
-  // Material Rates (Mock Data)
-  final Map<String, double> _materialRates = {
-    'Plastic': 20.0,
-    'Paper': 15.0,
-    'Metal': 40.0,
-    'E-Waste': 100.0,
-    'Glass': 10.0,
-  };
+  Map<String, double> _materialRates = {};
+  bool _isLoadingRates = true;
 
   @override
   void initState() {
@@ -63,7 +66,54 @@ class _CreateListingScreenState extends State<CreateListingScreen>
       vsync: this,
       duration: const Duration(seconds: 2),
     );
-    _loadUserLocation();
+    _prefillForEdit();
+    _loadRates();
+    if (!_isEditing) {
+      _loadUserLocation();
+    }
+  }
+
+  void _prefillForEdit() {
+    final listing = widget.listing;
+    if (listing == null) return;
+
+    _titleController.text = listing.title ?? '';
+    _descriptionController.text = listing.notes ?? '';
+    _weightController.text = listing.displayWeight.toStringAsFixed(
+      listing.displayWeight.truncateToDouble() == listing.displayWeight ? 0 : 1,
+    );
+    _addressController.text = listing.pickupAddress;
+    _selectedMaterial = listing.materialType;
+    _locationMethod = listing.locationMethod ?? 'manual';
+    _existingImages = listing.images ?? [];
+  }
+
+  Future<void> _loadRates() async {
+    try {
+      final rates = await _listingService.fetchMaterialRates();
+      if (mounted) {
+        setState(() {
+          _materialRates = rates;
+          if (!_isEditing && rates.isNotEmpty) {
+            _selectedMaterial = rates.keys.first;
+          } else if (_isEditing && rates.isNotEmpty) {
+            _selectedMaterial = rates.keys.firstWhere(
+              (key) => key.toLowerCase() == _selectedMaterial.toLowerCase(),
+              orElse: () => rates.keys.first,
+            );
+          }
+          _isLoadingRates = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoadingRates = false);
+        // Fallback or leave empty
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load material rates.')),
+        );
+      }
+    }
   }
 
   @override
@@ -84,10 +134,18 @@ class _CreateListingScreenState extends State<CreateListingScreen>
       final authService = Provider.of<AuthService>(context, listen: false);
       final response = await authService.fetchProfile();
       if (response['success'] == true) {
-        final data = response['data']['data'];
+        final data = response['data'] as Map<String, dynamic>;
         final addressParts = <String>[];
-        if (data['address'] != null) addressParts.add(data['address']);
-        if (data['city'] != null) addressParts.add(data['city']);
+        final address = data['address']?.toString().trim();
+        final area = data['area']?.toString().trim();
+        final city = data['city']?.toString().trim();
+        if (address != null && address.isNotEmpty) addressParts.add(address);
+        if (area != null && area.isNotEmpty && !addressParts.contains(area)) {
+          addressParts.add(area);
+        }
+        if (city != null && city.isNotEmpty && !addressParts.contains(city)) {
+          addressParts.add(city);
+        }
         
         if (addressParts.isNotEmpty) {
           setState(() {
@@ -126,36 +184,22 @@ class _CreateListingScreenState extends State<CreateListingScreen>
     if (source == null) return;
 
     final ImagePicker picker = ImagePicker();
-    List<XFile> newImages = [];
 
     try {
-      if (source == ImageSource.camera) {
-        final XFile? image = await picker.pickImage(
-          source: ImageSource.camera,
-          imageQuality: 70,
-          maxWidth: 800,
-          maxHeight: 800,
-        );
-        if (image != null) newImages.add(image);
-      } else {
-        final List<XFile> images = await picker.pickMultiImage(
-          imageQuality: 70,
-          maxWidth: 800,
-          maxHeight: 800,
-        );
-        newImages.addAll(images);
-      }
+      final XFile? image = await picker.pickImage(
+        source: source,
+        imageQuality: 70,
+        maxWidth: 800,
+        maxHeight: 800,
+      );
 
-      if (newImages.isNotEmpty) {
+      if (image != null) {
         setState(() {
-          _selectedImages.addAll(newImages);
-          // Limit to 3 images total if needed
-          if (_selectedImages.length > 3) {
-             _selectedImages = _selectedImages.take(3).toList();
-          }
+          // Only 1 image allowed — replace any existing
+          _selectedImages = [image];
         });
-        // Trigger AI Analysis Simulation
-        _simulateAIAnalysis();
+        // Trigger real AI Classification
+        _runAIClassification();
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -163,41 +207,73 @@ class _CreateListingScreenState extends State<CreateListingScreen>
       );
     }
   }
-
-  void _simulateAIAnalysis() {
+  Future<void> _runAIClassification() async {
     setState(() => _isAnalyzing = true);
     _scanController.repeat(reverse: true);
 
-    // Simulate 2 seconds of "processing"
-    Timer(const Duration(seconds: 2), () {
-      if (!mounted) return;
-      setState(() {
-        _isAnalyzing = false;
-        _scanController.stop();
-        _scanController.reset();
+    try {
+      final classifier = ImageClassifierService.instance;
+      await classifier.initialize();
 
-        // Mock AI Results
-        _selectedMaterial = 'Plastic'; // AI detected Plastic
-        _titleController.text = 'Batch of Recyclable Plastic Bottles';
-        _descriptionController.text =
-            'Assortment of PET bottles and containers. Clean and ready for recycling.';
-        
-        // Visual feedback
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: const [
-                 Icon(Icons.auto_awesome, color: Colors.white),
-                 SizedBox(width: 8),
-                 Text('AI Analysis Complete! Details Auto-filled.'),
-              ],
+      if (_selectedImages.isNotEmpty) {
+        final imageFile = File(_selectedImages.first.path);
+        final result = await classifier.classifyImage(imageFile);
+
+        if (!mounted) return;
+
+        if (result != null) {
+          // Find the exact key in _materialRates that matches the AI result,
+          // using case-insensitive comparison to avoid DropdownButton crash.
+          final matchedKey = _materialRates.keys.firstWhere(
+            (k) => k.toLowerCase() == result.displayName.toLowerCase(),
+            orElse: () => _materialRates.keys.isNotEmpty
+                ? _materialRates.keys.first
+                : _selectedMaterial,
+          );
+          setState(() {
+            _isAnalyzing = false;
+            _scanController.stop();
+            _scanController.reset();
+            _selectedMaterial = matchedKey;
+          });
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.auto_awesome, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'AI Detected (${result.sourceDisplay}): ${result.displayName} (${result.confidencePercent})',
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: MarketplaceTheme.lightAccent,
+              duration: const Duration(seconds: 3),
             ),
-            backgroundColor: MarketplaceTheme.lightAccent,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      });
+          );
+          return;
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) print('AI Classification error: $e');
+    }
+
+    // Fallback if classification fails
+    if (!mounted) return;
+    setState(() {
+      _isAnalyzing = false;
+      _scanController.stop();
+      _scanController.reset();
     });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Could not auto-detect material. Please select manually.'),
+        duration: Duration(seconds: 2),
+      ),
+    );
   }
 
   double get _estimatedValue {
@@ -211,7 +287,7 @@ class _CreateListingScreenState extends State<CreateListingScreen>
        // Scroll to top to show errors if needed, or rely on field error text
        return;
     }
-    if (_selectedImages.isEmpty) {
+    if (_selectedImages.isEmpty && _existingImages.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please upload at least one image.')),
       );
@@ -221,10 +297,18 @@ class _CreateListingScreenState extends State<CreateListingScreen>
     setState(() => _isSubmitting = true);
 
     try {
-      // 1. Convert Images to Base64
-      List<String> base64Images = [];
+      // 1. Compress Images then Convert to Base64 (OOM Protection)
+      List<String> base64Images = List<String>.from(_existingImages);
       for (var img in _selectedImages) {
-        final bytes = await img.readAsBytes();
+        // Compress native payload to save hundreds of MBs in memory allocation
+        final Uint8List? compressedBytes = await FlutterImageCompress.compressWithFile(
+          img.path,
+          minWidth: 800,
+          minHeight: 800,
+          quality: 60,
+        );
+
+        final bytes = compressedBytes ?? await img.readAsBytes();
         base64Images.add(base64Encode(bytes));
       }
 
@@ -236,6 +320,7 @@ class _CreateListingScreenState extends State<CreateListingScreen>
         estimatedWeight: double.parse(_weightController.text),
         pickupAddress: _addressController.text,
         locationMethod: _locationMethod,
+        title: _titleController.text.trim(),
         notes: _descriptionController.text, // Mapping Description to Notes
         status: 'PENDING',
         createdAt: DateTime.now(),
@@ -244,14 +329,25 @@ class _CreateListingScreenState extends State<CreateListingScreen>
       );
 
       // 3. API Call
-      await _listingService.createListing(listing);
+      if (_isEditing) {
+        await _listingService.updateListing(widget.listing!.id, listing);
+      } else {
+        await _listingService.createListing(listing);
+      }
 
       if (mounted) {
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (ctx) => _buildSuccessDialog(ctx),
-        );
+        if (_isEditing) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Listing updated successfully')),
+          );
+          Navigator.pop(context, true);
+        } else {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (ctx) => _buildSuccessDialog(ctx),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -265,42 +361,65 @@ class _CreateListingScreenState extends State<CreateListingScreen>
   }
 
   Widget _buildSuccessDialog(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return AlertDialog(
       backgroundColor: Colors.transparent,
+      elevation: 0,
       contentPadding: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       content: GlassCard(
-        borderRadius: 20,
+        borderRadius: 24,
+        padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.check_circle_outline,
-                color: MarketplaceTheme.lightAccent, size: 64),
-            const SizedBox(height: 16),
-            const Text(
-              'Listing Published!',
-              style: TextStyle(
-                fontSize: 20, 
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: (isDark ? MarketplaceTheme.darkAccentCyan : MarketplaceTheme.lightAccent).withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.check_circle_outline,
+                color: isDark ? MarketplaceTheme.darkAccentCyan : MarketplaceTheme.lightAccent, 
+                size: 72,
               ),
             ),
-            const SizedBox(height: 8),
-            const Text(
-              'Your item is now live on the marketplace.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white70),
-            ),
             const SizedBox(height: 24),
-            NeonButton(
-              text: 'DONE',
-              onPressed: () {
-                Navigator.of(context).pop(); // Close dialog
-                if (Navigator.of(context).canPop()) {
-                  Navigator.of(context).pop(); // Exit screen
-                } else {
-                  _resetForm(); // Reset if used as tab
-                }
-              },
+            Text(
+              'Listing Published!',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 24, 
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Your item is now live on the marketplace and ready for collectors.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 15,
+                color: isDark ? Colors.white70 : Colors.black54,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              child: NeonButton(
+                text: 'DONE',
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close dialog
+                  if (Navigator.of(context).canPop()) {
+                    Navigator.of(context).pop(); // Exit screen
+                  } else {
+                    _resetForm(); // Reset if used as tab
+                  }
+                },
+              ),
             ),
           ],
         ),
@@ -315,7 +434,9 @@ class _CreateListingScreenState extends State<CreateListingScreen>
       _weightController.clear();
       // Keep address if possible or clear
       _selectedImages.clear();
-      _selectedMaterial = 'Plastic';
+      if (_materialRates.isNotEmpty) {
+        _selectedMaterial = _materialRates.keys.first;
+      }
       _requestCollector = false;
     });
   }
@@ -333,17 +454,19 @@ class _CreateListingScreenState extends State<CreateListingScreen>
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(
-          'New Listing',
+          _isEditing ? 'Edit Listing' : 'New Listing',
           style: TextStyle(
             color: isDark ? MarketplaceTheme.darkTextPrimary : MarketplaceTheme.lightTextPrimary,
             fontWeight: FontWeight.bold,
           ),
         ),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios,
-              color: isDark ? MarketplaceTheme.darkTextPrimary : MarketplaceTheme.lightTextPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: Navigator.canPop(context)
+            ? IconButton(
+                icon: Icon(Icons.arrow_back_ios,
+                    color: isDark ? MarketplaceTheme.darkTextPrimary : MarketplaceTheme.lightTextPrimary),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
       ),
       body: Container(
         decoration: BoxDecoration(
@@ -464,21 +587,7 @@ class _CreateListingScreenState extends State<CreateListingScreen>
                       ],
                     );
                   }).toList(),
-                  GestureDetector(
-                    onTap: _pickImages,
-                    child: Container(
-                      width: 100,
-                      height: 110,
-                      margin: const EdgeInsets.only(left: 8),
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                            color: isDark ? Colors.white24 : Colors.black12),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(Icons.add_a_photo,
-                          color: isDark ? Colors.white54 : Colors.black45),
-                    ),
-                  ),
+
                 ],
               ),
             ),
@@ -498,7 +607,9 @@ class _CreateListingScreenState extends State<CreateListingScreen>
         // Material Dropdown
         GlassCard(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          child: DropdownButtonHideUnderline(
+          child: _isLoadingRates 
+            ? const Center(child: Padding(padding: EdgeInsets.all(12.0), child: CircularProgressIndicator()))
+            : DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               value: _selectedMaterial,
               isExpanded: true,
@@ -627,7 +738,7 @@ class _CreateListingScreenState extends State<CreateListingScreen>
                 ),
               ),
               Text(
-                'Rs ${_materialRates[_selectedMaterial]}/kg',
+                'Rs ${_materialRates[_selectedMaterial] ?? 0}/kg',
                 style: TextStyle(
                   color: isDark ? MarketplaceTheme.darkAccentGreen : MarketplaceTheme.lightAccent,
                   fontWeight: FontWeight.bold,
@@ -648,21 +759,74 @@ class _CreateListingScreenState extends State<CreateListingScreen>
           isDark: isDark,
           validator: (v) => v!.isEmpty ? 'Address is required' : null,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
 
-        // Collector Toggle
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          title: Text(
-            'Request Collector Pickup',
-            style: TextStyle(
-               color: isDark ? Colors.white : Colors.black87,
-               fontWeight: FontWeight.w500,
-            ),
+        // Pickup Required Radio Button
+        GlassCard(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.local_shipping_outlined,
+                      color: isDark ? Colors.white54 : Colors.black38, size: 20),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Pickup Required?',
+                    style: TextStyle(
+                      color: isDark ? Colors.white60 : Colors.black45,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: RadioListTile<bool>(
+                      title: Text(
+                        'Yes',
+                        style: TextStyle(
+                          color: isDark ? Colors.white : Colors.black87,
+                          fontSize: 14,
+                        ),
+                      ),
+                      value: true,
+                      groupValue: _requestCollector,
+                      activeColor: isDark
+                          ? MarketplaceTheme.darkAccentCyan
+                          : MarketplaceTheme.lightAccent,
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                      onChanged: (val) => setState(() => _requestCollector = val!),
+                    ),
+                  ),
+                  Expanded(
+                    child: RadioListTile<bool>(
+                      title: Text(
+                        'No',
+                        style: TextStyle(
+                          color: isDark ? Colors.white : Colors.black87,
+                          fontSize: 14,
+                        ),
+                      ),
+                      value: false,
+                      groupValue: _requestCollector,
+                      activeColor: isDark
+                          ? MarketplaceTheme.darkAccentCyan
+                          : MarketplaceTheme.lightAccent,
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                      onChanged: (val) => setState(() => _requestCollector = val!),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-          activeColor: isDark ? MarketplaceTheme.darkAccentCyan : MarketplaceTheme.lightAccent,
-          value: _requestCollector,
-          onChanged: (val) => setState(() => _requestCollector = val),
         ),
       ],
     );
@@ -759,7 +923,7 @@ class _CreateListingScreenState extends State<CreateListingScreen>
           SizedBox(
             width: double.infinity,
             child: NeonButton(
-              text: 'PUBLISH LISTING',
+              text: _isEditing ? 'UPDATE LISTING' : 'PUBLISH LISTING',
               isLoading: _isSubmitting,
               onPressed: _publishListing,
             ),
@@ -810,6 +974,8 @@ class _CreateListingScreenState extends State<CreateListingScreen>
       case 'Metal': return Icons.build;
       case 'E-Waste': return Icons.computer;
       case 'Glass': return Icons.wine_bar;
+      case 'Clothing': return Icons.checkroom;
+      case 'Other': return Icons.category;
       default: return Icons.recycling;
     }
   }

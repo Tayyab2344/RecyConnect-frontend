@@ -1,4 +1,5 @@
-import 'dart:ui';
+import 'dart:ui' as ui;
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../../core/theme/marketplace_theme.dart';
 import '../../../core/theme/app_theme.dart';
@@ -11,6 +12,8 @@ import '../../../core/models/order_model.dart';
 import '../../widgets/empty_state_widget.dart';
 import '../../widgets/marketplace/glass_card.dart';
 import '../../widgets/marketplace/neon_button.dart';
+import '../../widgets/recycle_loader.dart';
+import '../../widgets/skeleton_loader.dart';
 import 'marketplace/item_detail_screen.dart';
 
 class BrowseMarketplaceScreen extends StatefulWidget {
@@ -21,7 +24,10 @@ class BrowseMarketplaceScreen extends StatefulWidget {
       _BrowseMarketplaceScreenState();
 }
 
-class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen> {
+class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
   final ListingService _listingService = ListingService();
   final OrderService _orderService = OrderService();
   List<Listing> _items = [];
@@ -72,25 +78,34 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen> {
     }
   }
 
-  void _onItemTap(Listing item) {
-    Navigator.push(
+  void _onItemTap(Listing item) async {
+    final result = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => ItemDetailScreen(item: item),
       ),
-    ).then((_) => _loadItems()); // Refresh on return
+    );
+    
+    // Only reload if the detail screen specifically says it was modified (e.g., deleted or bought)
+    if (result == true) {
+      _loadItems();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       extendBodyBehindAppBar: true, // For glass effect
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Marketplace',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: isDark ? Colors.white : Colors.black87,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         centerTitle: true,
         backgroundColor: Colors.transparent,
@@ -124,7 +139,7 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen> {
               _buildStickyFilterBar(isDark),
               Expanded(
                 child: _isLoading
-                    ? const Center(child: CircularProgressIndicator())
+                    ? SkeletonLoader.grid()
                     : _errorMessage != null
                         ? Center(child: Text(_errorMessage!))
                         : _items.isEmpty
@@ -136,7 +151,7 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen> {
                                   gridDelegate:
                                       const SliverGridDelegateWithFixedCrossAxisCount(
                                     crossAxisCount: 2,
-                                    childAspectRatio: 0.75,
+                                    childAspectRatio: 0.62,
                                     mainAxisSpacing: 16,
                                     crossAxisSpacing: 16,
                                   ),
@@ -166,7 +181,7 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen> {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
               child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                 child: Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
@@ -289,16 +304,55 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Image / Icon Placeholder
+          // Image Area
           Expanded(
             flex: 3,
             child: Container(
               width: double.infinity,
-              color: isDark ? Colors.black12 : Colors.grey.shade100,
-              child: Icon(
-                _getIconForMaterial(item.materialType),
-                size: 48,
-                color: isDark ? MarketplaceTheme.darkAccentCyan : Colors.grey,
+              decoration: BoxDecoration(
+                color: isDark ? Colors.black12 : Colors.grey.shade100,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              ),
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                child: item.hasNetworkImages
+                    ? CachedNetworkImage(
+                        imageUrl: item.imageUrls.first,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        memCacheWidth: 400,
+                        memCacheHeight: 400,
+                        placeholder: (context, url) => Center(
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: isDark
+                                ? MarketplaceTheme.darkAccentCyan
+                                : MarketplaceTheme.lightAccent,
+                          ),
+                        ),
+                        errorWidget: (context, url, error) {
+                          return Center(
+                            child: Icon(
+                              Icons.broken_image_outlined,
+                              size: 36,
+                              color: isDark ? MarketplaceTheme.darkAccentCyan : Colors.grey,
+                            ),
+                          );
+                        },
+                      )
+                    : item.decodedImages.isNotEmpty
+                        ? Image.memory(
+                            item.decodedImages.first,
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                          )
+                        : Center(
+                            child: Icon(
+                              _getIconForMaterial(item.materialType),
+                              size: 48,
+                              color: isDark ? MarketplaceTheme.darkAccentCyan : Colors.grey,
+                            ),
+                          ),
               ),
             ),
           ),
@@ -314,24 +368,74 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Category badge
                       Text(
-                        item.materialType.toUpperCase(),
+                        item.materialTypeDisplay.toUpperCase(),
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 10,
                           fontWeight: FontWeight.bold,
                           color: isDark
                               ? MarketplaceTheme.darkAccentGreen
                               : MarketplaceTheme.lightAccent,
+                          letterSpacing: 0.5,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 3),
+                      // Title
                       Text(
-                        '${item.estimatedWeight} kg',
+                        item.displayTitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 14,
                           fontWeight: FontWeight.bold,
                           color: isDark ? Colors.white : Colors.black87,
                         ),
+                      ),
+                      const SizedBox(height: 4),
+                      // Seller name
+                      if (item.user?.name != null)
+                        Row(
+                          children: [
+                            Icon(Icons.person_outline, size: 12,
+                                color: isDark ? Colors.white38 : Colors.black45),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                'Sold by ${item.user!.name}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: isDark ? Colors.white38 : Colors.black45,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      const SizedBox(height: 6),
+                      // Price & weight row
+                      Row(
+                        children: [
+                          Text(
+                            'Rs ${(item.estimatedWeight * 20).toStringAsFixed(0)}',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: isDark
+                                  ? MarketplaceTheme.darkAccentGreen
+                                  : MarketplaceTheme.lightAccent,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            '· ${item.estimatedWeight} kg',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: isDark ? Colors.white54 : Colors.black45,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),

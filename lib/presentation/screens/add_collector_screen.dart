@@ -9,6 +9,7 @@ import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/constants/api_constants.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../core/services/warehouse_service.dart';
 
@@ -316,9 +317,8 @@ class _AddCollectorScreenState extends State<AddCollectorScreen>
     });
 
     try {
-      final authService = context.read<AuthService>();
       final response = await http.get(
-        Uri.parse('${authService.baseUrl}/api/user/check-cnic/$cleanedCnic'),
+        Uri.parse('${ApiConstants.baseUrl}/user/check-cnic/$cleanedCnic'),
       );
 
       if (response.statusCode == 200) {

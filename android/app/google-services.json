@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "660931466873",
+    "project_id": "recyconnect-4ec01",
+    "storage_bucket": "recyconnect-4ec01.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:660931466873:android:509dbd16e4a6886f55e6a8",
+        "android_client_info": {
+          "package_name": "com.recyconnect.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBoEtagiAg9nHfqth1Jx3hMwfcOKfv96Og"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
