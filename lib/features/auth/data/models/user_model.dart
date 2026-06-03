@@ -41,7 +41,7 @@ class UserModel extends UserEntity {
       city: json['city'] as String?,
       area: json['area'] as String?,
       profileImage: json['profileImage'] as String?,
-      collectorId: (json['collectorId'] as num?)?.toInt(),
+      collectorId: json['collectorId'] as String?,
       verificationStatus: json['verificationStatus'] as String?,
       kycStage: json['kycStage'] as String?,
       rejectionReason: json['rejectionReason'] as String?,
