@@ -257,18 +257,18 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> with TickerProvid
           decoration: BoxDecoration(
             color: (isDark ? AppTheme.darkCardSurface : Colors.white),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.emerald.withOpacity(0.3), width: 1.5),
+            border: Border.all(color: Colors.green.withOpacity(0.3), width: 1.5),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  const Icon(Icons.analytics_outlined, color: Colors.emerald, size: 16),
+                  const Icon(Icons.analytics_outlined, color: Colors.green, size: 16),
                   const SizedBox(width: 8),
                   Text(
                     'FINANCIAL INSIGHT SUMMARY',
-                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.emerald),
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.green),
                   ),
                 ],
               ),

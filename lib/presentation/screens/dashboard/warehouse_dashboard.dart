@@ -462,7 +462,7 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
             _buildQuickActionCard('AI Insights', Icons.insights, Colors.purple, () {
               Navigator.push(context, MaterialPageRoute(builder: (context) => const AIInsightsScreen()));
             }),
-            _buildQuickActionCard('AI Partner', Icons.psychology_outlined, Colors.emerald, () {
+            _buildQuickActionCard('AI Partner', Icons.psychology_outlined, Colors.green, () {
               Navigator.push(context, MaterialPageRoute(builder: (context) => const AIAssistantScreen()));
             }),
             _buildQuickActionCard('Reports', Icons.analytics_outlined, Colors.blueGrey, () {
