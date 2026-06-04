@@ -18,6 +18,7 @@ import 'core/services/complaint_service.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/rewards_service.dart';
 import 'presentation/screens/onboarding/onboarding_screen.dart';
+import 'presentation/screens/onboarding/splash_screen.dart';
 import 'presentation/widgets/skeleton_loader.dart';
 import 'features/notification/presentation/providers/notification_provider.dart';
 
@@ -69,7 +70,7 @@ class MyApp extends StatelessWidget {
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: themeProvider.themeMode,
-            home: const AuthWrapper(),
+            home: const SplashScreen(),
             debugShowCheckedModeBanner: false,
           );
         },
@@ -79,7 +80,14 @@ class MyApp extends StatelessWidget {
 }
 
 class AuthWrapper extends StatefulWidget {
-  const AuthWrapper({super.key});
+  final bool? preloadedHasSeenOnboarding;
+  final bool? preloadedNetworkError;
+
+  const AuthWrapper({
+    super.key,
+    this.preloadedHasSeenOnboarding,
+    this.preloadedNetworkError,
+  });
 
   @override
   State<AuthWrapper> createState() => _AuthWrapperState();
@@ -93,7 +101,13 @@ class _AuthWrapperState extends State<AuthWrapper> {
   @override
   void initState() {
     super.initState();
-    _initializeApp();
+    if (widget.preloadedHasSeenOnboarding != null) {
+      _hasSeenOnboarding = widget.preloadedHasSeenOnboarding;
+      _networkError = widget.preloadedNetworkError ?? false;
+      _isCheckingAuth = false;
+    } else {
+      _initializeApp();
+    }
   }
 
   Future<void> _initializeApp() async {

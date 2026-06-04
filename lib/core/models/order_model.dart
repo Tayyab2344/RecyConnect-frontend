@@ -101,6 +101,10 @@ class Order {
     return 0.0;
   }
 
+  String get sellerName => seller?.name ?? 'Unknown';
+  String get buyerName => buyer?.name ?? 'Unknown';
+  double get totalQuantity => weight;
+
   String get statusDisplay {
     const labels = {
       'CREATED': 'Pending',

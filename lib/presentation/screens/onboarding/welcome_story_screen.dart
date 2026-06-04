@@ -288,7 +288,7 @@ class RecyConnectLogoPainter extends CustomPainter {
     required this.pulseProgress,
     required this.rotation,
   });
-  
+
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2 - 40);
@@ -299,7 +299,7 @@ class RecyConnectLogoPainter extends CustomPainter {
       _drawCircuitBoard(canvas, center, logoRadius * 0.55);
     }
     
-    // Draw recycling arrows
+    // Draw recycling arrows (New Geometric Leaf Shapes)
     canvas.save();
     canvas.translate(center.dx, center.dy);
     canvas.rotate(rotation);
@@ -314,6 +314,22 @@ class RecyConnectLogoPainter extends CustomPainter {
     }
     
     canvas.restore();
+
+    // Central connection node
+    if (pulseProgress > 0) {
+      final double baseRadius = logoRadius * 0.7;
+      final double fade = pulseProgress.clamp(0.0, 1.0);
+      
+      final nodePaint = Paint()
+        ..color = Colors.white // Punch-hole matching white background
+        ..style = PaintingStyle.fill;
+      canvas.drawCircle(center, baseRadius * 0.28 * pulseProgress, nodePaint);
+
+      final coreGlowPaint = Paint()
+        ..color = const Color(0xFF0C241B).withOpacity(fade) // Core connection node
+        ..style = PaintingStyle.fill;
+      canvas.drawCircle(center, baseRadius * 0.16 * pulseProgress, coreGlowPaint);
+    }
     
     // Draw center glow pulse
     if (pulseProgress > 0) {
@@ -324,11 +340,11 @@ class RecyConnectLogoPainter extends CustomPainter {
   void _drawCircuitBoard(Canvas canvas, Offset center, double radius) {
     // Central core - teal color
     final corePaint = Paint()
-      ..color = const Color(0xFF26A69A).withOpacity(circuitProgress * 0.9)
+      ..color = const Color(0xFF00D2C4).withOpacity(circuitProgress * 0.9)
       ..style = PaintingStyle.fill;
     
     final coreGlowPaint = Paint()
-      ..color = const Color(0xFF26A69A).withOpacity(circuitProgress * 0.2)
+      ..color = const Color(0xFF00D2C4).withOpacity(circuitProgress * 0.2)
       ..style = PaintingStyle.fill
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12);
     
@@ -337,7 +353,7 @@ class RecyConnectLogoPainter extends CustomPainter {
     
     // Concentric circles
     final ringPaint = Paint()
-      ..color = const Color(0xFF26A69A).withOpacity(circuitProgress * 0.4)
+      ..color = const Color(0xFF00D2C4).withOpacity(circuitProgress * 0.4)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.2;
     
@@ -351,7 +367,7 @@ class RecyConnectLogoPainter extends CustomPainter {
     
     // Draw circuit lines emanating outward
     final linePaint = Paint()
-      ..color = const Color(0xFF26A69A).withOpacity(circuitProgress * 0.6)
+      ..color = const Color(0xFF00D2C4).withOpacity(circuitProgress * 0.6)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.8
       ..strokeCap = StrokeCap.round;
@@ -376,7 +392,7 @@ class RecyConnectLogoPainter extends CustomPainter {
       
       // Node at end
       final nodePaint = Paint()
-        ..color = const Color(0xFF26A69A).withOpacity(circuitProgress)
+        ..color = const Color(0xFF00D2C4)
         ..style = PaintingStyle.fill;
       
       canvas.drawCircle(end, 3.5 * circuitProgress, nodePaint);
@@ -402,144 +418,63 @@ class RecyConnectLogoPainter extends CustomPainter {
   
   void _drawGreenArrow(Canvas canvas, Offset center, double radius) {
     final progress = greenArrowProgress;
-    
-    // Green gradient arrow
-    final rect = Rect.fromCircle(center: center, radius: radius);
-    
-    final gradient = SweepGradient(
-      startAngle: -math.pi / 2,
-      endAngle: math.pi,
-      colors: const [
-        Color(0xFF81C784), // Light green
-        Color(0xFF4CAF50), // Primary green
-        Color(0xFF388E3C), // Dark green
-      ],
-    );
-    
-    final arrowPaint = Paint()
-      ..shader = gradient.createShader(rect)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 16
-      ..strokeCap = StrokeCap.round;
-    
-    // Subtle shadow
-    final shadowPaint = Paint()
-      ..color = const Color(0xFF4CAF50).withOpacity(0.15 * progress)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 22
-      ..strokeCap = StrokeCap.round
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
-    
-    // Draw arc
-    final sweepAngle = math.pi * 0.82 * progress;
-    final startAngle = -math.pi / 2 - math.pi / 8;
-    
-    canvas.drawArc(rect, startAngle, sweepAngle, false, shadowPaint);
-    canvas.drawArc(rect, startAngle, sweepAngle, false, arrowPaint);
-    
-    // Arrowhead
-    if (progress > 0.8) {
-      final arrowheadProgress = (progress - 0.8) / 0.2;
-      _drawArrowhead(
-        canvas, 
-        center, 
-        radius, 
-        startAngle + sweepAngle, 
-        const Color(0xFF4CAF50),
-        arrowheadProgress,
-      );
-    }
+    final fade = progress.clamp(0.0, 1.0);
+    final scale = 0.5 + 0.5 * Curves.easeOutBack.transform(progress);
+
+    canvas.save();
+    canvas.translate(center.dx, center.dy);
+    canvas.scale(scale);
+    canvas.translate(-center.dx, -center.dy);
+
+    final Path leftLeaf = Path();
+    final Paint leftPaint = Paint()
+      ..color = const Color(0xFF00D2C4).withOpacity(fade) // Vivid electric teal
+      ..style = PaintingStyle.fill;
+    _buildLeafShape(leftLeaf, center, radius * 0.7, isLeft: true);
+    canvas.drawPath(leftLeaf, leftPaint);
+
+    canvas.restore();
   }
   
   void _drawBlueArrow(Canvas canvas, Offset center, double radius) {
     final progress = blueArrowProgress;
-    
-    // Blue gradient arrow
-    final rect = Rect.fromCircle(center: center, radius: radius);
-    
-    final gradient = SweepGradient(
-      startAngle: math.pi / 2,
-      endAngle: 2 * math.pi,
-      colors: const [
-        Color(0xFF90CAF9), // Light blue
-        Color(0xFF42A5F5), // Primary blue  
-        Color(0xFF1E88E5), // Dark blue
-      ],
-    );
-    
-    final arrowPaint = Paint()
-      ..shader = gradient.createShader(rect)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 16
-      ..strokeCap = StrokeCap.round;
-    
-    // Subtle shadow
-    final shadowPaint = Paint()
-      ..color = const Color(0xFF42A5F5).withOpacity(0.15 * progress)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 22
-      ..strokeCap = StrokeCap.round
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
-    
-    // Draw arc
-    final sweepAngle = math.pi * 0.82 * progress;
-    final startAngle = math.pi / 2 - math.pi / 8;
-    
-    canvas.drawArc(rect, startAngle, sweepAngle, false, shadowPaint);
-    canvas.drawArc(rect, startAngle, sweepAngle, false, arrowPaint);
-    
-    // Arrowhead
-    if (progress > 0.8) {
-      final arrowheadProgress = (progress - 0.8) / 0.2;
-      _drawArrowhead(
-        canvas, 
-        center, 
-        radius, 
-        startAngle + sweepAngle, 
-        const Color(0xFF42A5F5),
-        arrowheadProgress,
-      );
-    }
-  }
-  
-  void _drawArrowhead(
-    Canvas canvas, 
-    Offset center, 
-    double radius, 
-    double angle, 
-    Color color,
-    double progress,
-  ) {
-    final tipX = center.dx + math.cos(angle) * radius;
-    final tipY = center.dy + math.sin(angle) * radius;
-    
-    final arrowSize = 18.0 * progress;
-    final backAngle = angle + math.pi;
-    
-    final path = Path();
-    path.moveTo(tipX, tipY);
-    path.lineTo(
-      tipX + math.cos(backAngle + 0.4) * arrowSize,
-      tipY + math.sin(backAngle + 0.4) * arrowSize,
-    );
-    path.lineTo(
-      tipX + math.cos(backAngle - 0.4) * arrowSize,
-      tipY + math.sin(backAngle - 0.4) * arrowSize,
-    );
-    path.close();
-    
-    final paint = Paint()
-      ..color = color
+    final fade = progress.clamp(0.0, 1.0);
+    final scale = 0.5 + 0.5 * Curves.easeOutBack.transform(progress);
+
+    canvas.save();
+    canvas.translate(center.dx, center.dy);
+    canvas.scale(scale);
+    canvas.translate(-center.dx, -center.dy);
+
+    final Path rightLeaf = Path();
+    final Paint rightPaint = Paint()
+      ..color = const Color(0xFFB5FF00).withOpacity(fade) // Tech Lime
       ..style = PaintingStyle.fill;
+    _buildLeafShape(rightLeaf, center, radius * 0.7, isLeft: false);
+    canvas.drawPath(rightLeaf, rightPaint);
+
+    canvas.restore();
+  }
+
+  void _buildLeafShape(Path path, Offset center, double radius, {required bool isLeft}) {
+    final double sideMultiplier = isLeft ? -1.0 : 1.0;
+    final start = Offset(center.dx, center.dy - radius);
+    final end = Offset(center.dx, center.dy + radius);
     
-    canvas.drawPath(path, paint);
+    final controlPoint1 = Offset(center.dx + (radius * 1.15 * sideMultiplier), center.dy - (radius * 0.1));
+    final controlPoint2 = Offset(center.dx + (radius * 0.3 * sideMultiplier), center.dy + (radius * 0.2));
+
+    path.moveTo(start.dx, start.dy);
+    path.quadraticBezierTo(controlPoint1.dx, controlPoint1.dy, end.dx, end.dy);
+    path.quadraticBezierTo(controlPoint2.dx, controlPoint2.dy, start.dx, start.dy);
+    path.close();
   }
   
   void _drawCenterGlow(Canvas canvas, Offset center) {
     final pulseFactor = 0.85 + 0.15 * math.sin(pulseProgress * math.pi * 2);
     
     final glowPaint = Paint()
-      ..color = const Color(0xFF26A69A).withOpacity(0.15 * pulseProgress * pulseFactor)
+      ..color = const Color(0xFF00D2C4).withOpacity(0.15 * pulseProgress * pulseFactor)
       ..style = PaintingStyle.fill
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 18);
     
