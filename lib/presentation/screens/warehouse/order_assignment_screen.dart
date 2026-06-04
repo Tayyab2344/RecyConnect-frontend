@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../core/services/collector_service.dart';
 import '../../../core/models/order_model.dart';
-import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/premium_design_system.dart';
+import '../../widgets/premium/premium_components.dart';
 
 class OrderAssignmentScreen extends StatefulWidget {
   final Map<String, dynamic> collector;
@@ -102,6 +103,9 @@ class _OrderAssignmentScreenState extends State<OrderAssignmentScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     double totalWeight = 0;
     double totalAmount = 0;
     for (final order in _orders) {
@@ -112,9 +116,22 @@ class _OrderAssignmentScreenState extends State<OrderAssignmentScreen> {
     }
 
     return Scaffold(
+      backgroundColor: isDark ? PremiumDesignSystem.darkBackground : PremiumDesignSystem.background,
       appBar: AppBar(
-        title: Text('Assign Orders: ${widget.collector['name']}'),
-        backgroundColor: AppTheme.primaryGreen,
+        title: Text(
+          'Assign Orders: ${widget.collector['name']}',
+          style: PremiumDesignSystem.h3.copyWith(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: PremiumDesignSystem.primaryGradient,
+          ),
+        ),
+        elevation: 4,
+        shadowColor: PremiumDesignSystem.primary.withOpacity(0.3),
         foregroundColor: Colors.white,
         actions: [
           if (_orders.isNotEmpty && !_isLoading)
@@ -123,6 +140,7 @@ class _OrderAssignmentScreenState extends State<OrderAssignmentScreen> {
                 _selectedOrderIds.length == _orders.length
                     ? Icons.deselect_rounded
                     : Icons.select_all_rounded,
+                color: Colors.white,
               ),
               onPressed: _toggleSelectAll,
               tooltip: _selectedOrderIds.length == _orders.length ? 'Deselect All' : 'Select All',
@@ -133,31 +151,45 @@ class _OrderAssignmentScreenState extends State<OrderAssignmentScreen> {
         children: [
           // Dropdown filter header
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            margin: const EdgeInsets.only(bottom: 8),
             decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.1),
-                  spreadRadius: 1,
-                  blurRadius: 5,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+              color: isDark ? PremiumDesignSystem.darkSurface : Colors.white,
+              boxShadow: PremiumDesignSystem.softShadowSmall,
             ),
             child: Row(
               children: [
-                const Text(
+                Text(
                   'Operations Mode:',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                  style: PremiumDesignSystem.subtitle2.copyWith(
+                    color: isDark ? PremiumDesignSystem.darkTextPrimary : PremiumDesignSystem.textPrimary,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: DropdownButtonFormField<String>(
                     value: _selectedRole,
+                    dropdownColor: isDark ? PremiumDesignSystem.darkSurface : Colors.white,
+                    style: PremiumDesignSystem.body2.copyWith(
+                      color: isDark ? PremiumDesignSystem.darkTextPrimary : PremiumDesignSystem.textPrimary,
+                    ),
                     decoration: InputDecoration(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      filled: true,
+                      fillColor: isDark ? PremiumDesignSystem.darkSurfaceVariant : Colors.grey[50],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(PremiumDesignSystem.radiusMedium),
+                        borderSide: BorderSide(color: isDark ? Colors.white24 : Colors.grey[300]!),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(PremiumDesignSystem.radiusMedium),
+                        borderSide: BorderSide(color: isDark ? Colors.white10 : Colors.grey[200]!),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(PremiumDesignSystem.radiusMedium),
+                        borderSide: const BorderSide(color: PremiumDesignSystem.primary, width: 1.5),
+                      ),
                     ),
                     items: const [
                       DropdownMenuItem(
@@ -184,38 +216,73 @@ class _OrderAssignmentScreenState extends State<OrderAssignmentScreen> {
           // Orders list area
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? const Center(child: CircularProgressIndicator(color: PremiumDesignSystem.primary))
                 : _errorMessage != null
                     ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
-                            const SizedBox(height: 16),
-                            ElevatedButton(
-                              onPressed: _fetchOrders,
-                              child: const Text('Retry'),
-                            ),
-                          ],
+                        child: Padding(
+                          padding: const EdgeInsets.all(24.0),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.error_outline_rounded, size: 64, color: PremiumDesignSystem.error),
+                              const SizedBox(height: 16),
+                              Text(
+                                _errorMessage!,
+                                style: PremiumDesignSystem.body1.copyWith(
+                                  color: PremiumDesignSystem.error,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 24),
+                              PremiumButton(
+                                text: 'Retry',
+                                icon: Icons.refresh_rounded,
+                                width: 150,
+                                height: 46,
+                                onPressed: _fetchOrders,
+                              ),
+                            ],
+                          ),
                         ),
                       )
                     : _orders.isEmpty
                         ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.assignment_turned_in_outlined, size: 64, color: Colors.grey[400]),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'No unassigned orders found',
-                                  style: TextStyle(fontSize: 18, color: Colors.grey[600], fontWeight: FontWeight.w500),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'All orders are currently dispatched or completed.',
-                                  style: TextStyle(color: Colors.grey[500]),
-                                ),
-                              ],
+                            child: Padding(
+                              padding: const EdgeInsets.all(24.0),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(20),
+                                    decoration: BoxDecoration(
+                                      color: PremiumDesignSystem.primary.withOpacity(0.08),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.assignment_turned_in_outlined,
+                                      size: 64,
+                                      color: PremiumDesignSystem.primary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 24),
+                                  Text(
+                                    'No unassigned orders found',
+                                    style: PremiumDesignSystem.h3.copyWith(
+                                      color: isDark ? PremiumDesignSystem.darkTextPrimary : PremiumDesignSystem.textPrimary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'All orders are currently dispatched or completed.',
+                                    style: PremiumDesignSystem.body2.copyWith(
+                                      color: isDark ? PremiumDesignSystem.darkTextSecondary : PremiumDesignSystem.textSecondary,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
                             ),
                           )
                         : ListView.builder(
@@ -232,120 +299,152 @@ class _OrderAssignmentScreenState extends State<OrderAssignmentScreen> {
                                   ? (order.seller?.address ?? 'No Address Provided')
                                   : (order.buyer?.address ?? 'No Address Provided');
 
-                              return Card(
-                                elevation: isSelected ? 4 : 1,
-                                margin: const EdgeInsets.only(bottom: 12),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  side: BorderSide(
-                                    color: isSelected
-                                        ? AppTheme.primaryGreen
-                                        : Colors.grey.withOpacity(0.2),
-                                    width: isSelected ? 2 : 1,
-                                  ),
-                                ),
-                                child: InkWell(
-                                  onTap: () {
-                                    setState(() {
-                                      if (isSelected) {
-                                        _selectedOrderIds.remove(order.id);
-                                      } else {
-                                        _selectedOrderIds.add(order.id);
-                                      }
-                                    });
-                                  },
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(16),
-                                    child: Row(
-                                      children: [
-                                        // Custom checkbox
-                                        Container(
-                                          width: 24,
-                                          height: 24,
-                                          decoration: BoxDecoration(
-                                            color: isSelected ? AppTheme.primaryGreen : Colors.transparent,
-                                            border: Border.all(
-                                              color: isSelected ? AppTheme.primaryGreen : Colors.grey[400]!,
-                                              width: 2,
-                                            ),
-                                            borderRadius: BorderRadius.circular(6),
+                              return GlassCard(
+                                enableHover: true,
+                                padding: const EdgeInsets.all(16),
+                                margin: const EdgeInsets.only(bottom: 14),
+                                color: isSelected
+                                    ? PremiumDesignSystem.primary.withOpacity(0.08)
+                                    : (isDark ? PremiumDesignSystem.darkSurface : Colors.white),
+                                borderRadius: BorderRadius.circular(PremiumDesignSystem.radiusLarge),
+                                onTap: () {
+                                  setState(() {
+                                    if (isSelected) {
+                                      _selectedOrderIds.remove(order.id);
+                                    } else {
+                                      _selectedOrderIds.add(order.id);
+                                    }
+                                  });
+                                },
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // Custom Checkbox
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 2),
+                                      child: AnimatedContainer(
+                                        duration: PremiumDesignSystem.animationFast,
+                                        width: 24,
+                                        height: 24,
+                                        decoration: BoxDecoration(
+                                          color: isSelected ? PremiumDesignSystem.primary : Colors.transparent,
+                                          border: Border.all(
+                                            color: isSelected ? PremiumDesignSystem.primary : (isDark ? Colors.white30 : Colors.grey[400]!),
+                                            width: 2,
                                           ),
-                                          child: isSelected
-                                              ? const Icon(Icons.check, size: 16, color: Colors.white)
+                                          borderRadius: BorderRadius.circular(6),
+                                          boxShadow: isSelected
+                                              ? PremiumDesignSystem.glowEffect(PremiumDesignSystem.primary, intensity: 0.2)
                                               : null,
                                         ),
-                                        const SizedBox(width: 16),
-                                        
-                                        // Details
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                        child: isSelected
+                                            ? const Icon(Icons.check, size: 16, color: Colors.white)
+                                            : null,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    
+                                    // Details
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                             children: [
-                                              Row(
-                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                children: [
-                                                  Text(
-                                                    'Order #ORD-${order.id}',
-                                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                                                  ),
-                                                  Text(
-                                                    'Rs ${order.totalAmount.toStringAsFixed(0)}',
-                                                    style: TextStyle(
-                                                      fontWeight: FontWeight.bold,
-                                                      color: AppTheme.primaryGreen,
-                                                      fontSize: 16,
-                                                    ),
-                                                  ),
-                                                ],
+                                              Text(
+                                                'Order #ORD-${order.id}',
+                                                style: PremiumDesignSystem.subtitle1.copyWith(
+                                                  color: isDark ? PremiumDesignSystem.darkTextPrimary : PremiumDesignSystem.textPrimary,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
                                               ),
-                                              const SizedBox(height: 8),
-                                              Row(
-                                                children: [
-                                                  Icon(Icons.recycling_rounded, size: 16, color: AppTheme.primaryGreen),
-                                                  const SizedBox(width: 6),
-                                                  Text(
-                                                    '${order.materialTypeDisplay} (${order.weight} kg)',
-                                                    style: const TextStyle(fontWeight: FontWeight.w500),
-                                                  ),
-                                                ],
-                                              ),
-                                              const SizedBox(height: 6),
-                                              Row(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Icon(Icons.person_rounded, size: 16, color: Colors.grey[600]),
-                                                  const SizedBox(width: 6),
-                                                  Expanded(
-                                                    child: Text(
-                                                      '$counterpartName',
-                                                      style: TextStyle(color: Colors.grey[800], fontSize: 13),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Row(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Icon(Icons.location_on_rounded, size: 16, color: Colors.grey[600]),
-                                                  const SizedBox(width: 6),
-                                                  Expanded(
-                                                    child: Text(
-                                                      address,
-                                                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                                                      maxLines: 2,
-                                                      overflow: TextOverflow.ellipsis,
-                                                    ),
-                                                  ),
-                                                ],
+                                              Text(
+                                                'Rs ${order.totalAmount.toStringAsFixed(0)}',
+                                                style: PremiumDesignSystem.subtitle1.copyWith(
+                                                  fontWeight: FontWeight.bold,
+                                                  color: PremiumDesignSystem.primary,
+                                                ),
                                               ),
                                             ],
                                           ),
-                                        ),
-                                      ],
+                                          const SizedBox(height: 10),
+                                          
+                                          // Material Type and Weight row
+                                          Row(
+                                            children: [
+                                              Container(
+                                                padding: const EdgeInsets.all(6),
+                                                decoration: BoxDecoration(
+                                                  color: PremiumDesignSystem.primary.withOpacity(0.1),
+                                                  borderRadius: BorderRadius.circular(8),
+                                                ),
+                                                child: const Icon(
+                                                  Icons.recycling_rounded,
+                                                  size: 16,
+                                                  color: PremiumDesignSystem.primary,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                '${order.materialTypeDisplay} (${order.weight} kg)',
+                                                style: PremiumDesignSystem.body2.copyWith(
+                                                  color: isDark ? PremiumDesignSystem.darkTextPrimary : PremiumDesignSystem.textPrimary,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 10),
+                                          
+                                          // Person Row
+                                          Row(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Icon(
+                                                Icons.person_rounded,
+                                                size: 16,
+                                                color: isDark ? PremiumDesignSystem.darkTextTertiary : PremiumDesignSystem.textSecondary,
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Expanded(
+                                                child: Text(
+                                                  counterpartName,
+                                                  style: PremiumDesignSystem.body2.copyWith(
+                                                    color: isDark ? PremiumDesignSystem.darkTextSecondary : PremiumDesignSystem.textSecondary,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 6),
+                                          
+                                          // Address Row
+                                          Row(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Icon(
+                                                Icons.location_on_rounded,
+                                                size: 16,
+                                                color: isDark ? PremiumDesignSystem.darkTextTertiary : PremiumDesignSystem.textSecondary,
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Expanded(
+                                                child: Text(
+                                                  address,
+                                                  style: PremiumDesignSystem.caption.copyWith(
+                                                    color: isDark ? PremiumDesignSystem.darkTextTertiary : PremiumDesignSystem.textSecondary,
+                                                  ),
+                                                  maxLines: 2,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                  ),
+                                  ],
                                 ),
                               );
                             },
@@ -355,21 +454,20 @@ class _OrderAssignmentScreenState extends State<OrderAssignmentScreen> {
           // Sticky Bottom confirmation bar
           if (_orders.isNotEmpty && !_isLoading)
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? PremiumDesignSystem.darkSurface : Colors.white,
                 borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(16),
-                  topRight: Radius.circular(16),
+                  topLeft: Radius.circular(PremiumDesignSystem.radiusXXLarge),
+                  topRight: Radius.circular(PremiumDesignSystem.radiusXXLarge),
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    spreadRadius: 1,
-                    blurRadius: 10,
-                    offset: const Offset(0, -2),
+                boxShadow: PremiumDesignSystem.elevatedShadow,
+                border: Border(
+                  top: BorderSide(
+                    color: isDark ? Colors.white10 : Colors.grey.withOpacity(0.1),
+                    width: 1,
                   ),
-                ],
+                ),
               ),
               child: SafeArea(
                 child: Column(
@@ -381,45 +479,35 @@ class _OrderAssignmentScreenState extends State<OrderAssignmentScreen> {
                       children: [
                         Text(
                           '${_selectedOrderIds.length} Orders Selected',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          style: PremiumDesignSystem.subtitle1.copyWith(
+                            color: isDark ? PremiumDesignSystem.darkTextPrimary : PremiumDesignSystem.textPrimary,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         Text(
                           'Rs ${totalAmount.toStringAsFixed(0)}',
-                          style: TextStyle(
+                          style: PremiumDesignSystem.subtitle1.copyWith(
                             fontWeight: FontWeight.bold,
-                            color: AppTheme.primaryGreen,
-                            fontSize: 16,
+                            color: PremiumDesignSystem.primary,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
                     Text(
                       'Total Weight: ${totalWeight.toStringAsFixed(1)} kg',
-                      style: TextStyle(color: Colors.grey[700], fontSize: 13),
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _selectedOrderIds.isEmpty || _isSubmitLoading ? null : _assignOrders,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primaryGreen,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        ),
-                        child: _isSubmitLoading
-                            ? const SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                              )
-                            : const Text(
-                                'Confirm Assignment',
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                              ),
+                      style: PremiumDesignSystem.caption.copyWith(
+                        color: isDark ? PremiumDesignSystem.darkTextSecondary : PremiumDesignSystem.textSecondary,
                       ),
+                    ),
+                    const SizedBox(height: 16),
+                    PremiumButton(
+                      text: 'Confirm Assignment',
+                      icon: Icons.assignment_turned_in_rounded,
+                      onPressed: _assignOrders,
+                      enabled: _selectedOrderIds.isNotEmpty && !_isSubmitLoading,
+                      isLoading: _isSubmitLoading,
+                      gradient: PremiumDesignSystem.primaryGradient,
                     ),
                   ],
                 ),
