@@ -497,7 +497,7 @@ class _AIInsightsScreenState extends State<AIInsightsScreen> with SingleTickerPr
       case 'inventory':
         return Colors.blue;
       case 'finance':
-        return Colors.emerald;
+        return Colors.green;
       case 'forecasting':
         return Colors.purple;
       case 'market':

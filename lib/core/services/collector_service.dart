@@ -339,4 +339,50 @@ class CollectorService {
     );
     return _decode(response);
   }
+
+  // Fetch unassigned orders
+  Future<List<dynamic>> getUnassignedOrders({required String role}) async {
+    final response = await http.get(
+      Uri.parse('${ApiConstants.baseUrl}/orders?unassigned=true&role=$role'),
+      headers: await _headers(),
+    );
+    final decoded = _decode(response);
+    return decoded['data'] ?? [];
+  }
+
+  // Assign orders to collector (creates Trip and tasks)
+  Future<Map<String, dynamic>> assignOrders({
+    required int collectorId,
+    required List<int> orderIds,
+  }) async {
+    final response = await http.post(
+      Uri.parse('${ApiConstants.baseUrl}/dispatch/assign-orders'),
+      headers: await _headers(),
+      body: jsonEncode({
+        'collectorId': collectorId,
+        'orderIds': orderIds,
+      }),
+    );
+    return _decode(response);
+  }
+
+  // Fetch warehouse trips with optional filters
+  Future<List<dynamic>> getWarehouseTrips({
+    String? status,
+    int? collectorId,
+    String? startDate,
+    String? endDate,
+  }) async {
+    final query = <String, String>{};
+    if (status != null && status.isNotEmpty) query['status'] = status;
+    if (collectorId != null) query['collectorId'] = collectorId.toString();
+    if (startDate != null && startDate.isNotEmpty) query['startDate'] = startDate;
+    if (endDate != null && endDate.isNotEmpty) query['endDate'] = endDate;
+
+    final uri = Uri.parse('${ApiConstants.baseUrl}/dispatch/trips')
+        .replace(queryParameters: query.isEmpty ? null : query);
+    final response = await http.get(uri, headers: await _headers());
+    final decoded = _decode(response);
+    return decoded['data'] ?? [];
+  }
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong2.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:http/http.dart' as http;
@@ -258,7 +258,6 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
                       points: _routePoints,
                       color: AppTheme.primaryGreen.withOpacity(0.8),
                       strokeWidth: 5.0,
-                      isFilled: false,
                       borderColor: Colors.black.withOpacity(0.3),
                       borderStrokeWidth: 1.0,
                     ),

@@ -111,7 +111,7 @@ class _FinancialDashboardScreenState extends State<FinancialDashboardScreen> {
           'Net Profit',
           'PKR ${netProfit.toStringAsFixed(0)}',
           isLoss ? Icons.trending_down : Icons.trending_up,
-          isLoss ? Colors.red : Colors.emerald,
+          isLoss ? Colors.red : Colors.green,
           isDark,
           subtitle: '${_summary['monthlyGrowth'] ?? 0.0}% growth',
         ),

@@ -184,10 +184,12 @@ class _RewardsScreenState extends State<RewardsScreen> with TickerProviderStateM
                     height: 350,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: AppColors.neonCyan.withValues(alpha: 0.15),
-                      filters: [
-                        ImageFilter.blur(sigmaX: 100, sigmaY: 100),
-                      ],
+                      gradient: RadialGradient(
+                        colors: [
+                          AppColors.neonCyan.withValues(alpha: 0.15),
+                          AppColors.neonCyan.withValues(alpha: 0),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -200,10 +202,12 @@ class _RewardsScreenState extends State<RewardsScreen> with TickerProviderStateM
                     height: 400,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: AppColors.neonGreen.withValues(alpha: 0.12),
-                      filters: [
-                        ImageFilter.blur(sigmaX: 120, sigmaY: 120),
-                      ],
+                      gradient: RadialGradient(
+                        colors: [
+                          AppColors.neonGreen.withValues(alpha: 0.12),
+                          AppColors.neonGreen.withValues(alpha: 0),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -326,7 +330,7 @@ class _RewardsScreenState extends State<RewardsScreen> with TickerProviderStateM
                                 '$points',
                                 style: TextStyle(
                                   fontSize: 44,
-                                  fontWeight: FontWeight.black,
+                                  fontWeight: FontWeight.w900,
                                   color: isDark ? Colors.white : Colors.black87,
                                   letterSpacing: -1,
                                 ),
@@ -583,7 +587,7 @@ class _RewardsScreenState extends State<RewardsScreen> with TickerProviderStateM
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 14,
-                  color: isDark ? Colors.white70 : Colors.black60,
+                  color: isDark ? Colors.white70 : Colors.black.withOpacity(0.60),
                 ),
               ),
               const SizedBox(height: 24),
@@ -626,7 +630,7 @@ class _RewardsScreenState extends State<RewardsScreen> with TickerProviderStateM
           value,
           style: TextStyle(
             fontSize: 20,
-            fontWeight: FontWeight.black,
+            fontWeight: FontWeight.w900,
             color: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
           ),
         ),
@@ -1050,7 +1054,7 @@ class _RewardsScreenState extends State<RewardsScreen> with TickerProviderStateM
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: isPodium
-                                    ? ringColor.withValues(alpha: 0.2)
+                                    ? ringColor!.withValues(alpha: 0.2)
                                     : Colors.transparent,
                               ),
                               child: Center(
@@ -1074,7 +1078,7 @@ class _RewardsScreenState extends State<RewardsScreen> with TickerProviderStateM
                               height: 44,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                border: isPodium ? Border.all(color: ringColor, width: 2) : null,
+                                border: isPodium ? Border.all(color: ringColor!, width: 2) : null,
                                 color: isDark ? Colors.white10 : Colors.grey.shade300,
                               ),
                               child: ClipOval(
@@ -1756,7 +1760,7 @@ class _RewardsScreenState extends State<RewardsScreen> with TickerProviderStateM
                   '+$pts PTS',
                   style: TextStyle(
                     fontSize: 14,
-                    fontWeight: FontWeight.black,
+                    fontWeight: FontWeight.w900,
                     color: isDark ? AppColors.neonGreen : AppColors.success,
                   ),
                 ),

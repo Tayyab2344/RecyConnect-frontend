@@ -12,6 +12,7 @@ import '../../widgets/recycle_loader.dart';
 import '../messages/messages_screen.dart';
 import '../notifications/notifications_screen.dart';
 import '../collector/collector_map_screen.dart';
+import '../auth/login_screen.dart';
 
 class CollectorDashboard extends StatefulWidget {
   const CollectorDashboard({super.key});
@@ -721,6 +722,8 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
             _buildEarningsWallet(wallet, earningsList),
             const SizedBox(height: 16),
             _buildSafetyPanel(),
+            const SizedBox(height: 16),
+            _buildLogoutTile(),
             const SizedBox(height: 88),
           ],
         ),
@@ -909,6 +912,79 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
               label: const Text('Report issue'),
               style: FilledButton.styleFrom(backgroundColor: AppTheme.errorRed),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLogoutTile() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.errorRed.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppTheme.errorRed.withOpacity(0.16)),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: _showLogoutDialog,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                const Icon(Icons.logout, color: AppTheme.errorRed),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Logout',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.errorRed,
+                        ),
+                  ),
+                ),
+                const Icon(Icons.chevron_right, color: AppTheme.errorRed),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showLogoutDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: Row(
+          children: const [
+            Icon(Icons.logout, color: AppTheme.errorRed),
+            SizedBox(width: 10),
+            Text('Logout'),
+          ],
+        ),
+        content: const Text('Are you sure you want to logout from your collector account?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel', style: TextStyle(color: AppTheme.textLight)),
+          ),
+          FilledButton(
+            onPressed: () async {
+              final navigator = Navigator.of(context);
+              navigator.pop(); // Pop the logout dialog
+              final authService = Provider.of<AuthService>(context, listen: false);
+              await authService.logout();
+              navigator.pushAndRemoveUntil(
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
+                (route) => false,
+              );
+            },
+            style: FilledButton.styleFrom(backgroundColor: AppTheme.errorRed),
+            child: const Text('Logout'),
           ),
         ],
       ),

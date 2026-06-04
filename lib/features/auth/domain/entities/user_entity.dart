@@ -11,7 +11,7 @@ class UserEntity {
   final String? city;
   final String? area;
   final String? profileImage;
-  final int? collectorId;
+  final String? collectorId;
   final String? verificationStatus;
   final String? kycStage;
   final String? rejectionReason;
