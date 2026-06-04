@@ -75,4 +75,20 @@ class ChatService {
     final decoded = _decode(response);
     return decoded['data'] ?? [];
   }
+
+  // Upload a voice note recording
+  Future<Map<String, dynamic>> uploadVoiceNote(String filePath) async {
+    final token = await _authService.getToken();
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('${ApiConstants.baseUrl}/chat/voice-message/upload'),
+    );
+    request.headers['Authorization'] = 'Bearer $token';
+    request.files.add(await http.MultipartFile.fromPath('voice', filePath));
+
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+    final decoded = _decode(response);
+    return decoded['data'] ?? {};
+  }
 }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/services/warehouse_service.dart';
+import '../../../core/utils/export_helper.dart';
 import 'add_warehouse_item_screen.dart';
 
 class InventoryListScreen extends StatefulWidget {
@@ -176,6 +177,40 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
         iconTheme: IconThemeData(
           color: isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen,
         ),
+        actions: [
+          PopupMenuButton<String>(
+            icon: Icon(Icons.download, color: isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen),
+            onSelected: (value) async {
+              if (value == 'csv') {
+                await ExportHelper.exportInventoryToCsv(_inventory);
+              } else if (value == 'pdf') {
+                await ExportHelper.exportInventoryToPdf(_inventory);
+              }
+            },
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+              const PopupMenuItem<String>(
+                value: 'csv',
+                child: Row(
+                  children: [
+                    Icon(Icons.table_chart, color: Colors.green),
+                    SizedBox(width: 8),
+                    Text('Export CSV'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem<String>(
+                value: 'pdf',
+                child: Row(
+                  children: [
+                    Icon(Icons.picture_as_pdf, color: Colors.red),
+                    SizedBox(width: 8),
+                    Text('Export PDF'),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
       body: Column(
         children: [

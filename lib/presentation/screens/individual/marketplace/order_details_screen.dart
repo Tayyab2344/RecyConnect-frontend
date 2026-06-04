@@ -6,6 +6,8 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:record/record.dart';
+import 'package:path_provider/path_provider.dart';
 import '../../../../core/models/order_model.dart';
 import '../../../../core/services/order_service.dart';
 import '../../../../core/services/chat_service.dart';
@@ -15,6 +17,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../widgets/marketplace/glass_card.dart';
 import '../../../widgets/marketplace/neon_button.dart';
 import '../../../widgets/recycle_loader.dart';
+import '../../../widgets/chat/voice_note_bubble.dart';
 
 class OrderDetailsScreen extends StatefulWidget {
   final Order? order;
@@ -53,6 +56,12 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen>
   Timer? _chatPollingTimer;
   late int _currentUserId;
 
+  // Recording variables
+  final AudioRecorder _audioRecorder = AudioRecorder();
+  bool _isRecording = false;
+  int _recordingDuration = 0;
+  Timer? _recordingTimer;
+
   @override
   void initState() {
     super.initState();
@@ -72,10 +81,95 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen>
   @override
   void dispose() {
     _chatPollingTimer?.cancel();
+    _recordingTimer?.cancel();
+    _audioRecorder.dispose();
     _tabController.dispose();
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  Future<void> _startRecording() async {
+    try {
+      if (await _audioRecorder.hasPermission()) {
+        final directory = await getTemporaryDirectory();
+        final path = '${directory.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
+
+        await _audioRecorder.start(const RecordConfig(), path: path);
+
+        setState(() {
+          _isRecording = true;
+          _recordingDuration = 0;
+        });
+
+        _recordingTimer?.cancel();
+        _recordingTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+          setState(() {
+            _recordingDuration++;
+          });
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Microphone permission is required to record voice notes.')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to start recording: $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  Future<void> _cancelRecording() async {
+    try {
+      await _audioRecorder.stop();
+      _recordingTimer?.cancel();
+      setState(() {
+        _isRecording = false;
+        _recordingDuration = 0;
+      });
+    } catch (e) {
+      debugPrint('Error cancelling recording: $e');
+    }
+  }
+
+  Future<void> _stopAndSendVoiceNote() async {
+    try {
+      final path = await _audioRecorder.stop();
+      _recordingTimer?.cancel();
+      
+      setState(() {
+        _isRecording = false;
+        _recordingDuration = 0;
+        _isSendingMessage = true;
+      });
+
+      if (path != null && _selectedConversation != null) {
+        final result = await _chatService.uploadVoiceNote(path);
+        final voiceUrl = result['voiceUrl'] as String?;
+
+        if (voiceUrl != null) {
+          final convId = _selectedConversation['id'] as int;
+          await _chatService.sendMessage(
+            conversationId: convId,
+            content: '',
+            voiceUrl: voiceUrl,
+            messageType: 'VOICE_NOTE',
+          );
+          _fetchMessages(silent: true, scroll: true);
+        } else {
+          throw Exception('Failed to get voice url from upload');
+        }
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to send voice note: $e'), backgroundColor: Colors.red),
+      );
+    } finally {
+      setState(() {
+        _isSendingMessage = false;
+      });
+    }
   }
 
   void _handleTabSelection() {
@@ -1010,12 +1104,13 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen>
                     final bool isMe = senderId == _currentUserId;
                     final String content = msg['content'] ?? '';
                     final String messageType = msg['messageType'] ?? 'TEXT';
+                    final String voiceUrl = msg['voiceUrl'] ?? '';
                     final DateTime date = msg['createdAt'] != null
                         ? DateTime.parse(msg['createdAt'])
                         : DateTime.now();
                     final String timeStr = DateFormat('hh:mm a').format(date);
 
-                    return _buildChatBubble(isMe, content, messageType, timeStr, isDark);
+                    return _buildChatBubble(isMe, content, messageType, timeStr, isDark, voiceUrl: voiceUrl);
                   },
                 ),
         ),
@@ -1101,9 +1196,10 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen>
     );
   }
 
-  Widget _buildChatBubble(bool isMe, String content, String messageType, String timeStr, bool isDark) {
+  Widget _buildChatBubble(bool isMe, String content, String messageType, String timeStr, bool isDark, {String? voiceUrl}) {
     final bool isSystem = messageType == 'SYSTEM';
     final bool isLocation = messageType == 'LOCATION' || content.startsWith('LOCATION_SHARE:');
+    final bool isVoice = messageType == 'VOICE_NOTE' || (voiceUrl != null && voiceUrl.isNotEmpty);
 
     if (isSystem) {
       return Container(
@@ -1157,6 +1253,11 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen>
             ),
           ),
         ],
+      );
+    } else if (isVoice) {
+      body = VoiceNoteBubble(
+        voiceUrl: voiceUrl ?? '',
+        isMe: isMe,
       );
     } else {
       body = Text(
@@ -1244,6 +1345,72 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen>
   }
 
   Widget _buildMessageInputBar(bool isDark) {
+    final orderStatus = _order?.status.trim().toUpperCase() ?? '';
+    final isClosed = orderStatus == 'COMPLETED' || 
+                     orderStatus == 'CANCELLED' || 
+                     _selectedConversation?['status'] == 'ARCHIVED';
+
+    if (isClosed) {
+      return Container(
+        color: isDark ? const Color(0xFF1E293B) : Colors.grey.shade100,
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        child: SafeArea(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                orderStatus == 'COMPLETED' ? Icons.check_circle_outline : Icons.lock_outline,
+                color: orderStatus == 'COMPLETED' ? Colors.green : Colors.grey,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                orderStatus == 'COMPLETED'
+                    ? 'This chat is closed because the order is completed.'
+                    : orderStatus == 'CANCELLED'
+                        ? 'This chat is closed because the order is cancelled.'
+                        : 'This chat is closed.',
+                style: TextStyle(
+                  color: isDark ? Colors.white70 : Colors.black87,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_isRecording) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        color: isDark ? const Color(0xFF0D1B2A) : Colors.white,
+        border: Border(top: BorderSide(color: isDark ? Colors.white10 : Colors.black12)),
+        child: SafeArea(
+          child: Row(
+            children: [
+              const Icon(Icons.mic, color: Colors.red),
+              const SizedBox(width: 8),
+              Text(
+                'Recording... ${_recordingDuration}s',
+                style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+              ),
+              const Spacer(),
+              IconButton(
+                icon: const Icon(Icons.delete, color: Colors.red),
+                onPressed: _cancelRecording,
+              ),
+              IconButton(
+                icon: const Icon(Icons.check, color: Colors.green),
+                onPressed: _stopAndSendVoiceNote,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
@@ -1264,6 +1431,9 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen>
             Expanded(
               child: TextField(
                 controller: _messageController,
+                onChanged: (text) {
+                  setState(() {});
+                },
                 style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                 decoration: const InputDecoration(
                   hintText: 'Type your message...',
@@ -1276,9 +1446,11 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen>
             ),
             const SizedBox(width: 8),
 
-            // Send button
+            // Send or Record button
             GestureDetector(
-              onTap: _sendMessage,
+              onTap: _messageController.text.trim().isEmpty
+                  ? _startRecording
+                  : _sendMessage,
               child: CircleAvatar(
                 backgroundColor: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
                 radius: 20,
@@ -1288,7 +1460,11 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen>
                         height: 18,
                         child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                       )
-                    : Icon(Icons.send, color: isDark ? Colors.black : Colors.white, size: 16),
+                    : Icon(
+                        _messageController.text.trim().isEmpty ? Icons.mic : Icons.send,
+                        color: isDark ? Colors.black : Colors.white,
+                        size: 16,
+                      ),
               ),
             ),
           ],
