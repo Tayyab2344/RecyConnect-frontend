@@ -24,6 +24,9 @@ class Order {
   // Delivery method
   final String? deliveryMethod;
 
+  // Review details if order has been rated
+  final Map<String, dynamic>? review;
+
   Order({
     required this.id,
     required this.buyerId,
@@ -39,6 +42,7 @@ class Order {
     this.chat,
     this.handshakeOtp,
     this.deliveryMethod,
+    this.review,
   });
 
   /// Parse the actual backend response shape:
@@ -72,6 +76,7 @@ class Order {
       chat: json['chat'] != null ? OrderChat.fromJson(json['chat']) : null,
       handshakeOtp: json['handshakeOtp'] as String?,
       deliveryMethod: json['deliveryMethod'] as String?,
+      review: json['review'] as Map<String, dynamic>?,
     );
   }
 

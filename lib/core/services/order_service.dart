@@ -93,6 +93,15 @@ class OrderService {
     return Order.fromJson(data);
   }
 
+  // Submit review for an order
+  Future<Map<String, dynamic>> submitOrderReview(
+      int orderId, double rating, String feedback) async {
+    return _unwrapMap(
+      await _repository.submitOrderReview(orderId, rating, feedback),
+      'Failed to submit review'
+    );
+  }
+
   // Get export URL for CSV download
   String getExportUrl({
     String? role,

@@ -26,6 +26,9 @@ abstract class OrderRepository {
 
   Future<ApiResult<Map<String, dynamic>>> confirmOrder(int id);
 
+  Future<ApiResult<Map<String, dynamic>>> submitOrderReview(
+      int orderId, double rating, String feedback);
+
   String getExportUrl({
     String? role,
     String? material,

@@ -18,6 +18,7 @@ import '../../../widgets/marketplace/glass_card.dart';
 import '../../../widgets/marketplace/neon_button.dart';
 import '../../../widgets/recycle_loader.dart';
 import '../../../widgets/chat/voice_note_bubble.dart';
+import '../../../widgets/ratings_reviews_dialog.dart';
 
 class OrderDetailsScreen extends StatefulWidget {
   final Order? order;
@@ -45,6 +46,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen>
   Order? _order;
   bool _isLoadingOrder = true;
   String? _orderError;
+  bool _hasReviewed = false;
 
   // Chat variables
   List<dynamic> _conversations = [];
@@ -608,6 +610,15 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen>
           // Sticky Status Header Card
           _buildStatusHeaderCard(isDark),
           const SizedBox(height: 16),
+
+          // Rate Order Prompt Card (if completed, buyer is current user, and not reviewed)
+          if (order.status.trim().toUpperCase() == 'COMPLETED' &&
+              order.buyerId == _currentUserId &&
+              order.review == null &&
+              !_hasReviewed) ...[
+            _buildRateOrderCard(isDark),
+            const SizedBox(height: 16),
+          ],
 
           // Handshake OTP Verification Card (if active)
           if (order.handshakeOtp != null && 
@@ -1531,5 +1542,101 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen>
       default:
         return '';
     }
+  }
+
+  Widget _buildRateOrderCard(bool isDark) {
+    final accentColor = isDark ? AppColors.neonCyan : AppColors.primaryGreen;
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: accentColor.withOpacity(0.3),
+          width: 1.5,
+        ),
+        gradient: LinearGradient(
+          colors: isDark
+              ? [const Color(0xFF0F1E2E), const Color(0xFF0A1420)]
+              : [Colors.green.shade50, Colors.green.shade100],
+        ),
+        boxShadow: isDark
+            ? [
+                BoxShadow(
+                  color: accentColor.withOpacity(0.05),
+                  blurRadius: 15,
+                )
+              ]
+            : null,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.stars_rounded,
+                color: Color(0xFFFFA726),
+                size: 28,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Rate Your Transaction!',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Your feedback helps maintain a trustworthy community. Submit a review of ${_order!.sellerName} and earn +5 Eco Points!',
+            style: TextStyle(
+              fontSize: 13,
+              color: isDark ? Colors.white70 : Colors.black87,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () async {
+                final result = await showDialog<bool>(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (context) => RatingsReviewsDialog(
+                    orderId: _order!.id,
+                    sellerName: _order!.sellerName,
+                  ),
+                );
+                if (result == true) {
+                  setState(() {
+                    _hasReviewed = true;
+                  });
+                }
+              },
+              icon: const Icon(Icons.rate_review_rounded, size: 18),
+              label: const Text(
+                'Rate Order',
+                style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 0.5),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
+                foregroundColor: isDark ? Colors.black : Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 0,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

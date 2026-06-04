@@ -6,6 +6,7 @@ import '../../../core/services/listing_service.dart';
 import '../../../core/services/order_service.dart';
 import '../../../core/services/report_service.dart';
 import '../../../core/services/app_service.dart';
+import '../../../core/services/rewards_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../widgets/curved/curved_bottom_nav.dart';
 import '../../widgets/recycle_loader.dart';
@@ -68,20 +69,24 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
   Future<void> _loadDashboardStats() async {
     setState(() => _isLoading = true);
     try {
-      final listingStats = await _listingService.getListingStats();
-      final buyOrderStats = await _orderService.getOrderStats(role: 'buyer');
-      final sellOrderStats = await _orderService.getOrderStats(role: 'seller');
-      final activity = await _reportService.getActivity(limit: 5);
-      final rates = await _appService.getPublicRates();
+      final rewardsService = Provider.of<RewardsService>(context, listen: false);
+      final results = await Future.wait([
+        _listingService.getListingStats(),
+        _orderService.getOrderStats(role: 'buyer'),
+        _orderService.getOrderStats(role: 'seller'),
+        _reportService.getActivity(limit: 5),
+        _appService.getPublicRates(),
+        rewardsService.fetchRewardsStatus(),
+      ]);
       
       setState(() {
         _stats = {
-          'listings': listingStats,
-          'buyOrders': buyOrderStats,
-          'sellOrders': sellOrderStats,
+          'listings': results[0],
+          'buyOrders': results[1],
+          'sellOrders': results[2],
         };
-        _recentActivity = activity;
-        _marketRates = rates;
+        _recentActivity = results[3] as List<dynamic>?;
+        _marketRates = results[4] as List<dynamic>?;
         _isLoading = false;
       });
     } catch (e) {
@@ -149,6 +154,8 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
                 _buildHeader(),
                 const SizedBox(height: 24),
                 _buildBrandingTitle(),
+                const SizedBox(height: 20),
+                _buildGamificationCard(Theme.of(context).brightness == Brightness.dark),
                 const SizedBox(height: 24),
                 _buildStatsOverview(),
                 const SizedBox(height: 24),
@@ -869,6 +876,254 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
           setState(() => _selectedIndex = 2);
           _pageController.jumpToPage(2);
         },
+      ),
+    );
+  }
+
+  Widget _buildGamificationCard(bool isDark) {
+    final rewardsService = context.watch<RewardsService>();
+    final status = rewardsService.rewardsStatus;
+    if (status == null) return const SizedBox.shrink();
+
+    final points = status['ecoPoints'] ?? 0;
+    final level = status['currentLevel'] ?? 'Beginner Recycler';
+    final trustScore = status['trustScore'] ?? 100;
+    final nextLevelInfo = status['nextLevelInfo'];
+    final progressPercent = (nextLevelInfo?['progressPercent'] as num?)?.toDouble() ?? 0.0;
+    final pointsNeeded = nextLevelInfo?['pointsNeeded'] ?? 0;
+    final badgesList = status['badges'] as List? ?? [];
+
+    final primaryColor = isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen;
+
+    // Helper to get display name & icon for warehouse badges
+    String getBadgeDisplay(String badgeName) {
+      switch (badgeName.toUpperCase()) {
+        case 'BRONZE_WAREHOUSE': return 'Bronze';
+        case 'SILVER_WAREHOUSE': return 'Silver';
+        case 'GOLD_WAREHOUSE': return 'Gold';
+        case 'PLATINUM_WAREHOUSE': return 'Platinum';
+        case 'GREEN_PARTNER': return 'Green Partner';
+        default: return badgeName;
+      }
+    }
+
+    Widget getBadgeIcon(String badgeName) {
+      switch (badgeName.toUpperCase()) {
+        case 'BRONZE_WAREHOUSE':
+          return const Icon(Icons.workspace_premium_rounded, color: Colors.orangeAccent, size: 20);
+        case 'SILVER_WAREHOUSE':
+          return const Icon(Icons.workspace_premium_rounded, color: Colors.grey, size: 20);
+        case 'GOLD_WAREHOUSE':
+          return const Icon(Icons.workspace_premium_rounded, color: Colors.amber, size: 20);
+        case 'PLATINUM_WAREHOUSE':
+          return const Icon(Icons.diamond_outlined, color: Colors.cyan, size: 20);
+        case 'GREEN_PARTNER':
+          return const Icon(Icons.eco_rounded, color: Colors.greenAccent, size: 20);
+        default:
+          return const Icon(Icons.shield_outlined, color: Colors.white60, size: 20);
+      }
+    }
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const RewardsScreen()),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(20),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: isDark
+                ? [const Color(0xFF1A3A2F), const Color(0xFF0D1F1A)]
+                : [Colors.green.shade50, Colors.green.shade100],
+          ),
+          border: Border.all(
+            color: isDark ? primaryColor.withOpacity(0.3) : Colors.green.shade200,
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.eco_rounded,
+                            color: isDark ? const Color(0xFF00E676) : Colors.green.shade800,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            level,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: isDark ? Colors.white70 : Colors.green.shade900,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        '$points Eco Points',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white : Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.white10 : Colors.white70,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isDark ? Colors.white24 : Colors.green.shade300,
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        'Trust Score',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white60 : Colors.green.shade900,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '$trustScore',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? const Color(0xFF00E676) : Colors.green.shade800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            
+            // Warehouse Badges Section
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  'Warehouse Badges:',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white70 : Colors.black87,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                if (badgesList.isEmpty)
+                  Text(
+                    'No badges yet',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontStyle: FontStyle.italic,
+                      color: isDark ? Colors.white38 : Colors.black45,
+                    ),
+                  )
+                else
+                  Expanded(
+                    child: SizedBox(
+                      height: 32,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: badgesList.length,
+                        itemBuilder: (context, idx) {
+                          final badge = badgesList[idx];
+                          final badgeName = badge['badgeName'] as String? ?? '';
+                          return Tooltip(
+                            message: badgeName,
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: Chip(
+                                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                padding: EdgeInsets.zero,
+                                labelPadding: const EdgeInsets.symmetric(horizontal: 6),
+                                backgroundColor: isDark ? Colors.white10 : Colors.white70,
+                                avatar: getBadgeIcon(badgeName),
+                                label: Text(
+                                  getBadgeDisplay(badgeName),
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: isDark ? Colors.white : Colors.black87,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            
+            const SizedBox(height: 14),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Level Progress',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: isDark ? Colors.white60 : Colors.black54,
+                  ),
+                ),
+                Text(
+                  pointsNeeded > 0 ? '$pointsNeeded pts to next level' : 'Max Level',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? const Color(0xFF00E676) : Colors.green.shade900,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: progressPercent,
+                minHeight: 6,
+                backgroundColor: isDark ? Colors.white12 : Colors.green.shade200,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  isDark ? const Color(0xFF00E676) : Colors.green.shade700,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
