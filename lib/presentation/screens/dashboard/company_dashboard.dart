@@ -18,6 +18,7 @@ import '../individual/seller_orders_screen.dart';
 import '../individual/transactions_screen.dart';
 import '../profile/profile_screen.dart';
 import '../rewards/rewards_screen.dart';
+import '../messages/messages_screen.dart';
 
 class CompanyDashboard extends StatefulWidget {
   const CompanyDashboard({super.key});
@@ -176,25 +177,49 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
             ),
           ],
         ),
-        GestureDetector(
-          onTap: () {
-            _pageController.animateToPage(
-              4,
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
-            );
-          },
-          child: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
+        Row(
+          children: [
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const MessagesScreen()),
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
+                  ),
+                ),
+                child: Icon(Icons.chat_bubble_outline_rounded, color: Theme.of(context).iconTheme.color, size: 20),
               ),
             ),
-            child: Icon(Icons.person, color: Theme.of(context).iconTheme.color, size: 20),
-          ),
+            const SizedBox(width: 10),
+            GestureDetector(
+              onTap: () {
+                _pageController.animateToPage(
+                  4,
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
+                  ),
+                ),
+                child: Icon(Icons.person, color: Theme.of(context).iconTheme.color, size: 20),
+              ),
+            ),
+          ],
         ),
       ],
     );

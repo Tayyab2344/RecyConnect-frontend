@@ -372,48 +372,54 @@ class _OrderAssignmentScreenState extends State<OrderAssignmentScreen> {
                 ],
               ),
               child: SafeArea(
-                child: Row(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            '${_selectedOrderIds.length} Orders Selected',
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '${_selectedOrderIds.length} Orders Selected',
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                        Text(
+                          'Rs ${totalAmount.toStringAsFixed(0)}',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.primaryGreen,
+                            fontSize: 16,
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Total Weight: ${totalWeight.toStringAsFixed(1)} kg',
-                            style: TextStyle(color: Colors.grey[700], fontSize: 13),
-                          ),
-                          Text(
-                            'Total Amount: Rs ${totalAmount.toStringAsFixed(0)}',
-                            style: TextStyle(color: Colors.grey[700], fontSize: 13),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 16),
-                    ElevatedButton(
-                      onPressed: _selectedOrderIds.isEmpty || _isSubmitLoading ? null : _assignOrders,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryGreen,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Total Weight: ${totalWeight.toStringAsFixed(1)} kg',
+                      style: TextStyle(color: Colors.grey[700], fontSize: 13),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _selectedOrderIds.isEmpty || _isSubmitLoading ? null : _assignOrders,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primaryGreen,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        child: _isSubmitLoading
+                            ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                              )
+                            : const Text(
+                                'Confirm Assignment',
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                              ),
                       ),
-                      child: _isSubmitLoading
-                          ? const SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                            )
-                          : const Text(
-                              'Confirm Assignment',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                            ),
                     ),
                   ],
                 ),

@@ -875,6 +875,7 @@ class _ProfileScreenState extends State<ProfileScreen>
             _ActivityItem(Icons.analytics_outlined, 'Business Analytics', 'Charts, trends, and insights', const Color(0xFFE91E63)),
             _ActivityItem(Icons.people_outlined, 'Collector Performance', 'Track collector metrics', const Color(0xFF00BCD4)),
             _ActivityItem(Icons.receipt_long_outlined, 'Order Management', 'View and track orders', AppColors.neonGreen),
+            _ActivityItem(Icons.message_outlined, 'Messages', 'Chats with buyers and sellers', const Color(0xFF9C27B0)),
             _ActivityItem(Icons.emoji_events_outlined, 'Rewards & Leaderboard', 'Level, badges, and rankings', const Color(0xFFFF5722)),
           ]
         : [
@@ -905,13 +906,13 @@ class _ProfileScreenState extends State<ProfileScreen>
           onTap: () {
             if (item.title == 'Rewards & Leaderboard') {
               Navigator.push(context, MaterialPageRoute(builder: (_) => const RewardsScreen()));
+            } else if (item.title == 'Messages') {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const MessagesScreen()));
             } else if (!isWarehouse) {
               if (item.title == 'Sales History') {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const SalesHistoryScreen()));
               } else if (item.title == 'Purchase History') {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const PurchaseHistoryScreen()));
-              } else if (item.title == 'Messages') {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const MessagesScreen()));
               }
             }
           },

@@ -376,122 +376,116 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
                   ),
               ],
             ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: isDark
-                          ? [
-                              Colors.white.withOpacity(0.12),
-                              Colors.white.withOpacity(0.05),
-                            ]
-                          : [
-                              Colors.white.withOpacity(0.85),
-                              Colors.white.withOpacity(0.65),
-                            ],
-                    ),
-                    border: Border.all(
-                      color: isSelected
-                          ? role.color.withOpacity(0.7)
-                          : isDark
-                              ? Colors.white.withOpacity(0.12)
-                              : Colors.white.withOpacity(0.6),
-                      width: isSelected ? 2.5 : 1.5,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      // Icon container
-                      Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              role.color,
-                              role.color.withOpacity(0.8),
-                            ],
-                          ),
-                          borderRadius: BorderRadius.circular(14),
-                          boxShadow: [
-                            BoxShadow(
-                              color: role.color.withOpacity(0.3),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Icon(
-                          role.icon,
-                          size: 28,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-
-                      // Text
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              role.title,
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: isDark ? Colors.white : AppColors.darkText,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              role.description,
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: isDark
-                                    ? Colors.white.withOpacity(0.6)
-                                    : AppColors.darkGrey,
-                                height: 1.3,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(width: 12),
-
-                      // Selection indicator
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 250),
-                        width: 26,
-                        height: 26,
-                        decoration: BoxDecoration(
-                          color: isSelected ? role.color : Colors.transparent,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: isSelected
-                                ? role.color
-                                : isDark
-                                    ? Colors.white.withOpacity(0.3)
-                                    : Colors.grey.shade300,
-                            width: 2,
-                          ),
-                        ),
-                        child: isSelected
-                            ? const Icon(Icons.check_rounded, size: 16, color: Colors.white)
-                            : null,
-                      ),
-                    ],
-                  ),
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: isDark
+                      ? [
+                          Colors.white.withOpacity(0.12),
+                          Colors.white.withOpacity(0.05),
+                        ]
+                      : [
+                          Colors.white.withOpacity(0.85),
+                          Colors.white.withOpacity(0.65),
+                        ],
                 ),
+                border: Border.all(
+                  color: isSelected
+                      ? role.color.withOpacity(0.7)
+                      : isDark
+                          ? Colors.white.withOpacity(0.12)
+                          : Colors.white.withOpacity(0.6),
+                  width: isSelected ? 2.5 : 1.5,
+                ),
+              ),
+              child: Row(
+                children: [
+                  // Icon container
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          role.color,
+                          role.color.withOpacity(0.8),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: role.color.withOpacity(0.3),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      role.icon,
+                      size: 28,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+
+                  // Text
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          role.title,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.white : AppColors.darkText,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          role.description,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: isDark
+                                ? Colors.white.withOpacity(0.6)
+                                : AppColors.darkGrey,
+                            height: 1.3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(width: 12),
+
+                  // Selection indicator
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    width: 26,
+                    height: 26,
+                    decoration: BoxDecoration(
+                      color: isSelected ? role.color : Colors.transparent,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isSelected
+                            ? role.color
+                            : isDark
+                                ? Colors.white.withOpacity(0.3)
+                                : Colors.grey.shade300,
+                        width: 2,
+                      ),
+                    ),
+                    child: isSelected
+                        ? const Icon(Icons.check_rounded, size: 16, color: Colors.white)
+                        : null,
+                  ),
+                ],
               ),
             ),
           );

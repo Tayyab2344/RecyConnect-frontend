@@ -618,12 +618,8 @@ class _RegistrationScreenState extends State<RegistrationScreen>
   Widget _buildBasicInfoStep() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-        child: Container(
-          padding: const EdgeInsets.all(28),
+    return Container(
+      padding: const EdgeInsets.all(28),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
             gradient: LinearGradient(
@@ -995,20 +991,14 @@ class _RegistrationScreenState extends State<RegistrationScreen>
           ),
         ],
       ),
-    ),
-      ),
     );
   }
 
   Widget _buildDocumentsStep() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-        child: Container(
-          padding: const EdgeInsets.all(28),
+    return Container(
+      padding: const EdgeInsets.all(28),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
             gradient: LinearGradient(
@@ -1210,20 +1200,14 @@ class _RegistrationScreenState extends State<RegistrationScreen>
           ],
         ],
       ),
-    ),
-      ),
     );
   }
 
   Widget _buildVerificationStep() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-        child: Container(
-          padding: const EdgeInsets.all(28),
+    return Container(
+      padding: const EdgeInsets.all(28),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
             gradient: LinearGradient(
@@ -1388,8 +1372,6 @@ class _RegistrationScreenState extends State<RegistrationScreen>
             ),
           ],
         ],
-      ),
-    ),
       ),
     );
   }

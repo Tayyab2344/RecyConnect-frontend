@@ -324,23 +324,19 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
   Widget _buildSearchBar(bool isDark) {
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.08)
-                  : Colors.white.withValues(alpha: 0.8),
-              border: Border.all(
-                color: isDark
-                    ? AppColors.neonCyan.withValues(alpha: 0.2)
-                    : Colors.black.withValues(alpha: 0.05),
-              ),
-            ),
-            child: TextField(
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : Colors.white.withValues(alpha: 0.8),
+          border: Border.all(
+            color: isDark
+                ? AppColors.neonCyan.withValues(alpha: 0.2)
+                : Colors.black.withValues(alpha: 0.05),
+          ),
+        ),
+        child: TextField(
               style: TextStyle(
                 color: isDark ? Colors.white : const Color(0xFF1A1A1A),
               ),
@@ -360,8 +356,6 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
                 _searchQuery = value;
                 _filterOrders();
               },
-            ),
-          ),
         ),
       ),
     );
@@ -494,49 +488,34 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
           },
           child: Container(
             margin: const EdgeInsets.only(bottom: 16),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: isDark
-                        ? [
-                            Colors.white.withValues(alpha: 0.1),
-                            Colors.white.withValues(alpha: 0.05),
-                          ]
-                        : [
-                            Colors.white.withValues(alpha: 0.85),
-                            Colors.white.withValues(alpha: 0.65),
-                          ],
-                  ),
-                  border: Border.all(
-                    color: isDark
-                        ? materialColor.withValues(alpha: 0.3)
-                        : Colors.white.withValues(alpha: 0.6),
-                    width: 1.5,
-                  ),
-                  boxShadow: isDark
-                      ? [
-                          BoxShadow(
-                            color: materialColor.withValues(alpha: 0.08),
-                            blurRadius: 20,
-                          ),
-                        ]
-                      : [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.08),
-                            blurRadius: 20,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
-                ),
-                child: Column(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.1)
+                  : Colors.white.withValues(alpha: 0.85),
+              border: Border.all(
+                color: isDark
+                    ? materialColor.withValues(alpha: 0.3)
+                    : Colors.white.withValues(alpha: 0.6),
+                width: 1.5,
+              ),
+              boxShadow: isDark
+                  ? [
+                      BoxShadow(
+                        color: materialColor.withValues(alpha: 0.08),
+                        blurRadius: 20,
+                      ),
+                    ]
+                  : [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.08),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+            ),
+            child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
@@ -731,11 +710,8 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
                       ],
                     ),
                   ],
-                ),
-              ),
             ),
           ),
-        ),
         );
       },
     );

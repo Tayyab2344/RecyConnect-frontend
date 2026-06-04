@@ -5,6 +5,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constants/api_constants.dart';
 import 'secure_storage_service.dart';
@@ -146,5 +147,78 @@ class NotificationService {
       ),
       payload: jsonEncode(message.data),
     );
+  }
+
+  static Future<void> showLocalNotification({
+    required int id,
+    required String title,
+    required String body,
+    Map<String, dynamic>? payload,
+  }) async {
+    await _localNotifications.show(
+      id,
+      title,
+      body,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          _ordersChannel.id,
+          _ordersChannel.name,
+          channelDescription: _ordersChannel.description,
+          importance: Importance.high,
+          priority: Priority.high,
+          icon: '@mipmap/launcher_icon',
+        ),
+        iOS: const DarwinNotificationDetails(),
+      ),
+      payload: payload != null ? jsonEncode(payload) : null,
+    );
+  }
+
+  static Future<void> checkAndShowPendingNotifications() async {
+    try {
+      final authToken = await SecureStorageService.readToken();
+      if (authToken == null || authToken.isEmpty) {
+        return;
+      }
+
+      final provider = sl<NotificationProvider>();
+      await provider.fetchNotifications();
+      final unreadNotifications = provider.notifications.where((n) => !n.isRead).toList();
+
+      if (unreadNotifications.isEmpty) return;
+
+      final prefs = await SharedPreferences.getInstance();
+      final shownIdsStrList = prefs.getStringList('shown_notification_ids') ?? [];
+      final shownIds = shownIdsStrList.map((e) => int.tryParse(e)).whereType<int>().toSet();
+
+      bool updated = false;
+      for (final n in unreadNotifications) {
+        if (!shownIds.contains(n.id)) {
+          await showLocalNotification(
+            id: n.id,
+            title: n.title,
+            body: n.message,
+            payload: {
+              'type': n.type,
+              'id': n.id.toString(),
+              'actionUrl': n.actionUrl,
+            },
+          );
+          shownIds.add(n.id);
+          updated = true;
+        }
+      }
+
+      if (updated) {
+        await prefs.setStringList(
+          'shown_notification_ids',
+          shownIds.map((e) => e.toString()).toList(),
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error checking and showing pending notifications: $e');
+      }
+    }
   }
 }

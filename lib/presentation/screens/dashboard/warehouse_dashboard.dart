@@ -28,6 +28,7 @@ import '../warehouse/customer_management_screen.dart';
 import '../warehouse/ai_insights_screen.dart';
 import '../warehouse/ai_assistant_screen.dart';
 import '../warehouse/business_reports_screen.dart';
+import '../messages/messages_screen.dart';
 import 'package:flutter/foundation.dart';
 
 class WarehouseDashboard extends StatefulWidget {
@@ -189,25 +190,49 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
             ),
           ],
         ),
-        GestureDetector(
-          onTap: () {
-            _pageController.animateToPage(
-              4,
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
-            );
-          },
-          child: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: Theme.of(context).dividerColor.withOpacity(0.1),
+        Row(
+          children: [
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const MessagesScreen()),
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Theme.of(context).dividerColor.withOpacity(0.1),
+                  ),
+                ),
+                child: Icon(Icons.chat_bubble_outline_rounded, color: Theme.of(context).iconTheme.color, size: 20),
               ),
             ),
-            child: Icon(Icons.person, color: Theme.of(context).iconTheme.color, size: 20),
-          ),
+            const SizedBox(width: 10),
+            GestureDetector(
+              onTap: () {
+                _pageController.animateToPage(
+                  4,
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Theme.of(context).dividerColor.withOpacity(0.1),
+                  ),
+                ),
+                child: Icon(Icons.person, color: Theme.of(context).iconTheme.color, size: 20),
+              ),
+            ),
+          ],
         ),
       ],
     );

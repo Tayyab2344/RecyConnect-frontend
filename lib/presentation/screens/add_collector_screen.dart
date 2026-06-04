@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -786,57 +785,51 @@ class _AddCollectorScreenState extends State<AddCollectorScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: TextFormField(
-              controller: controller,
-              maxLines: maxLines,
-              keyboardType: keyboardType,
-              inputFormatters: inputFormatters,
-              validator: validator,
-              onChanged: onChanged,
-              style: TextStyle(color: isDark ? Colors.white : Colors.black87),
-              decoration: InputDecoration(
-                labelText: label,
-                hintText: hint,
-                hintStyle: TextStyle(
-                  color: isDark ? Colors.white38 : Colors.grey,
-                ),
-                labelStyle: TextStyle(
-                  color: isDark ? Colors.white70 : Colors.grey[700],
-                ),
-                prefixIcon: Icon(icon, color: isDark ? AppColors.neonCyan : AppColors.primaryGreen),
-                suffixIcon: suffixWidget,
-                filled: true,
-                fillColor: isDark
-                    ? Colors.white.withValues(alpha: 0.08)
-                    : Colors.white.withValues(alpha: 0.8),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(
-                    color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.2),
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(
-                    color: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
-                    width: 2,
-                  ),
-                ),
-                errorBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: AppColors.error),
-                ),
-                errorText: errorText,
+        TextFormField(
+          controller: controller,
+          maxLines: maxLines,
+          keyboardType: keyboardType,
+          inputFormatters: inputFormatters,
+          validator: validator,
+          onChanged: onChanged,
+          style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+          decoration: InputDecoration(
+            labelText: label,
+            hintText: hint,
+            hintStyle: TextStyle(
+              color: isDark ? Colors.white38 : Colors.grey,
+            ),
+            labelStyle: TextStyle(
+              color: isDark ? Colors.white70 : Colors.grey[700],
+            ),
+            prefixIcon: Icon(icon, color: isDark ? AppColors.neonCyan : AppColors.primaryGreen),
+            suffixIcon: suffixWidget,
+            filled: true,
+            fillColor: isDark
+                ? Colors.white.withValues(alpha: 0.08)
+                : Colors.white.withValues(alpha: 0.8),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(
+                color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.2),
               ),
             ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(
+                color: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
+                width: 2,
+              ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: AppColors.error),
+            ),
+            errorText: errorText,
           ),
         ),
       ],
@@ -856,99 +849,93 @@ class _AddCollectorScreenState extends State<AddCollectorScreen>
       child: AnimatedBuilder(
         animation: _pulseAnimation,
         builder: (context, child) {
-          return ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: Container(
-                height: 150,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.08)
-                      : Colors.white.withValues(alpha: 0.8),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: isDark
-                        ? AppColors.neonCyan.withValues(alpha: 0.2)
-                        : Colors.grey.withValues(alpha: 0.2),
-                  ),
-                ),
-                child: Stack(
-                  children: [
-                    if (image != null)
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: Image.file(image, fit: BoxFit.cover, width: double.infinity, height: 150),
-                      )
-                    else
-                      Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.add_a_photo_outlined,
-                              size: 40,
-                              color: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Tap to upload $label',
-                              style: TextStyle(
-                                color: isDark ? Colors.white54 : Colors.grey,
-                              ),
-                            ),
-                            if (showOcrBadge) ...[
-                              const SizedBox(height: 4),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primaryGreen.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.auto_awesome, size: 12, color: AppColors.primaryGreen),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      'OCR will extract CNIC',
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        color: AppColors.primaryGreen,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ],
+          return Container(
+            height: 150,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.08)
+                  : Colors.white.withValues(alpha: 0.8),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isDark
+                    ? AppColors.neonCyan.withValues(alpha: 0.2)
+                    : Colors.grey.withValues(alpha: 0.2),
+              ),
+            ),
+            child: Stack(
+              children: [
+                if (image != null)
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Image.file(image, fit: BoxFit.cover, width: double.infinity, height: 150),
+                  )
+                else
+                  Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.add_a_photo_outlined,
+                          size: 40,
+                          color: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
                         ),
-                      ),
-                    if (isExtracting)
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.black54,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: const Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              CircularProgressIndicator(color: Colors.white),
-                              SizedBox(height: 12),
-                              Text(
-                                'Extracting CNIC...',
-                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-                              ),
-                            ],
+                        const SizedBox(height: 8),
+                        Text(
+                          'Tap to upload $label',
+                          style: TextStyle(
+                            color: isDark ? Colors.white54 : Colors.grey,
                           ),
                         ),
+                        if (showOcrBadge) ...[
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryGreen.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.auto_awesome, size: 12, color: AppColors.primaryGreen),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'OCR will extract CNIC',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: AppColors.primaryGreen,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                if (isExtracting)
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.black54,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: const Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircularProgressIndicator(color: Colors.white),
+                          SizedBox(height: 12),
+                          Text(
+                            'Extracting CNIC...',
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                          ),
+                        ],
                       ),
-                  ],
-                ),
-              ),
+                    ),
+                  ),
+              ],
             ),
           );
         },

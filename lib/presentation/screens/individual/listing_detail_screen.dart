@@ -66,11 +66,10 @@ class ListingDetailScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        flexibleSpace: ClipRRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: Container(color: Colors.transparent),
-          ),
+        flexibleSpace: Container(
+          color: isDark
+              ? Colors.black.withOpacity(0.4)
+              : Colors.white.withOpacity(0.8),
         ),
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new, color: isDark ? Colors.white : Colors.black87),

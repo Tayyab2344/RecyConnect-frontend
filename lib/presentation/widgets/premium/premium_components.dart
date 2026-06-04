@@ -1,4 +1,4 @@
-import 'dart:ui';
+// dart:ui import removed - BackdropFilter no longer used for performance
 import 'package:flutter/material.dart';
 import '../../../core/theme/premium_design_system.dart';
 
@@ -198,38 +198,32 @@ class _GlassCardState extends State<GlassCard> {
               ? PremiumDesignSystem.elevatedShadow
               : PremiumDesignSystem.softShadowMedium,
         ),
-        child: ClipRRect(
-          borderRadius:
-              widget.borderRadius ?? PremiumDesignSystem.borderRadiusLarge,
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: Container(
-              decoration: BoxDecoration(
-                color: widget.color ??
-                    (isDark
-                        ? Colors.white.withOpacity(0.05)
-                        : Colors.white.withOpacity(0.7)),
-                borderRadius: widget.borderRadius ??
-                    PremiumDesignSystem.borderRadiusLarge,
-                border: Border.all(
-                  color: isDark
-                      ? Colors.white.withOpacity(0.1)
-                      : Colors.white.withOpacity(0.3),
-                  width: 1.5,
-                ),
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: widget.onTap,
-                  borderRadius: widget.borderRadius ??
-                      PremiumDesignSystem.borderRadiusLarge,
-                  child: Padding(
-                    padding: widget.padding ??
-                        const EdgeInsets.all(PremiumDesignSystem.spacing20),
-                    child: widget.child,
-                  ),
-                ),
+        // Performance optimization: Removed BackdropFilter blur for low-end device support
+        child: Container(
+          decoration: BoxDecoration(
+            color: widget.color ??
+                (isDark
+                    ? Colors.white.withOpacity(0.08)
+                    : Colors.white.withOpacity(0.85)),
+            borderRadius: widget.borderRadius ??
+                PremiumDesignSystem.borderRadiusLarge,
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withOpacity(0.1)
+                  : Colors.white.withOpacity(0.3),
+              width: 1.5,
+            ),
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: widget.onTap,
+              borderRadius: widget.borderRadius ??
+                  PremiumDesignSystem.borderRadiusLarge,
+              child: Padding(
+                padding: widget.padding ??
+                    const EdgeInsets.all(PremiumDesignSystem.spacing20),
+                child: widget.child,
               ),
             ),
           ),
@@ -304,7 +298,8 @@ class _PremiumStatCardState extends State<PremiumStatCard>
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return MouseRegion(
+    return RepaintBoundary(
+      child: MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
       child: ScaleTransition(
@@ -436,6 +431,7 @@ class _PremiumStatCardState extends State<PremiumStatCard>
           ),
         ),
       ),
+    ),
     );
   }
 }
@@ -716,7 +712,8 @@ class _PremiumShimmerState extends State<PremiumShimmer>
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return AnimatedBuilder(
+    return RepaintBoundary(
+      child: AnimatedBuilder(
       animation: _animation,
       builder: (context, child) {
         return Container(
@@ -743,6 +740,7 @@ class _PremiumShimmerState extends State<PremiumShimmer>
           ),
         );
       },
+    ),
     );
   }
 }

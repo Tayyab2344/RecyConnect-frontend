@@ -50,7 +50,7 @@ abstract class DesignTokens {
   // ============================================
   static const Duration animationFast = Duration(milliseconds: 150);
   static const Duration animationNormal = Duration(milliseconds: 300);
-  static const Duration animationSlow = Duration(milliseconds: 500);
+  static const Duration animationSlow = Duration(milliseconds: 350);
   static const Duration animationXSlow = Duration(milliseconds: 800);
   static const Duration pageTransition = Duration(milliseconds: 400);
 

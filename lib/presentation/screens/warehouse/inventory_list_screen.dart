@@ -1,4 +1,4 @@
-import 'dart:ui';
+// dart:ui import removed - BackdropFilter no longer used for performance
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_colors.dart';
@@ -232,43 +232,38 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
       ),
       child: Column(
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  color: isDark
-                      ? Colors.white.withOpacity(0.08)
-                      : Colors.white.withOpacity(0.8),
-                  border: Border.all(
-                    color: isDark
-                        ? AppColors.neonCyan.withOpacity(0.2)
-                        : Colors.black.withOpacity(0.05),
-                  ),
+          // Performance optimization: Removed BackdropFilter for low-end device support
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              color: isDark
+                  ? Colors.white.withOpacity(0.08)
+                  : Colors.white.withOpacity(0.9),
+              border: Border.all(
+                color: isDark
+                    ? AppColors.neonCyan.withOpacity(0.2)
+                    : Colors.black.withOpacity(0.05),
+              ),
+            ),
+            child: TextField(
+              onChanged: (value) {
+                setState(() => _searchQuery = value);
+                _loadInventory();
+              },
+              style: TextStyle(
+                color: isDark ? Colors.white : const Color(0xFF1A1A1A),
+              ),
+              decoration: InputDecoration(
+                hintText: 'Search materials or categories...',
+                hintStyle: TextStyle(
+                  color: isDark ? Colors.white54 : Colors.grey,
                 ),
-                child: TextField(
-                  onChanged: (value) {
-                    setState(() => _searchQuery = value);
-                    _loadInventory();
-                  },
-                  style: TextStyle(
-                    color: isDark ? Colors.white : const Color(0xFF1A1A1A),
-                  ),
-                  decoration: InputDecoration(
-                    hintText: 'Search materials or categories...',
-                    hintStyle: TextStyle(
-                      color: isDark ? Colors.white54 : Colors.grey,
-                    ),
-                    prefixIcon: Icon(
-                      Icons.search,
-                      color: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
-                    ),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  ),
+                prefixIcon: Icon(
+                  Icons.search,
+                  color: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
                 ),
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               ),
             ),
           ),
