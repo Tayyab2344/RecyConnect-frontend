@@ -8,6 +8,7 @@ import '../../../core/utils/error_message_helper.dart';
 import '../../widgets/recycle_loader.dart';
 import '../../widgets/skeleton_loader.dart';
 import 'package:flutter/foundation.dart';
+import 'marketplace/order_details_screen.dart';
 
 class SellerOrdersScreen extends StatefulWidget {
   const SellerOrdersScreen({Key? key}) : super(key: key);
@@ -333,8 +334,17 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
     final materialColor = _getMaterialColor(order.materialType);
     final statusColor = _getStatusColor(order.status);
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OrderDetailsScreen(order: order),
+          ),
+        ).then((_) => _loadOrders()); // Reload on return to refresh unread count/status
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: isDark ? AppTheme.darkCardSurface : Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -527,6 +537,60 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
                 ),
               ],
             ),
+
+            // Chat message preview and unread count badge
+            if (order.chat != null && order.chat!.lastMessage != null) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.white.withOpacity(0.04) : Colors.black.withOpacity(0.03),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.chat_bubble_outline_rounded,
+                      size: 14,
+                      color: isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        order.chat!.lastMessage!.messageType == 'SYSTEM'
+                            ? '[System] ${order.chat!.lastMessage!.content}'
+                            : order.chat!.lastMessage!.content,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDark ? AppTheme.darkTextSecondary : AppTheme.textLight,
+                          fontStyle: order.chat!.lastMessage!.messageType == 'SYSTEM' ? FontStyle.italic : null,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (order.chat!.unreadCount > 0) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          '${order.chat!.unreadCount}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
 
             // Action Buttons (only for active orders)
             if (order.status == 'PENDING' || order.status == 'COLLECTED') ...[

@@ -9,6 +9,7 @@ import '../../widgets/recycle_loader.dart';
 import '../../widgets/skeleton_loader.dart';
 import '../individual/browse_marketplace_screen.dart';
 import 'package:flutter/foundation.dart';
+import 'marketplace/order_details_screen.dart';
 
 /// Premium My Orders Screen with Glassmorphism Design
 /// Features: Glass cards, animated backgrounds, neon accents (dark), soft pastels (light)
@@ -482,8 +483,17 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
     return AnimatedBuilder(
       animation: _pulseAnimation,
       builder: (context, child) {
-        return Container(
-          margin: const EdgeInsets.only(bottom: 16),
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => OrderDetailsScreen(order: order),
+              ),
+            ).then((_) => _loadOrders()); // Reload on return to refresh unread count/status
+          },
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 16),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(20),
             child: BackdropFilter(
@@ -622,6 +632,59 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
                         ),
                       ],
                     ),
+                    // Chat message preview and unread count badge
+                    if (order.chat != null && order.chat!.lastMessage != null) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.white.withOpacity(0.04) : Colors.black.withOpacity(0.03),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.chat_bubble_outline_rounded,
+                              size: 14,
+                              color: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                order.chat!.lastMessage!.messageType == 'SYSTEM'
+                                    ? '[System] ${order.chat!.lastMessage!.content}'
+                                    : order.chat!.lastMessage!.content,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: isDark ? Colors.white60 : Colors.black54,
+                                  fontStyle: order.chat!.lastMessage!.messageType == 'SYSTEM' ? FontStyle.italic : null,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (order.chat!.unreadCount > 0) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.red,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  '${order.chat!.unreadCount}',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
 
                     const SizedBox(height: 14),
 

@@ -65,4 +65,14 @@ class ChatService {
     final decoded = _decode(response);
     return decoded['data'] ?? {};
   }
+
+  // Get conversations linked to a specific order
+  Future<List<dynamic>> getOrderChats(int orderId) async {
+    final response = await http.get(
+      Uri.parse('${ApiConstants.baseUrl}/chat/order/$orderId'),
+      headers: await _headers(),
+    );
+    final decoded = _decode(response);
+    return decoded['data'] ?? [];
+  }
 }

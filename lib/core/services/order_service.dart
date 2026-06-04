@@ -75,6 +75,24 @@ class OrderService {
     await _repository.cancelOrder(orderId, reason: reason);
   }
 
+  // Get a single order by ID
+  Future<Order> getOrderById(int id) async {
+    final data = _unwrapMap(
+      await _repository.getOrderById(id),
+      'Failed to fetch order details'
+    );
+    return Order.fromJson(data);
+  }
+
+  // Confirm an order
+  Future<Order> confirmOrder(int id) async {
+    final data = _unwrapMap(
+      await _repository.confirmOrder(id),
+      'Failed to confirm order'
+    );
+    return Order.fromJson(data);
+  }
+
   // Get export URL for CSV download
   String getExportUrl({
     String? role,

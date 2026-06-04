@@ -111,10 +111,39 @@ class OrderRepositoryImpl implements OrderRepository {
   @override
   Future<void> cancelOrder(int orderId,
       {String reason = 'Payment cancelled by user'}) async {
+    final response = await _apiService.post('/orders/$orderId/cancel', {'reason': reason});
+    if (response['success'] != true) {
+      throw Exception(response['message'] ?? 'Failed to cancel order');
+    }
+  }
+
+  @override
+  Future<ApiResult<Map<String, dynamic>>> getOrderById(int id) async {
     try {
-      await _apiService.post('/orders/$orderId/cancel', {'reason': reason});
+      final response = await _apiService.get('/orders/$id');
+      if (response['success'] == true && response['data'] != null) {
+        return ApiResult.success(data: response['data'] as Map<String, dynamic>);
+      } else {
+        return ApiResult.failure(
+            response['message'] as String? ?? 'Failed to fetch order details');
+      }
     } catch (e) {
-      debugPrint('Error cancelling order: $e');
+      return ApiResult.failure('Error fetching order details: $e');
+    }
+  }
+
+  @override
+  Future<ApiResult<Map<String, dynamic>>> confirmOrder(int id) async {
+    try {
+      final response = await _apiService.post('/orders/$id/confirm', {});
+      if (response['success'] == true && response['data'] != null) {
+        return ApiResult.success(data: response['data'] as Map<String, dynamic>);
+      } else {
+        return ApiResult.failure(
+            response['message'] as String? ?? 'Failed to confirm order');
+      }
+    } catch (e) {
+      return ApiResult.failure('Error confirming order: $e');
     }
   }
 
