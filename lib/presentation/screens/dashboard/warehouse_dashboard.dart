@@ -69,21 +69,23 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
     setState(() => _isLoading = true);
     try {
       final listingStats = await _listingService.getListingStats();
-      final orderStats = await _orderService.getOrderStats();
+      final buyOrderStats = await _orderService.getOrderStats(role: 'buyer');
+      final sellOrderStats = await _orderService.getOrderStats(role: 'seller');
       final activity = await _reportService.getActivity(limit: 5);
       final rates = await _appService.getPublicRates();
       
       setState(() {
         _stats = {
           'listings': listingStats,
-          'orders': orderStats,
+          'buyOrders': buyOrderStats,
+          'sellOrders': sellOrderStats,
         };
         _recentActivity = activity;
         _marketRates = rates;
         _isLoading = false;
       });
     } catch (e) {
-      if (kDebugMode) print('Error loading stats: ');
+      if (kDebugMode) print('Error loading stats: $e');
       setState(() => _isLoading = false);
     }
   }
@@ -266,7 +268,8 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
 
   Widget _buildStatsOverview() {
     final listings = _stats?['listings'] as Map?;
-    final orders = _stats?['orders'] as Map?;
+    final buyOrders = _stats?['buyOrders'] as Map?;
+    final sellOrders = _stats?['sellOrders'] as Map?;
 
     final stats = [
       {
@@ -274,21 +277,21 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
         'value': '${listings?['totalListings'] ?? 0}',
         'change': '+${listings?['activeListings'] ?? 0} active',
         'icon': Icons.inventory_2,
-        'color': const Color(0xFF4CAF50),
+        'color': const Color(0xFFFFA726),
       },
       {
-        'title': 'Total Orders',
-        'value': '${orders?['totalOrders'] ?? 0}',
-        'change': '${orders?['confirmedCount'] ?? 0} confirmed',
+        'title': 'Buy Orders',
+        'value': '${buyOrders?['totalOrders'] ?? 0}',
+        'change': '${buyOrders?['pendingCount'] ?? 0} active',
         'icon': Icons.shopping_cart,
         'color': const Color(0xFF2196F3),
       },
       {
-        'title': 'Active Orders',
-        'value': '${orders?['pendingCount'] ?? 0}',
-        'change': 'needs action',
-        'icon': Icons.assignment_turned_in,
-        'color': const Color(0xFFFFA726),
+        'title': 'Sell Orders',
+        'value': '${sellOrders?['totalOrders'] ?? 0}',
+        'change': '${sellOrders?['pendingCount'] ?? 0} active',
+        'icon': Icons.sell,
+        'color': const Color(0xFF4CAF50),
       },
       {
         'title': 'Total Weight',
@@ -394,17 +397,17 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
         ),
         const SizedBox(height: 16),
         GridView.count(
-          crossAxisCount: 3,
+          crossAxisCount: 4,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           mainAxisSpacing: 12,
           crossAxisSpacing: 12,
-          childAspectRatio: 1.0,
+          childAspectRatio: 0.9,
           children: [
-            _buildQuickActionCard('Sell Items', Icons.add_circle_outline, const Color(0xFF4CAF50), () {
+            _buildQuickActionCard('Sell Waste', Icons.add_circle_outline, const Color(0xFF4CAF50), () {
               _pageController.animateToPage(2, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
             }),
-            _buildQuickActionCard('Browse', Icons.search, const Color(0xFF2196F3), () {
+            _buildQuickActionCard('Marketplace', Icons.search, const Color(0xFF2196F3), () {
               _pageController.animateToPage(1, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
             }),
             _buildQuickActionCard('Inventory', Icons.inventory_outlined, const Color(0xFFFFA726), () {
@@ -412,6 +415,12 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
             }),
             _buildQuickActionCard('Collectors', Icons.people_alt_outlined, Colors.orange, () {
               Navigator.push(context, MaterialPageRoute(builder: (context) => const CollectorManagementScreen()));
+            }),
+            _buildQuickActionCard('Purchases', Icons.shopping_bag_outlined, Colors.blue, () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const MyOrdersScreen()));
+            }),
+            _buildQuickActionCard('Sales Orders', Icons.sell_outlined, Colors.teal, () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const SellerOrdersScreen()));
             }),
             _buildQuickActionCard('My Earnings', Icons.monetization_on_outlined, const Color(0xFF9C27B0), () {
               Navigator.push(context, MaterialPageRoute(builder: (context) => const MyEarningsScreen()));
@@ -650,7 +659,12 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
               ),
             ),
             TextButton(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const MyOrdersScreen()),
+                );
+              },
               child: const Text('View All', style: TextStyle(color: Color(0xFF4CAF50))),
             ),
           ],
