@@ -178,23 +178,19 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen> with 
           // Search Bar - Premium Glassmorphism Style
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: BackdropFilter(
-                filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.08)
-                        : Colors.white.withValues(alpha: 0.8),
-                    border: Border.all(
-                      color: isDark
-                          ? AppColors.neonCyan.withValues(alpha: 0.2)
-                          : Colors.black.withValues(alpha: 0.05),
-                    ),
-                  ),
-                  child: TextField(
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.08)
+                    : Colors.white.withValues(alpha: 0.8),
+                border: Border.all(
+                  color: isDark
+                      ? AppColors.neonCyan.withValues(alpha: 0.2)
+                      : Colors.black.withValues(alpha: 0.05),
+                ),
+              ),
+              child: TextField(
                     style: TextStyle(
                       color: isDark ? Colors.white : const Color(0xFF1A1A1A),
                     ),
@@ -214,8 +210,6 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen> with 
                       _searchQuery = val;
                       _loadItems();
                     },
-                  ),
-                ),
               ),
             ),
           ),

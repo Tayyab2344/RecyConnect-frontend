@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/services/order_service.dart';
 
 // Widget to show ratings & reviews dialog after order completion
 class RatingsReviewsDialog extends StatefulWidget {
@@ -17,6 +18,7 @@ class RatingsReviewsDialog extends StatefulWidget {
 }
 
 class _RatingsReviewsDialogState extends State<RatingsReviewsDialog> {
+  final OrderService _orderService = OrderService();
   double _rating = 0;
   final _feedbackController = TextEditingController();
   bool _isSubmitting = false;
@@ -40,19 +42,34 @@ class _RatingsReviewsDialogState extends State<RatingsReviewsDialog> {
 
     setState(() => _isSubmitting = true);
 
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 1));
-
-    if (mounted) {
-      setState(() => _isSubmitting = false);
-      Navigator.pop(context, true);
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Thank you for your feedback!'),
-          backgroundColor: AppTheme.primaryGreen,
-        ),
+    try {
+      await _orderService.submitOrderReview(
+        widget.orderId,
+        _rating,
+        _feedbackController.text.trim(),
       );
+
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+        Navigator.pop(context, true);
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Thank you for your feedback!'),
+            backgroundColor: AppTheme.primaryGreen,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceAll('Exception: ', '')),
+            backgroundColor: AppTheme.errorRed,
+          ),
+        );
+      }
     }
   }
 

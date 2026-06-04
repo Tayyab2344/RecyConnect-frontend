@@ -1,4 +1,4 @@
-import 'dart:ui';
+// dart:ui import removed - BackdropFilter no longer used for performance
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
@@ -309,65 +309,59 @@ class _MyEarningsScreenState extends State<MyEarningsScreen>
     return AnimatedBuilder(
       animation: _pulseAnimation,
       builder: (context, child) {
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: isDark
-                      ? [
-                          Colors.white.withValues(alpha: 0.1),
-                          Colors.white.withValues(alpha: 0.05),
-                        ]
-                      : [
-                          Colors.white.withValues(alpha: 0.85),
-                          Colors.white.withValues(alpha: 0.65),
-                        ],
-                ),
-                border: Border.all(
-                  color: isDark
-                      ? color.withValues(alpha: 0.3)
-                      : Colors.white.withValues(alpha: 0.6),
-                ),
-                boxShadow: isDark
-                    ? [
-                        BoxShadow(
-                          color: color.withValues(alpha: 0.1 * _pulseAnimation.value),
-                          blurRadius: 10,
-                        ),
-                      ]
-                    : null,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(icon, color: color, size: 22),
-                  const SizedBox(height: 10),
-                  Text(
-                    value,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : const Color(0xFF1A1A1A),
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: isDark ? Colors.white54 : Colors.grey,
-                    ),
-                  ),
-                ],
-              ),
+        return Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isDark
+                  ? [
+                      Colors.white.withValues(alpha: 0.1),
+                      Colors.white.withValues(alpha: 0.05),
+                    ]
+                  : [
+                      Colors.white.withValues(alpha: 0.9),
+                      Colors.white.withValues(alpha: 0.75),
+                    ],
             ),
+            border: Border.all(
+              color: isDark
+                  ? color.withValues(alpha: 0.3)
+                  : Colors.white.withValues(alpha: 0.6),
+            ),
+            boxShadow: isDark
+                ? [
+                    BoxShadow(
+                      color: color.withValues(alpha: 0.1 * _pulseAnimation.value),
+                      blurRadius: 10,
+                    ),
+                  ]
+                : null,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: color, size: 22),
+              const SizedBox(height: 10),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : const Color(0xFF1A1A1A),
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: isDark ? Colors.white54 : Colors.grey,
+                ),
+              ),
+            ],
           ),
         );
       },
@@ -457,33 +451,29 @@ class _MyEarningsScreenState extends State<MyEarningsScreen>
       builder: (context, child) {
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: isDark
-                        ? [
-                            Colors.white.withValues(alpha: 0.1),
-                            Colors.white.withValues(alpha: 0.05),
-                          ]
-                        : [
-                            Colors.white.withValues(alpha: 0.85),
-                            Colors.white.withValues(alpha: 0.65),
-                          ],
-                  ),
-                  border: Border.all(
-                    color: isDark
-                        ? materialColor.withValues(alpha: 0.3)
-                        : Colors.white.withValues(alpha: 0.6),
-                  ),
-                ),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isDark
+                    ? [
+                        Colors.white.withValues(alpha: 0.1),
+                        Colors.white.withValues(alpha: 0.05),
+                      ]
+                    : [
+                        Colors.white.withValues(alpha: 0.9),
+                        Colors.white.withValues(alpha: 0.75),
+                      ],
+              ),
+              border: Border.all(
+                color: isDark
+                    ? materialColor.withValues(alpha: 0.3)
+                    : Colors.white.withValues(alpha: 0.6),
+              ),
+            ),
                 child: Row(
                   children: [
                     // Material Icon
@@ -602,12 +592,10 @@ class _MyEarningsScreenState extends State<MyEarningsScreen>
                               ),
                             ],
                           ),
-                        ],
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
         );

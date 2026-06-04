@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../core/models/listing_model.dart';
 import '../../../core/services/listing_service.dart';
 import '../../../core/utils/static_data.dart';
+import '../../../core/utils/export_helper.dart';
 import '../../widgets/marketplace/glass_card.dart';
 import '../../widgets/recycle_loader.dart';
 import '../../widgets/skeleton_loader.dart';
@@ -142,11 +143,10 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        flexibleSpace: ClipRRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: Container(color: Colors.transparent),
-          ),
+        flexibleSpace: Container(
+          color: isDark 
+              ? Colors.black.withOpacity(0.4) 
+              : Colors.white.withOpacity(0.8),
         ),
         leading: Navigator.canPop(context) ? IconButton(
           icon: Icon(Icons.arrow_back_ios_new, color: isDark ? Colors.white : Colors.black),
@@ -156,6 +156,38 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
           IconButton(
             icon: Icon(Icons.filter_list, color: isDark ? Colors.white : Colors.black),
             onPressed: _showFilterDialog,
+          ),
+          PopupMenuButton<String>(
+            icon: Icon(Icons.download, color: isDark ? Colors.white : Colors.black),
+            onSelected: (value) async {
+              if (value == 'csv') {
+                await ExportHelper.exportListingsToCsv(_listings);
+              } else if (value == 'pdf') {
+                await ExportHelper.exportListingsToPdf(_listings);
+              }
+            },
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+              const PopupMenuItem<String>(
+                value: 'csv',
+                child: Row(
+                  children: [
+                    Icon(Icons.table_chart, color: Colors.green),
+                    SizedBox(width: 8),
+                    Text('Export CSV'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem<String>(
+                value: 'pdf',
+                child: Row(
+                  children: [
+                    Icon(Icons.picture_as_pdf, color: Colors.red),
+                    SizedBox(width: 8),
+                    Text('Export PDF'),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),

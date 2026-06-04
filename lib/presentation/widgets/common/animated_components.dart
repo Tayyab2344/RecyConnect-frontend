@@ -35,26 +35,9 @@ class AnimatedGradientButton extends StatefulWidget {
   State<AnimatedGradientButton> createState() => _AnimatedGradientButtonState();
 }
 
-class _AnimatedGradientButtonState extends State<AnimatedGradientButton>
-    with SingleTickerProviderStateMixin {
+class _AnimatedGradientButtonState extends State<AnimatedGradientButton> {
   bool _isHovered = false;
   bool _isPressed = false;
-  late AnimationController _shimmerController;
-
-  @override
-  void initState() {
-    super.initState();
-    _shimmerController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _shimmerController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -546,13 +529,6 @@ class _PulseBadgeState extends State<PulseBadge>
                 colors: [widget.color, widget.color.withOpacity(0.8)],
               ),
               shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: widget.color.withOpacity(0.4),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
             ),
             child: Center(
               child: Text(

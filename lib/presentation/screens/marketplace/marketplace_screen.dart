@@ -438,23 +438,17 @@ class GlassContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: borderRadius ?? BorderRadius.zero,
-      child: BackdropFilter(
-        filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          decoration: BoxDecoration(
-            color: isDark 
-               ? Colors.black.withValues(alpha: 0.4) 
-               : Colors.white.withValues(alpha: 0.7),
-            borderRadius: borderRadius,
-            border: border ?? Border.all(
-              color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white.withValues(alpha: 0.5),
-            ),
-          ),
-          child: child,
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark 
+           ? Colors.black.withValues(alpha: 0.4) 
+           : Colors.white.withValues(alpha: 0.75),
+        borderRadius: borderRadius,
+        border: border ?? Border.all(
+          color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white.withValues(alpha: 0.5),
         ),
       ),
+      child: child,
     );
   }
 }

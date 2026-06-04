@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -1029,44 +1028,41 @@ class _GlassCard extends StatelessWidget {
     final radius = borderRadius ?? BorderRadius.circular(20);
     final glow = glowColor ?? (isDark ? AppColors.neonCyan : AppColors.primaryGreen);
 
-    return ClipRRect(
-      borderRadius: radius,
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: radius,
-            gradient: isDark ? AppColors.darkCardGradient : AppColors.lightCardGradient,
-            border: Border.all(
-              color: isDark
-                  ? glow.withValues(alpha: 0.15 + 0.1 * pulseValue)
-                  : Theme.of(context).cardColor.withValues(alpha: 0.6),
-              width: 1.5,
-            ),
-            boxShadow: isDark
-                ? [
-                    BoxShadow(
-                      color: glow.withValues(alpha: 0.08 * pulseValue),
-                      blurRadius: 20,
-                      spreadRadius: 0,
-                    ),
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.3),
-                      blurRadius: 15,
-                      offset: const Offset(0, 8),
-                    ),
-                  ]
-                : [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.08),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-          ),
-          child: child,
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark
+            ? AppColors.darkCard.withOpacity(0.8)
+            : Colors.white.withOpacity(0.9),
+        borderRadius: radius,
+        gradient: isDark ? AppColors.darkCardGradient : AppColors.lightCardGradient,
+        border: Border.all(
+          color: isDark
+              ? glow.withValues(alpha: 0.15 + 0.1 * pulseValue)
+              : Theme.of(context).cardColor.withValues(alpha: 0.6),
+          width: 1.5,
         ),
+        boxShadow: isDark
+            ? [
+                BoxShadow(
+                  color: glow.withValues(alpha: 0.08 * pulseValue),
+                  blurRadius: 20,
+                  spreadRadius: 0,
+                ),
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.3),
+                  blurRadius: 15,
+                  offset: const Offset(0, 8),
+                ),
+              ]
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
       ),
+      child: child,
     );
   }
 }

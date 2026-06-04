@@ -1,7 +1,14 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
+import 'package:csv/csv.dart';
+import 'package:path_provider/path_provider.dart';
 import '../../../core/models/order_model.dart';
 import '../../../core/services/order_service.dart';
 import '../../../core/theme/app_colors.dart';
@@ -97,12 +104,344 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
     });
   }
 
+  double get _totalWeight {
+    return _filteredOrders.fold(0.0, (sum, order) => sum + order.weight);
+  }
+
+  double get _totalMoney {
+    return _filteredOrders.fold(0.0, (sum, order) => sum + (order.totalAmount > 0 ? order.totalAmount : (order.weight * 10.0)));
+  }
+
+  void _showExportOptions() {
+    if (_filteredOrders.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No orders to export'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF0D2137) : Colors.white,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(24),
+              topRight: Radius.circular(24),
+            ),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Export Purchase Records',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : const Color(0xFF1A1A1A),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Choose your preferred file format for export.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isDark ? Colors.white70 : Colors.grey,
+                ),
+              ),
+              const SizedBox(height: 24),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.picture_as_pdf, color: Colors.red),
+                ),
+                title: Text('Export as PDF Document', style: TextStyle(fontWeight: FontWeight.w600, color: isDark ? Colors.white : Colors.black87)),
+                subtitle: Text('Download or print a clean visual report', style: TextStyle(color: isDark ? Colors.white60 : Colors.grey)),
+                onTap: () {
+                  Navigator.pop(context);
+                  _exportToPdf();
+                },
+              ),
+              const Divider(height: 24),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.grid_on, color: Colors.green),
+                ),
+                title: Text('Export as CSV Spreadsheet', style: TextStyle(fontWeight: FontWeight.w600, color: isDark ? Colors.white : Colors.black87)),
+                subtitle: Text('Save data for Excel or other applications', style: TextStyle(color: isDark ? Colors.white60 : Colors.grey)),
+                onTap: () {
+                  Navigator.pop(context);
+                  _exportToCsv();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _exportToPdf() async {
+    try {
+      final pdf = pw.Document();
+      
+      final font = pw.Font.helvetica();
+      final boldFont = pw.Font.helveticaBold();
+
+      pdf.addPage(
+        pw.MultiPage(
+          pageFormat: PdfPageFormat.a4,
+          margin: const pw.EdgeInsets.all(32),
+          build: (pw.Context context) {
+            return [
+              pw.Header(
+                level: 0,
+                child: pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text('RECYCONNECT', style: pw.TextStyle(font: boldFont, fontSize: 24, textColor: PdfColor.fromHex('#4CAF50'))),
+                        pw.Text('Purchases Ledger & Transactions', style: pw.TextStyle(font: font, fontSize: 14, textColor: PdfColors.grey700)),
+                      ],
+                    ),
+                    pw.Text(
+                      DateFormat('yyyy-MM-dd').format(DateTime.now()),
+                      style: pw.TextStyle(font: font, fontSize: 12, textColor: PdfColors.grey600),
+                    ),
+                  ],
+                ),
+              ),
+              pw.SizedBox(height: 20),
+              pw.TableHelper.fromTextArray(
+                headers: ['Order ID', 'Date', 'Material Type', 'Seller Name', 'Status', 'Weight (kg)', 'Amount (Rs)'],
+                data: _filteredOrders.map((order) {
+                  final price = order.totalAmount > 0 ? order.totalAmount : (order.weight * 10.0);
+                  return [
+                    '#ORD0${order.id}',
+                    DateFormat('yyyy-MM-dd').format(order.createdAt),
+                    order.materialTypeDisplay,
+                    order.seller?.name ?? 'Unknown Seller',
+                    order.statusDisplay,
+                    '${order.weight.toStringAsFixed(1)} kg',
+                    'Rs ${price.toStringAsFixed(0)}',
+                  ];
+                }).toList(),
+                headerStyle: pw.TextStyle(font: boldFont, color: PdfColors.white),
+                headerDecoration: pw.BoxDecoration(color: PdfColor.fromHex('#4CAF50')),
+                rowDecoration: const pw.BoxDecoration(border: pw.Border(bottom: pw.BorderSide(color: PdfColors.grey300))),
+                cellAlignment: pw.Alignment.centerLeft,
+                cellStyle: pw.TextStyle(font: font, fontSize: 10),
+              ),
+              pw.SizedBox(height: 30),
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.end,
+                children: [
+                  pw.Container(
+                    width: 250,
+                    padding: const pw.EdgeInsets.all(12),
+                    decoration: pw.BoxDecoration(
+                      border: pw.Border.all(color: PdfColor.fromHex('#4CAF50'), width: 1.5),
+                      borderRadius: const pw.BorderRadius.all(pw.Radius.circular(8)),
+                    ),
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Row(
+                          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                          children: [
+                            pw.Text('Total Volume Purchased:', style: pw.TextStyle(font: font, fontSize: 11, textColor: PdfColors.grey700)),
+                            pw.Text('${_totalWeight.toStringAsFixed(1)} kg', style: pw.TextStyle(font: boldFont, fontSize: 12)),
+                          ],
+                        ),
+                        pw.SizedBox(height: 6),
+                        pw.Divider(color: PdfColor.fromHex('#4CAF50')),
+                        pw.SizedBox(height: 6),
+                        pw.Row(
+                          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                          children: [
+                            pw.Text('Total Expense:', style: pw.TextStyle(font: boldFont, fontSize: 13, textColor: PdfColor.fromHex('#4CAF50'))),
+                            pw.Text('Rs ${_totalMoney.toStringAsFixed(0)}', style: pw.TextStyle(font: boldFont, fontSize: 14, textColor: PdfColor.fromHex('#4CAF50'))),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ];
+          },
+        ),
+      );
+
+      await Printing.layoutPdf(
+        onLayout: (PdfPageFormat format) async => pdf.save(),
+        name: 'Purchase_Records_${DateFormat('yyyyMMdd').format(DateTime.now())}.pdf',
+      );
+    } catch (e) {
+      if (kDebugMode) print('Error generating PDF: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to generate PDF: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
+  Future<void> _exportToCsv() async {
+    try {
+      List<List<dynamic>> csvData = [
+        ['Order ID', 'Date', 'Material Type', 'Seller Name', 'Status', 'Weight (kg)', 'Amount (Rs)'],
+        ..._filteredOrders.map((order) {
+          final price = order.totalAmount > 0 ? order.totalAmount : (order.weight * 10.0);
+          return [
+            '#ORD0${order.id}',
+            DateFormat('yyyy-MM-dd').format(order.createdAt),
+            order.materialTypeDisplay,
+            order.seller?.name ?? 'Unknown Seller',
+            order.statusDisplay,
+            order.weight,
+            price,
+          ];
+        }),
+        [], // Empty spacer row
+        ['Total Weight (kg)', '', '', '', '', _totalWeight],
+        ['Total Expense (Rs)', '', '', '', '', _totalMoney],
+      ];
+
+      String csvContent = const ListToCsvConverter().convert(csvData);
+      
+      await Clipboard.setData(ClipboardData(text: csvContent));
+      
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/purchase_records_${DateFormat('yyyyMMdd').format(DateTime.now())}.csv');
+      await file.writeAsString(csvContent);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('CSV copied to clipboard & saved to documents folder!'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 4),
+          ),
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) print('Error generating CSV: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to generate CSV: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
+  Widget _buildSummaryPanel(bool isDark) {
+    if (_filteredOrders.isEmpty) return const SizedBox.shrink();
+
+    final accentColor = isDark ? AppColors.neonCyan : AppColors.primaryGreen;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF0D2137) : Colors.white,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
+          ),
+        ],
+        border: Border(
+          top: BorderSide(
+            color: isDark ? accentColor.withOpacity(0.3) : Colors.black.withOpacity(0.05),
+            width: 1.5,
+          ),
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Total Volume',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDark ? Colors.white60 : Colors.grey,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${_totalWeight.toStringAsFixed(1)} kg',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : const Color(0xFF1A1A1A),
+                  ),
+                ),
+              ],
+            ),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  'Total Spending',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDark ? Colors.white60 : Colors.grey,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Rs ${_totalMoney.toStringAsFixed(0)}',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? AppColors.neonGreen : AppColors.primaryGreen,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       extendBodyBehindAppBar: true,
+      bottomNavigationBar: _buildSummaryPanel(isDark),
       body: Stack(
         children: [
           // 1. Animated Gradient Background
@@ -217,6 +556,12 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
               );
             },
           ),
+          const SizedBox(width: 8),
+          _buildIconButton(
+            icon: Icons.download_rounded,
+            isDark: isDark,
+            onTap: _showExportOptions,
+          ),
         ],
       ),
     );
@@ -324,23 +669,19 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
   Widget _buildSearchBar(bool isDark) {
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.08)
-                  : Colors.white.withValues(alpha: 0.8),
-              border: Border.all(
-                color: isDark
-                    ? AppColors.neonCyan.withValues(alpha: 0.2)
-                    : Colors.black.withValues(alpha: 0.05),
-              ),
-            ),
-            child: TextField(
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : Colors.white.withValues(alpha: 0.8),
+          border: Border.all(
+            color: isDark
+                ? AppColors.neonCyan.withValues(alpha: 0.2)
+                : Colors.black.withValues(alpha: 0.05),
+          ),
+        ),
+        child: TextField(
               style: TextStyle(
                 color: isDark ? Colors.white : const Color(0xFF1A1A1A),
               ),
@@ -360,8 +701,6 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
                 _searchQuery = value;
                 _filterOrders();
               },
-            ),
-          ),
         ),
       ),
     );
@@ -494,49 +833,34 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
           },
           child: Container(
             margin: const EdgeInsets.only(bottom: 16),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: isDark
-                        ? [
-                            Colors.white.withValues(alpha: 0.1),
-                            Colors.white.withValues(alpha: 0.05),
-                          ]
-                        : [
-                            Colors.white.withValues(alpha: 0.85),
-                            Colors.white.withValues(alpha: 0.65),
-                          ],
-                  ),
-                  border: Border.all(
-                    color: isDark
-                        ? materialColor.withValues(alpha: 0.3)
-                        : Colors.white.withValues(alpha: 0.6),
-                    width: 1.5,
-                  ),
-                  boxShadow: isDark
-                      ? [
-                          BoxShadow(
-                            color: materialColor.withValues(alpha: 0.08),
-                            blurRadius: 20,
-                          ),
-                        ]
-                      : [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.08),
-                            blurRadius: 20,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
-                ),
-                child: Column(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.1)
+                  : Colors.white.withValues(alpha: 0.85),
+              border: Border.all(
+                color: isDark
+                    ? materialColor.withValues(alpha: 0.3)
+                    : Colors.white.withValues(alpha: 0.6),
+                width: 1.5,
+              ),
+              boxShadow: isDark
+                  ? [
+                      BoxShadow(
+                        color: materialColor.withValues(alpha: 0.08),
+                        blurRadius: 20,
+                      ),
+                    ]
+                  : [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.08),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+            ),
+            child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
@@ -702,7 +1026,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
                               ),
                             ),
                             Text(
-                              'Rs ${(order.weight * 10).toStringAsFixed(0)}',
+                              'Rs ${(order.totalAmount > 0 ? order.totalAmount : (order.weight * 10.0)).toStringAsFixed(0)}',
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -731,11 +1055,8 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
                       ],
                     ),
                   ],
-                ),
-              ),
             ),
           ),
-        ),
         );
       },
     );

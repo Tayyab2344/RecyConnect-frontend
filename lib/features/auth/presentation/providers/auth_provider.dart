@@ -162,6 +162,7 @@ class AuthProvider extends ChangeNotifier {
         _token = result.data!.token;
         _user = _userToMap(result.data!.user);
         await NotificationService.registerDeviceToken();
+        NotificationService.checkAndShowPendingNotifications();
         _setLoading(false);
         return true;
       } else {
@@ -359,6 +360,7 @@ class AuthProvider extends ChangeNotifier {
       _user = session.userData;
       if (_token != null && _token!.isNotEmpty) {
         await NotificationService.registerDeviceToken();
+        NotificationService.checkAndShowPendingNotifications();
       }
       notifyListeners();
     } catch (e) {

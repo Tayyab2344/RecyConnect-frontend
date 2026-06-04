@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:ui';
+// dart:ui import removed - BackdropFilter no longer used for performance
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/services/preferences_service.dart';
@@ -242,9 +242,8 @@ class _AdminDrawerState extends State<AdminDrawer>
                       topLeft: Radius.circular(30),
                       topRight: Radius.circular(30),
                     ),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                      child: FadeTransition(
+                    // Performance optimization: Removed BackdropFilter for low-end device support
+                    child: FadeTransition(
                         opacity: _fadeAnimation,
                         child: ListView(
                           padding: const EdgeInsets.symmetric(vertical: 20),
@@ -324,7 +323,6 @@ class _AdminDrawerState extends State<AdminDrawer>
                     ),
                   ),
                 ),
-              ),
 
               // Footer
               _buildModernFooter(isDark),

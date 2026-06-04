@@ -148,6 +148,25 @@ class OrderRepositoryImpl implements OrderRepository {
   }
 
   @override
+  Future<ApiResult<Map<String, dynamic>>> submitOrderReview(
+      int orderId, double rating, String feedback) async {
+    try {
+      final response = await _apiService.post('/orders/$orderId/review', {
+        'rating': rating.toInt(),
+        'feedback': feedback,
+      });
+      if (response['success'] == true) {
+        return ApiResult.success(data: (response['data'] ?? <String, dynamic>{}) as Map<String, dynamic>);
+      } else {
+        return ApiResult.failure(
+            response['message'] as String? ?? 'Failed to submit review');
+      }
+    } catch (e) {
+      return ApiResult.failure('Error submitting review: $e');
+    }
+  }
+
+  @override
   String getExportUrl({
     String? role,
     String? material,

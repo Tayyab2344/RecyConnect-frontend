@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:provider/provider.dart';
@@ -97,6 +99,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
   bool? _hasSeenOnboarding;
   bool _isCheckingAuth = true;
   bool _networkError = false;
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
 
   @override
   void initState() {
@@ -108,6 +111,35 @@ class _AuthWrapperState extends State<AuthWrapper> {
     } else {
       _initializeApp();
     }
+
+    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((results) {
+      final hasConnection = results.contains(ConnectivityResult.wifi) || results.contains(ConnectivityResult.mobile);
+      if (hasConnection) {
+        if (_networkError) {
+          setState(() {
+            _networkError = false;
+          });
+          _initializeApp();
+        } else {
+          final authService = Provider.of<AuthService>(context, listen: false);
+          if (authService.isAuthenticated) {
+            NotificationService.registerDeviceToken();
+            NotificationService.checkAndShowPendingNotifications();
+            Provider.of<SyncManager>(context, listen: false).processQueue();
+          }
+        }
+      } else {
+        setState(() {
+          _networkError = true;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _connectivitySubscription?.cancel();
+    super.dispose();
   }
 
   Future<void> _initializeApp() async {
@@ -147,6 +179,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
           }
         } else {
           await NotificationService.registerDeviceToken();
+          NotificationService.checkAndShowPendingNotifications();
         }
       } catch (e) {
         // Network exception — keep session alive
