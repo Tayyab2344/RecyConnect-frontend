@@ -735,6 +735,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
               ),
             ),
           ),
+        ),
         );
       },
     );

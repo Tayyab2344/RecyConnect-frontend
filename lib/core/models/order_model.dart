@@ -18,6 +18,12 @@ class Order {
   // Optional chat metadata
   final OrderChat? chat;
 
+  // Handshake OTP for delivery confirmation
+  final String? handshakeOtp;
+
+  // Delivery method
+  final String? deliveryMethod;
+
   Order({
     required this.id,
     required this.buyerId,
@@ -31,6 +37,8 @@ class Order {
     this.seller,
     this.items,
     this.chat,
+    this.handshakeOtp,
+    this.deliveryMethod,
   });
 
   /// Parse the actual backend response shape:
@@ -62,6 +70,8 @@ class Order {
               .toList()
           : null,
       chat: json['chat'] != null ? OrderChat.fromJson(json['chat']) : null,
+      handshakeOtp: json['handshakeOtp'] as String?,
+      deliveryMethod: json['deliveryMethod'] as String?,
     );
   }
 
@@ -73,6 +83,8 @@ class Order {
       'status': status,
       'totalAmount': totalAmount,
       if (paymentMethod != null) 'paymentMethod': paymentMethod,
+      if (handshakeOtp != null) 'handshakeOtp': handshakeOtp,
+      if (deliveryMethod != null) 'deliveryMethod': deliveryMethod,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };

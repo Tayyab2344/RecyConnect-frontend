@@ -915,8 +915,9 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen>
 
   Widget _buildDeliveryMethodCard(bool isDark) {
     final order = _order!;
-    final isCollector = order.deliveryMethod == DeliveryMethod.WAREHOUSE_COLLECTOR_SERVICE ||
-        order.deliveryMethod.toString().contains('COLLECTOR');
+    final isCollector = order.deliveryMethod != null &&
+        (order.deliveryMethod == 'WAREHOUSE_COLLECTOR_SERVICE' ||
+        order.deliveryMethod.toString().contains('COLLECTOR'));
 
     return GlassCard(
       padding: const EdgeInsets.all(16),
