@@ -17,7 +17,7 @@ class PurchaseConfirmationDialog extends StatelessWidget {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => OrderDetailsScreen(item: item),
+        builder: (context) => OrderDetailsScreen(orderId: item.id),
       ),
     );
   }

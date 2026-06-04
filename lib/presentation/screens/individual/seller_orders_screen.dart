@@ -266,13 +266,13 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
                     pw.Column(
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
-                        pw.Text('RECYCONNECT', style: pw.TextStyle(font: boldFont, fontSize: 24, textColor: PdfColor.fromHex('#4CAF50'))),
-                        pw.Text('Sales Ledger & Transactions', style: pw.TextStyle(font: font, fontSize: 14, textColor: PdfColors.grey700)),
+                        pw.Text('RECYCONNECT', style: pw.TextStyle(font: boldFont, fontSize: 24, color: PdfColor.fromHex('#4CAF50'))),
+                        pw.Text('Sales Ledger & Transactions', style: pw.TextStyle(font: font, fontSize: 14, color: PdfColors.grey700)),
                       ],
                     ),
                     pw.Text(
                       DateFormat('yyyy-MM-dd').format(DateTime.now()),
-                      style: pw.TextStyle(font: font, fontSize: 12, textColor: PdfColors.grey600),
+                      style: pw.TextStyle(font: font, fontSize: 12, color: PdfColors.grey600),
                     ),
                   ],
                 ),
@@ -312,7 +312,7 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
                         pw.Row(
                           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                           children: [
-                            pw.Text('Total Sales Volume:', style: pw.TextStyle(font: font, fontSize: 11, textColor: PdfColors.grey700)),
+                            pw.Text('Total Sales Volume:', style: pw.TextStyle(font: font, fontSize: 11, color: PdfColors.grey700)),
                             pw.Text('${_totalWeight.toStringAsFixed(1)} kg', style: pw.TextStyle(font: boldFont, fontSize: 12)),
                           ],
                         ),
@@ -322,8 +322,8 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
                         pw.Row(
                           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                           children: [
-                            pw.Text('Total Revenue:', style: pw.TextStyle(font: boldFont, fontSize: 13, textColor: PdfColor.fromHex('#4CAF50'))),
-                            pw.Text('Rs ${_totalMoney.toStringAsFixed(0)}', style: pw.TextStyle(font: boldFont, fontSize: 14, textColor: PdfColor.fromHex('#4CAF50'))),
+                            pw.Text('Total Revenue:', style: pw.TextStyle(font: boldFont, fontSize: 13, color: PdfColor.fromHex('#4CAF50'))),
+                            pw.Text('Rs ${_totalMoney.toStringAsFixed(0)}', style: pw.TextStyle(font: boldFont, fontSize: 14, color: PdfColor.fromHex('#4CAF50'))),
                           ],
                         ),
                       ],
