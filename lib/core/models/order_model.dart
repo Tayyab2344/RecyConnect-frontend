@@ -15,6 +15,15 @@ class Order {
   // Optional order items (from backend items array)
   final List<OrderItem>? items;
 
+  // Optional chat metadata
+  final OrderChat? chat;
+
+  // Handshake OTP for delivery confirmation
+  final String? handshakeOtp;
+
+  // Delivery method
+  final String? deliveryMethod;
+
   Order({
     required this.id,
     required this.buyerId,
@@ -27,6 +36,9 @@ class Order {
     this.buyer,
     this.seller,
     this.items,
+    this.chat,
+    this.handshakeOtp,
+    this.deliveryMethod,
   });
 
   /// Parse the actual backend response shape:
@@ -57,6 +69,9 @@ class Order {
               .map((i) => OrderItem.fromJson(i))
               .toList()
           : null,
+      chat: json['chat'] != null ? OrderChat.fromJson(json['chat']) : null,
+      handshakeOtp: json['handshakeOtp'] as String?,
+      deliveryMethod: json['deliveryMethod'] as String?,
     );
   }
 
@@ -68,6 +83,8 @@ class Order {
       'status': status,
       'totalAmount': totalAmount,
       if (paymentMethod != null) 'paymentMethod': paymentMethod,
+      if (handshakeOtp != null) 'handshakeOtp': handshakeOtp,
+      if (deliveryMethod != null) 'deliveryMethod': deliveryMethod,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
@@ -100,6 +117,10 @@ class Order {
     }
     return 0.0;
   }
+
+  String get sellerName => seller?.name ?? 'Unknown';
+  String get buyerName => buyer?.name ?? 'Unknown';
+  double get totalQuantity => weight;
 
   String get statusDisplay {
     const labels = {
@@ -219,5 +240,55 @@ class OrderUser {
       'contactNo': contactNo,
       'address': address,
     };
+  }
+}
+
+class OrderChat {
+  final int? conversationId;
+  final OrderChatMessage? lastMessage;
+  final int unreadCount;
+
+  OrderChat({
+    this.conversationId,
+    this.lastMessage,
+    required this.unreadCount,
+  });
+
+  factory OrderChat.fromJson(Map<String, dynamic> json) {
+    return OrderChat(
+      conversationId: json['conversationId'] as int?,
+      lastMessage: json['lastMessage'] != null
+          ? OrderChatMessage.fromJson(json['lastMessage'])
+          : null,
+      unreadCount: json['unreadCount'] as int? ?? 0,
+    );
+  }
+}
+
+class OrderChatMessage {
+  final int id;
+  final String content;
+  final DateTime createdAt;
+  final String messageType;
+  final int senderId;
+
+  OrderChatMessage({
+    required this.id,
+    required this.content,
+    required this.createdAt,
+    required this.messageType,
+    required this.senderId,
+  });
+
+  factory OrderChatMessage.fromJson(Map<String, dynamic> json) {
+    return OrderChatMessage(
+      id: json['id'] as int,
+      content: json['content'] as String? ?? '',
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'] as String)
+          : DateTime.now(),
+      messageType: json['messageType'] as String? ?? 'TEXT',
+      senderId: json['senderId'] as int? ?? 0,
+    );
   }
 }

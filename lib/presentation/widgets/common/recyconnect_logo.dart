@@ -2,25 +2,38 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 /// Reusable RecyConnect Logo Widget
-/// Draws the logo with code (recycling arrows + circuit board)
+/// Draws the logo with code (geometric leaf-arrows meeting in the center)
 /// Can be used at any size throughout the app
 
 class RecyConnectLogo extends StatelessWidget {
   final double size;
   final bool showText;
   final bool animated;
+  final Color? holeColor;
+  final Color? coreColor;
   
   const RecyConnectLogo({
     super.key,
     this.size = 120,
     this.showText = false,
     this.animated = false,
+    this.holeColor,
+    this.coreColor,
   });
   
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final resolvedHoleColor = holeColor ?? (isDark ? const Color(0xFF071410) : Colors.white);
+    final resolvedCoreColor = coreColor ?? (isDark ? const Color(0xFFF7F5F0) : const Color(0xFF0C241B));
+
     if (animated) {
-      return _AnimatedLogo(size: size, showText: showText);
+      return _AnimatedLogo(
+        size: size,
+        showText: showText,
+        holeColor: resolvedHoleColor,
+        coreColor: resolvedCoreColor,
+      );
     }
     
     return Column(
@@ -28,27 +41,37 @@ class RecyConnectLogo extends StatelessWidget {
       children: [
         CustomPaint(
           size: Size(size, size),
-          painter: RecyConnectLogoPainterStatic(size: size),
+          painter: RecyConnectLogoPainterStatic(
+            size: size,
+            holeColor: resolvedHoleColor,
+            coreColor: resolvedCoreColor,
+          ),
         ),
         if (showText) ...[
           SizedBox(height: size * 0.1),
-          ShaderMask(
-            shaderCallback: (bounds) => const LinearGradient(
-              colors: [
-                Color(0xFF42A5F5),
-                Color(0xFF333333),
-              ],
-              stops: [0.35, 0.35],
-            ).createShader(bounds),
-            child: Text(
-              'RecyConnect',
-              style: TextStyle(
-                fontSize: size * 0.22,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                letterSpacing: 1.0,
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'recy',
+                style: TextStyle(
+                  fontSize: size * 0.22,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF00D2C4), // Vivid electric teal
+                  letterSpacing: 1.0,
+                ),
               ),
-            ),
+              Text(
+                'connect',
+                style: TextStyle(
+                  fontSize: size * 0.22,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? const Color(0xFFF7F5F0) : const Color(0xFF0C241B), // Warm sand or Deep Forest Green
+                  letterSpacing: 1.0,
+                ),
+              ),
+            ],
           ),
         ],
       ],
@@ -59,8 +82,15 @@ class RecyConnectLogo extends StatelessWidget {
 class _AnimatedLogo extends StatefulWidget {
   final double size;
   final bool showText;
+  final Color holeColor;
+  final Color coreColor;
   
-  const _AnimatedLogo({required this.size, required this.showText});
+  const _AnimatedLogo({
+    required this.size,
+    required this.showText,
+    required this.holeColor,
+    required this.coreColor,
+  });
   
   @override
   State<_AnimatedLogo> createState() => _AnimatedLogoState();
@@ -87,6 +117,8 @@ class _AnimatedLogoState extends State<_AnimatedLogo>
   
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
@@ -97,28 +129,36 @@ class _AnimatedLogoState extends State<_AnimatedLogo>
               size: Size(widget.size, widget.size),
               painter: RecyConnectLogoPainterStatic(
                 size: widget.size,
-                rotation: _controller.value * 0.1,
+                rotation: _controller.value * 2 * math.pi, // Spin fully
+                holeColor: widget.holeColor,
+                coreColor: widget.coreColor,
               ),
             ),
             if (widget.showText) ...[
               SizedBox(height: widget.size * 0.1),
-              ShaderMask(
-                shaderCallback: (bounds) => const LinearGradient(
-                  colors: [
-                    Color(0xFF42A5F5),
-                    Color(0xFF333333),
-                  ],
-                  stops: [0.35, 0.35],
-                ).createShader(bounds),
-                child: Text(
-                  'RecyConnect',
-                  style: TextStyle(
-                    fontSize: widget.size * 0.22,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    letterSpacing: 1.0,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'recy',
+                    style: TextStyle(
+                      fontSize: widget.size * 0.22,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF00D2C4), // Vivid electric teal
+                      letterSpacing: 1.0,
+                    ),
                   ),
-                ),
+                  Text(
+                    'connect',
+                    style: TextStyle(
+                      fontSize: widget.size * 0.22,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? const Color(0xFFF7F5F0) : const Color(0xFF0C241B),
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                ],
               ),
             ],
           ],
@@ -128,210 +168,79 @@ class _AnimatedLogoState extends State<_AnimatedLogo>
   }
 }
 
-/// Static painter for the RecyConnect logo
+/// Static painter for the RecyConnect logo using custom geometric leaf-arrows
 class RecyConnectLogoPainterStatic extends CustomPainter {
   final double size;
   final double rotation;
+  final Color holeColor;
+  final Color coreColor;
   
   RecyConnectLogoPainterStatic({
     required this.size,
     this.rotation = 0,
+    required this.holeColor,
+    required this.coreColor,
   });
   
   @override
   void paint(Canvas canvas, Size canvasSize) {
     final center = Offset(size / 2, size / 2);
-    final logoRadius = size * 0.38;
-    final circuitRadius = size * 0.2;
+    final baseRadius = size * 0.38;
     
-    // Draw circuit board pattern
-    _drawCircuitBoard(canvas, center, circuitRadius);
-    
-    // Draw recycling arrows with rotation
+    // Draw leaf-arrows with rotation
     canvas.save();
     canvas.translate(center.dx, center.dy);
     canvas.rotate(rotation);
     canvas.translate(-center.dx, -center.dy);
     
-    _drawGreenArrow(canvas, center, logoRadius);
-    _drawBlueArrow(canvas, center, logoRadius);
+    // Arrow 1: Teal leaf (Left)
+    final Path leftLeaf = Path();
+    final Paint leftPaint = Paint()
+      ..color = const Color(0xFF00D2C4)
+      ..style = PaintingStyle.fill;
+    _buildLeafShape(leftLeaf, center, baseRadius, isLeft: true);
+    canvas.drawPath(leftLeaf, leftPaint);
+    
+    // Arrow 2: Lime leaf (Right)
+    final Path rightLeaf = Path();
+    final Paint rightPaint = Paint()
+      ..color = const Color(0xFFB5FF00)
+      ..style = PaintingStyle.fill;
+    _buildLeafShape(rightLeaf, center, baseRadius, isLeft: false);
+    canvas.drawPath(rightLeaf, rightPaint);
+    
+    // Central connection node
+    final nodePaint = Paint()
+      ..color = holeColor
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(center, baseRadius * 0.28, nodePaint);
+    
+    final coreGlowPaint = Paint()
+      ..color = coreColor
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(center, baseRadius * 0.16, coreGlowPaint);
     
     canvas.restore();
   }
   
-  void _drawCircuitBoard(Canvas canvas, Offset center, double radius) {
-    // Central core
-    final corePaint = Paint()
-      ..color = const Color(0xFF26A69A).withOpacity(0.9)
-      ..style = PaintingStyle.fill;
+  void _buildLeafShape(Path path, Offset center, double radius, {required bool isLeft}) {
+    final double sideMultiplier = isLeft ? -1.0 : 1.0;
+    final start = Offset(center.dx, center.dy - radius);
+    final end = Offset(center.dx, center.dy + radius);
     
-    final coreGlowPaint = Paint()
-      ..color = const Color(0xFF26A69A).withOpacity(0.2)
-      ..style = PaintingStyle.fill
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
-    
-    canvas.drawCircle(center, size * 0.08, coreGlowPaint);
-    
-    // Concentric circles
-    final ringPaint = Paint()
-      ..color = const Color(0xFF26A69A).withOpacity(0.4)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = size * 0.008;
-    
-    for (int i = 1; i <= 3; i++) {
-      canvas.drawCircle(center, size * (0.04 + i * 0.03), ringPaint);
-    }
-    
-    // Core center
-    canvas.drawCircle(center, size * 0.035, corePaint);
-    canvas.drawCircle(center, size * 0.018, Paint()..color = Colors.white);
-    
-    // Circuit lines
-    final linePaint = Paint()
-      ..color = const Color(0xFF26A69A).withOpacity(0.6)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = size * 0.012
-      ..strokeCap = StrokeCap.round;
-    
-    final nodeCount = 8;
-    for (int i = 0; i < nodeCount; i++) {
-      final angle = (i / nodeCount) * 2 * math.pi - math.pi / 2;
-      final lineLength = radius * 0.9;
-      
-      final startOffset = size * 0.06;
-      final start = Offset(
-        center.dx + math.cos(angle) * startOffset,
-        center.dy + math.sin(angle) * startOffset,
-      );
-      final end = Offset(
-        center.dx + math.cos(angle) * lineLength,
-        center.dy + math.sin(angle) * lineLength,
-      );
-      
-      canvas.drawLine(start, end, linePaint);
-      
-      // Node at end
-      final nodePaint = Paint()
-        ..color = const Color(0xFF26A69A)
-        ..style = PaintingStyle.fill;
-      
-      canvas.drawCircle(end, size * 0.025, nodePaint);
-      
-      // Branch lines
-      if (i % 2 == 0) {
-        final branchAngle = angle + math.pi / 6;
-        final branchLength = lineLength * 0.35;
-        final branchStart = Offset(
-          center.dx + math.cos(angle) * (lineLength * 0.6),
-          center.dy + math.sin(angle) * (lineLength * 0.6),
-        );
-        final branchEnd = Offset(
-          branchStart.dx + math.cos(branchAngle) * branchLength,
-          branchStart.dy + math.sin(branchAngle) * branchLength,
-        );
-        
-        canvas.drawLine(branchStart, branchEnd, linePaint);
-        canvas.drawCircle(branchEnd, size * 0.018, nodePaint);
-      }
-    }
-  }
-  
-  void _drawGreenArrow(Canvas canvas, Offset center, double radius) {
-    final rect = Rect.fromCircle(center: center, radius: radius);
-    
-    final gradient = SweepGradient(
-      startAngle: -math.pi / 2,
-      endAngle: math.pi,
-      colors: const [
-        Color(0xFF81C784),
-        Color(0xFF4CAF50),
-        Color(0xFF388E3C),
-      ],
-    );
-    
-    final arrowPaint = Paint()
-      ..shader = gradient.createShader(rect)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = size * 0.1
-      ..strokeCap = StrokeCap.round;
-    
-    final shadowPaint = Paint()
-      ..color = const Color(0xFF4CAF50).withOpacity(0.15)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = size * 0.14
-      ..strokeCap = StrokeCap.round
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
-    
-    final sweepAngle = math.pi * 0.82;
-    final startAngle = -math.pi / 2 - math.pi / 8;
-    
-    canvas.drawArc(rect, startAngle, sweepAngle, false, shadowPaint);
-    canvas.drawArc(rect, startAngle, sweepAngle, false, arrowPaint);
-    
-    // Arrowhead
-    _drawArrowhead(canvas, center, radius, startAngle + sweepAngle, const Color(0xFF4CAF50));
-  }
-  
-  void _drawBlueArrow(Canvas canvas, Offset center, double radius) {
-    final rect = Rect.fromCircle(center: center, radius: radius);
-    
-    final gradient = SweepGradient(
-      startAngle: math.pi / 2,
-      endAngle: 2 * math.pi,
-      colors: const [
-        Color(0xFF90CAF9),
-        Color(0xFF42A5F5),
-        Color(0xFF1E88E5),
-      ],
-    );
-    
-    final arrowPaint = Paint()
-      ..shader = gradient.createShader(rect)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = size * 0.1
-      ..strokeCap = StrokeCap.round;
-    
-    final shadowPaint = Paint()
-      ..color = const Color(0xFF42A5F5).withOpacity(0.15)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = size * 0.14
-      ..strokeCap = StrokeCap.round
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
-    
-    final sweepAngle = math.pi * 0.82;
-    final startAngle = math.pi / 2 - math.pi / 8;
-    
-    canvas.drawArc(rect, startAngle, sweepAngle, false, shadowPaint);
-    canvas.drawArc(rect, startAngle, sweepAngle, false, arrowPaint);
-    
-    // Arrowhead
-    _drawArrowhead(canvas, center, radius, startAngle + sweepAngle, const Color(0xFF42A5F5));
-  }
-  
-  void _drawArrowhead(Canvas canvas, Offset center, double radius, double angle, Color color) {
-    final tipX = center.dx + math.cos(angle) * radius;
-    final tipY = center.dy + math.sin(angle) * radius;
-    
-    final arrowSize = size * 0.12;
-    final backAngle = angle + math.pi;
-    
-    final path = Path();
-    path.moveTo(tipX, tipY);
-    path.lineTo(
-      tipX + math.cos(backAngle + 0.4) * arrowSize,
-      tipY + math.sin(backAngle + 0.4) * arrowSize,
-    );
-    path.lineTo(
-      tipX + math.cos(backAngle - 0.4) * arrowSize,
-      tipY + math.sin(backAngle - 0.4) * arrowSize,
-    );
+    final controlPoint1 = Offset(center.dx + (radius * 1.15 * sideMultiplier), center.dy - (radius * 0.1));
+    final controlPoint2 = Offset(center.dx + (radius * 0.3 * sideMultiplier), center.dy + (radius * 0.2));
+
+    path.moveTo(start.dx, start.dy);
+    path.quadraticBezierTo(controlPoint1.dx, controlPoint1.dy, end.dx, end.dy);
+    path.quadraticBezierTo(controlPoint2.dx, controlPoint2.dy, start.dx, start.dy);
     path.close();
-    
-    canvas.drawPath(path, Paint()..color = color);
   }
   
   @override
   bool shouldRepaint(covariant RecyConnectLogoPainterStatic oldDelegate) {
-    return rotation != oldDelegate.rotation;
+    return rotation != oldDelegate.rotation ||
+           holeColor != oldDelegate.holeColor ||
+           coreColor != oldDelegate.coreColor;
   }
 }

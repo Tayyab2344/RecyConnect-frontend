@@ -3,8 +3,7 @@ import 'package:intl/intl.dart';
 import '../../../core/constants/modern_colors.dart';
 import '../../../core/constants/admin_colors.dart';
 import '../../../core/services/order_service.dart';
-import '../../../models/order_model.dart';
-import '../../widgets/admin/admin_drawer.dart'; // Ensure drawer is accessible or remove if not needed
+import '../../../core/models/order_model.dart';
 
 class SellerOrdersScreen extends StatefulWidget {
   const SellerOrdersScreen({super.key});

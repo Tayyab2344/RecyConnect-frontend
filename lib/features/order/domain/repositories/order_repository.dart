@@ -22,6 +22,10 @@ abstract class OrderRepository {
 
   Future<void> cancelOrder(int orderId, {String reason = 'Payment cancelled by user'});
 
+  Future<ApiResult<Map<String, dynamic>>> getOrderById(int id);
+
+  Future<ApiResult<Map<String, dynamic>>> confirmOrder(int id);
+
   String getExportUrl({
     String? role,
     String? material,
