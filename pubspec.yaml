@@ -82,7 +82,7 @@ dependencies:
   printing: ^5.13.1
 
   # Audio
-  record: ^5.1.2
+  record: ^6.0.0
   audioplayers: ^6.0.0
 
   # Animations & Modern UI
