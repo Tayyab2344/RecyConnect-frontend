@@ -10,6 +10,7 @@ import '../../../core/services/rewards_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../widgets/curved/curved_bottom_nav.dart';
 import '../../widgets/skeleton_loader.dart';
+import '../../widgets/eco_assist_sheet.dart';
 
 import '../individual/create_listing_screen.dart';
 import '../individual/browse_marketplace_screen.dart';
@@ -99,6 +100,16 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
         ],
       ),
       bottomNavigationBar: _buildBottomNavBar(),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 16.0),
+        child: FloatingActionButton(
+          onPressed: () => EcoAssistSheet.show(context),
+          backgroundColor: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF00E5FF)
+              : const Color(0xFF4CAF50),
+          child: const Icon(Icons.psychology_outlined, color: Colors.white, size: 28),
+        ),
+      ),
     );
   }
 

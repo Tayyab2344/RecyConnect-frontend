@@ -19,6 +19,7 @@ import 'core/services/sync_manager.dart';
 import 'core/services/complaint_service.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/rewards_service.dart';
+import 'core/services/eco_assist_service.dart';
 import 'presentation/screens/onboarding/onboarding_screen.dart';
 import 'presentation/screens/onboarding/splash_screen.dart';
 import 'presentation/widgets/skeleton_loader.dart';
@@ -64,6 +65,7 @@ class MyApp extends StatelessWidget {
         ),
         ChangeNotifierProvider(create: (_) => sl<NotificationProvider>()),
         ChangeNotifierProvider(create: (_) => sl<RewardsService>()),
+        ChangeNotifierProvider(create: (_) => EcoAssistService()),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {
