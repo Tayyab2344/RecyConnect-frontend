@@ -19,8 +19,17 @@ import 'package:flutter/foundation.dart';
 
 class CreateListingScreen extends StatefulWidget {
   final Listing? listing;
+  final String? initialMaterial;
+  final bool triggerCamera;
+  final bool requestCollector;
 
-  const CreateListingScreen({Key? key, this.listing}) : super(key: key);
+  const CreateListingScreen({
+    Key? key,
+    this.listing,
+    this.initialMaterial,
+    this.triggerCamera = false,
+    this.requestCollector = false,
+  }) : super(key: key);
 
   @override
   State<CreateListingScreen> createState() => _CreateListingScreenState();
@@ -70,6 +79,14 @@ class _CreateListingScreenState extends State<CreateListingScreen>
     _loadRates();
     if (!_isEditing) {
       _loadUserLocation();
+      if (widget.requestCollector) {
+        _requestCollector = true;
+      }
+      if (widget.triggerCamera) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _pickImages();
+        });
+      }
     }
   }
 
@@ -95,7 +112,14 @@ class _CreateListingScreenState extends State<CreateListingScreen>
         setState(() {
           _materialRates = rates;
           if (!_isEditing && rates.isNotEmpty) {
-            _selectedMaterial = rates.keys.first;
+            if (widget.initialMaterial != null) {
+              _selectedMaterial = rates.keys.firstWhere(
+                (key) => key.toLowerCase() == widget.initialMaterial!.toLowerCase(),
+                orElse: () => rates.keys.first,
+              );
+            } else {
+              _selectedMaterial = rates.keys.first;
+            }
           } else if (_isEditing && rates.isNotEmpty) {
             _selectedMaterial = rates.keys.firstWhere(
               (key) => key.toLowerCase() == _selectedMaterial.toLowerCase(),

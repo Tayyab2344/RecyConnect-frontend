@@ -16,7 +16,16 @@ import 'marketplace/item_detail_screen.dart';
 import 'create_listing_screen.dart';
 
 class BrowseMarketplaceScreen extends StatefulWidget {
-  const BrowseMarketplaceScreen({Key? key}) : super(key: key);
+  final String? initialMaterial;
+  final String? initialRadius;
+  final String? initialSort;
+
+  const BrowseMarketplaceScreen({
+    Key? key,
+    this.initialMaterial,
+    this.initialRadius,
+    this.initialSort,
+  }) : super(key: key);
 
   @override
   State<BrowseMarketplaceScreen> createState() => _BrowseMarketplaceScreenState();
@@ -67,6 +76,15 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
   @override
   void initState() {
     super.initState();
+    if (widget.initialMaterial != null) {
+      _filterMaterial = widget.initialMaterial;
+    }
+    if (widget.initialRadius != null) {
+      _selectedRadius = widget.initialRadius!;
+    }
+    if (widget.initialSort != null) {
+      _selectedSort = widget.initialSort!;
+    }
     _loadItems();
   }
 
