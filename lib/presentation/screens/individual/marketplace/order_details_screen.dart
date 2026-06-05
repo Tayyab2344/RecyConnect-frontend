@@ -1396,8 +1396,10 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen>
     if (_isRecording) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        color: isDark ? const Color(0xFF0D1B2A) : Colors.white,
-        border: Border(top: BorderSide(color: isDark ? Colors.white10 : Colors.black12)),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF0D1B2A) : Colors.white,
+          border: Border(top: BorderSide(color: isDark ? Colors.white10 : Colors.black12)),
+        ),
         child: SafeArea(
           child: Row(
             children: [

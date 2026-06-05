@@ -191,21 +191,21 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
-                                  'recy',
+                                  'Recy',
                                   style: GoogleFonts.outfit(
-                                    fontSize: 36,
-                                    fontWeight: FontWeight.bold,
-                                    color: const Color(0xFF00D2C4), // Vivid electric teal
-                                    letterSpacing: 0.5,
+                                    fontSize: 38,
+                                    fontWeight: FontWeight.w800,
+                                    color: const Color(0xFF4CAF50), // Premium green
+                                    letterSpacing: -0.5,
                                   ),
                                 ),
                                 Text(
-                                  'connect',
+                                  'Connect',
                                   style: GoogleFonts.outfit(
-                                    fontSize: 36,
-                                    fontWeight: FontWeight.bold,
-                                    color: const Color(0xFFF7F5F0), // Warm sand
-                                    letterSpacing: 0.5,
+                                    fontSize: 38,
+                                    fontWeight: FontWeight.w800,
+                                    color: const Color(0xFF2196F3), // Accent blue
+                                    letterSpacing: -0.5,
                                   ),
                                 ),
                               ],
@@ -225,12 +225,12 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                         child: Opacity(
                           opacity: ((logoRevealProgress - 0.4) / 0.6).clamp(0.0, 1.0),
                           child: Text(
-                            'Exchange Waste. Save the Planet.',
+                            'RECYCLE SMARTER. BUILD A GREENER FUTURE.',
                             style: GoogleFonts.outfit(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w400,
-                              color: const Color(0xFFF7F5F0).withOpacity(0.6),
-                              letterSpacing: 0.8,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFFF7F5F0).withOpacity(0.7),
+                              letterSpacing: 1.5,
                             ),
                           ),
                         ),
@@ -285,58 +285,51 @@ class RecyConnectSplashPainter extends CustomPainter {
 
     final Paint particlePaint = Paint()..style = PaintingStyle.fill;
 
-    // Drifting rough particle 1 (Left: rough waste shape becoming cleaner)
-    final path1 = Path();
+    // Drifting Particle 1 (Left): Blue Technology Node (circuit node)
     final leftCenter = Offset(leftX, center.dy);
-    _buildRoughShape(path1, leftCenter, 22 * (1.0 - progress * 0.4), progress);
-    particlePaint.color = const Color(0xFF00D2C4).withOpacity(0.8); // Teal
-    canvas.drawPath(path1, particlePaint);
-
-    // Drifting rough particle 2 (Right: rough waste shape becoming cleaner)
-    final path2 = Path();
-    final rightCenter = Offset(rightX, center.dy);
-    _buildRoughShape(path2, rightCenter, 22 * (1.0 - progress * 0.4), progress);
-    particlePaint.color = const Color(0xFFB5FF00).withOpacity(0.8); // Lime
-    canvas.drawPath(path2, particlePaint);
-  }
-
-  void _buildRoughShape(Path path, Offset offsetCenter, double radius, double progress) {
-    // Generate an irregular, organic polygon representing waste
-    // Irregularity decreases as progress approaches 1.0 (waste becomes valuable/clean logo)
-    final int points = 7;
-    final double irregularity = 0.4 * (1.0 - progress);
+    final Paint linePaint = Paint()
+      ..color = const Color(0xFF2196F3).withOpacity(0.8 * (1.0 - progress * 0.5))
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0;
     
-    for (int i = 0; i < points; i++) {
-      final double angle = (i / points) * 2 * math.pi;
-      // Add slight randomness to radius based on index to simulate rough waste edges
-      final double randomOffset = math.sin(i * 3.8) * irregularity * radius;
-      final double r = radius + randomOffset;
-      final double x = offsetCenter.dx + math.cos(angle) * r;
-      final double y = offsetCenter.dy + math.sin(angle) * r;
+    canvas.drawLine(leftCenter, Offset(leftCenter.dx - 15, leftCenter.dy - 10), linePaint);
+    canvas.drawLine(leftCenter, Offset(leftCenter.dx - 12, leftCenter.dy + 15), linePaint);
+    
+    particlePaint.color = const Color(0xFF2196F3).withOpacity(0.9 * (1.0 - progress * 0.5));
+    canvas.drawCircle(leftCenter, 6, particlePaint);
+    canvas.drawCircle(Offset(leftCenter.dx - 15, leftCenter.dy - 10), 4, particlePaint);
+    canvas.drawCircle(Offset(leftCenter.dx - 12, leftCenter.dy + 15), 4, particlePaint);
 
-      if (i == 0) {
-        path.moveTo(x, y);
-      } else {
-        path.lineTo(x, y);
-      }
-    }
-    path.close();
+    // Drifting Particle 2 (Right): Green Leaf
+    final rightCenter = Offset(rightX, center.dy);
+    final Path leafPath = Path();
+    final double leafRadius = 15.0 * (1.0 - progress * 0.3);
+    
+    final leafStart = Offset(rightCenter.dx - leafRadius, rightCenter.dy + leafRadius * 0.5);
+    final leafEnd = Offset(rightCenter.dx + leafRadius, rightCenter.dy - leafRadius * 0.5);
+    leafPath.moveTo(leafStart.dx, leafStart.dy);
+    leafPath.quadraticBezierTo(rightCenter.dx + leafRadius * 0.8, rightCenter.dy + leafRadius * 0.5, leafEnd.dx, leafEnd.dy);
+    leafPath.quadraticBezierTo(rightCenter.dx - leafRadius * 0.8, rightCenter.dy - leafRadius * 0.5, leafStart.dx, leafStart.dy);
+    leafPath.close();
+    
+    particlePaint.color = const Color(0xFF8BC34A).withOpacity(0.9 * (1.0 - progress * 0.5));
+    canvas.drawPath(leafPath, particlePaint);
   }
 
   void _drawSpark(Canvas canvas, Offset center, double baseRadius, double progress) {
     final double sparkRadius = baseRadius * 1.5 * progress;
     final double opacity = 1.0 - progress;
 
-    // Glowing spark core
+    // Glowing spark core (teal/green mix)
     final glowPaint = Paint()
-      ..color = const Color(0xFF00D2C4).withOpacity(0.7 * opacity)
+      ..color = const Color(0xFF4CAF50).withOpacity(0.6 * opacity)
       ..maskFilter = MaskFilter.blur(BlurStyle.normal, 12.0 * progress)
       ..style = PaintingStyle.fill;
     canvas.drawCircle(center, sparkRadius * 0.5, glowPaint);
 
     // Radiating burst particles
     final sparkPaint = Paint()
-      ..color = const Color(0xFFF7F5F0).withOpacity(opacity)
+      ..color = const Color(0xFF2196F3).withOpacity(opacity)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.0;
 
@@ -366,53 +359,134 @@ class RecyConnectSplashPainter extends CustomPainter {
     canvas.rotate(spin);
     canvas.translate(-center.dx, -center.dy);
 
-    // Draw the two geometric leaf-arrows
-    // Arrow 1: Teal leaf (Inflow exchange)
-    final Path tealLeaf = Path();
-    final Paint tealPaint = Paint()
-      ..color = const Color(0xFF00D2C4).withOpacity(fade)
-      ..style = PaintingStyle.fill;
-    _buildLeafShape(tealLeaf, center, baseRadius, isLeft: true);
-    canvas.drawPath(tealLeaf, tealPaint);
+    // Draw the stylized R logo matching the brand identity
+    final loopCenter = Offset(center.dx + baseRadius * 0.05, center.dy - baseRadius * 0.25);
+    final loopRadiusOuter = baseRadius * 0.75;
+    final loopRadiusInner = baseRadius * 0.45;
 
-    // Arrow 2: Lime leaf (Outflow exchange)
-    final Path limeLeaf = Path();
-    final Paint limePaint = Paint()
-      ..color = const Color(0xFFB5FF00).withOpacity(fade)
-      ..style = PaintingStyle.fill;
-    _buildLeafShape(limeLeaf, center, baseRadius, isLeft: false);
-    canvas.drawPath(limeLeaf, limePaint);
+    // 1. Main R Loop Path (Green Gradient)
+    final Path rPath = Path();
+    rPath.moveTo(loopCenter.dx - loopRadiusOuter, loopCenter.dy + baseRadius * 0.1);
+    rPath.quadraticBezierTo(
+      loopCenter.dx - loopRadiusOuter * 0.9, loopCenter.dy - loopRadiusOuter * 0.9,
+      loopCenter.dx, loopCenter.dy - loopRadiusOuter
+    );
+    rPath.quadraticBezierTo(
+      loopCenter.dx + loopRadiusOuter * 1.0, loopCenter.dy - loopRadiusOuter * 0.9,
+      loopCenter.dx + loopRadiusOuter * 0.95, loopCenter.dy + baseRadius * 0.05
+    );
+    rPath.quadraticBezierTo(
+      loopCenter.dx + loopRadiusOuter * 0.8, loopCenter.dy + loopRadiusOuter * 0.7,
+      center.dx + baseRadius * 0.65, center.dy + baseRadius * 0.85 // leg outer
+    );
+    rPath.lineTo(center.dx + baseRadius * 0.35, center.dy + baseRadius * 0.85); // leg bottom
+    rPath.quadraticBezierTo(
+      loopCenter.dx + loopRadiusInner * 0.8, loopCenter.dy + loopRadiusInner * 0.9,
+      loopCenter.dx + loopRadiusInner * 0.7, loopCenter.dy + baseRadius * 0.1 // leg inner
+    );
+    rPath.quadraticBezierTo(
+      loopCenter.dx + loopRadiusInner * 0.8, loopCenter.dy - loopRadiusInner * 0.8,
+      loopCenter.dx, loopCenter.dy - loopRadiusInner
+    );
+    rPath.quadraticBezierTo(
+      loopCenter.dx - loopRadiusInner * 0.8, loopCenter.dy - loopRadiusInner * 0.6,
+      loopCenter.dx - loopRadiusInner * 0.9, loopCenter.dy + baseRadius * 0.2
+    );
+    rPath.quadraticBezierTo(
+      loopCenter.dx - loopRadiusOuter * 0.95, loopCenter.dy + baseRadius * 0.35,
+      loopCenter.dx - loopRadiusOuter, loopCenter.dy + baseRadius * 0.1
+    );
+    rPath.close();
 
-    // Central connection node
-    final nodePaint = Paint()
-      ..color = const Color(0xFF071410) // Match background to punch hole
+    final Paint rPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomRight,
+        colors: [
+          const Color(0xFF8BC34A).withOpacity(fade), // Light Green
+          const Color(0xFF4CAF50).withOpacity(fade), // Green
+          const Color(0xFF2E7D32).withOpacity(fade), // Dark Green
+        ],
+      ).createShader(Rect.fromCircle(center: loopCenter, radius: loopRadiusOuter))
       ..style = PaintingStyle.fill;
-    canvas.drawCircle(center, baseRadius * 0.28, nodePaint);
+    canvas.drawPath(rPath, rPaint);
 
-    final coreGlowPaint = Paint()
-      ..color = const Color(0xFFF7F5F0).withOpacity(fade)
+    // 2. Green Leaf inside loop
+    final Path leafPath = Path();
+    final leafStart = Offset(loopCenter.dx - loopRadiusInner * 0.2, loopCenter.dy + loopRadiusInner * 0.4);
+    final leafEnd = Offset(loopCenter.dx + loopRadiusInner * 0.5, loopCenter.dy - loopRadiusInner * 0.5);
+    final leafControl1 = Offset(loopCenter.dx + loopRadiusInner * 0.6, loopCenter.dy + loopRadiusInner * 0.1);
+    final leafControl2 = Offset(loopCenter.dx - loopRadiusInner * 0.4, loopCenter.dy - loopRadiusInner * 0.3);
+
+    leafPath.moveTo(leafStart.dx, leafStart.dy);
+    leafPath.quadraticBezierTo(leafControl1.dx, leafControl1.dy, leafEnd.dx, leafEnd.dy);
+    leafPath.quadraticBezierTo(leafControl2.dx, leafControl2.dy, leafStart.dx, leafStart.dy);
+    leafPath.close();
+
+    final Paint leafPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.bottomLeft,
+        end: Alignment.topRight,
+        colors: [
+          const Color(0xFF4CAF50).withOpacity(fade),
+          const Color(0xFF8BC34A).withOpacity(fade),
+        ],
+      ).createShader(Rect.fromPoints(leafStart, leafEnd))
       ..style = PaintingStyle.fill;
-    canvas.drawCircle(center, baseRadius * 0.16, coreGlowPaint);
+    canvas.drawPath(leafPath, leafPaint);
+
+    // 3. Blue Circuit Nodes on the left
+    final Paint tracePaint = Paint()
+      ..color = const Color(0xFF2196F3).withOpacity(fade)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.5
+      ..strokeCap = StrokeCap.round;
+
+    final Paint nodePaint = Paint()
+      ..color = const Color(0xFF2196F3).withOpacity(fade)
+      ..style = PaintingStyle.fill;
+
+    final startNode = Offset(loopCenter.dx - loopRadiusOuter * 0.6, loopCenter.dy + baseRadius * 0.25);
+
+    // Trace 1: Top-left
+    final Path path1 = Path();
+    path1.moveTo(startNode.dx, startNode.dy);
+    final node1 = Offset(loopCenter.dx - baseRadius * 0.95, loopCenter.dy - baseRadius * 0.15);
+    path1.cubicTo(
+      startNode.dx - baseRadius * 0.2, startNode.dy - baseRadius * 0.1,
+      node1.dx + baseRadius * 0.1, node1.dy + baseRadius * 0.2,
+      node1.dx, node1.dy
+    );
+    canvas.drawPath(path1, tracePaint);
+    canvas.drawCircle(node1, 4.5, nodePaint);
+
+    // Trace 2: Middle-left
+    final Path path2 = Path();
+    path2.moveTo(startNode.dx + baseRadius * 0.05, startNode.dy + baseRadius * 0.05);
+    final node2 = Offset(loopCenter.dx - baseRadius * 1.0, loopCenter.dy + baseRadius * 0.15);
+    path2.quadraticBezierTo(
+      startNode.dx - baseRadius * 0.25, startNode.dy + baseRadius * 0.05,
+      node2.dx, node2.dy
+    );
+    canvas.drawPath(path2, tracePaint);
+    canvas.drawCircle(node2, 4.5, nodePaint);
+
+    // Trace 3: Bottom-left
+    final Path path3 = Path();
+    path3.moveTo(startNode.dx + baseRadius * 0.1, startNode.dy + baseRadius * 0.1);
+    final node3 = Offset(loopCenter.dx - baseRadius * 0.8, loopCenter.dy + baseRadius * 0.45);
+    path3.quadraticBezierTo(
+      startNode.dx - baseRadius * 0.1, startNode.dy + baseRadius * 0.2,
+      node3.dx, node3.dy
+    );
+    canvas.drawPath(path3, tracePaint);
+    canvas.drawCircle(node3, 4.5, nodePaint);
 
     canvas.restore();
   }
 
   void _buildLeafShape(Path path, Offset center, double radius, {required bool isLeft}) {
-    final double sideMultiplier = isLeft ? -1.0 : 1.0;
-    
-    // Draw leaf geometry meeting symmetrically at the center exchange point
-    final start = Offset(center.dx, center.dy - radius);
-    final end = Offset(center.dx, center.dy + radius);
-    
-    final controlPoint1 = Offset(center.dx + (radius * 1.15 * sideMultiplier), center.dy - (radius * 0.1));
-    final controlPoint2 = Offset(center.dx + (radius * 0.3 * sideMultiplier), center.dy + (radius * 0.2));
-
-    path.moveTo(start.dx, start.dy);
-    // Outer curve
-    path.quadraticBezierTo(controlPoint1.dx, controlPoint1.dy, end.dx, end.dy);
-    // Inner curve
-    path.quadraticBezierTo(controlPoint2.dx, controlPoint2.dy, start.dx, start.dy);
-    path.close();
+    // Left empty since leaves are drawn inside _drawLogo
   }
 
   @override

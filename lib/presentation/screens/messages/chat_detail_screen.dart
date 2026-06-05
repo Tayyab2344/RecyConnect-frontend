@@ -424,8 +424,10 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
               : _isRecording
                   ? Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      color: isDark ? const Color(0xFF1F2937) : Colors.white,
-                      border: Border(top: BorderSide(color: Colors.grey.withOpacity(0.2))),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF1F2937) : Colors.white,
+                        border: Border(top: BorderSide(color: Colors.grey.withOpacity(0.2))),
+                      ),
                       child: SafeArea(
                         child: Row(
                           children: [
