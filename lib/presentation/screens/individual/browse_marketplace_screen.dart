@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong2.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/marketplace_theme.dart';
 import '../../../core/theme/app_colors.dart';
@@ -793,11 +793,16 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
               return Padding(
                 padding: const EdgeInsets.only(right: 8),
                 child: ChoiceChip(
-                  label: Text(opt, style: GoogleFonts.outfit(fontSize: 12)),
+                  label: Text(
+                    opt,
+                    style: GoogleFonts.outfit(
+                      fontSize: 12,
+                      color: isSelected ? const Color(0xFF2196F3) : (isDark ? Colors.white60 : Colors.black54),
+                    ),
+                  ),
                   selected: isSelected,
                   selectedColor: const Color(0xFF2196F3).withOpacity(0.25),
                   backgroundColor: isDark ? Colors.white.withOpacity(0.04) : Colors.white,
-                  textColor: isSelected ? const Color(0xFF2196F3) : (isDark ? Colors.white60 : Colors.black54),
                   selectedShadowColor: Colors.transparent,
                   checkmarkColor: const Color(0xFF2196F3),
                   shape: RoundedRectangleBorder(
@@ -841,11 +846,16 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: ChoiceChip(
-        label: Text(label, style: GoogleFonts.outfit(fontSize: 12)),
+        label: Text(
+          label,
+          style: GoogleFonts.outfit(
+            fontSize: 12,
+            color: isSelected ? activeColor : (isDark ? Colors.white60 : Colors.black54),
+          ),
+        ),
         selected: isSelected,
         selectedColor: activeColor.withOpacity(0.2),
         backgroundColor: isDark ? Colors.white.withOpacity(0.04) : Colors.white,
-        textColor: isSelected ? activeColor : (isDark ? Colors.white60 : Colors.black54),
         selectedShadowColor: Colors.transparent,
         checkmarkColor: activeColor,
         shape: RoundedRectangleBorder(

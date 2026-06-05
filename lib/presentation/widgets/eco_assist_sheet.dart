@@ -554,7 +554,7 @@ class _EcoAssistSheetState extends State<EcoAssistSheet> {
                           _suggestions[index],
                           style: GoogleFonts.outfit(
                             fontSize: 12,
-                            color: isDark ? Colors.white80 : Colors.black87,
+                            color: isDark ? Colors.white70 : Colors.black87,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
