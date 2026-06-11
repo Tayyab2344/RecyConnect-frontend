@@ -40,6 +40,10 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
   LatLng? _warehousePosition;
   
   List<LatLng> _routePoints = [];
+  List<LatLng> _routePointsToPickup = [];
+  List<LatLng> _routePointsToDestination = [];
+  double _totalDistanceKm = 0.0;
+  double _totalDurationMinutes = 0.0;
   bool _isLoadingRoute = true;
   String _navigationMode = "pickup"; // "pickup" or "warehouse"
 
@@ -177,24 +181,80 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
   }
 
   Future<void> _fetchRoute() async {
-    final LatLng start = _currentPosition ?? const LatLng(33.6844, 73.0479);
-    final LatLng end = _navigationMode == "pickup" ? _pickupPosition! : _warehousePosition!;
+    final LatLng start = _currentPosition ?? const LatLng(34.1504, 73.2078);
+    final LatLng pickup = _pickupPosition ?? const LatLng(34.1504, 73.2078);
+    final LatLng dest = _warehousePosition ?? const LatLng(34.1504, 73.2078);
+    final String status = _task['status']?.toString() ?? 'ASSIGNED';
+
+    final isPickedUp = ['PICKED_UP', 'IN_TRANSIT', 'ARRIVED_AT_DESTINATION', 'COMPLETED'].contains(status);
 
     try {
-      final String url = 'https://router.project-osrm.org/route/v1/driving/'
-          '${start.longitude},${start.latitude};${end.longitude},${end.latitude}'
-          '?overview=full&geometries=geojson';
-      
-      final response = await http.get(Uri.parse(url));
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final List<dynamic> coordinates = data['routes'][0]['geometry']['coordinates'];
-        
-        final List<LatLng> points = coordinates.map((c) => LatLng(c[1] as double, c[0] as double)).toList();
-        
+      if (isPickedUp) {
+        // Only Leg 2 is active
+        final String leg2Url = 'https://router.project-osrm.org/route/v1/driving/'
+            '${start.longitude},${start.latitude};${dest.longitude},${dest.latitude}'
+            '?overview=full&geometries=geojson';
+        final response = await http.get(Uri.parse(leg2Url));
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          final List<dynamic> coordinates = data['routes'][0]['geometry']['coordinates'];
+          final List<LatLng> points = coordinates.map((c) => LatLng(c[1] as double, c[0] as double)).toList();
+          final distanceMeters = data['routes'][0]['distance'] as num? ?? 0;
+          final durationSeconds = data['routes'][0]['duration'] as num? ?? 0;
+
+          if (mounted) {
+            setState(() {
+              _routePointsToPickup = [];
+              _routePointsToDestination = points;
+              _routePoints = points;
+              _totalDistanceKm = distanceMeters / 1000.0;
+              _totalDurationMinutes = durationSeconds / 60.0;
+              _isLoadingRoute = false;
+            });
+          }
+        }
+      } else {
+        // Both legs: Leg 1 (Start -> Pickup), Leg 2 (Pickup -> Dest)
+        final String leg1Url = 'https://router.project-osrm.org/route/v1/driving/'
+            '${start.longitude},${start.latitude};${pickup.longitude},${pickup.latitude}'
+            '?overview=full&geometries=geojson';
+        final String leg2Url = 'https://router.project-osrm.org/route/v1/driving/'
+            '${pickup.longitude},${pickup.latitude};${dest.longitude},${dest.latitude}'
+            '?overview=full&geometries=geojson';
+
+        final responses = await Future.wait([
+          http.get(Uri.parse(leg1Url)),
+          http.get(Uri.parse(leg2Url)),
+        ]);
+
+        List<LatLng> points1 = [];
+        List<LatLng> points2 = [];
+        double distanceKm = 0.0;
+        double durationMins = 0.0;
+
+        if (responses[0].statusCode == 200) {
+          final data = jsonDecode(responses[0].body);
+          final List<dynamic> coordinates = data['routes'][0]['geometry']['coordinates'];
+          points1 = coordinates.map((c) => LatLng(c[1] as double, c[0] as double)).toList();
+          distanceKm += (data['routes'][0]['distance'] as num? ?? 0) / 1000.0;
+          durationMins += (data['routes'][0]['duration'] as num? ?? 0) / 60.0;
+        }
+
+        if (responses[1].statusCode == 200) {
+          final data = jsonDecode(responses[1].body);
+          final List<dynamic> coordinates = data['routes'][0]['geometry']['coordinates'];
+          points2 = coordinates.map((c) => LatLng(c[1] as double, c[0] as double)).toList();
+          distanceKm += (data['routes'][0]['distance'] as num? ?? 0) / 1000.0;
+          durationMins += (data['routes'][0]['duration'] as num? ?? 0) / 60.0;
+        }
+
         if (mounted) {
           setState(() {
-            _routePoints = points;
+            _routePointsToPickup = points1;
+            _routePointsToDestination = points2;
+            _routePoints = [...points1, ...points2];
+            _totalDistanceKm = distanceKm;
+            _totalDurationMinutes = durationMins;
             _isLoadingRoute = false;
           });
         }
@@ -204,8 +264,11 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
       if (mounted) {
         setState(() {
           _isLoadingRoute = false;
-          // Fallback to direct straight line if routing server fails
-          _routePoints = [start, end];
+          _routePointsToPickup = [start, pickup];
+          _routePointsToDestination = [pickup, dest];
+          _routePoints = [start, pickup, dest];
+          _totalDistanceKm = 0.0;
+          _totalDurationMinutes = 0.0;
         });
       }
     }
@@ -240,8 +303,9 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final LatLng center = _currentPosition ?? _pickupPosition ?? const LatLng(33.6844, 73.0479);
+    final LatLng center = _currentPosition ?? _pickupPosition ?? const LatLng(34.1504, 73.2078);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final String status = _task['status']?.toString() ?? 'ASSIGNED';
 
     return Scaffold(
       body: Stack(
@@ -265,13 +329,25 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
                 userAgentPackageName: 'com.recyconnect.app',
               ),
 
-              // Road Route path layer
-              if (_routePoints.isNotEmpty)
+              // Road Route paths for Leg 1 and Leg 2
+              if (_routePointsToPickup.isNotEmpty)
                 PolylineLayer(
                   polylines: [
                     Polyline(
-                      points: _routePoints,
-                      color: AppTheme.primaryGreen.withOpacity(0.8),
+                      points: _routePointsToPickup,
+                      color: AppTheme.primaryGreen.withOpacity(0.85),
+                      strokeWidth: 5.5,
+                      borderColor: Colors.black.withOpacity(0.3),
+                      borderStrokeWidth: 1.0,
+                    ),
+                  ],
+                ),
+              if (_routePointsToDestination.isNotEmpty)
+                PolylineLayer(
+                  polylines: [
+                    Polyline(
+                      points: _routePointsToDestination,
+                      color: Colors.amber.withOpacity(0.75),
                       strokeWidth: 5.0,
                       borderColor: Colors.black.withOpacity(0.3),
                       borderStrokeWidth: 1.0,
@@ -286,41 +362,76 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
                   if (_currentPosition != null)
                     Marker(
                       point: _currentPosition!,
-                      width: 50,
-                      height: 50,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryGreen,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
-                          boxShadow: [
-                            BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 6, offset: const Offset(0, 3)),
-                          ],
-                        ),
-                        child: const Icon(Icons.local_shipping, color: Colors.white, size: 24),
+                      width: 60,
+                      height: 60,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppTheme.primaryGreen.withOpacity(0.24),
+                            ),
+                          ),
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppTheme.primaryGreen,
+                              border: Border.all(color: Colors.white, width: 2.5),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppTheme.primaryGreen.withOpacity(0.6),
+                                  blurRadius: 10,
+                                  spreadRadius: 2,
+                                ),
+                              ],
+                            ),
+                            child: const Icon(Icons.navigation, color: Colors.white, size: 16),
+                          ),
+                        ],
                       ),
                     ),
 
                   // Source Pickup Marker
                   Marker(
                     point: _pickupPosition!,
-                    width: 45,
-                    height: 45,
+                    width: 65,
+                    height: 65,
                     child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Container(
-                          padding: const EdgeInsets.all(4),
+                          padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
-                            color: Colors.orange,
+                            gradient: const LinearGradient(
+                              colors: [Colors.orange, Colors.deepOrange],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
                             shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 1.5),
+                            border: Border.all(color: Colors.white, width: 2),
+                            boxShadow: [
+                              BoxShadow(color: Colors.orange.withOpacity(0.4), blurRadius: 8, spreadRadius: 1),
+                            ],
                           ),
-                          child: const Icon(Icons.pin_drop, color: Colors.white, size: 18),
+                          child: const Icon(Icons.hail, color: Colors.white, size: 18),
                         ),
+                        const SizedBox(height: 2),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                          decoration: BoxDecoration(color: Colors.black.withOpacity(0.7), borderRadius: BorderRadius.circular(4)),
-                          child: const Text('SOURCE', style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold)),
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
+                          decoration: BoxDecoration(
+                            color: Colors.orange[800],
+                            borderRadius: BorderRadius.circular(10),
+                            boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4)],
+                          ),
+                          child: const Text(
+                            'PICKUP',
+                            style: TextStyle(color: Colors.white, fontSize: 7.5, fontWeight: FontWeight.w800, letterSpacing: 0.5),
+                          ),
                         ),
                       ],
                     ),
@@ -329,23 +440,39 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
                   // Destination Warehouse Marker
                   Marker(
                     point: _warehousePosition!,
-                    width: 45,
-                    height: 45,
+                    width: 65,
+                    height: 65,
                     child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Container(
-                          padding: const EdgeInsets.all(4),
+                          padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
-                            color: Colors.blue,
+                            gradient: const LinearGradient(
+                              colors: [Colors.blue, Colors.blueAccent],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
                             shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 1.5),
+                            border: Border.all(color: Colors.white, width: 2),
+                            boxShadow: [
+                              BoxShadow(color: Colors.blue.withOpacity(0.4), blurRadius: 8, spreadRadius: 1),
+                            ],
                           ),
                           child: const Icon(Icons.warehouse, color: Colors.white, size: 18),
                         ),
+                        const SizedBox(height: 2),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                          decoration: BoxDecoration(color: Colors.black.withOpacity(0.7), borderRadius: BorderRadius.circular(4)),
-                          child: const Text('DEST', style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold)),
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
+                          decoration: BoxDecoration(
+                            color: Colors.blue[800],
+                            borderRadius: BorderRadius.circular(10),
+                            boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4)],
+                          ),
+                          child: const Text(
+                            'DELIVERY',
+                            style: TextStyle(color: Colors.white, fontSize: 7.5, fontWeight: FontWeight.w800, letterSpacing: 0.5),
+                          ),
                         ),
                       ],
                     ),
@@ -355,8 +482,8 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
             ],
           ),
 
-          // Floating Safe Area Elements
-          Positioned(
+          // Floating Safe Area Elements (Back Button)
+          Position(
             top: MediaQuery.of(context).padding.top + 12,
             left: 16,
             child: FloatingActionButton.small(
@@ -375,7 +502,7 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
           ),
 
           // Floating Navigation Target Selector
-          Positioned(
+          Position(
             top: MediaQuery.of(context).padding.top + 12,
             right: 16,
             child: Container(
@@ -396,6 +523,47 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
             ),
           ),
 
+          // Premium Travel Estimates Capsule
+          if (!_isLoadingRoute && _totalDistanceKm > 0)
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 70,
+              left: 16,
+              right: 16,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF1E293B).withOpacity(0.9) : Colors.white.withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(color: AppTheme.primaryGreen.withOpacity(0.3), width: 1.5),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 10, offset: const Offset(0, 4)),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.directions_run_outlined, color: AppTheme.primaryGreen, size: 18),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Full Ride: ${_totalDistanceKm.toStringAsFixed(1)} km',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: isDark ? Colors.white : Colors.black87),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(width: 1.5, height: 12, color: Colors.grey.withOpacity(0.5)),
+                      const SizedBox(width: 8),
+                      const Icon(Icons.access_time_outlined, color: AppTheme.primaryGreen, size: 18),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${_totalDurationMinutes.toStringAsFixed(0)} mins',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: isDark ? Colors.white : Colors.black87),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
           // Info Overlay Card
           Positioned(
             bottom: 0,
@@ -415,6 +583,10 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Horizontal Premium Progress Stepper
+                  _buildPremiumStepper(status, isDark),
+                  const SizedBox(height: 18),
+
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -532,6 +704,79 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildPremiumStepper(String status, bool isDark) {
+    int activeStep = 0;
+    if (status == 'EN_ROUTE_TO_PICKUP') activeStep = 0;
+    if (status == 'ARRIVED_AT_SOURCE') activeStep = 1;
+    if (['COMPLETED', 'DELIVERED'].contains(status)) activeStep = 2;
+
+    final steps = ['En Route', 'Arrived', 'Complete'];
+    final accentColor = AppTheme.primaryGreen;
+
+    return Row(
+      children: List.generate(steps.length * 2 - 1, (index) {
+        if (index.isOdd) {
+          final stepIdx = index ~/ 2;
+          final isDone = activeStep > stepIdx;
+          return Expanded(
+            child: Container(
+              height: 2,
+              color: isDone ? accentColor : (isDark ? Colors.white10 : Colors.grey.shade300),
+            ),
+          );
+        } else {
+          final stepIdx = index ~/ 2;
+          final isDone = activeStep > stepIdx;
+          final isActive = activeStep == stepIdx;
+          final stepName = steps[stepIdx];
+
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 20,
+                height: 20,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isDone 
+                      ? accentColor 
+                      : (isActive ? accentColor.withOpacity(0.2) : Colors.transparent),
+                  border: Border.all(
+                    color: (isDone || isActive) ? accentColor : (isDark ? Colors.white24 : Colors.black26),
+                    width: 2,
+                  ),
+                ),
+                child: isDone
+                    ? const Icon(Icons.check, size: 10, color: Colors.white)
+                    : (isActive
+                        ? Center(
+                            child: Container(
+                              width: 8,
+                              height: 8,
+                              decoration: const BoxDecoration(shape: BoxShape.circle, color: AppTheme.primaryGreen),
+                            ),
+                          )
+                        : null),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                stepName,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: (isDone || isActive) ? FontWeight.bold : FontWeight.normal,
+                  color: (isDone || isActive) 
+                      ? (isDark ? Colors.white : Colors.black87) 
+                      : Colors.grey,
+                ),
+              ),
+              const SizedBox(width: 4),
+            ],
+          );
+        }
+      }),
     );
   }
 
