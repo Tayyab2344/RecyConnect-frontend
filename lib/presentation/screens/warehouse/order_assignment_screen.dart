@@ -157,7 +157,8 @@ class _OrderAssignmentScreenState extends State<OrderAssignmentScreen> {
               color: isDark ? PremiumDesignSystem.darkSurface : Colors.white,
               boxShadow: PremiumDesignSystem.softShadowSmall,
             ),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Operations Mode:',
@@ -166,48 +167,46 @@ class _OrderAssignmentScreenState extends State<OrderAssignmentScreen> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: DropdownButtonFormField<String>(
-                    value: _selectedRole,
-                    dropdownColor: isDark ? PremiumDesignSystem.darkSurface : Colors.white,
-                    style: PremiumDesignSystem.body2.copyWith(
-                      color: isDark ? PremiumDesignSystem.darkTextPrimary : PremiumDesignSystem.textPrimary,
-                    ),
-                    decoration: InputDecoration(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      filled: true,
-                      fillColor: isDark ? PremiumDesignSystem.darkSurfaceVariant : Colors.grey[50],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(PremiumDesignSystem.radiusMedium),
-                        borderSide: BorderSide(color: isDark ? Colors.white24 : Colors.grey[300]!),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(PremiumDesignSystem.radiusMedium),
-                        borderSide: BorderSide(color: isDark ? Colors.white10 : Colors.grey[200]!),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(PremiumDesignSystem.radiusMedium),
-                        borderSide: const BorderSide(color: PremiumDesignSystem.primary, width: 1.5),
-                      ),
-                    ),
-                    items: const [
-                      DropdownMenuItem(
-                        value: 'buyer',
-                        child: Text('Pickup from Sellers (Inflow)'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'seller',
-                        child: Text('Deliver to Buyers (Outflow)'),
-                      ),
-                    ],
-                    onChanged: (val) {
-                      if (val != null) {
-                        setState(() => _selectedRole = val);
-                        _fetchOrders();
-                      }
-                    },
+                const SizedBox(height: 8),
+                DropdownButtonFormField<String>(
+                  value: _selectedRole,
+                  dropdownColor: isDark ? PremiumDesignSystem.darkSurface : Colors.white,
+                  style: PremiumDesignSystem.body2.copyWith(
+                    color: isDark ? PremiumDesignSystem.darkTextPrimary : PremiumDesignSystem.textPrimary,
                   ),
+                  decoration: InputDecoration(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    filled: true,
+                    fillColor: isDark ? PremiumDesignSystem.darkSurfaceVariant : Colors.grey[50],
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(PremiumDesignSystem.radiusMedium),
+                      borderSide: BorderSide(color: isDark ? Colors.white24 : Colors.grey[300]!),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(PremiumDesignSystem.radiusMedium),
+                      borderSide: BorderSide(color: isDark ? Colors.white10 : Colors.grey[200]!),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(PremiumDesignSystem.radiusMedium),
+                      borderSide: const BorderSide(color: PremiumDesignSystem.primary, width: 1.5),
+                    ),
+                  ),
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'buyer',
+                      child: Text('Pickup from Sellers (Inflow)'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'seller',
+                      child: Text('Deliver to Buyers (Outflow)'),
+                    ),
+                  ],
+                  onChanged: (val) {
+                    if (val != null) {
+                      setState(() => _selectedRole = val);
+                      _fetchOrders();
+                    }
+                  },
                 ),
               ],
             ),

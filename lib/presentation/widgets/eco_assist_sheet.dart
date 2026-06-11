@@ -155,7 +155,7 @@ class _EcoAssistSheetState extends State<EcoAssistSheet> {
       // Trigger Intent-Based Navigation after a short delay
       if (intent != null) {
         Future.delayed(const Duration(milliseconds: 1500), () {
-          if (mounted) _executeNavigationIntent(intent);
+          if (mounted) _executeNavigationIntent(intent, text);
         });
       }
     } else {
@@ -170,7 +170,7 @@ class _EcoAssistSheetState extends State<EcoAssistSheet> {
     }
   }
 
-  void _executeNavigationIntent(Map<String, dynamic> intent) {
+  void _executeNavigationIntent(Map<String, dynamic> intent, String queryText) {
     final action = intent['action'] as String?;
     final params = intent['params'] as Map<String, dynamic>? ?? {};
     final category = params['category'] as String?;
@@ -196,6 +196,18 @@ class _EcoAssistSheetState extends State<EcoAssistSheet> {
       if (dist == 5) radius = 'Within 5 km';
       if (dist == 25) radius = 'Within 25 km';
 
+      // Check if user specifically requested a map view
+      final lowercaseQuery = queryText.toLowerCase();
+      final wantsMap = params['mapView'] == true || 
+                       params['showMap'] == true ||
+                       lowercaseQuery.contains('map') ||
+                       lowercaseQuery.contains('map view') ||
+                       lowercaseQuery.contains('naqsha') ||
+                       lowercaseQuery.contains('naqshay') ||
+                       lowercaseQuery.contains('location') ||
+                       lowercaseQuery.contains('kahan') ||
+                       lowercaseQuery.contains('kidhar');
+
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -203,6 +215,7 @@ class _EcoAssistSheetState extends State<EcoAssistSheet> {
             initialMaterial: category,
             initialRadius: radius,
             initialSort: params['sortBy'] ?? 'Nearest First',
+            initialMapView: wantsMap,
           ),
         ),
       );

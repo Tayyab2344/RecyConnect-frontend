@@ -3,14 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../core/theme/marketplace_theme.dart';
-import '../../../core/theme/app_colors.dart';
+import 'package:provider/provider.dart';
 import '../../../core/utils/error_message_helper.dart';
 import '../../../core/services/listing_service.dart';
+import '../../../core/services/location_service.dart';
+import '../../../core/services/auth_service.dart';
 import '../../../core/models/listing_model.dart';
 import '../../../core/utils/static_data.dart';
-import '../../widgets/marketplace/glass_card.dart';
-import '../../widgets/marketplace/neon_button.dart';
 import '../../widgets/skeleton_loader.dart';
 import 'marketplace/item_detail_screen.dart';
 import 'create_listing_screen.dart';
@@ -19,43 +18,53 @@ class BrowseMarketplaceScreen extends StatefulWidget {
   final String? initialMaterial;
   final String? initialRadius;
   final String? initialSort;
+  final bool initialMapView;
 
   const BrowseMarketplaceScreen({
     Key? key,
     this.initialMaterial,
     this.initialRadius,
     this.initialSort,
+    this.initialMapView = false,
   }) : super(key: key);
 
   @override
   State<BrowseMarketplaceScreen> createState() => _BrowseMarketplaceScreenState();
 }
 
-class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen> 
-    with AutomaticKeepAliveClientMixin, SingleTickerProviderStateMixin {
-  
+class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
+    with AutomaticKeepAliveClientMixin, TickerProviderStateMixin {
+
   @override
   bool get wantKeepAlive => true;
 
   final ListingService _listingService = ListingService();
+  final LocationService _locationService = LocationService();
   List<Listing> _items = [];
   bool _isLoading = true;
   String? _errorMessage;
 
-  // Hyperlocal filters
+  // Real GPS location
+  LatLng? _userLocation;
+  bool _locationLoading = true;
+  String _currentCity = 'Detecting...';
+  String _currentArea = '';
+
+  // Filters
   String _selectedRadius = 'Within 10 km';
   String _selectedSort = 'Nearest First';
   String? _filterMaterial;
   String _searchQuery = '';
   bool _isMapView = false;
-  String _currentCity = 'Abbottabad';
-  String _currentArea = 'Jinnahabad';
-  
-  // Coordinates (User location: Abbottabad center)
-  final LatLng _userLocation = const LatLng(34.1688, 73.2215);
+
+  // Map
   final MapController _mapController = MapController();
   final PageController _pageController = PageController(viewportFraction: 0.88);
   int _activeMapCardIndex = 0;
+
+  // Animations
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnimation;
 
   final List<String> _radiusOptions = [
     'Within 5 km',
@@ -68,24 +77,140 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
   final List<String> _sortOptions = [
     'Nearest First',
     'Best Price',
-    'Most Trusted Seller',
     'Recently Listed',
-    'AI Recommended'
   ];
+
+  // Material type gradients for modern card styling
+  static const Map<String, List<Color>> _materialGradients = {
+    'plastic': [Color(0xFF43A047), Color(0xFF66BB6A)],
+    'paper': [Color(0xFFEF6C00), Color(0xFFFFA726)],
+    'metal': [Color(0xFF546E7A), Color(0xFF78909C)],
+    'e-waste': [Color(0xFF1565C0), Color(0xFF42A5F5)],
+  };
+
+  static const List<Color> _defaultGradient = [Color(0xFF2E7D32), Color(0xFF4CAF50)];
 
   @override
   void initState() {
     super.initState();
-    if (widget.initialMaterial != null) {
-      _filterMaterial = widget.initialMaterial;
-    }
-    if (widget.initialRadius != null) {
-      _selectedRadius = widget.initialRadius!;
-    }
-    if (widget.initialSort != null) {
-      _selectedSort = widget.initialSort!;
-    }
+    if (widget.initialMaterial != null) _filterMaterial = widget.initialMaterial;
+    if (widget.initialRadius != null) _selectedRadius = widget.initialRadius!;
+    if (widget.initialSort != null) _selectedSort = widget.initialSort!;
+    _isMapView = widget.initialMapView;
+
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
+    _pulseAnimation = Tween<double>(begin: 0.4, end: 1.0).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
+    _initLocation();
     _loadItems();
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  /// Fetch real GPS location and reverse geocode city/area
+  Future<void> _initLocation() async {
+    try {
+      // Explicitly request location permission
+      await _locationService.requestLocationPermission();
+
+      final pos = await _locationService.getCurrentLocationWithTimeout(
+        timeout: const Duration(seconds: 8),
+      );
+      if (pos != null && mounted) {
+        final lat = pos['latitude']!;
+        final lng = pos['longitude']!;
+        setState(() {
+          _userLocation = LatLng(lat, lng);
+        });
+
+        // Reverse geocode for city/area display
+        final address = await _locationService.getAddressFromCoordinates(lat, lng);
+        if (address != null && mounted) {
+          setState(() {
+            _currentCity = address['locality']?.isNotEmpty == true
+                ? address['locality']!
+                : (address['subAdministrativeArea'] ?? 'Your Area');
+            _currentArea = address['subLocality']?.isNotEmpty == true
+                ? address['subLocality']!
+                : (address['street'] ?? '');
+            _locationLoading = false;
+          });
+        } else if (mounted) {
+          setState(() => _locationLoading = false);
+        }
+      } else if (mounted) {
+        _useProfileLocationFallback();
+      }
+    } catch (e) {
+      if (mounted) {
+        _useProfileLocationFallback();
+      }
+    }
+  }
+
+  void _useProfileLocationFallback() {
+    try {
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final user = authService.currentUser;
+      if (user != null) {
+        final city = user['city'] as String?;
+        final area = (user['area'] ?? user['address']) as String?;
+        
+        if (city != null && city.isNotEmpty) {
+          setState(() {
+            _currentCity = city;
+            _currentArea = area ?? '';
+            _userLocation = _getFallbackCoordinates(city, area ?? '');
+            _locationLoading = false;
+          });
+          return;
+        }
+      }
+    } catch (e) {
+      debugPrint('Error getting profile location fallback: $e');
+    }
+
+    // Default ultimate fallback to Abbottabad
+    setState(() {
+      _userLocation = const LatLng(34.1688, 73.2215);
+      _currentCity = 'Abbottabad';
+      _currentArea = 'Jinnahabad';
+      _locationLoading = false;
+    });
+  }
+
+  LatLng _getFallbackCoordinates(String city, String area) {
+    final combined = '$area, $city'.toLowerCase();
+    if (combined.contains('attock') || combined.contains('kamra')) {
+      return const LatLng(33.7686, 72.3614);
+    } else if (combined.contains('abbottabad') || combined.contains('jinnahabad')) {
+      return const LatLng(34.1688, 73.2215);
+    } else if (combined.contains('haripur')) {
+      return const LatLng(33.9998, 72.9344);
+    } else if (combined.contains('mansehra')) {
+      return const LatLng(34.3313, 73.2038);
+    } else if (combined.contains('islamabad')) {
+      return const LatLng(33.6844, 73.0479);
+    } else if (combined.contains('rawalpindi')) {
+      return const LatLng(33.5651, 73.0169);
+    } else if (combined.contains('lahore')) {
+      return const LatLng(31.5204, 74.3587);
+    } else if (combined.contains('karachi')) {
+      return const LatLng(24.8607, 67.0011);
+    } else if (combined.contains('peshawar')) {
+      return const LatLng(34.0151, 71.5249);
+    }
+    return const LatLng(34.1688, 73.2215); // Default to Abbottabad
   }
 
   Future<void> _loadItems() async {
@@ -117,159 +242,24 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
     }
   }
 
-  // Pre-configured mock local listings to ensure the screen is rich and populated
-  List<Listing> _getMockListings() {
-    return [
-      Listing(
-        id: 901,
-        userId: 301,
-        materialType: 'plastic',
-        estimatedWeight: 15.0,
-        pickupAddress: 'Jinnahabad, Abbottabad',
-        latitude: 34.1725,
-        longitude: 73.2185,
-        title: 'Sorted HDPE Plastic Bottles',
-        notes: 'Dry, cleaned water bottles, stored in boxes.',
-        status: 'AVAILABLE',
-        createdAt: DateTime.now().subtract(const Duration(hours: 1)),
-        updatedAt: DateTime.now(),
-        images: [],
-        user: ListingUser(id: 301, name: 'Asif Mehmood'),
-      ),
-      Listing(
-        id: 902,
-        userId: 302,
-        materialType: 'paper',
-        estimatedWeight: 45.0,
-        pickupAddress: 'Mandian, Abbottabad',
-        latitude: 34.1950,
-        longitude: 73.2420,
-        title: 'Corrugated Cardboard Boxes',
-        notes: 'Flattened carton boxes, excellent for recycling.',
-        status: 'AVAILABLE',
-        createdAt: DateTime.now().subtract(const Duration(hours: 3)),
-        updatedAt: DateTime.now(),
-        images: [],
-        user: ListingUser(id: 302, name: 'Bilal Malik'),
-      ),
-      Listing(
-        id: 903,
-        userId: 303,
-        materialType: 'metal',
-        estimatedWeight: 12.5,
-        pickupAddress: 'Cantonment, Abbottabad',
-        latitude: 34.1620,
-        longitude: 73.2260,
-        title: 'Iron Scrap and Rods',
-        notes: 'Construction waste, steel and iron rods.',
-        status: 'AVAILABLE',
-        createdAt: DateTime.now().subtract(const Duration(hours: 6)),
-        updatedAt: DateTime.now(),
-        images: [],
-        user: ListingUser(id: 303, name: 'Sajid Ali'),
-      ),
-      Listing(
-        id: 904,
-        userId: 304,
-        materialType: 'e-waste',
-        estimatedWeight: 6.8,
-        pickupAddress: 'Supply Area, Abbottabad',
-        latitude: 34.1800,
-        longitude: 73.2180,
-        title: 'Computer Scrap (RAM, Motherboards)',
-        notes: 'Assorted computer boards from workshop.',
-        status: 'AVAILABLE',
-        createdAt: DateTime.now().subtract(const Duration(hours: 12)),
-        updatedAt: DateTime.now(),
-        images: [],
-        user: ListingUser(id: 304, name: 'Kashif Nazir'),
-      ),
-      Listing(
-        id: 905,
-        userId: 305,
-        materialType: 'plastic',
-        estimatedWeight: 32.0,
-        pickupAddress: 'Kakul Road, Abbottabad',
-        latitude: 34.1850,
-        longitude: 73.2550,
-        title: 'Crushed Plastic Cans',
-        notes: 'HDPE food cans washed clean.',
-        status: 'AVAILABLE',
-        createdAt: DateTime.now().subtract(const Duration(days: 1)),
-        updatedAt: DateTime.now(),
-        images: [],
-        user: ListingUser(id: 305, name: 'Col. Tariq'),
-      ),
-      Listing(
-        id: 906,
-        userId: 306,
-        materialType: 'paper',
-        estimatedWeight: 22.0,
-        pickupAddress: 'Haripur, KPK',
-        latitude: 33.9998,
-        longitude: 72.9344,
-        title: 'Old Newspaper Bundles',
-        notes: 'Stored in dry location, tied with ropes.',
-        status: 'AVAILABLE',
-        createdAt: DateTime.now().subtract(const Duration(days: 1, hours: 4)),
-        updatedAt: DateTime.now(),
-        images: [],
-        user: ListingUser(id: 306, name: 'Zia-ur-Rehman'),
-      ),
-      Listing(
-        id: 907,
-        userId: 307,
-        materialType: 'metal',
-        estimatedWeight: 5.5,
-        pickupAddress: 'Mansehra, KPK',
-        latitude: 34.3313,
-        longitude: 73.2038,
-        title: 'Aluminum Scrap Cans',
-        notes: 'Crushed and bagged soda cans.',
-        status: 'AVAILABLE',
-        createdAt: DateTime.now().subtract(const Duration(days: 2)),
-        updatedAt: DateTime.now(),
-        images: [],
-        user: ListingUser(id: 307, name: 'Haris Khan'),
-      ),
-      Listing(
-        id: 908,
-        userId: 308,
-        materialType: 'e-waste',
-        estimatedWeight: 14.0,
-        pickupAddress: 'G-11, Islamabad',
-        latitude: 33.6844,
-        longitude: 73.0479,
-        title: 'Dead Laptop Batteries and Chargers',
-        notes: 'Office clearance, bulk collection.',
-        status: 'AVAILABLE',
-        createdAt: DateTime.now().subtract(const Duration(days: 3)),
-        updatedAt: DateTime.now(),
-        images: [],
-        user: ListingUser(id: 308, name: 'Waseem Shah'),
-      ),
-    ];
-  }
-
-  // Calculate distance in km between user location and listing coordinates using Haversine formula
+  /// Calculate real distance using LocationService (Geolocator)
   double _calculateDistance(double lat, double lng) {
-    const double userLat = 34.1688;
-    const double userLng = 73.2215;
-    
-    var p = 0.017453292519943295;
-    var a = 0.5 - math.cos((lat - userLat) * p)/2 + 
-          math.cos(userLat * p) * math.cos(lat * p) * 
-          (1 - math.cos((lng - userLng) * p))/2;
-    return 12742 * math.asin(math.sqrt(a));
+    if (_userLocation == null) return 0.0;
+    return _locationService.calculateDistance(
+      _userLocation!.latitude,
+      _userLocation!.longitude,
+      lat,
+      lng,
+    );
   }
 
-  // Assign coordinate positions dynamically to API listings if they are missing
+  /// Assign fallback coordinates to API listings missing lat/lng
   List<Listing> _processListings(List<Listing> rawListings) {
     return rawListings.map((item) {
       double? lat = item.latitude;
       double? lng = item.longitude;
       String address = item.pickupAddress.toLowerCase();
-      
+
       if (lat == null || lng == null) {
         if (address.contains('jinnahabad')) {
           lat = 34.1725; lng = 73.2185;
@@ -288,13 +278,12 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
         } else if (address.contains('islamabad') || address.contains('g-11') || address.contains('f-7')) {
           lat = 33.6844; lng = 73.0479;
         } else {
-          // Semi-random offset close to user to mock hyperlocal coordinates
           final seed = item.id;
-          lat = 34.1688 + (math.sin(seed * 0.5) * 0.05);
-          lng = 73.2215 + (math.cos(seed * 0.5) * 0.05);
+          lat = (_userLocation?.latitude ?? 34.1688) + (math.sin(seed * 0.5) * 0.03);
+          lng = (_userLocation?.longitude ?? 73.2215) + (math.cos(seed * 0.5) * 0.03);
         }
       }
-      
+
       return Listing(
         id: item.id,
         userId: item.userId,
@@ -318,21 +307,11 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
     }).toList();
   }
 
-  // Core hyperlocal sorting and filtering logic
+  /// Filtered & sorted items — only real API data, no mocks
   List<Listing> get _filteredAndSortedItems {
-    final List<Listing> allItems = [];
-    allItems.addAll(_items);
-    
-    final existingIds = _items.map((i) => i.id).toSet();
-    for (var mock in _getMockListings()) {
-      if (!existingIds.contains(mock.id)) {
-        allItems.add(mock);
-      }
-    }
+    final processedItems = _processListings(_items);
 
-    final processedItems = _processListings(allItems);
-
-    // 1. Filter by search query
+    // 1. Search filter
     var filtered = processedItems.where((item) {
       if (_searchQuery.isEmpty) return true;
       final q = _searchQuery.toLowerCase();
@@ -342,35 +321,58 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
       return title.contains(q) || type.contains(q) || address.contains(q);
     }).toList();
 
-    // 2. Filter by material type
+    // 2. Material filter
     if (_filterMaterial != null && _filterMaterial != 'All') {
       filtered = filtered.where((item) {
         return item.materialType.toLowerCase() == _filterMaterial!.toLowerCase();
       }).toList();
     }
 
-    // 3. Filter by radius
-    filtered = filtered.where((item) {
-      final double distance = _calculateDistance(item.latitude ?? 34.1688, item.longitude ?? 73.2215);
-      if (_selectedRadius == 'Within 5 km') {
-        return distance <= 5.0;
-      } else if (_selectedRadius == 'Within 10 km') {
-        return distance <= 10.0;
-      } else if (_selectedRadius == 'Within 25 km') {
-        return distance <= 25.0;
-      } else if (_selectedRadius == 'Entire City') {
-        return distance <= 15.0 || item.pickupAddress.toLowerCase().contains(_currentCity.toLowerCase());
-      } else if (_selectedRadius == 'Nearby Cities') {
-        return distance <= 50.0; // haripur, mansehra
-      }
-      return true; // entire province/all
-    }).toList();
+    // 3. Radius filter (only if GPS is available)
+    if (_userLocation != null) {
+      filtered = filtered.where((item) {
+        final double distance = _calculateDistance(
+          item.latitude ?? _userLocation!.latitude,
+          item.longitude ?? _userLocation!.longitude,
+        );
+        switch (_selectedRadius) {
+          case 'Within 5 km': return distance <= 5.0;
+          case 'Within 10 km': return distance <= 10.0;
+          case 'Within 25 km': return distance <= 25.0;
+          case 'Entire City': return distance <= 15.0 || item.pickupAddress.toLowerCase().contains(_currentCity.toLowerCase());
+          case 'Nearby Cities': return distance <= 50.0;
+          default: return true;
+        }
+      }).toList();
+    }
 
-    // 4. Sort items (Nearby First Logic as priority)
-    if (_selectedSort == 'Nearest First' || _selectedSort == 'AI Recommended') {
+    // 4. Sort
+    if (_selectedSort == 'Nearest First' && _userLocation != null) {
       filtered.sort((a, b) {
-        final distA = _calculateDistance(a.latitude ?? 34.1688, a.longitude ?? 73.2215);
-        final distB = _calculateDistance(b.latitude ?? 34.1688, b.longitude ?? 73.2215);
+        final addressA = a.pickupAddress.toLowerCase();
+        final addressB = b.pickupAddress.toLowerCase();
+        
+        int scoreA = 0;
+        int scoreB = 0;
+
+        if (_currentArea.isNotEmpty && _currentArea != 'Detecting...') {
+          if (addressA.contains(_currentArea.toLowerCase())) scoreA = 2;
+          if (addressB.contains(_currentArea.toLowerCase())) scoreB = 2;
+        }
+
+        if (scoreA == 0 && _currentCity.isNotEmpty && _currentCity != 'Detecting...') {
+          if (addressA.contains(_currentCity.toLowerCase())) scoreA = 1;
+        }
+        if (scoreB == 0 && _currentCity.isNotEmpty && _currentCity != 'Detecting...') {
+          if (addressB.contains(_currentCity.toLowerCase())) scoreB = 1;
+        }
+
+        if (scoreA != scoreB) {
+          return scoreB.compareTo(scoreA); // Higher score (closer match) comes first
+        }
+
+        final distA = _calculateDistance(a.latitude ?? _userLocation!.latitude, a.longitude ?? _userLocation!.longitude);
+        final distB = _calculateDistance(b.latitude ?? _userLocation!.latitude, b.longitude ?? _userLocation!.longitude);
         return distA.compareTo(distB);
       });
     } else if (_selectedSort == 'Best Price') {
@@ -381,12 +383,6 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
       });
     } else if (_selectedSort == 'Recently Listed') {
       filtered.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-    } else if (_selectedSort == 'Most Trusted Seller') {
-      filtered.sort((a, b) {
-        final ratingA = 4.0 + (a.id % 10) * 0.1;
-        final ratingB = 4.0 + (b.id % 10) * 0.1;
-        return ratingB.compareTo(ratingA);
-      });
     }
 
     return filtered;
@@ -399,228 +395,32 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
         builder: (context) => ItemDetailScreen(item: item),
       ),
     );
-    if (result == true) {
-      _loadItems();
+    if (result == true) _loadItems();
+  }
+
+  List<Color> _getGradient(String materialType) {
+    return _materialGradients[materialType.toLowerCase()] ?? _defaultGradient;
+  }
+
+  IconData _getIconForMaterial(String type) {
+    switch (type.toLowerCase()) {
+      case 'plastic': return Icons.local_drink_rounded;
+      case 'metal': return Icons.build_rounded;
+      case 'paper': return Icons.description_rounded;
+      case 'e-waste': return Icons.computer_rounded;
+      default: return Icons.recycling_rounded;
     }
   }
 
-  // Opens simulated GPS switcher dialog
-  void _showLocationSelectorDialog() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        final cities = ['Abbottabad', 'Haripur', 'Mansehra', 'Islamabad', 'Peshawar'];
-        return AlertDialog(
-          backgroundColor: const Color(0xFF0F172A),
-          title: Text(
-            'Simulate GPS Location',
-            style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: cities.map((city) {
-              return ListTile(
-                title: Text(city, style: GoogleFonts.outfit(color: Colors.white70)),
-                leading: const Icon(Icons.location_city_rounded, color: Color(0xFF2196F3)),
-                onTap: () {
-                  setState(() {
-                    _currentCity = city;
-                    _currentArea = city == 'Abbottabad' ? 'Jinnahabad' : 'Central';
-                  });
-                  Navigator.pop(context);
-                },
-              );
-            }).toList(),
-          ),
-        );
-      },
-    );
+  String _timeAgo(DateTime date) {
+    final diff = DateTime.now().difference(date);
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    if (diff.inDays < 7) return '${diff.inDays}d ago';
+    return '${(diff.inDays / 7).floor()}w ago';
   }
 
-  // Displays the EcoBot AI Assistant Bottom Sheet
-  void _openAIAssistantSheet() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: const Color(0xFF0A0F1D),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      builder: (context) {
-        final commands = [
-          'Show cardboard near me',
-          'Find highest paying plastic nearby',
-          'Show e-waste within 5 km',
-          'Request collector to Abbottabad',
-          'Sell my plastic bottles'
-        ];
-
-        return Container(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF4CAF50).withOpacity(0.15),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: const Color(0xFF4CAF50).withOpacity(0.3)),
-                    ),
-                    child: const Center(
-                      child: Icon(Icons.psychology_outlined, color: Color(0xFF4CAF50), size: 24),
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'EcoBot AI Assistant',
-                        style: GoogleFonts.outfit(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        'Hyperlocal smart commander',
-                        style: GoogleFonts.outfit(
-                          color: Colors.white54,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              Text(
-                'Try asking EcoBot to filter and sort automatically:',
-                style: GoogleFonts.outfit(color: Colors.white70, fontSize: 13),
-              ),
-              const SizedBox(height: 12),
-              Column(
-                children: commands.map((cmd) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: InkWell(
-                      onTap: () {
-                        Navigator.pop(context);
-                        _executeAICommand(cmd);
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.04),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: Colors.white.withOpacity(0.05)),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              cmd,
-                              style: GoogleFonts.outfit(
-                                color: const Color(0xFF2196F3),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white24, size: 14),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  // Helper that parses command and updates state dynamically
-  void _executeAICommand(String cmd) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: const Color(0xFF2E7D32),
-        content: Row(
-          children: [
-            const Icon(Icons.check_circle_outline_rounded, color: Colors.white),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'EcoBot: Applying filters for "$cmd"',
-                style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.w500),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-
-    setState(() {
-      if (cmd.contains('cardboard')) {
-        _filterMaterial = 'Paper';
-        _searchQuery = 'cardboard';
-        _selectedRadius = 'Within 10 km';
-      } else if (cmd.contains('highest paying')) {
-        _filterMaterial = 'Plastic';
-        _selectedSort = 'Best Price';
-      } else if (cmd.contains('e-waste within 5 km')) {
-        _filterMaterial = 'E-Waste';
-        _selectedRadius = 'Within 5 km';
-        _selectedSort = 'Nearest First';
-      } else if (cmd.contains('Request collector')) {
-        _selectedRadius = 'Entire City';
-        _showCollectorRequestAlert();
-      } else if (cmd.contains('plastic bottles')) {
-        _filterMaterial = 'Plastic';
-        _searchQuery = 'bottles';
-        _selectedRadius = 'Within 10 km';
-      }
-    });
-  }
-
-  void _showCollectorRequestAlert() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: const Color(0xFF0F172A),
-          title: Text('Request Dispatch', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold)),
-          content: Text(
-            'EcoBot is preparing a collector pickup request in $_currentArea, $_currentCity. Verify details and dispatch?',
-            style: GoogleFonts.outfit(color: Colors.white70),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('Cancel', style: GoogleFonts.outfit(color: Colors.white38)),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    backgroundColor: const Color(0xFF2E7D32),
-                    content: Text('Collector dispatch request created successfully in $_currentArea!', style: GoogleFonts.outfit()),
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF4CAF50)),
-              child: Text('Confirm Dispatch', style: GoogleFonts.outfit(color: Colors.white)),
-            ),
-          ],
-        );
-      },
-    );
-  }
+  // ─── BUILD ──────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -629,147 +429,132 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
     final itemsToShow = _filteredAndSortedItems;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0A0F1D) : const Color(0xFFF8FAF9),
+      backgroundColor: isDark ? const Color(0xFF0A0F1D) : const Color(0xFFF5F7FA),
       body: SafeArea(
         child: Column(
           children: [
-            // 1. Header Section
-            _buildHyperlocalHeader(isDark),
-
-            // 2. Filter Chips Rows
-            _buildFilterRow(isDark),
-
-            // 3. View Toggle & Sort Controls
-            _buildSortAndToggleControls(isDark, itemsToShow.length),
-
-            // 4. Main Body Content (List View or Map View)
+            _buildHeader(isDark),
+            _buildFilterChips(isDark),
+            _buildSortBar(isDark, itemsToShow.length),
             Expanded(
               child: _isLoading
                   ? SkeletonLoader.grid()
-                  : itemsToShow.isEmpty
-                      ? _buildEmptyState(isDark)
-                      : _isMapView
-                          ? _buildMapView(isDark, itemsToShow)
-                          : _buildListView(isDark, itemsToShow),
+                  : _errorMessage != null
+                      ? _buildErrorState(isDark)
+                      : itemsToShow.isEmpty
+                          ? _buildEmptyState(isDark)
+                          : _isMapView
+                              ? _buildMapView(isDark, itemsToShow)
+                              : _buildListView(isDark, itemsToShow),
             ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _openAIAssistantSheet,
-        backgroundColor: const Color(0xFF4CAF50),
-        elevation: 6,
-        child: Container(
-          width: 60,
-          height: 60,
-          decoration: const BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: LinearGradient(
-              colors: [Color(0xFF8BC34A), Color(0xFF4CAF50)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-          child: const Center(
-            child: Icon(Icons.psychology_outlined, color: Colors.white, size: 30),
-          ),
-        ),
-      ),
+      floatingActionButton: _buildFAB(),
     );
   }
 
-  Widget _buildHyperlocalHeader(bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+  // ─── HEADER ─────────────────────────────────────────────
+
+  Widget _buildHeader(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
       child: Column(
         children: [
-          // Row: Location Picker, Title & Notifications
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              GestureDetector(
-                onTap: _showLocationSelectorDialog,
-                child: Row(
+              // Location indicator
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF43A047), Color(0xFF66BB6A)],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.location_on_rounded, color: Colors.white, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.location_on_rounded, color: Color(0xFF4CAF50), size: 22),
-                    const SizedBox(width: 6),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    Row(
                       children: [
-                        Row(
-                          children: [
-                            Text(
-                              '$_currentCity, Pakistan',
-                              style: GoogleFonts.outfit(
-                                color: isDark ? Colors.white : Colors.black87,
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const Icon(Icons.arrow_drop_down, color: Color(0xFF4CAF50), size: 20),
-                          ],
-                        ),
+                        if (_locationLoading)
+                          _buildPulsingDot()
+                        else
+                          const SizedBox.shrink(),
                         Text(
-                          '$_currentArea (Hyperlocal Focus)',
+                          _locationLoading ? 'Detecting location...' : _currentCity,
                           style: GoogleFonts.outfit(
-                            color: isDark ? Colors.white38 : Colors.black45,
-                            fontSize: 11,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? Colors.white : const Color(0xFF1A1A2E),
                           ),
                         ),
                       ],
                     ),
+                    if (_currentArea.isNotEmpty && !_locationLoading)
+                      Text(
+                        _currentArea,
+                        style: GoogleFonts.outfit(
+                          fontSize: 12,
+                          color: isDark ? Colors.white38 : Colors.black45,
+                        ),
+                      ),
                   ],
                 ),
               ),
-              Row(
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.notifications_outlined, 
-                        color: isDark ? Colors.white70 : Colors.black87),
-                    onPressed: () {},
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.voice_chat, color: Color(0xFF2196F3)),
-                    onPressed: _openAIAssistantSheet,
-                  ),
-                ],
+              // Refresh button
+              _buildIconBtn(
+                Icons.refresh_rounded,
+                isDark,
+                onTap: () {
+                  _initLocation();
+                  _loadItems();
+                },
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          // Search Box with Glass/Neomorphism Design
+          const SizedBox(height: 14),
+          // Search bar
           Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              color: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              color: isDark ? const Color(0xFF1A2035) : Colors.white,
               border: Border.all(
-                color: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05),
+                color: isDark ? Colors.white.withOpacity(0.06) : const Color(0xFFE8ECF0),
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.02),
-                  blurRadius: 10,
+                  color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
+                  blurRadius: 12,
                   offset: const Offset(0, 4),
-                )
+                ),
               ],
             ),
             child: TextField(
               style: GoogleFonts.outfit(
                 color: isDark ? Colors.white : Colors.black87,
+                fontSize: 14,
               ),
               decoration: InputDecoration(
-                hintText: 'Search recyclable items near you',
+                hintText: 'Search recyclables near you...',
                 hintStyle: GoogleFonts.outfit(
-                  color: isDark ? Colors.white38 : Colors.black38,
+                  color: isDark ? Colors.white30 : Colors.black38,
                   fontSize: 14,
                 ),
-                prefixIcon: const Icon(Icons.search, color: Color(0xFF4CAF50)),
+                prefixIcon: Icon(
+                  Icons.search_rounded,
+                  color: isDark ? const Color(0xFF66BB6A) : const Color(0xFF43A047),
+                  size: 22,
+                ),
                 border: InputBorder.none,
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               ),
-              onChanged: (val) {
-                setState(() => _searchQuery = val);
-              },
+              onChanged: (val) => setState(() => _searchQuery = val),
             ),
           ),
         ],
@@ -777,12 +562,46 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
     );
   }
 
-  Widget _buildFilterRow(bool isDark) {
+  Widget _buildPulsingDot() {
+    return AnimatedBuilder(
+      animation: _pulseAnimation,
+      builder: (context, child) {
+        return Container(
+          width: 8,
+          height: 8,
+          margin: const EdgeInsets.only(right: 8),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: const Color(0xFF4CAF50).withOpacity(_pulseAnimation.value),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildIconBtn(IconData icon, bool isDark, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: isDark ? Colors.white.withOpacity(0.06) : const Color(0xFFF0F2F5),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(icon, color: isDark ? Colors.white60 : Colors.black54, size: 20),
+      ),
+    );
+  }
+
+  // ─── FILTER CHIPS ───────────────────────────────────────
+
+  Widget _buildFilterChips(bool isDark) {
     return Column(
       children: [
-        // 1. Distance Radius Filter Chips
+        // Radius chips
         SizedBox(
-          height: 38,
+          height: 40,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -792,166 +611,167 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
               final isSelected = _selectedRadius == opt;
               return Padding(
                 padding: const EdgeInsets.only(right: 8),
-                child: ChoiceChip(
-                  label: Text(
-                    opt,
-                    style: GoogleFonts.outfit(
-                      fontSize: 12,
-                      color: isSelected ? const Color(0xFF2196F3) : (isDark ? Colors.white60 : Colors.black54),
+                child: GestureDetector(
+                  onTap: () => setState(() => _selectedRadius = opt),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      gradient: isSelected
+                          ? const LinearGradient(colors: [Color(0xFF1565C0), Color(0xFF42A5F5)])
+                          : null,
+                      color: isSelected ? null : (isDark ? const Color(0xFF1A2035) : Colors.white),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isSelected
+                            ? Colors.transparent
+                            : (isDark ? Colors.white.withOpacity(0.08) : const Color(0xFFE0E4E8)),
+                      ),
+                      boxShadow: isSelected
+                          ? [BoxShadow(color: const Color(0xFF1565C0).withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 2))]
+                          : [],
+                    ),
+                    child: Text(
+                      opt,
+                      style: GoogleFonts.outfit(
+                        fontSize: 12,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                        color: isSelected ? Colors.white : (isDark ? Colors.white54 : Colors.black54),
+                      ),
                     ),
                   ),
-                  selected: isSelected,
-                  selectedColor: const Color(0xFF2196F3).withOpacity(0.25),
-                  backgroundColor: isDark ? Colors.white.withOpacity(0.04) : Colors.white,
-                  selectedShadowColor: Colors.transparent,
-                  checkmarkColor: const Color(0xFF2196F3),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(100),
-                    side: BorderSide(
-                      color: isSelected ? const Color(0xFF2196F3) : Colors.transparent,
-                    ),
-                  ),
-                  onSelected: (val) {
-                    if (val) setState(() => _selectedRadius = opt);
-                  },
                 ),
               );
             },
           ),
         ),
-        const SizedBox(height: 10),
-        // 2. Categories chips
+        const SizedBox(height: 8),
+        // Material category chips
         SizedBox(
-          height: 38,
+          height: 40,
           child: ListView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            children: [
-              _buildCategoryChip('All', isDark),
-              _buildCategoryChip('Plastic', isDark),
-              _buildCategoryChip('Paper', isDark),
-              _buildCategoryChip('Metal', isDark),
-              _buildCategoryChip('E-Waste', isDark),
-            ],
+            children: ['All', 'Plastic', 'Paper', 'Metal', 'E-Waste']
+                .map((label) => _buildMaterialChip(label, isDark))
+                .toList(),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildCategoryChip(String label, bool isDark) {
+  Widget _buildMaterialChip(String label, bool isDark) {
     final isSelected = _filterMaterial == label || (_filterMaterial == null && label == 'All');
-    final activeColor = const Color(0xFF4CAF50);
+    final gradient = label == 'All'
+        ? _defaultGradient
+        : (_materialGradients[label.toLowerCase()] ?? _defaultGradient);
 
     return Padding(
       padding: const EdgeInsets.only(right: 8),
-      child: ChoiceChip(
-        label: Text(
-          label,
-          style: GoogleFonts.outfit(
-            fontSize: 12,
-            color: isSelected ? activeColor : (isDark ? Colors.white60 : Colors.black54),
+      child: GestureDetector(
+        onTap: () => setState(() => _filterMaterial = label == 'All' ? null : label),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            gradient: isSelected ? LinearGradient(colors: gradient) : null,
+            color: isSelected ? null : (isDark ? const Color(0xFF1A2035) : Colors.white),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isSelected
+                  ? Colors.transparent
+                  : (isDark ? Colors.white.withOpacity(0.08) : const Color(0xFFE0E4E8)),
+            ),
+            boxShadow: isSelected
+                ? [BoxShadow(color: gradient[0].withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 2))]
+                : [],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (label != 'All') ...[
+                Icon(
+                  _getIconForMaterial(label),
+                  size: 14,
+                  color: isSelected ? Colors.white : (isDark ? Colors.white54 : Colors.black45),
+                ),
+                const SizedBox(width: 6),
+              ],
+              Text(
+                label,
+                style: GoogleFonts.outfit(
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  color: isSelected ? Colors.white : (isDark ? Colors.white54 : Colors.black54),
+                ),
+              ),
+            ],
           ),
         ),
-        selected: isSelected,
-        selectedColor: activeColor.withOpacity(0.2),
-        backgroundColor: isDark ? Colors.white.withOpacity(0.04) : Colors.white,
-        selectedShadowColor: Colors.transparent,
-        checkmarkColor: activeColor,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(100),
-          side: BorderSide(
-            color: isSelected ? activeColor : Colors.transparent,
-          ),
-        ),
-        onSelected: (val) {
-          if (val) {
-            setState(() => _filterMaterial = label == 'All' ? null : label);
-          }
-        },
       ),
     );
   }
 
-  Widget _buildSortAndToggleControls(bool isDark, int count) {
+  // ─── SORT BAR ───────────────────────────────────────────
+
+  Widget _buildSortBar(bool isDark, int count) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              Text(
-                '$count items found nearby',
-                style: GoogleFonts.outfit(
-                  color: isDark ? Colors.white54 : Colors.black54,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
+          Expanded(
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF1A2035) : const Color(0xFFF0F2F5),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '$count found',
+                    style: GoogleFonts.outfit(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.white54 : Colors.black54,
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              // Sort dropdown selector
-              DropdownButton<String>(
-                value: _selectedSort,
-                dropdownColor: isDark ? const Color(0xFF0F172A) : Colors.white,
-                icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF4CAF50), size: 18),
-                underline: const SizedBox(),
-                style: GoogleFonts.outfit(
-                  color: const Color(0xFF4CAF50),
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
+                const SizedBox(width: 8),
+                DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: _selectedSort,
+                    dropdownColor: isDark ? const Color(0xFF1A2035) : Colors.white,
+                    icon: Icon(Icons.keyboard_arrow_down_rounded, color: isDark ? Colors.white38 : Colors.black38, size: 18),
+                    style: GoogleFonts.outfit(
+                      color: const Color(0xFF43A047),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    onChanged: (val) {
+                      if (val != null) setState(() => _selectedSort = val);
+                    },
+                    items: _sortOptions.map((opt) {
+                      return DropdownMenuItem(value: opt, child: Text(opt));
+                    }).toList(),
+                  ),
                 ),
-                onChanged: (val) {
-                  if (val != null) setState(() => _selectedSort = val);
-                },
-                items: _sortOptions.map((opt) {
-                  return DropdownMenuItem(value: opt, child: Text(opt));
-                }).toList(),
-              ),
-            ],
+              ],
+            ),
           ),
-          // Toggle View Controls (List / Map)
+          // View toggle
           Container(
             height: 36,
             padding: const EdgeInsets.all(3),
             decoration: BoxDecoration(
-              color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.04),
+              color: isDark ? const Color(0xFF1A2035) : const Color(0xFFF0F2F5),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Row(
               children: [
-                GestureDetector(
-                  onTap: () => setState(() => _isMapView = false),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(
-                      color: !_isMapView
-                          ? (isDark ? const Color(0xFF1E293B) : Colors.white)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(7),
-                    ),
-                    child: Center(
-                      child: Icon(Icons.view_list_rounded, 
-                         color: !_isMapView ? const Color(0xFF4CAF50) : Colors.grey, size: 18),
-                    ),
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () => setState(() => _isMapView = true),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(
-                      color: _isMapView
-                          ? (isDark ? const Color(0xFF1E293B) : Colors.white)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(7),
-                    ),
-                    child: Center(
-                      child: Icon(Icons.map_rounded, 
-                         color: _isMapView ? const Color(0xFF4CAF50) : Colors.grey, size: 18),
-                    ),
-                  ),
-                ),
+                _viewToggle(Icons.grid_view_rounded, !_isMapView, isDark, () => setState(() => _isMapView = false)),
+                _viewToggle(Icons.map_rounded, _isMapView, isDark, () => setState(() => _isMapView = true)),
               ],
             ),
           ),
@@ -960,259 +780,343 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
     );
   }
 
-  Widget _buildListView(bool isDark, List<Listing> items) {
-    return RefreshIndicator(
-      onRefresh: _loadItems,
-      child: GridView.builder(
-        padding: const EdgeInsets.all(16),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          childAspectRatio: 0.61, // taller aspect ratio to fit all metadata nicely
-          mainAxisSpacing: 16,
-          crossAxisSpacing: 16,
+  Widget _viewToggle(IconData icon, bool active, bool isDark, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: active
+              ? (isDark ? const Color(0xFF263040) : Colors.white)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(7),
+          boxShadow: active
+              ? [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 4, offset: const Offset(0, 1))]
+              : [],
         ),
-        itemCount: items.length,
-        itemBuilder: (context, index) {
-          return _buildMarketplaceCard(items[index], isDark);
-        },
+        child: Center(
+          child: Icon(icon, color: active ? const Color(0xFF43A047) : Colors.grey, size: 18),
+        ),
       ),
     );
   }
 
-  Widget _buildMarketplaceCard(Listing item, bool isDark) {
-    final double distance = _calculateDistance(item.latitude ?? 34.1688, item.longitude ?? 73.2215);
+  // ─── LIST VIEW ──────────────────────────────────────────
+
+  Widget _buildListView(bool isDark, List<Listing> items) {
+    return RefreshIndicator(
+      onRefresh: _loadItems,
+      color: const Color(0xFF43A047),
+      child: GridView.builder(
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          childAspectRatio: 0.62,
+          mainAxisSpacing: 14,
+          crossAxisSpacing: 14,
+        ),
+        itemCount: items.length,
+        itemBuilder: (context, index) => _buildCard(items[index], isDark),
+      ),
+    );
+  }
+
+  // ─── MODERN CARD ────────────────────────────────────────
+
+  Widget _buildCard(Listing item, bool isDark) {
+    final gradient = _getGradient(item.materialType);
+    final double distance = _calculateDistance(
+      item.latitude ?? (_userLocation?.latitude ?? 34.1688),
+      item.longitude ?? (_userLocation?.longitude ?? 73.2215),
+    );
     final double rate = MaterialData.materialRates[item.materialType.toLowerCase()] ?? 40.0;
     final double price = item.estimatedWeight * rate;
-    
-    // Simulate seller rating based on ID seed
-    final double rating = 4.2 + (item.id % 8) * 0.1;
-    final bool isAIClassified = item.id % 2 == 1; // Odd ids are AI classified
-    
-    // Color mapping by category
-    Color badgeColor = const Color(0xFF4CAF50);
-    if (item.materialType.toLowerCase() == 'paper') badgeColor = const Color(0xFFFF9800);
-    if (item.materialType.toLowerCase() == 'metal') badgeColor = const Color(0xFF757575);
-    if (item.materialType.toLowerCase() == 'e-waste') badgeColor = const Color(0xFF2196F3);
+    final bool hasImages = item.hasNetworkImages;
 
-    return GlassCard(
-      padding: EdgeInsets.zero,
+    return GestureDetector(
       onTap: () => _onItemTap(item),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Image Area
-          Expanded(
-            flex: 12,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                Container(
-                  color: isDark ? Colors.black12 : Colors.grey.shade100,
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                    child: Center(
-                      child: Icon(
-                        _getIconForMaterial(item.materialType),
-                        size: 50,
-                        color: badgeColor.withOpacity(0.8),
-                      ),
-                    ),
-                  ),
-                ),
-                // Material Category Badge
-                Positioned(
-                  top: 8,
-                  left: 8,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: badgeColor,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      item.materialTypeDisplay,
-                      style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-                // Distance badge
-                Positioned(
-                  bottom: 8,
-                  right: 8,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.7),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      '${distance.toStringAsFixed(1)} km away',
-                      style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+      child: Container(
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF141B2D) : Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: isDark ? Colors.white.withOpacity(0.06) : const Color(0xFFE8ECF0),
           ),
-          
-          // Card Details
-          Expanded(
-            flex: 15,
-            child: Padding(
-              padding: const EdgeInsets.all(10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.25 : 0.06),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Image / Placeholder Area ──
+            Expanded(
+              flex: 11,
+              child: Stack(
+                fit: StackFit.expand,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Item Name & Area
-                      Text(
-                        item.displayTitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.outfit(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : Colors.black87,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        item.pickupAddress,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.outfit(
-                          fontSize: 11,
-                          color: isDark ? Colors.white38 : Colors.black45,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      // Weight & Price row
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            '${item.estimatedWeight} kg Available',
-                            style: GoogleFonts.outfit(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: isDark ? Colors.white70 : Colors.black54,
-                            ),
-                          ),
-                          Text(
-                            'Rs. ${price.toStringAsFixed(0)}',
-                            style: GoogleFonts.outfit(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: const Color(0xFF4CAF50),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      // Rating & Badges
-                      Row(
-                        children: [
-                          const Icon(Icons.star, color: Colors.amber, size: 12),
-                          const SizedBox(width: 2),
-                          Text(
-                            rating.toStringAsFixed(1),
-                            style: GoogleFonts.outfit(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: isDark ? Colors.white70 : Colors.black87,
-                            ),
-                          ),
-                          const Spacer(),
-                          if (isAIClassified)
-                            Container(
-                              margin: const EdgeInsets.only(left: 4),
-                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF2196F3).withOpacity(0.15),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: const Text(
-                                'AI',
-                                style: TextStyle(color: Color(0xFF2196F3), fontSize: 9, fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          Container(
-                            margin: const EdgeInsets.only(left: 4),
-                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF4CAF50).withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: const Text(
-                              'Pickup',
-                              style: TextStyle(color: Color(0xFF4CAF50), fontSize: 9, fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+                    child: hasImages
+                        ? Image.network(
+                            item.imageUrls.first,
+                            fit: BoxFit.cover,
+                            loadingBuilder: (ctx, child, progress) {
+                              if (progress == null) return child;
+                              return _buildGradientPlaceholder(item.materialType, gradient);
+                            },
+                            errorBuilder: (_, __, ___) => _buildGradientPlaceholder(item.materialType, gradient),
+                          )
+                        : _buildGradientPlaceholder(item.materialType, gradient),
                   ),
-                  
-                  // Buy Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 32,
-                    child: NeonButton(
-                      text: 'BUY',
-                      height: 32,
-                      onPressed: () => _onItemTap(item),
+                  // Material type pill
+                  Positioned(
+                    top: 8,
+                    left: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(colors: gradient),
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(color: gradient[0].withOpacity(0.4), blurRadius: 6, offset: const Offset(0, 2)),
+                        ],
+                      ),
+                      child: Text(
+                        item.materialTypeDisplay,
+                        style: GoogleFonts.outfit(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Distance pill
+                  Positioned(
+                    bottom: 8,
+                    right: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.65),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.near_me_rounded, color: Colors.white, size: 10),
+                          const SizedBox(width: 4),
+                          Text(
+                            _userLocation != null
+                                ? '${distance.toStringAsFixed(1)} km'
+                                : '...',
+                            style: GoogleFonts.outfit(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
+
+            // ── Card Details ──
+            Expanded(
+              flex: 12,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Title & metadata
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item.displayTitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.outfit(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Row(
+                          children: [
+                            Icon(Icons.location_on_outlined,
+                                size: 12, color: isDark ? Colors.white30 : Colors.black38),
+                            const SizedBox(width: 3),
+                            Expanded(
+                              child: Text(
+                                item.pickupAddress,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.outfit(
+                                  fontSize: 11,
+                                  color: isDark ? Colors.white30 : Colors.black38,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        // Weight & time
+                        Row(
+                          children: [
+                            _buildMetaPill(
+                              '${item.estimatedWeight} kg',
+                              isDark,
+                              icon: Icons.scale_rounded,
+                            ),
+                            const SizedBox(width: 6),
+                            _buildMetaPill(
+                              _timeAgo(item.createdAt),
+                              isDark,
+                              icon: Icons.access_time_rounded,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    // Price & seller
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        // Seller
+                        Flexible(
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 10,
+                                backgroundColor: gradient[0].withOpacity(0.2),
+                                child: Icon(Icons.person, size: 12, color: gradient[0]),
+                              ),
+                              const SizedBox(width: 5),
+                              Flexible(
+                                child: Text(
+                                  item.user?.name ?? 'Seller',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 10,
+                                    color: isDark ? Colors.white38 : Colors.black45,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Price
+                        Text(
+                          'Rs ${price.toStringAsFixed(0)}',
+                          style: GoogleFonts.outfit(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF43A047),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGradientPlaceholder(String materialType, List<Color> gradient) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [gradient[0].withOpacity(0.15), gradient[1].withOpacity(0.08)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Center(
+        child: Icon(
+          _getIconForMaterial(materialType),
+          size: 48,
+          color: gradient[0].withOpacity(0.4),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMetaPill(String text, bool isDark, {IconData? icon}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.white.withOpacity(0.05) : const Color(0xFFF5F7FA),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 10, color: isDark ? Colors.white30 : Colors.black38),
+            const SizedBox(width: 3),
+          ],
+          Text(
+            text,
+            style: GoogleFonts.outfit(
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
+              color: isDark ? Colors.white38 : Colors.black45,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildMapView(bool isDark, List<Listing> items) {
-    // Generate map markers based on item locations
-    final markers = items.map((item) {
-      Color pinColor = const Color(0xFF4CAF50);
-      if (item.materialType.toLowerCase() == 'paper') pinColor = const Color(0xFFFF9800);
-      if (item.materialType.toLowerCase() == 'metal') pinColor = const Color(0xFF757575);
-      if (item.materialType.toLowerCase() == 'e-waste') pinColor = const Color(0xFF2196F3);
+  // ─── MAP VIEW ───────────────────────────────────────────
 
+  Widget _buildMapView(bool isDark, List<Listing> items) {
+    final center = _userLocation ?? const LatLng(34.1688, 73.2215);
+
+    final markers = items.map((item) {
+      final gradient = _getGradient(item.materialType);
       final index = items.indexOf(item);
       final isSelected = _activeMapCardIndex == index;
 
       return Marker(
-        point: LatLng(item.latitude ?? 34.1688, item.longitude ?? 73.2215),
+        point: LatLng(item.latitude ?? center.latitude, item.longitude ?? center.longitude),
         width: isSelected ? 48 : 36,
         height: isSelected ? 48 : 36,
         child: GestureDetector(
           onTap: () {
-            setState(() {
-              _activeMapCardIndex = index;
-            });
-            _pageController.animateToPage(
-              index,
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
-            );
+            setState(() => _activeMapCardIndex = index);
+            _pageController.animateToPage(index,
+                duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
             _mapController.move(
-              LatLng(item.latitude ?? 34.1688, item.longitude ?? 73.2215),
-              13.5,
-            );
+              LatLng(item.latitude ?? center.latitude, item.longitude ?? center.longitude), 13.5);
           },
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             decoration: BoxDecoration(
-              color: pinColor,
+              gradient: LinearGradient(colors: gradient),
               shape: BoxShape.circle,
               border: Border.all(color: Colors.white, width: isSelected ? 3 : 2),
-              boxShadow: const [
-                BoxShadow(color: Colors.black38, blurRadius: 6, offset: Offset(0, 3)),
+              boxShadow: [
+                BoxShadow(color: gradient[0].withOpacity(0.5), blurRadius: 8, offset: const Offset(0, 3)),
               ],
             ),
             child: Icon(
@@ -1225,49 +1129,50 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
       );
     }).toList();
 
-    // Pulser User Location Marker
+    // User location marker with pulse
     markers.add(
       Marker(
-        point: _userLocation,
-        width: 40,
-        height: 40,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: const Color(0xFF2196F3).withOpacity(0.2),
-                shape: BoxShape.circle,
-              ),
-            ),
-            Container(
-              width: 16,
-              height: 16,
-              decoration: BoxDecoration(
-                color: const Color(0xFF2196F3),
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 2),
-                boxShadow: const [
-                  BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2)),
-                ],
-              ),
-            ),
-          ],
+        point: center,
+        width: 44,
+        height: 44,
+        child: AnimatedBuilder(
+          animation: _pulseAnimation,
+          builder: (context, child) {
+            return Stack(
+              alignment: Alignment.center,
+              children: [
+                Container(
+                  width: 36 * _pulseAnimation.value,
+                  height: 36 * _pulseAnimation.value,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1565C0).withOpacity(0.15),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                Container(
+                  width: 16,
+                  height: 16,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1565C0),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 2.5),
+                    boxShadow: const [
+                      BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2)),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
 
     return Stack(
       children: [
-        // 1. Flutter Map
         FlutterMap(
           mapController: _mapController,
-          options: MapOptions(
-            initialCenter: _userLocation,
-            initialZoom: 13.0,
-          ),
+          options: MapOptions(initialCenter: center, initialZoom: 13.0),
           children: [
             TileLayer(
               urlTemplate: isDark
@@ -1278,8 +1183,7 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
             MarkerLayer(markers: markers),
           ],
         ),
-        
-        // 2. Carousel overlay at the bottom
+        // Bottom carousel
         Positioned(
           bottom: 20,
           left: 0,
@@ -1290,18 +1194,12 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
               controller: _pageController,
               itemCount: items.length,
               onPageChanged: (index) {
-                setState(() {
-                  _activeMapCardIndex = index;
-                });
+                setState(() => _activeMapCardIndex = index);
                 final item = items[index];
                 _mapController.move(
-                  LatLng(item.latitude ?? 34.1688, item.longitude ?? 73.2215),
-                  13.5,
-                );
+                  LatLng(item.latitude ?? center.latitude, item.longitude ?? center.longitude), 13.5);
               },
-              itemBuilder: (context, index) {
-                return _buildMapCarouselCard(items[index], isDark);
-              },
+              itemBuilder: (context, index) => _buildMapCard(items[index], isDark),
             ),
           ),
         ),
@@ -1309,24 +1207,23 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
     );
   }
 
-  Widget _buildMapCarouselCard(Listing item, bool isDark) {
-    final double distance = _calculateDistance(item.latitude ?? 34.1688, item.longitude ?? 73.2215);
+  Widget _buildMapCard(Listing item, bool isDark) {
+    final gradient = _getGradient(item.materialType);
+    final double distance = _calculateDistance(
+      item.latitude ?? (_userLocation?.latitude ?? 34.1688),
+      item.longitude ?? (_userLocation?.longitude ?? 73.2215),
+    );
     final double rate = MaterialData.materialRates[item.materialType.toLowerCase()] ?? 40.0;
     final double price = item.estimatedWeight * rate;
-
-    Color badgeColor = const Color(0xFF4CAF50);
-    if (item.materialType.toLowerCase() == 'paper') badgeColor = const Color(0xFFFF9800);
-    if (item.materialType.toLowerCase() == 'metal') badgeColor = const Color(0xFF757575);
-    if (item.materialType.toLowerCase() == 'e-waste') badgeColor = const Color(0xFF2196F3);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0F172A).withOpacity(0.95) : Colors.white.withOpacity(0.95),
+        color: isDark ? const Color(0xFF141B2D).withOpacity(0.95) : Colors.white.withOpacity(0.95),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
-        boxShadow: const [
-          BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 4)),
+        border: Border.all(color: isDark ? Colors.white.withOpacity(0.08) : const Color(0xFFE8ECF0)),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 12, offset: const Offset(0, 4)),
         ],
       ),
       child: Material(
@@ -1338,24 +1235,31 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
             padding: const EdgeInsets.all(12),
             child: Row(
               children: [
-                // Icon Thumbnail
+                // Thumbnail
                 Container(
                   width: 80,
                   height: 100,
                   decoration: BoxDecoration(
-                    color: badgeColor.withOpacity(0.1),
+                    gradient: LinearGradient(
+                      colors: [gradient[0].withOpacity(0.15), gradient[1].withOpacity(0.08)],
+                    ),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: Center(
-                    child: Icon(
-                      _getIconForMaterial(item.materialType),
-                      size: 36,
-                      color: badgeColor,
-                    ),
-                  ),
+                  child: item.hasNetworkImages
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(14),
+                          child: Image.network(item.imageUrls.first, fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Center(
+                                    child: Icon(_getIconForMaterial(item.materialType),
+                                        size: 32, color: gradient[0]),
+                                  )),
+                        )
+                      : Center(
+                          child: Icon(_getIconForMaterial(item.materialType),
+                              size: 32, color: gradient[0]),
+                        ),
                 ),
                 const SizedBox(width: 14),
-                // Card Metadata
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1367,12 +1271,13 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.outfit(
                           fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : Colors.black87,
+                          fontWeight: FontWeight.w700,
+                          color: isDark ? Colors.white : const Color(0xFF1A1A2E),
                         ),
                       ),
+                      const SizedBox(height: 2),
                       Text(
-                        '${item.pickupAddress} · ${distance.toStringAsFixed(1)} km away',
+                        '${item.pickupAddress} · ${distance.toStringAsFixed(1)} km',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.outfit(
@@ -1380,23 +1285,24 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
                           color: isDark ? Colors.white38 : Colors.black45,
                         ),
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 8),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            '${item.estimatedWeight} kg Available',
+                            '${item.estimatedWeight} kg',
                             style: GoogleFonts.outfit(
                               fontSize: 12,
-                              color: isDark ? Colors.white70 : Colors.black54,
+                              fontWeight: FontWeight.w500,
+                              color: isDark ? Colors.white60 : Colors.black54,
                             ),
                           ),
                           Text(
-                            'Rs. ${price.toStringAsFixed(0)}',
+                            'Rs ${price.toStringAsFixed(0)}',
                             style: GoogleFonts.outfit(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: const Color(0xFF4CAF50),
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFF43A047),
                             ),
                           ),
                         ],
@@ -1412,7 +1318,95 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
     );
   }
 
+  // ─── EMPTY STATE ────────────────────────────────────────
+
   Widget _buildEmptyState(bool isDark) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 88,
+              height: 88,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    const Color(0xFF43A047).withOpacity(0.12),
+                    const Color(0xFF66BB6A).withOpacity(0.06),
+                  ],
+                ),
+                shape: BoxShape.circle,
+              ),
+              child: const Center(
+                child: Icon(Icons.storefront_rounded, color: Color(0xFF43A047), size: 40),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'No listings found nearby',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.outfit(
+                color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Try expanding your search radius\nor create a new listing.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.outfit(
+                color: isDark ? Colors.white38 : Colors.black45,
+                fontSize: 14,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 28),
+            // Expand radius button
+            SizedBox(
+              width: 220,
+              height: 46,
+              child: ElevatedButton.icon(
+                onPressed: () => setState(() => _selectedRadius = 'Nearby Cities'),
+                icon: const Icon(Icons.radar_rounded, size: 18),
+                label: Text('Expand Radius', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1565C0),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            // Create listing button
+            SizedBox(
+              width: 220,
+              height: 46,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateListingScreen()));
+                },
+                icon: const Icon(Icons.add_rounded, size: 18),
+                label: Text('Create Listing', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF43A047),
+                  side: const BorderSide(color: Color(0xFF43A047)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ─── ERROR STATE ─────────────────────────────────────────
+
+  Widget _buildErrorState(bool isDark) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -1423,81 +1417,46 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.08),
+                color: Colors.redAccent.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
               child: const Center(
-                child: Icon(Icons.location_off_rounded, color: Colors.redAccent, size: 40),
+                child: Icon(Icons.cloud_off_rounded, color: Colors.redAccent, size: 36),
               ),
             ),
             const SizedBox(height: 20),
             Text(
-              'No recyclable items found nearby.',
-              textAlign: TextAlign.center,
+              'Something went wrong',
               style: GoogleFonts.outfit(
-                color: isDark ? Colors.white : Colors.black87,
+                color: isDark ? Colors.white : const Color(0xFF1A1A2E),
                 fontSize: 18,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w700,
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              'Try expanding your search radius to find listings in nearby areas or cities.',
+              _errorMessage ?? 'Failed to load listings',
               textAlign: TextAlign.center,
               style: GoogleFonts.outfit(
-                color: isDark ? Colors.white54 : Colors.black45,
+                color: isDark ? Colors.white38 : Colors.black45,
                 fontSize: 13,
               ),
             ),
             const SizedBox(height: 24),
-            // Actions
-            Column(
-              children: [
-                SizedBox(
-                  width: 220,
-                  child: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2196F3),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ).build(
-                    context,
-                    onPressed: () {
-                      setState(() {
-                        _selectedRadius = 'Nearby Cities';
-                      });
-                    },
-                    child: Text('Expand search radius', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold)),
-                  ),
+            SizedBox(
+              width: 180,
+              height: 44,
+              child: ElevatedButton.icon(
+                onPressed: _loadItems,
+                icon: const Icon(Icons.refresh_rounded, size: 18),
+                label: Text('Retry', style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF43A047),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: 220,
-                  child: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF4CAF50),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ).build(
-                    context,
-                    onPressed: _showCollectorRequestAlert,
-                    child: Text('Request collector', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold)),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: 220,
-                  child: OutlinedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const CreateListingScreen()),
-                      );
-                    },
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: isDark ? Colors.white24 : Colors.black12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: Text('Create listing', style: GoogleFonts.outfit(color: isDark ? Colors.white70 : Colors.black87, fontWeight: FontWeight.bold)),
-                  ),
-                ),
-              ],
+              ),
             ),
           ],
         ),
@@ -1505,29 +1464,35 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
     );
   }
 
-  IconData _getIconForMaterial(String type) {
-    switch (type.toLowerCase()) {
-      case 'plastic':
-        return Icons.local_drink_rounded;
-      case 'metal':
-        return Icons.build_rounded;
-      case 'paper':
-        return Icons.description_rounded;
-      case 'e-waste':
-        return Icons.computer_rounded;
-      default:
-        return Icons.recycling_rounded;
-    }
-  }
-}
+  // ─── FAB ────────────────────────────────────────────────
 
-// Extension to build generic buttons cleanly
-extension on ButtonStyle {
-  Widget build(BuildContext context, {required VoidCallback onPressed, required Widget child}) {
-    return ElevatedButton(
-      style: this,
-      onPressed: onPressed,
-      child: child,
+  Widget _buildFAB() {
+    return Container(
+      width: 56,
+      height: 56,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF43A047), Color(0xFF66BB6A)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF43A047).withOpacity(0.4),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateListingScreen()));
+        },
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        child: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
+      ),
     );
   }
 }

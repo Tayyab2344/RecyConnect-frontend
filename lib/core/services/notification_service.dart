@@ -142,6 +142,12 @@ class NotificationService {
           importance: Importance.high,
           priority: Priority.high,
           icon: '@mipmap/launcher_icon',
+          styleInformation: BigTextStyleInformation(
+            notification.body ?? '',
+            htmlFormatBigText: true,
+            contentTitle: notification.title,
+            htmlFormatContentTitle: true,
+          ),
         ),
         iOS: const DarwinNotificationDetails(),
       ),
@@ -167,6 +173,10 @@ class NotificationService {
           importance: Importance.high,
           priority: Priority.high,
           icon: '@mipmap/launcher_icon',
+          styleInformation: BigTextStyleInformation(
+            body,
+            contentTitle: title,
+          ),
         ),
         iOS: const DarwinNotificationDetails(),
       ),

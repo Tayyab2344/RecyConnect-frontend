@@ -27,6 +27,9 @@ class Order {
   // Review details if order has been rated
   final Map<String, dynamic>? review;
 
+  // Collector tasks with verification/delivery details
+  final List<dynamic>? collectorTasks;
+
   Order({
     required this.id,
     required this.buyerId,
@@ -43,6 +46,7 @@ class Order {
     this.handshakeOtp,
     this.deliveryMethod,
     this.review,
+    this.collectorTasks,
   });
 
   /// Parse the actual backend response shape:
@@ -77,6 +81,7 @@ class Order {
       handshakeOtp: json['handshakeOtp'] as String?,
       deliveryMethod: json['deliveryMethod'] as String?,
       review: json['review'] as Map<String, dynamic>?,
+      collectorTasks: json['collectorTasks'] as List<dynamic>?,
     );
   }
 

@@ -602,6 +602,16 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen>
     final order = _order!;
     final accentColor = isDark ? AppColors.neonCyan : AppColors.primaryGreen;
 
+    Map<String, dynamic>? verificationTask;
+    if (order.collectorTasks != null) {
+      for (final t in order.collectorTasks!) {
+        if (t is Map && t['verification'] != null) {
+          verificationTask = Map<String, dynamic>.from(t);
+          break;
+        }
+      }
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -610,6 +620,12 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen>
           // Sticky Status Header Card
           _buildStatusHeaderCard(isDark),
           const SizedBox(height: 16),
+
+          // Collector Verification Card (Real Data Proofs)
+          if (verificationTask != null) ...[
+            _buildCollectorVerificationCard(verificationTask, isDark),
+            const SizedBox(height: 16),
+          ],
 
           // Rate Order Prompt Card (if completed, buyer is current user, and not reviewed)
           if (order.status.trim().toUpperCase() == 'COMPLETED' &&
@@ -645,6 +661,242 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen>
           _buildDeliveryMethodCard(isDark),
           const SizedBox(height: 32),
         ],
+      ),
+    );
+  }
+
+  Widget _buildCollectorVerificationCard(Map<String, dynamic> task, bool isDark) {
+    final verification = task['verification'] as Map<String, dynamic>?;
+    if (verification == null) return const SizedBox.shrink();
+
+    final collector = task['collector'] as Map<String, dynamic>?;
+    final collectorName = collector?['name']?.toString() ?? 'Collector';
+    final collectorPhone = collector?['contactNo']?.toString() ?? '';
+
+    final verifiedWeight = verification['verifiedWeight']?.toString() ?? '0';
+    final verifiedCategory = verification['verifiedCategory']?.toString() ?? '-';
+    final verifiedMaterial = verification['verifiedMaterial']?.toString() ?? '';
+    final notes = verification['notes']?.toString() ?? '';
+    final List<dynamic> proofImages = verification['proofImages'] as List<dynamic>? ?? [];
+
+    final accentColor = isDark ? AppColors.neonCyan : AppColors.primaryGreen;
+
+    return GlassCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.verified_outlined, color: accentColor, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'COLLECTOR VERIFICATION PROOF',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: accentColor,
+                  letterSpacing: 1,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Side-by-side stats for Weight and Category
+          Row(
+            children: [
+              Expanded(
+                child: _buildVerificationStatTile(
+                  'Verified Weight',
+                  '$verifiedWeight kg',
+                  Icons.scale_outlined,
+                  isDark,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildVerificationStatTile(
+                  'Verified Category',
+                  verifiedCategory,
+                  Icons.category_outlined,
+                  isDark,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          if (verifiedMaterial.isNotEmpty) ...[
+            _buildVerificationStatTile(
+              'Material Type',
+              verifiedMaterial,
+              Icons.recycling_outlined,
+              isDark,
+              isWide: true,
+            ),
+            const SizedBox(height: 12),
+          ],
+
+          if (notes.isNotEmpty) ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isDark ? Colors.white.withOpacity(0.04) : Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Notes from Collector',
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    notes,
+                    style: TextStyle(fontSize: 13, color: isDark ? Colors.white70 : Colors.black87),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+
+          // Proof images
+          if (proofImages.isNotEmpty) ...[
+            const Text(
+              'PROOF IMAGES',
+              style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 0.5),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 100,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: proofImages.length,
+                itemBuilder: (context, idx) {
+                  final imgUrl = proofImages[idx].toString();
+                  return GestureDetector(
+                    onTap: () => _showFullImageDialog(imgUrl),
+                    child: Container(
+                      margin: const EdgeInsets.only(right: 8),
+                      width: 100,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.white24),
+                        image: DecorationImage(
+                          image: NetworkImage(imgUrl),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+
+          const Divider(),
+          const SizedBox(height: 6),
+
+          // Collector details
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 18,
+                backgroundColor: isDark ? Colors.white10 : Colors.grey.shade200,
+                child: Icon(Icons.person_outline, size: 18, color: isDark ? Colors.white70 : Colors.black54),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      collectorName,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                    ),
+                    const Text(
+                      'Assigned Waste Collector',
+                      style: TextStyle(fontSize: 10, color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ),
+              if (collectorPhone.isNotEmpty)
+                IconButton.filledTonal(
+                  onPressed: () => launchUrl(Uri.parse('tel:$collectorPhone')),
+                  icon: const Icon(Icons.phone_outlined, size: 16),
+                  style: IconButton.styleFrom(padding: const EdgeInsets.all(8)),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVerificationStatTile(String label, String value, IconData icon, bool isDark, {bool isWide = false}) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.white.withOpacity(0.04) : Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: isDark ? AppColors.neonCyan : AppColors.primaryGreen, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showFullImageDialog(String imgUrl) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Stack(
+          alignment: Alignment.topRight,
+          children: [
+            InteractiveViewer(
+              child: Image.network(imgUrl, fit: BoxFit.contain),
+            ),
+            IconButton(
+              icon: const Icon(Icons.close, color: Colors.white, size: 30),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ],
+        ),
       ),
     );
   }
