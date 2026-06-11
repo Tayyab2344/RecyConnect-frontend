@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 
@@ -265,26 +264,23 @@ class AdminGlassCard extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final radius = borderRadius ?? BorderRadius.circular(20);
     
-    return ClipRRect(
-      borderRadius: radius,
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: blurAmount, sigmaY: blurAmount),
-        child: Container(
-          padding: padding ?? const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            borderRadius: radius,
-            gradient: AdminColors.getCardGradient(isDark),
-            border: Border.all(
-              color: isDark
-                  ? (glowColor ?? AdminColors.neonCyan).withValues(alpha: 0.2)
-                  : Colors.white.withValues(alpha: 0.6),
-              width: 1.5,
-            ),
-            boxShadow: AdminColors.getCardShadow(isDark),
-          ),
-          child: child,
+    return Container(
+      padding: padding ?? const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isDark
+            ? AdminColors.darkCardBackground.withOpacity(0.8)
+            : Colors.white.withOpacity(0.9),
+        borderRadius: radius,
+        gradient: AdminColors.getCardGradient(isDark),
+        border: Border.all(
+          color: isDark
+              ? (glowColor ?? AdminColors.neonCyan).withValues(alpha: 0.2)
+              : Colors.white.withValues(alpha: 0.6),
+          width: 1.5,
         ),
+        boxShadow: AdminColors.getCardShadow(isDark),
       ),
+      child: child,
     );
   }
 }

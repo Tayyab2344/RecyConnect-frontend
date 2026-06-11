@@ -9,6 +9,7 @@ import '../../../../core/services/payment_service.dart';
 import '../../../../core/theme/marketplace_theme.dart';
 import '../../../widgets/marketplace/glass_card.dart';
 import '../../../widgets/marketplace/neon_button.dart';
+import 'order_details_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
   final Listing item;
@@ -109,7 +110,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           // Log but don't block — order is already created
           debugPrint('COD payment record creation failed: $e');
         }
-        _showSuccessDialog(isCod: true);
+        _showSuccessDialog(order, isCod: true);
       }
     } catch (e) {
       if (!mounted) return;
@@ -167,7 +168,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       await Stripe.instance.presentPaymentSheet();
 
       // Payment successful
-      if (mounted) _showSuccessDialog(isCod: false);
+      if (mounted) _showSuccessDialog(order, isCod: false);
     } on StripeException catch (e) {
       if (!mounted) return;
       // Cancel the order since payment was not completed
@@ -203,7 +204,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
   }
 
-  void _showSuccessDialog({required bool isCod}) {
+  void _showSuccessDialog(Order order, {required bool isCod}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accentColor = isDark
         ? MarketplaceTheme.darkAccentGreen
@@ -212,95 +213,108 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1A2D40) : Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: isDark
-                  ? accentColor.withOpacity(0.3)
-                  : Colors.grey.shade200,
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: isDark
-                    ? accentColor.withOpacity(0.15)
-                    : Colors.black.withOpacity(0.1),
-                blurRadius: 24,
-                spreadRadius: 2,
-                offset: const Offset(0, 8),
+      builder: (ctx) {
+        // Automatically close dialog and redirect after 1.5 seconds
+        Future.delayed(const Duration(milliseconds: 1500), () {
+          if (ctx.mounted) {
+            Navigator.of(ctx).pop(); // Close success dialog
+          }
+          if (mounted) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (context) => OrderDetailsScreen(order: order),
               ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Success icon with animated circle
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: accentColor.withOpacity(0.1),
-                  border: Border.all(
-                    color: accentColor.withOpacity(0.4),
-                    width: 2,
+            );
+          }
+        });
+
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1A2D40) : Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: isDark
+                    ? accentColor.withOpacity(0.3)
+                    : Colors.grey.shade200,
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: isDark
+                      ? accentColor.withOpacity(0.15)
+                      : Colors.black.withOpacity(0.1),
+                  blurRadius: 24,
+                  spreadRadius: 2,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Success icon with animated circle
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: accentColor.withOpacity(0.1),
+                    border: Border.all(
+                      color: accentColor.withOpacity(0.4),
+                      width: 2,
+                    ),
+                  ),
+                  child: Icon(
+                    isCod
+                        ? Icons.check_circle_outline_rounded
+                        : Icons.verified_rounded,
+                    color: accentColor,
+                    size: 48,
                   ),
                 ),
-                child: Icon(
+                const SizedBox(height: 20),
+                Text(
+                  isCod ? 'Order Placed!' : 'Payment Successful!',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
                   isCod
-                      ? Icons.check_circle_outline_rounded
-                      : Icons.verified_rounded,
-                  color: accentColor,
-                  size: 48,
+                      ? 'Your order is placed. Cash payment will be collected on delivery after the seller confirms.'
+                      : 'Your payment was processed successfully via Stripe. The seller will confirm your order shortly.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: isDark ? Colors.white60 : Colors.black54,
+                    fontSize: 13,
+                    height: 1.4,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                isCod ? 'Order Placed!' : 'Payment Successful!',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white : Colors.black87,
+                const SizedBox(height: 20),
+                const CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
                 ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                isCod
-                    ? 'Your order is placed. Cash payment will be collected on delivery after the seller confirms.'
-                    : 'Your payment was processed successfully via Stripe. The seller will confirm your order shortly.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: isDark ? Colors.white60 : Colors.black54,
-                  fontSize: 13,
-                  height: 1.4,
+                const SizedBox(height: 10),
+                Text(
+                  'Redirecting to order details...',
+                  style: TextStyle(
+                    color: isDark ? Colors.white38 : Colors.black38,
+                    fontSize: 11,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 28),
-              SizedBox(
-                width: double.infinity,
-                child: NeonButton(
-                  text: 'RETURN TO MARKETPLACE',
-                  onPressed: () {
-                    // Close the success dialog first
-                    Navigator.of(ctx).pop();
-                    // Pop the CheckoutScreen and signal success (true) so that
-                    // ItemDetailScreen can pop itself and return to the marketplace.
-                    if (context.mounted) {
-                      Navigator.of(context).pop(true);
-                    }
-                  },
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 

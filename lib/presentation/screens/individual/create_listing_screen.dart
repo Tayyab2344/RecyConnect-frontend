@@ -8,19 +8,32 @@ import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:recyconnect/core/models/listing_model.dart';
 import 'package:recyconnect/core/services/auth_service.dart';
 import 'package:recyconnect/core/services/image_classifier_service.dart';
 import 'package:recyconnect/core/services/listing_service.dart';
+import 'package:recyconnect/core/services/location_service.dart';
 import 'package:recyconnect/core/theme/marketplace_theme.dart';
 import 'package:recyconnect/presentation/widgets/marketplace/glass_card.dart';
 import 'package:recyconnect/presentation/widgets/marketplace/neon_button.dart';
+import 'package:recyconnect/presentation/screens/marketplace/location_selection_screen.dart';
 import 'package:flutter/foundation.dart';
 
 class CreateListingScreen extends StatefulWidget {
   final Listing? listing;
+  final String? initialMaterial;
+  final bool triggerCamera;
+  final bool requestCollector;
 
-  const CreateListingScreen({Key? key, this.listing}) : super(key: key);
+  const CreateListingScreen({
+    Key? key,
+    this.listing,
+    this.initialMaterial,
+    this.triggerCamera = false,
+    this.requestCollector = false,
+  }) : super(key: key);
 
   @override
   State<CreateListingScreen> createState() => _CreateListingScreenState();
@@ -51,7 +64,22 @@ class _CreateListingScreenState extends State<CreateListingScreen>
   bool _isAnalyzing = false;
   bool _isSubmitting = false;
 
+  double? _latitude;
+  double? _longitude;
+  double? _userGpsLatitude;
+  double? _userGpsLongitude;
+  String? _selectedCity;
+  String? _selectedArea;
+
   bool get _isEditing => widget.listing != null;
+
+  bool get _isGpsLocationVerified {
+    if (_userGpsLatitude == null || _userGpsLongitude == null || _latitude == null || _longitude == null) {
+      return false;
+    }
+    return (_userGpsLatitude! - _latitude!).abs() < 0.0001 &&
+           (_userGpsLongitude! - _longitude!).abs() < 0.0001;
+  }
 
   // Animation for "AI Scanning"
   late AnimationController _scanController;
@@ -69,7 +97,15 @@ class _CreateListingScreenState extends State<CreateListingScreen>
     _prefillForEdit();
     _loadRates();
     if (!_isEditing) {
-      _loadUserLocation();
+      _initGPSLocation();
+      if (widget.requestCollector) {
+        _requestCollector = true;
+      }
+      if (widget.triggerCamera) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _pickImages();
+        });
+      }
     }
   }
 
@@ -86,6 +122,19 @@ class _CreateListingScreenState extends State<CreateListingScreen>
     _selectedMaterial = listing.materialType;
     _locationMethod = listing.locationMethod ?? 'manual';
     _existingImages = listing.images ?? [];
+    
+    _latitude = listing.latitude;
+    _longitude = listing.longitude;
+    _selectedCity = listing.city;
+    _selectedArea = listing.area;
+    
+    if (listing.metadata != null) {
+      final gpsLoc = listing.userCurrentLocation;
+      if (gpsLoc != null) {
+        _userGpsLatitude = gpsLoc['latitude'];
+        _userGpsLongitude = gpsLoc['longitude'];
+      }
+    }
   }
 
   Future<void> _loadRates() async {
@@ -95,7 +144,14 @@ class _CreateListingScreenState extends State<CreateListingScreen>
         setState(() {
           _materialRates = rates;
           if (!_isEditing && rates.isNotEmpty) {
-            _selectedMaterial = rates.keys.first;
+            if (widget.initialMaterial != null) {
+              _selectedMaterial = rates.keys.firstWhere(
+                (key) => key.toLowerCase() == widget.initialMaterial!.toLowerCase(),
+                orElse: () => rates.keys.first,
+              );
+            } else {
+              _selectedMaterial = rates.keys.first;
+            }
           } else if (_isEditing && rates.isNotEmpty) {
             _selectedMaterial = rates.keys.firstWhere(
               (key) => key.toLowerCase() == _selectedMaterial.toLowerCase(),
@@ -129,6 +185,52 @@ class _CreateListingScreenState extends State<CreateListingScreen>
 
   // --- Logic Implementations ---
 
+  Future<void> _initGPSLocation() async {
+    try {
+      final locationService = LocationService();
+      // Set a 4-second timeout to check GPS coordinates so UI loading is responsive
+      final gpsData = await locationService.getCurrentLocationWithTimeout(
+        timeout: const Duration(seconds: 4),
+      );
+      if (gpsData != null) {
+        final lat = gpsData['latitude']!;
+        final lng = gpsData['longitude']!;
+        
+        setState(() {
+          _userGpsLatitude = lat;
+          _userGpsLongitude = lng;
+          _latitude = lat;
+          _longitude = lng;
+        });
+
+        final addressData = await locationService.getAddressFromCoordinates(lat, lng);
+        if (addressData != null) {
+          final street = addressData['street'] ?? '';
+          final subLocality = addressData['subLocality'] ?? '';
+          final locality = addressData['locality'] ?? '';
+          final province = addressData['administrativeArea'] ?? '';
+
+          final List<String> parts = [
+            if (street.isNotEmpty) street,
+            if (subLocality.isNotEmpty) subLocality,
+            if (locality.isNotEmpty) locality,
+            if (province.isNotEmpty) province,
+          ];
+
+          setState(() {
+            _addressController.text = parts.isNotEmpty ? parts.join(', ') : 'Current Location';
+            _selectedCity = locality.isNotEmpty ? locality : null;
+            _selectedArea = subLocality.isNotEmpty ? subLocality : null;
+          });
+        }
+      } else {
+        await _loadUserLocation();
+      }
+    } catch (_) {
+      await _loadUserLocation();
+    }
+  }
+
   Future<void> _loadUserLocation() async {
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
@@ -146,16 +248,219 @@ class _CreateListingScreenState extends State<CreateListingScreen>
         if (city != null && city.isNotEmpty && !addressParts.contains(city)) {
           addressParts.add(city);
         }
-        
-        if (addressParts.isNotEmpty) {
-          setState(() {
-            _addressController.text = addressParts.join(', ');
-            // Force manual so user can edit if they want, but it's pre-filled
-            _locationMethod = 'manual';
-          });
+
+        final latVal = data['latitude'];
+        final lngVal = data['longitude'];
+        double? lat;
+        double? lng;
+        if (latVal != null) {
+          lat = latVal is String ? double.tryParse(latVal) : (latVal as num).toDouble();
         }
+        if (lngVal != null) {
+          lng = lngVal is String ? double.tryParse(lngVal) : (lngVal as num).toDouble();
+        }
+
+        // Forward geocode address to extract coordinates if they are null in user profile
+        if (lat == null || lng == null) {
+          final query = addressParts.join(', ');
+          if (query.isNotEmpty) {
+            try {
+              final results = await LocationService().searchLocation(query);
+              if (results.isNotEmpty) {
+                lat = double.tryParse(results.first['lat']?.toString() ?? '');
+                lng = double.tryParse(results.first['lon']?.toString() ?? '');
+              }
+            } catch (_) {}
+          }
+        }
+
+        // Core fallback coordinates if everything fails, ensuring map doesn't show loading forever
+        lat ??= 33.7687;
+        lng ??= 72.3618;
+
+        setState(() {
+          _latitude = lat;
+          _longitude = lng;
+          _addressController.text = addressParts.isNotEmpty ? addressParts.join(', ') : 'Default Location';
+          _locationMethod = data['locationMethod'] ?? 'manual';
+          _selectedCity = city;
+          _selectedArea = area;
+        });
       }
     } catch (_) {}
+  }
+
+  Widget _buildLocationSection(bool isDark) {
+    return GlassCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Location Status',
+                style: TextStyle(
+                  color: isDark ? Colors.white70 : Colors.black54,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: _isGpsLocationVerified
+                      ? Colors.green.withOpacity(0.15)
+                      : (isDark ? MarketplaceTheme.darkAccentCyan : MarketplaceTheme.lightAccent).withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: _isGpsLocationVerified
+                        ? Colors.green.withOpacity(0.4)
+                        : (isDark ? MarketplaceTheme.darkAccentCyan : MarketplaceTheme.lightAccent).withOpacity(0.4),
+                  ),
+                ),
+                child: Text(
+                  _isGpsLocationVerified ? 'Location Verified ✅' : 'Custom Item Location 📍',
+                  style: TextStyle(
+                    color: _isGpsLocationVerified
+                        ? Colors.green[400]
+                        : (isDark ? MarketplaceTheme.darkAccentCyan : MarketplaceTheme.lightAccent),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          Text(
+            'Address',
+            style: TextStyle(
+              color: isDark ? Colors.white60 : Colors.black45,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            decoration: BoxDecoration(
+              color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.02),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: isDark ? Colors.white12 : Colors.black12),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.location_on_outlined, color: isDark ? Colors.white54 : Colors.black38, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _addressController.text.isNotEmpty ? _addressController.text : 'No address selected',
+                    style: TextStyle(
+                      color: isDark ? Colors.white : Colors.black87,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          if (_latitude != null && _longitude != null)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: SizedBox(
+                height: 150,
+                width: double.infinity,
+                child: FlutterMap(
+                  options: MapOptions(
+                    initialCenter: LatLng(_latitude!, _longitude!),
+                    initialZoom: 14.5,
+                    maxZoom: 18,
+                    minZoom: 8,
+                    interactionOptions: const InteractionOptions(
+                      flags: InteractiveFlag.none,
+                    ),
+                  ),
+                  children: [
+                    TileLayer(
+                      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      userAgentPackageName: 'com.recyconnect.app',
+                    ),
+                    MarkerLayer(
+                      markers: [
+                        Marker(
+                          point: LatLng(_latitude!, _longitude!),
+                          width: 40,
+                          height: 40,
+                          child: Icon(
+                            Icons.location_on,
+                            color: isDark ? MarketplaceTheme.darkAccentCyan : MarketplaceTheme.lightAccent,
+                            size: 30,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            Container(
+              height: 150,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.02),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Center(
+                child: CircularProgressIndicator(),
+              ),
+            ),
+          const SizedBox(height: 16),
+
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              icon: const Icon(Icons.map_outlined, size: 18),
+              label: const Text('CHANGE LOCATION'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: isDark ? MarketplaceTheme.darkAccentCyan : MarketplaceTheme.lightAccent,
+                side: BorderSide(
+                  color: isDark ? MarketplaceTheme.darkAccentCyan : MarketplaceTheme.lightAccent,
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onPressed: () async {
+                final result = await Navigator.push<Map<String, dynamic>>(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => LocationSelectionScreen(
+                      initialLocation: LatLng(_latitude ?? 33.7687, _longitude ?? 72.3618),
+                      initialAddress: _addressController.text,
+                    ),
+                  ),
+                );
+                if (result != null) {
+                  setState(() {
+                    _latitude = result['latitude'];
+                    _longitude = result['longitude'];
+                    _addressController.text = result['address'];
+                    _selectedCity = result['city'];
+                    _selectedArea = result['area'];
+                  });
+                }
+              },
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _pickImages() async {
@@ -284,8 +589,13 @@ class _CreateListingScreenState extends State<CreateListingScreen>
 
   Future<void> _publishListing() async {
     if (!_formKey.currentState!.validate()) {
-       // Scroll to top to show errors if needed, or rely on field error text
        return;
+    }
+    if (_latitude == null || _longitude == null || _addressController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a valid item location.')),
+      );
+      return;
     }
     if (_selectedImages.isEmpty && _existingImages.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -300,7 +610,6 @@ class _CreateListingScreenState extends State<CreateListingScreen>
       // 1. Compress Images then Convert to Base64 (OOM Protection)
       List<String> base64Images = List<String>.from(_existingImages);
       for (var img in _selectedImages) {
-        // Compress native payload to save hundreds of MBs in memory allocation
         final Uint8List? compressedBytes = await FlutterImageCompress.compressWithFile(
           img.path,
           minWidth: 800,
@@ -315,17 +624,32 @@ class _CreateListingScreenState extends State<CreateListingScreen>
       // 2. Create Listing Object
       final listing = Listing(
         id: 0,
-        userId: 0, // Backend sets this
+        userId: 0,
         materialType: _selectedMaterial.toLowerCase(),
         estimatedWeight: double.parse(_weightController.text),
         pickupAddress: _addressController.text,
         locationMethod: _locationMethod,
         title: _titleController.text.trim(),
-        notes: _descriptionController.text, // Mapping Description to Notes
+        notes: _descriptionController.text,
         status: 'PENDING',
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
         images: base64Images,
+        latitude: _latitude,
+        longitude: _longitude,
+        city: _selectedCity,
+        area: _selectedArea,
+        metadata: {
+          'userCurrentLocation': {
+            'latitude': _userGpsLatitude ?? _latitude ?? 0.0,
+            'longitude': _userGpsLongitude ?? _longitude ?? 0.0,
+          },
+          'itemLocation': {
+            'latitude': _latitude ?? 0.0,
+            'longitude': _longitude ?? 0.0,
+            'address': _addressController.text,
+          }
+        },
       );
 
       // 3. API Call
@@ -491,6 +815,10 @@ class _CreateListingScreenState extends State<CreateListingScreen>
 
                         _buildSectionHeader('Item Details', isDark),
                         _buildDetailsSection(isDark),
+                        const SizedBox(height: 24),
+
+                        _buildSectionHeader('Location of Item', isDark),
+                        _buildLocationSection(isDark),
                         const SizedBox(height: 24),
 
                         _buildSectionHeader('Pricing & Logistics', isDark),
@@ -747,17 +1075,6 @@ class _CreateListingScreenState extends State<CreateListingScreen>
               ),
             ],
           ),
-        ),
-        const SizedBox(height: 16),
-
-        // Pickup Address
-        _buildTextField(
-          controller: _addressController,
-          label: 'Pickup Location',
-          hint: 'Full Address',
-          icon: Icons.location_on_outlined,
-          isDark: isDark,
-          validator: (v) => v!.isEmpty ? 'Address is required' : null,
         ),
         const SizedBox(height: 16),
 

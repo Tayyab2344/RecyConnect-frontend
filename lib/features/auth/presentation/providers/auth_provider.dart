@@ -117,6 +117,9 @@ class AuthProvider extends ChangeNotifier {
         'companyName': user.companyName,
         'businessType': user.businessType,
         'registrationNumber': user.registrationNumber,
+        'latitude': user.latitude,
+        'longitude': user.longitude,
+        'locationMethod': user.locationMethod,
       });
     }
     return map;
@@ -162,6 +165,7 @@ class AuthProvider extends ChangeNotifier {
         _token = result.data!.token;
         _user = _userToMap(result.data!.user);
         await NotificationService.registerDeviceToken();
+        NotificationService.checkAndShowPendingNotifications();
         _setLoading(false);
         return true;
       } else {
@@ -358,7 +362,13 @@ class AuthProvider extends ChangeNotifier {
       _token = session.token;
       _user = session.userData;
       if (_token != null && _token!.isNotEmpty) {
-        await NotificationService.registerDeviceToken();
+        // Run these asynchronously without awaiting them, so they do not block startup
+        NotificationService.registerDeviceToken().catchError((e) {
+          if (kDebugMode) print('Error registering device token: $e');
+        });
+        NotificationService.checkAndShowPendingNotifications().catchError((e) {
+          if (kDebugMode) print('Error checking pending notifications: $e');
+        });
       }
       notifyListeners();
     } catch (e) {

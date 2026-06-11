@@ -22,6 +22,9 @@ class UserEntity {
   final int? ecoPoints;
   final String? currentLevel;
   final int? dailyStreak;
+  final double? latitude;
+  final double? longitude;
+  final String? locationMethod;
 
   const UserEntity({
     this.id,
@@ -44,6 +47,9 @@ class UserEntity {
     this.ecoPoints,
     this.currentLevel,
     this.dailyStreak,
+    this.latitude,
+    this.longitude,
+    this.locationMethod,
   });
 
   /// Get the display name (handles different user types)

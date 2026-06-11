@@ -13,6 +13,7 @@ import 'sales_history_screen.dart';
 import '../messages/messages_screen.dart';
 import '../notifications/notifications_screen.dart';
 import '../rewards/rewards_screen.dart';
+import 'user_reviews_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// Premium My Profile Screen for RecyConnect
@@ -875,13 +876,16 @@ class _ProfileScreenState extends State<ProfileScreen>
             _ActivityItem(Icons.analytics_outlined, 'Business Analytics', 'Charts, trends, and insights', const Color(0xFFE91E63)),
             _ActivityItem(Icons.people_outlined, 'Collector Performance', 'Track collector metrics', const Color(0xFF00BCD4)),
             _ActivityItem(Icons.receipt_long_outlined, 'Order Management', 'View and track orders', AppColors.neonGreen),
+            _ActivityItem(Icons.message_outlined, 'Messages', 'Chats with buyers and sellers', const Color(0xFF9C27B0)),
             _ActivityItem(Icons.emoji_events_outlined, 'Rewards & Leaderboard', 'Level, badges, and rankings', const Color(0xFFFF5722)),
+            _ActivityItem(Icons.rate_review_outlined, 'Ratings & Reviews', 'View feedback from trading partners', const Color(0xFF009688)),
           ]
         : [
             _ActivityItem(Icons.receipt_long_outlined, 'Sales History', 'View your past sales and earnings', const Color(0xFFFF9800)),
             _ActivityItem(Icons.shopping_cart_outlined, 'Purchase History', 'Track your purchases and orders', AppColors.neonCyan),
             _ActivityItem(Icons.message_outlined, 'Messages', 'Chats with buyers and sellers', const Color(0xFF9C27B0)),
             _ActivityItem(Icons.emoji_events_outlined, 'Rewards & Leaderboard', 'Level, badges, and rankings', const Color(0xFFFF5722)),
+            _ActivityItem(Icons.rate_review_outlined, 'Ratings & Reviews', 'View feedback from trading partners', const Color(0xFF009688)),
           ];
 
     return ListView.separated(
@@ -905,13 +909,28 @@ class _ProfileScreenState extends State<ProfileScreen>
           onTap: () {
             if (item.title == 'Rewards & Leaderboard') {
               Navigator.push(context, MaterialPageRoute(builder: (_) => const RewardsScreen()));
+            } else if (item.title == 'Ratings & Reviews') {
+              final currentUserId = authService.currentUser?['id'];
+              final currentUserName = authService.currentUser?['name'] ?? 'User';
+              if (currentUserId != null) {
+                final parsedId = currentUserId is int ? currentUserId : int.tryParse(currentUserId.toString()) ?? 0;
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => UserReviewsScreen(
+                      userId: parsedId,
+                      userName: currentUserName,
+                    ),
+                  ),
+                );
+              }
+            } else if (item.title == 'Messages') {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const MessagesScreen()));
             } else if (!isWarehouse) {
               if (item.title == 'Sales History') {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const SalesHistoryScreen()));
               } else if (item.title == 'Purchase History') {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const PurchaseHistoryScreen()));
-              } else if (item.title == 'Messages') {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const MessagesScreen()));
               }
             }
           },

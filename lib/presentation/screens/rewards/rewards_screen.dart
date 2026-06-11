@@ -1,5 +1,4 @@
 import 'dart:math' as math;
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
@@ -105,11 +104,10 @@ class _RewardsScreenState extends State<RewardsScreen> with TickerProviderStateM
         elevation: 0,
         backgroundColor: Colors.transparent,
         foregroundColor: isDark ? Colors.white : Colors.black87,
-        flexibleSpace: ClipRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: Container(color: Colors.transparent),
-          ),
+        flexibleSpace: Container(
+          color: isDark 
+              ? Colors.black.withValues(alpha: 0.2) 
+              : Colors.white.withValues(alpha: 0.8),
         ),
       ),
       body: Stack(
@@ -125,11 +123,42 @@ class _RewardsScreenState extends State<RewardsScreen> with TickerProviderStateM
 
                 // Main Views
                 Expanded(
-                  child: isLoading && status == null
+                  child: status == null
                       ? Center(
-                          child: CircularProgressIndicator(
-                            color: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
-                          ),
+                          child: isLoading
+                              ? CircularProgressIndicator(
+                                  color: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
+                                )
+                              : Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.error_outline_rounded,
+                                      color: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
+                                      size: 48,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      'Failed to load rewards status',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: isDark ? Colors.white70 : Colors.black87,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    ElevatedButton(
+                                      onPressed: _loadAllData,
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
+                                        foregroundColor: isDark ? const Color(0xFF070B19) : Colors.white,
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                      ),
+                                      child: const Text('Retry'),
+                                    ),
+                                  ],
+                                ),
                         )
                       : TabBarView(
                           controller: _tabController,
@@ -227,30 +256,24 @@ class _RewardsScreenState extends State<RewardsScreen> with TickerProviderStateM
           color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.05),
         ),
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-          child: TabBar(
-            controller: _tabController,
-            isScrollable: true,
-            tabAlignment: TabAlignment.start,
-            labelColor: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
-            unselectedLabelColor: isDark ? Colors.white60 : Colors.black45,
-            indicatorColor: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
-            indicatorWeight: 3,
-            indicatorPadding: const EdgeInsets.symmetric(horizontal: 12),
-            labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-            tabs: const [
-              Tab(text: 'Dashboard'),
-              Tab(text: 'Streaks'),
-              Tab(text: 'Leaderboard'),
-              Tab(text: 'Badges'),
-              Tab(text: 'Challenges'),
-              Tab(text: 'History'),
-            ],
-          ),
-        ),
+      child: TabBar(
+        controller: _tabController,
+        isScrollable: true,
+        tabAlignment: TabAlignment.start,
+        labelColor: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
+        unselectedLabelColor: isDark ? Colors.white60 : Colors.black45,
+        indicatorColor: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
+        indicatorWeight: 3,
+        indicatorPadding: const EdgeInsets.symmetric(horizontal: 12),
+        labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+        tabs: const [
+          Tab(text: 'Dashboard'),
+          Tab(text: 'Streaks'),
+          Tab(text: 'Leaderboard'),
+          Tab(text: 'Badges'),
+          Tab(text: 'Challenges'),
+          Tab(text: 'History'),
+        ],
       ),
     );
   }
@@ -546,9 +569,7 @@ class _RewardsScreenState extends State<RewardsScreen> with TickerProviderStateM
     final isDark = Theme.of(context).brightness == Brightness.dark;
     showDialog(
       context: context,
-      builder: (context) => BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: AlertDialog(
+      builder: (context) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
           backgroundColor: isDark ? const Color(0xFF131C33) : Colors.white,
           title: Center(
@@ -619,7 +640,6 @@ class _RewardsScreenState extends State<RewardsScreen> with TickerProviderStateM
             ),
           ],
         ),
-      ),
     );
   }
 
@@ -1004,7 +1024,7 @@ class _RewardsScreenState extends State<RewardsScreen> with TickerProviderStateM
                       final item = list[index] as Map<String, dynamic>;
                       final int rank = item['rank'] ?? (index + 1);
                       final String name = item['displayName'] ?? 'Anonymous';
-                      final int points = (item['ecoPoints'] as num?)?.toInt() ?? 0;
+                      final int points = (item['totalEcoPoints'] as num?)?.toInt() ?? (item['ecoPoints'] as num?)?.toInt() ?? 0;
                       final String level = item['currentLevel'] ?? 'Recycler';
                       final String? city = item['city'];
                       final String? area = item['area'];
@@ -1364,9 +1384,7 @@ class _RewardsScreenState extends State<RewardsScreen> with TickerProviderStateM
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
+      builder: (context) => Container(
           decoration: BoxDecoration(
             color: isDark ? const Color(0xFF131C33) : Colors.white,
             borderRadius: const BorderRadius.only(
@@ -1476,7 +1494,6 @@ class _RewardsScreenState extends State<RewardsScreen> with TickerProviderStateM
             ],
           ),
         ),
-      ),
     );
   }
 
@@ -1802,37 +1819,21 @@ class _GlassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 15.0, sigmaY: 15.0),
-        child: Container(
-          padding: padding,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: isDark
-                  ? [
-                      Colors.white.withValues(alpha: 0.07),
-                      Colors.white.withValues(alpha: 0.02),
-                    ]
-                  : [
-                      Colors.white.withValues(alpha: 0.85),
-                      Colors.white.withValues(alpha: 0.60),
-                    ],
-            ),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.08)
-                  : Colors.black.withValues(alpha: 0.05),
-              width: 1.5,
-            ),
-          ),
-          child: child,
+    return Container(
+      padding: padding,
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.05)
+            : Colors.white.withValues(alpha: 0.85),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : Colors.black.withValues(alpha: 0.05),
+          width: 1.5,
         ),
       ),
+      child: child,
     );
   }
 }

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:provider/provider.dart';
@@ -8,7 +10,7 @@ import 'core/services/auth_service.dart'; // Bridge: AuthService = AuthProvider
 import 'core/services/admin_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/providers/theme_provider.dart';
-import 'presentation/screens/onboarding/welcome_story_screen.dart';
+import 'presentation/screens/auth/login_screen.dart';
 import 'presentation/screens/dashboard/dashboard_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -17,7 +19,9 @@ import 'core/services/sync_manager.dart';
 import 'core/services/complaint_service.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/rewards_service.dart';
+import 'core/services/eco_assist_service.dart';
 import 'presentation/screens/onboarding/onboarding_screen.dart';
+import 'presentation/screens/onboarding/splash_screen.dart';
 import 'presentation/widgets/skeleton_loader.dart';
 import 'features/notification/presentation/providers/notification_provider.dart';
 
@@ -61,6 +65,7 @@ class MyApp extends StatelessWidget {
         ),
         ChangeNotifierProvider(create: (_) => sl<NotificationProvider>()),
         ChangeNotifierProvider(create: (_) => sl<RewardsService>()),
+        ChangeNotifierProvider(create: (_) => EcoAssistService()),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {
@@ -69,7 +74,7 @@ class MyApp extends StatelessWidget {
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: themeProvider.themeMode,
-            home: const AuthWrapper(),
+            home: const SplashScreen(),
             debugShowCheckedModeBanner: false,
           );
         },
@@ -79,7 +84,14 @@ class MyApp extends StatelessWidget {
 }
 
 class AuthWrapper extends StatefulWidget {
-  const AuthWrapper({super.key});
+  final bool? preloadedHasSeenOnboarding;
+  final bool? preloadedNetworkError;
+
+  const AuthWrapper({
+    super.key,
+    this.preloadedHasSeenOnboarding,
+    this.preloadedNetworkError,
+  });
 
   @override
   State<AuthWrapper> createState() => _AuthWrapperState();
@@ -89,11 +101,47 @@ class _AuthWrapperState extends State<AuthWrapper> {
   bool? _hasSeenOnboarding;
   bool _isCheckingAuth = true;
   bool _networkError = false;
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
 
   @override
   void initState() {
     super.initState();
-    _initializeApp();
+    if (widget.preloadedHasSeenOnboarding != null) {
+      _hasSeenOnboarding = widget.preloadedHasSeenOnboarding;
+      _networkError = widget.preloadedNetworkError ?? false;
+      _isCheckingAuth = false;
+    } else {
+      _initializeApp();
+    }
+
+    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((results) {
+      final hasConnection = results.contains(ConnectivityResult.wifi) || results.contains(ConnectivityResult.mobile);
+      if (hasConnection) {
+        if (_networkError) {
+          setState(() {
+            _networkError = false;
+          });
+          _initializeApp();
+        } else {
+          final authService = Provider.of<AuthService>(context, listen: false);
+          if (authService.isAuthenticated) {
+            NotificationService.registerDeviceToken();
+            NotificationService.checkAndShowPendingNotifications();
+            Provider.of<SyncManager>(context, listen: false).processQueue();
+          }
+        }
+      } else {
+        setState(() {
+          _networkError = true;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _connectivitySubscription?.cancel();
+    super.dispose();
   }
 
   Future<void> _initializeApp() async {
@@ -115,7 +163,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
     // If we have a saved token, try to fetch the user profile
     if (authService.isAuthenticated) {
       try {
-        final result = await authService.fetchProfile();
+        final result = await authService.fetchProfile().timeout(const Duration(seconds: 2));
         if (!result['success']) {
           final msg = (result['message'] ?? '').toString().toLowerCase();
           final isNetworkError = msg.contains('network') ||
@@ -133,6 +181,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
           }
         } else {
           await NotificationService.registerDeviceToken();
+          NotificationService.checkAndShowPendingNotifications();
         }
       } catch (e) {
         // Network exception — keep session alive
@@ -183,7 +232,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
         } else if (!_hasSeenOnboarding!) {
           return const OnboardingScreen();
         } else {
-          return const AnimatedStoryWelcomeScreen();
+          return const LoginScreen();
         }
       },
     );

@@ -70,21 +70,34 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> get(String endpoint, {bool requiresAuth = true, Map<String, dynamic>? query}) async {
+  Future<Map<String, dynamic>> get(
+    String endpoint, {
+    bool requiresAuth = true,
+    Map<String, dynamic>? query,
+    bool forceRefresh = false,
+  }) async {
     if (_dio == null) await _init();
     
     try {
+      final options = forceRefresh
+          ? _cacheOptions!.copyWith(policy: CachePolicy.refresh).toOptions()
+          : Options();
+      options.extra ??= {};
+      options.extra!['requiresAuth'] = requiresAuth;
+
       final response = await _dio!.get(
         endpoint,
         queryParameters: query,
-        options: Options(extra: {'requiresAuth': requiresAuth}),
+        options: options,
       );
       
-      // If the response came from the cache, trigger a silent background refresh
-      // so the next time we load this, it has fresh data! (Smart Delta/Refresh)
-      final isFromCache = response.extra['@dio_cache_interceptor@'] == true;
-      if (isFromCache) {
-        _triggerBackgroundRefresh(endpoint, query, requiresAuth);
+      if (!forceRefresh) {
+        // If the response came from the cache, trigger a silent background refresh
+        // so the next time we load this, it has fresh data! (Smart Delta/Refresh)
+        final isFromCache = response.extra['@dio_cache_interceptor@'] == true;
+        if (isFromCache) {
+          _triggerBackgroundRefresh(endpoint, query, requiresAuth);
+        }
       }
 
       return _handleResponse(response);

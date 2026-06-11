@@ -6,9 +6,12 @@ import '../../../core/services/listing_service.dart';
 import '../../../core/services/order_service.dart';
 import '../../../core/services/report_service.dart';
 import '../../../core/services/app_service.dart';
+import '../../../core/services/rewards_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../widgets/curved/curved_bottom_nav.dart';
 import '../../widgets/skeleton_loader.dart';
+import '../../widgets/eco_assist_sheet.dart';
+import '../../widgets/animated_robot_icon.dart';
 
 import '../individual/create_listing_screen.dart';
 import '../individual/browse_marketplace_screen.dart';
@@ -18,6 +21,7 @@ import '../individual/seller_orders_screen.dart';
 import '../individual/transactions_screen.dart';
 import '../profile/profile_screen.dart';
 import '../rewards/rewards_screen.dart';
+import '../messages/messages_screen.dart';
 
 class CompanyDashboard extends StatefulWidget {
   const CompanyDashboard({super.key});
@@ -55,18 +59,22 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   Future<void> _loadDashboardStats() async {
     setState(() => _isLoading = true);
     try {
-      final listingStats = await _listingService.getListingStats();
-      final orderStats = await _orderService.getOrderStats();
-      final activity = await _reportService.getActivity(limit: 5);
-      final rates = await _appService.getPublicRates();
+      final rewardsService = Provider.of<RewardsService>(context, listen: false);
+      final results = await Future.wait([
+        _listingService.getListingStats(),
+        _orderService.getOrderStats(),
+        _reportService.getActivity(limit: 5),
+        _appService.getPublicRates(),
+        rewardsService.fetchRewardsStatus(),
+      ]);
 
       setState(() {
         _stats = {
-          'listings': listingStats,
-          'orders': orderStats,
+          'listings': results[0],
+          'orders': results[1],
         };
-        _recentActivity = activity;
-        _marketRates = rates;
+        _recentActivity = results[2] as List<dynamic>?;
+        _marketRates = results[3] as List<dynamic>?;
         _isLoading = false;
       });
     } catch (e) {
@@ -82,12 +90,16 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
       body: PageView(
         controller: _pageController,
         onPageChanged: (index) {
-          setState(() => _selectedIndex = index);
+          // Map PageView index back to bottom nav index
+          int navIndex = index;
+          if (navIndex >= 2) {
+            navIndex = navIndex + 1;
+          }
+          setState(() => _selectedIndex = navIndex);
         },
         children: [
           _buildHomeTab(),
           const BrowseMarketplaceScreen(),
-          const CreateListingScreen(),
           const MyOrdersScreen(),
           const ProfileScreen(),
         ],
@@ -134,6 +146,8 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                       _buildHeader(),
                       const SizedBox(height: 24),
                       _buildBrandingTitle(),
+                      const SizedBox(height: 20),
+                      _buildGamificationCard(Theme.of(context).brightness == Brightness.dark),
                       const SizedBox(height: 24),
                       _buildStatsOverview(),
                       const SizedBox(height: 24),
@@ -176,25 +190,49 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
             ),
           ],
         ),
-        GestureDetector(
-          onTap: () {
-            _pageController.animateToPage(
-              4,
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
-            );
-          },
-          child: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
+        Row(
+          children: [
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const MessagesScreen()),
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
+                  ),
+                ),
+                child: Icon(Icons.chat_bubble_outline_rounded, color: Theme.of(context).iconTheme.color, size: 20),
               ),
             ),
-            child: Icon(Icons.person, color: Theme.of(context).iconTheme.color, size: 20),
-          ),
+            const SizedBox(width: 10),
+            GestureDetector(
+              onTap: () {
+                _pageController.animateToPage(
+                  3,
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
+                  ),
+                ),
+                child: Icon(Icons.person, color: Theme.of(context).iconTheme.color, size: 20),
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -364,7 +402,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
           childAspectRatio: 1.0,
           children: [
             _buildQuickActionCard('Sell Items', Icons.add_circle_outline, const Color(0xFF4CAF50), () {
-              _pageController.animateToPage(2, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateListingScreen()));
             }),
             _buildQuickActionCard('Browse', Icons.search, const Color(0xFF2196F3), () {
               _pageController.animateToPage(1, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
@@ -594,8 +632,17 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
     return CurvedBottomNav(
       currentIndex: _selectedIndex,
       onTap: (index) {
+        if (index == 2) {
+          EcoAssistSheet.show(context);
+          return;
+        }
         setState(() => _selectedIndex = index);
-        _pageController.jumpToPage(index);
+        // Map navigation bar index to PageView index
+        int pageIndex = index;
+        if (index > 2) {
+          pageIndex = pageIndex - 1;
+        }
+        _pageController.jumpToPage(pageIndex);
       },
       items: const [
         CurvedBottomNavItem(
@@ -608,9 +655,10 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
           activeIcon: Icons.storefront,
           label: 'Market',
         ),
-        CurvedBottomNavItem.simple(
-          icon: Icons.add,
-          label: 'Sell',
+        CurvedBottomNavItem(
+          icon: Icons.smart_toy_outlined,
+          activeIcon: Icons.smart_toy,
+          label: 'EcoAssist',
         ),
         CurvedBottomNavItem(
           icon: Icons.receipt_long_outlined,
@@ -624,12 +672,170 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
         ),
       ],
       floatingButton: CurvedNavFAB(
-        icon: Icons.add,
-        isSelected: _selectedIndex == 2,
+        icon: Icons.smart_toy_rounded,
+        isSelected: false,
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF00E5FF)
+            : const Color(0xFF4CAF50),
+        iconColor: Colors.white,
         onTap: () {
-          setState(() => _selectedIndex = 2);
-          _pageController.jumpToPage(2);
+          EcoAssistSheet.show(context);
         },
+      ),
+    );
+  }
+
+  Widget _buildGamificationCard(bool isDark) {
+    final rewardsService = context.watch<RewardsService>();
+    final status = rewardsService.rewardsStatus;
+    if (status == null) return const SizedBox.shrink();
+
+    final points = status['ecoPoints'] ?? 0;
+    final level = status['currentLevel'] ?? 'Beginner Recycler';
+    final trustScore = status['trustScore'] ?? 100;
+    final nextLevelInfo = status['nextLevelInfo'];
+    final progressPercent = (nextLevelInfo?['progressPercent'] as num?)?.toDouble() ?? 0.0;
+    final pointsNeeded = nextLevelInfo?['pointsNeeded'] ?? 0;
+
+    final primaryColor = isDark ? const Color(0xFF4CAF50) : const Color(0xFF2E7D32);
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const RewardsScreen()),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: isDark
+                ? [const Color(0xFF1A3A2F), const Color(0xFF0D1F1A)]
+                : [Colors.green.shade50, Colors.green.shade100],
+          ),
+          border: Border.all(
+            color: isDark ? primaryColor.withOpacity(0.3) : Colors.green.shade200,
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.eco_rounded,
+                            color: isDark ? const Color(0xFF00E676) : Colors.green.shade800,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            level,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: isDark ? Colors.white70 : Colors.green.shade900,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        '$points Eco Points',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white : Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.white10 : Colors.white70,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isDark ? Colors.white24 : Colors.green.shade300,
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        'Trust Score',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white60 : Colors.green.shade900,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '$trustScore',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? const Color(0xFF00E676) : Colors.green.shade800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Level Progress',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: isDark ? Colors.white60 : Colors.black54,
+                  ),
+                ),
+                Text(
+                  pointsNeeded > 0 ? '$pointsNeeded pts to next level' : 'Max Level',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? const Color(0xFF00E676) : Colors.green.shade900,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: progressPercent,
+                minHeight: 6,
+                backgroundColor: isDark ? Colors.white12 : Colors.green.shade200,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  isDark ? const Color(0xFF00E676) : Colors.green.shade700,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

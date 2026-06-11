@@ -1,4 +1,4 @@
-import 'dart:ui';
+// dart:ui import removed - BackdropFilter no longer used for performance
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../core/constants/admin_colors.dart';
@@ -418,30 +418,25 @@ class GlassContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(borderRadius),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          padding: padding,
-          decoration: BoxDecoration(
-            color: (color ?? Colors.white).withOpacity(0.7),
-            borderRadius: BorderRadius.circular(borderRadius),
-            border: Border.all(
-              color: Colors.white.withOpacity(0.2),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                offset: const Offset(0, 8),
-                blurRadius: 32,
-              ),
-            ],
-          ),
-          child: child,
+    // Performance optimization: Removed BackdropFilter blur for low-end device support
+    return Container(
+      padding: padding,
+      decoration: BoxDecoration(
+        color: (color ?? Colors.white).withOpacity(0.85),
+        borderRadius: BorderRadius.circular(borderRadius),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.2),
+          width: 1.5,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            offset: const Offset(0, 8),
+            blurRadius: 32,
+          ),
+        ],
       ),
+      child: child,
     );
   }
 }

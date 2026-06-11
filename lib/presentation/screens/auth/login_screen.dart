@@ -1,12 +1,9 @@
 import 'dart:math' as math;
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_theme.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../core/utils/validators.dart';
-import '../../widgets/common/recyconnect_logo.dart';
 import '../dashboard/dashboard_screen.dart';
 import '../admin/admin_dashboard_screen.dart';
 import 'role_selection_screen.dart';
@@ -392,9 +389,14 @@ class _LoginScreenState extends State<LoginScreen>
               ),
             ],
           ),
-          child: const RecyConnectLogo(
-            size: 100,
-            showText: false,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(22),
+            child: Image.asset(
+              'assets/icons/app_icon.png',
+              width: 100,
+              height: 100,
+              fit: BoxFit.cover,
+            ),
           ),
         );
       },
@@ -413,8 +415,29 @@ class _LoginScreenState extends State<LoginScreen>
       builder: (context, child) {
         return Container(
           width: math.min(400, screenSize.width - 48),
+          padding: const EdgeInsets.all(32),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
+            // Theme-aware glass effect
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isDark
+                  ? [
+                      Colors.white.withValues(alpha: 0.12),
+                      Colors.white.withValues(alpha: 0.05),
+                    ]
+                  : [
+                      Colors.white.withValues(alpha: 0.85),
+                      Colors.white.withValues(alpha: 0.65),
+                    ],
+            ),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.15 + 0.1 * _pulseAnimation.value)
+                  : Colors.white.withValues(alpha: 0.6 + 0.1 * _pulseAnimation.value),
+              width: 1.5,
+            ),
             // Theme-aware glowing edges
             boxShadow: isDark
                 ? [
@@ -454,36 +477,7 @@ class _LoginScreenState extends State<LoginScreen>
                     ),
                   ],
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(24),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-              child: Container(
-                padding: const EdgeInsets.all(32),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(24),
-                  // Theme-aware glass effect
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: isDark
-                        ? [
-                            Colors.white.withValues(alpha: 0.12),
-                            Colors.white.withValues(alpha: 0.05),
-                          ]
-                        : [
-                            Colors.white.withValues(alpha: 0.85),
-                            Colors.white.withValues(alpha: 0.65),
-                          ],
-                  ),
-                  border: Border.all(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.15 + 0.1 * _pulseAnimation.value)
-                        : Colors.white.withValues(alpha: 0.6 + 0.1 * _pulseAnimation.value),
-                    width: 1.5,
-                  ),
-                ),
-                child: Form(
+          child: Form(
                   key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -577,9 +571,6 @@ class _LoginScreenState extends State<LoginScreen>
                     ],
                   ),
                 ),
-              ),
-            ),
-          ),
         );
       },
     );

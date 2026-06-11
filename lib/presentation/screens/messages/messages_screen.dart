@@ -231,6 +231,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                                     conversationId: conv['id'],
                                     otherParticipantName: name,
                                     initialIsOnline: isOnline,
+                                    initialIsClosed: conv['status'] == 'ARCHIVED',
                                   ),
                                 ),
                               ).then((_) => _fetchConversations());

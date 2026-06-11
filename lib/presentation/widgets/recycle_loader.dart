@@ -31,11 +31,9 @@ class RecycleLoader extends StatefulWidget {
 class _RecycleLoaderState extends State<RecycleLoader>
     with TickerProviderStateMixin {
   late AnimationController _rotateController;
-  late AnimationController _pulseController;
   late AnimationController _dotController;
 
   late Animation<double> _rotateAnimation;
-  late Animation<double> _pulseAnimation;
   late Animation<double> _dotAnimation;
 
   @override
@@ -52,16 +50,6 @@ class _RecycleLoaderState extends State<RecycleLoader>
       CurvedAnimation(parent: _rotateController, curve: Curves.linear),
     );
 
-    // Pulse — breathing glow effect
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1000),
-    )..repeat(reverse: true);
-
-    _pulseAnimation = Tween<double>(begin: 0.4, end: 0.9).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-    );
-
     // Orbiting dots — slightly offset from main rotation
     _dotController = AnimationController(
       vsync: this,
@@ -76,7 +64,6 @@ class _RecycleLoaderState extends State<RecycleLoader>
   @override
   void dispose() {
     _rotateController.dispose();
-    _pulseController.dispose();
     _dotController.dispose();
     super.dispose();
   }
@@ -89,68 +76,48 @@ class _RecycleLoaderState extends State<RecycleLoader>
     final dotRadius = size * 0.065;
     final orbitRadius = size * 0.42;
 
-    return SizedBox(
-      width: size,
-      height: size,
-      child: AnimatedBuilder(
-        animation: Listenable.merge(
-            [_rotateAnimation, _pulseAnimation, _dotAnimation]),
-        builder: (context, _) {
-          return Stack(
-            alignment: Alignment.center,
-            children: [
-              // ── Pulsing background glow ──────────────────────────────
-              Container(
-                width: size,
-                height: size,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: accentColor.withOpacity(_pulseAnimation.value * 0.12),
+    return RepaintBoundary(
+      child: SizedBox(
+        width: size,
+        height: size,
+        child: AnimatedBuilder(
+          animation: Listenable.merge(
+              [_rotateAnimation, _dotAnimation]),
+          builder: (context, _) {
+            return Stack(
+              alignment: Alignment.center,
+              children: [
+                // ── Inner solid circle ────────────────────────────────────
+                Container(
+                  width: size * 0.72,
+                  height: size * 0.72,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: accentColor.withOpacity(0.08),
+                  ),
                 ),
-              ),
 
-              // ── Inner solid circle ────────────────────────────────────
-              Container(
-                width: size * 0.72,
-                height: size * 0.72,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: accentColor.withOpacity(0.08),
-                ),
-              ),
-
-              // ── Rotating recycling icon ───────────────────────────────
-              Transform.rotate(
-                angle: _rotateAnimation.value,
-                child: ShaderMask(
-                  shaderCallback: (bounds) => LinearGradient(
-                    colors: [
-                      accentColor,
-                      Color.lerp(accentColor, const Color(0xFF81C784),
-                              0.6) ??
-                          accentColor,
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ).createShader(bounds),
+                // ── Rotating recycling icon ───────────────────────────────
+                Transform.rotate(
+                  angle: _rotateAnimation.value,
                   child: Icon(
                     Icons.recycling_rounded,
                     size: iconSize,
-                    color: Colors.white,
+                    color: accentColor,
                   ),
                 ),
-              ),
 
-              // ── Three orbiting dots ───────────────────────────────────
-              ..._buildOrbitingDots(
-                orbitRadius: orbitRadius,
-                dotRadius: dotRadius,
-                baseAngle: _dotAnimation.value,
-                color: accentColor,
-              ),
-            ],
-          );
-        },
+                // ── Three orbiting dots ───────────────────────────────────
+                ..._buildOrbitingDots(
+                  orbitRadius: orbitRadius,
+                  dotRadius: dotRadius,
+                  baseAngle: _dotAnimation.value,
+                  color: accentColor,
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -178,13 +145,6 @@ class _RecycleLoaderState extends State<RecycleLoader>
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: color.withOpacity(opacity),
-            boxShadow: [
-              BoxShadow(
-                color: color.withOpacity(opacity * 0.5),
-                blurRadius: dotRadius * 2,
-                spreadRadius: 0,
-              ),
-            ],
           ),
         ),
       );

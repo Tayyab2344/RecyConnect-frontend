@@ -111,10 +111,117 @@ class OrderRepositoryImpl implements OrderRepository {
   @override
   Future<void> cancelOrder(int orderId,
       {String reason = 'Payment cancelled by user'}) async {
+    final response = await _apiService.post('/orders/$orderId/cancel', {'reason': reason});
+    if (response['success'] != true) {
+      throw Exception(response['message'] ?? 'Failed to cancel order');
+    }
+  }
+
+  @override
+  Future<ApiResult<Map<String, dynamic>>> getOrderById(int id) async {
     try {
-      await _apiService.post('/orders/$orderId/cancel', {'reason': reason});
+      final response = await _apiService.get('/orders/$id');
+      if (response['success'] == true && response['data'] != null) {
+        return ApiResult.success(data: response['data'] as Map<String, dynamic>);
+      } else {
+        return ApiResult.failure(
+            response['message'] as String? ?? 'Failed to fetch order details');
+      }
     } catch (e) {
-      debugPrint('Error cancelling order: $e');
+      return ApiResult.failure('Error fetching order details: $e');
+    }
+  }
+
+  @override
+  Future<ApiResult<Map<String, dynamic>>> confirmOrder(int id) async {
+    try {
+      final response = await _apiService.post('/orders/$id/confirm', {});
+      if (response['success'] == true && response['data'] != null) {
+        return ApiResult.success(data: response['data'] as Map<String, dynamic>);
+      } else {
+        return ApiResult.failure(
+            response['message'] as String? ?? 'Failed to confirm order');
+      }
+    } catch (e) {
+      return ApiResult.failure('Error confirming order: $e');
+    }
+  }
+
+  @override
+  Future<ApiResult<Map<String, dynamic>>> submitOrderReview(
+      int orderId, double rating, String feedback, {
+      int? productQuality,
+      int? materialAccuracy,
+      int? communication,
+      int? deliveryExperience,
+      int? overallSatisfaction,
+  }) async {
+    try {
+      final response = await _apiService.post('/orders/$orderId/review', {
+        'rating': rating.toInt(),
+        'feedback': feedback,
+        if (productQuality != null) 'productQuality': productQuality,
+        if (materialAccuracy != null) 'materialAccuracy': materialAccuracy,
+        if (communication != null) 'communication': communication,
+        if (deliveryExperience != null) 'deliveryExperience': deliveryExperience,
+        if (overallSatisfaction != null) 'overallSatisfaction': overallSatisfaction,
+      });
+      if (response['success'] == true) {
+        return ApiResult.success(data: (response['data'] ?? <String, dynamic>{}) as Map<String, dynamic>);
+      } else {
+        return ApiResult.failure(
+            response['message'] as String? ?? 'Failed to submit review');
+      }
+    } catch (e) {
+      return ApiResult.failure('Error submitting review: $e');
+    }
+  }
+
+  @override
+  Future<ApiResult<Map<String, dynamic>>> editOrderReview(
+      int orderId, double rating, String feedback, {
+      int? productQuality,
+      int? materialAccuracy,
+      int? communication,
+      int? deliveryExperience,
+      int? overallSatisfaction,
+  }) async {
+    try {
+      final response = await _apiService.put('/orders/$orderId/review', {
+        'rating': rating.toInt(),
+        'feedback': feedback,
+        if (productQuality != null) 'productQuality': productQuality,
+        if (materialAccuracy != null) 'materialAccuracy': materialAccuracy,
+        if (communication != null) 'communication': communication,
+        if (deliveryExperience != null) 'deliveryExperience': deliveryExperience,
+        if (overallSatisfaction != null) 'overallSatisfaction': overallSatisfaction,
+      });
+      if (response['success'] == true) {
+        return ApiResult.success(data: (response['data'] ?? <String, dynamic>{}) as Map<String, dynamic>);
+      } else {
+        return ApiResult.failure(
+            response['message'] as String? ?? 'Failed to edit review');
+      }
+    } catch (e) {
+      return ApiResult.failure('Error editing review: $e');
+    }
+  }
+
+  @override
+  Future<ApiResult<Map<String, dynamic>>> reportOrderReview(
+      int orderId, String reason) async {
+    try {
+      final response = await _apiService.post('/orders/$orderId/review/report', {
+        'reason': reason,
+      });
+      if (response['success'] == true) {
+        return ApiResult.success(data: (response['data'] ?? <String, dynamic>{}) as Map<String, dynamic>);
+      } else {
+        return ApiResult.failure(
+            response['message'] as String? ?? 'Failed to report review');
+      }
+    } catch (e) {
+      return ApiResult.failure('Error reporting review: $e');
     }
   }
 

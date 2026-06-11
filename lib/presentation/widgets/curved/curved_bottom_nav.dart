@@ -1,4 +1,4 @@
-import 'dart:ui';
+// dart:ui import removed - BackdropFilter no longer used for performance
 import 'package:flutter/material.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/app_colors.dart';
@@ -60,11 +60,7 @@ class CurvedBottomNav extends StatelessWidget {
           topLeft: Radius.circular(DesignTokens.bottomNavRadius),
           topRight: Radius.circular(DesignTokens.bottomNavRadius),
         ),
-        child: BackdropFilter(
-          filter: hasBlur
-              ? ImageFilter.blur(sigmaX: 10, sigmaY: 10)
-              : ImageFilter.blur(sigmaX: 0, sigmaY: 0),
-          child: SafeArea(
+        child: SafeArea(
             top: false,
             child: SizedBox(
               height: height,
@@ -104,7 +100,6 @@ class CurvedBottomNav extends StatelessWidget {
               ),
             ),
           ),
-        ),
       ),
     );
   }

@@ -75,6 +75,81 @@ class OrderService {
     await _repository.cancelOrder(orderId, reason: reason);
   }
 
+  // Get a single order by ID
+  Future<Order> getOrderById(int id) async {
+    final data = _unwrapMap(
+      await _repository.getOrderById(id),
+      'Failed to fetch order details'
+    );
+    return Order.fromJson(data);
+  }
+
+  // Confirm an order
+  Future<Order> confirmOrder(int id) async {
+    final data = _unwrapMap(
+      await _repository.confirmOrder(id),
+      'Failed to confirm order'
+    );
+    return Order.fromJson(data);
+  }
+
+  // Submit review for an order
+  Future<Map<String, dynamic>> submitOrderReview(
+      int orderId, double rating, String feedback, {
+      int? productQuality,
+      int? materialAccuracy,
+      int? communication,
+      int? deliveryExperience,
+      int? overallSatisfaction,
+  }) async {
+    return _unwrapMap(
+      await _repository.submitOrderReview(
+        orderId,
+        rating,
+        feedback,
+        productQuality: productQuality,
+        materialAccuracy: materialAccuracy,
+        communication: communication,
+        deliveryExperience: deliveryExperience,
+        overallSatisfaction: overallSatisfaction,
+      ),
+      'Failed to submit review'
+    );
+  }
+
+  // Edit review for an order
+  Future<Map<String, dynamic>> editOrderReview(
+      int orderId, double rating, String feedback, {
+      int? productQuality,
+      int? materialAccuracy,
+      int? communication,
+      int? deliveryExperience,
+      int? overallSatisfaction,
+  }) async {
+    return _unwrapMap(
+      await _repository.editOrderReview(
+        orderId,
+        rating,
+        feedback,
+        productQuality: productQuality,
+        materialAccuracy: materialAccuracy,
+        communication: communication,
+        deliveryExperience: deliveryExperience,
+        overallSatisfaction: overallSatisfaction,
+      ),
+      'Failed to edit review'
+    );
+  }
+
+  // Report review for an order
+  Future<Map<String, dynamic>> reportOrderReview(
+      int orderId, String reason) async {
+    return _unwrapMap(
+      await _repository.reportOrderReview(orderId, reason),
+      'Failed to report review'
+    );
+  }
+
   // Get export URL for CSV download
   String getExportUrl({
     String? role,

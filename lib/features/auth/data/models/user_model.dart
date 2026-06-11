@@ -27,6 +27,9 @@ class UserModel extends UserEntity {
     super.ecoPoints,
     super.currentLevel,
     super.dailyStreak,
+    super.latitude,
+    super.longitude,
+    super.locationMethod,
   });
 
   /// Create a UserModel from a JSON map (API response).
@@ -52,6 +55,17 @@ class UserModel extends UserEntity {
       ecoPoints: (json['ecoPoints'] as num?)?.toInt(),
       currentLevel: json['currentLevel'] as String?,
       dailyStreak: (json['dailyStreak'] as num?)?.toInt(),
+      latitude: json['latitude'] != null
+          ? (json['latitude'] is String
+              ? double.tryParse(json['latitude'])
+              : (json['latitude'] as num).toDouble())
+          : null,
+      longitude: json['longitude'] != null
+          ? (json['longitude'] is String
+              ? double.tryParse(json['longitude'])
+              : (json['longitude'] as num).toDouble())
+          : null,
+      locationMethod: json['locationMethod'] as String?,
     );
   }
 
@@ -78,6 +92,9 @@ class UserModel extends UserEntity {
       if (ecoPoints != null) 'ecoPoints': ecoPoints,
       if (currentLevel != null) 'currentLevel': currentLevel,
       if (dailyStreak != null) 'dailyStreak': dailyStreak,
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
+      if (locationMethod != null) 'locationMethod': locationMethod,
     };
   }
 
@@ -96,6 +113,18 @@ class UserModel extends UserEntity {
       'verificationStatus': verificationStatus,
       'kycStage': kycStage,
       'rejectionReason': rejectionReason,
+      'address': userData['address'],
+      'city': userData['city'],
+      'area': userData['area'],
+      'latitude': userData['latitude'],
+      'longitude': userData['longitude'],
+      'locationMethod': userData['locationMethod'],
+      'phone': userData['phone'] ?? userData['contactNo'],
+      'profileImage': userData['profileImage'],
+      'businessName': userData['businessName'],
+      'companyName': userData['companyName'],
+      'businessType': userData['businessType'],
+      'registrationNumber': userData['registrationNumber'],
     };
   }
 }

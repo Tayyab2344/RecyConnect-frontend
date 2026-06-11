@@ -29,6 +29,9 @@ class ListingUser {
 }
 
 class Listing {
+  final String? city;
+  final String? area;
+  final Map<String, dynamic>? metadata;
   final int id;
   final int userId;
   final String materialType;
@@ -67,6 +70,9 @@ class Listing {
     this.images,
     this.quantity = 0,
     this.orderItems = const [],
+    this.city,
+    this.area,
+    this.metadata,
   });
 
   factory Listing.fromJson(Map<String, dynamic> json) {
@@ -101,6 +107,9 @@ class Listing {
                   Map<String, dynamic>.from(item as Map)))
               .toList()
           : const [],
+      city: json['city'],
+      area: json['area'],
+      metadata: json['metadata'] is Map ? Map<String, dynamic>.from(json['metadata'] as Map) : null,
     );
   }
 
@@ -122,6 +131,9 @@ class Listing {
       'updatedAt': updatedAt.toIso8601String(),
       'images': images,
       'quantity': quantity,
+      'city': city,
+      'area': area,
+      'metadata': metadata,
     };
   }
 
@@ -137,7 +149,33 @@ class Listing {
       if (title != null && title!.isNotEmpty) 'title': title,
       if (notes != null && notes!.isNotEmpty) 'notes': notes,
       if (images != null && images!.isNotEmpty) 'images': images,
+      if (city != null) 'city': city,
+      if (area != null) 'area': area,
+      if (metadata != null) 'metadata': metadata,
     };
+  }
+
+  Map<String, double>? get userCurrentLocation {
+    if (metadata != null && metadata!['userCurrentLocation'] != null) {
+      final loc = metadata!['userCurrentLocation'];
+      return {
+        'latitude': (loc['latitude'] as num).toDouble(),
+        'longitude': (loc['longitude'] as num).toDouble(),
+      };
+    }
+    return null;
+  }
+
+  Map<String, dynamic>? get itemLocation {
+    if (metadata != null && metadata!['itemLocation'] != null) {
+      final loc = metadata!['itemLocation'];
+      return {
+        'latitude': (loc['latitude'] as num).toDouble(),
+        'longitude': (loc['longitude'] as num).toDouble(),
+        'address': loc['address'] as String? ?? '',
+      };
+    }
+    return null;
   }
 
   double get orderedWeight {
