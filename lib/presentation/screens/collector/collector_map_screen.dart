@@ -483,7 +483,7 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
           ),
 
           // Floating Safe Area Elements (Back Button)
-          Position(
+          Positioned(
             top: MediaQuery.of(context).padding.top + 12,
             left: 16,
             child: FloatingActionButton.small(
@@ -502,7 +502,7 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
           ),
 
           // Floating Navigation Target Selector
-          Position(
+          Positioned(
             top: MediaQuery.of(context).padding.top + 12,
             right: 16,
             child: Container(
