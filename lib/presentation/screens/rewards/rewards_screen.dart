@@ -123,11 +123,42 @@ class _RewardsScreenState extends State<RewardsScreen> with TickerProviderStateM
 
                 // Main Views
                 Expanded(
-                  child: isLoading && status == null
+                  child: status == null
                       ? Center(
-                          child: CircularProgressIndicator(
-                            color: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
-                          ),
+                          child: isLoading
+                              ? CircularProgressIndicator(
+                                  color: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
+                                )
+                              : Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.error_outline_rounded,
+                                      color: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
+                                      size: 48,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      'Failed to load rewards status',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: isDark ? Colors.white70 : Colors.black87,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    ElevatedButton(
+                                      onPressed: _loadAllData,
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
+                                        foregroundColor: isDark ? const Color(0xFF070B19) : Colors.white,
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                      ),
+                                      child: const Text('Retry'),
+                                    ),
+                                  ],
+                                ),
                         )
                       : TabBarView(
                           controller: _tabController,
@@ -993,7 +1024,7 @@ class _RewardsScreenState extends State<RewardsScreen> with TickerProviderStateM
                       final item = list[index] as Map<String, dynamic>;
                       final int rank = item['rank'] ?? (index + 1);
                       final String name = item['displayName'] ?? 'Anonymous';
-                      final int points = (item['ecoPoints'] as num?)?.toInt() ?? 0;
+                      final int points = (item['totalEcoPoints'] as num?)?.toInt() ?? (item['ecoPoints'] as num?)?.toInt() ?? 0;
                       final String level = item['currentLevel'] ?? 'Recycler';
                       final String? city = item['city'];
                       final String? area = item['area'];

@@ -10,7 +10,7 @@ import 'core/services/auth_service.dart'; // Bridge: AuthService = AuthProvider
 import 'core/services/admin_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/providers/theme_provider.dart';
-import 'presentation/screens/onboarding/welcome_story_screen.dart';
+import 'presentation/screens/auth/login_screen.dart';
 import 'presentation/screens/dashboard/dashboard_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -163,7 +163,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
     // If we have a saved token, try to fetch the user profile
     if (authService.isAuthenticated) {
       try {
-        final result = await authService.fetchProfile();
+        final result = await authService.fetchProfile().timeout(const Duration(seconds: 2));
         if (!result['success']) {
           final msg = (result['message'] ?? '').toString().toLowerCase();
           final isNetworkError = msg.contains('network') ||
@@ -232,7 +232,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
         } else if (!_hasSeenOnboarding!) {
           return const OnboardingScreen();
         } else {
-          return const AnimatedStoryWelcomeScreen();
+          return const LoginScreen();
         }
       },
     );

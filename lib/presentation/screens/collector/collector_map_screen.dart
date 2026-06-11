@@ -58,27 +58,42 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
     super.dispose();
   }
 
+  LatLng _getCoordinatesFallback(String? address, LatLng defaultFallback) {
+    if (address == null) return defaultFallback;
+    final lower = address.toLowerCase();
+    if (lower.contains('abbottabad')) {
+      return const LatLng(34.1504, 73.2078);
+    }
+    if (lower.contains('islamabad')) {
+      return const LatLng(33.6844, 73.0479);
+    }
+    if (lower.contains('lahore')) {
+      return const LatLng(31.5204, 74.3587);
+    }
+    return defaultFallback;
+  }
+
   void _initializePoints() {
     final task = _task;
     
     // Parse source coordinates
     final double? sourceLat = task['sourceLatitude'] != null ? double.tryParse(task['sourceLatitude'].toString()) : null;
     final double? sourceLon = task['sourceLongitude'] != null ? double.tryParse(task['sourceLongitude'].toString()) : null;
-    if (sourceLat != null && sourceLon != null) {
+    if (sourceLat != null && sourceLon != null && sourceLat != 0.0) {
       _pickupPosition = LatLng(sourceLat, sourceLon);
     } else {
-      // Default fallback
-      _pickupPosition = const LatLng(33.6844, 73.0479); // Islamabad default
+      // Default fallback based on address
+      _pickupPosition = _getCoordinatesFallback(task['sourceAddress']?.toString(), const LatLng(33.6844, 73.0479));
     }
 
     // Parse destination coordinates
     final double? destLat = task['destinationLatitude'] != null ? double.tryParse(task['destinationLatitude'].toString()) : null;
     final double? destLon = task['destinationLongitude'] != null ? double.tryParse(task['destinationLongitude'].toString()) : null;
-    if (destLat != null && destLon != null) {
+    if (destLat != null && destLon != null && destLat != 0.0) {
       _warehousePosition = LatLng(destLat, destLon);
     } else {
-      // Fallback
-      _warehousePosition = const LatLng(33.7294, 73.0931);
+      // Fallback based on address
+      _warehousePosition = _getCoordinatesFallback(task['destinationAddress']?.toString(), const LatLng(33.7294, 73.0931));
     }
 
     // Determine current navigation mode based on task status
@@ -535,9 +550,9 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
 
     switch (status) {
       case 'ASSIGNED':
-        label = "Accept Task";
-        icon = Icons.check_circle_outline;
-        onPressed = _acceptTask;
+        label = "Start Route";
+        icon = Icons.play_arrow;
+        onPressed = _acceptAndStartRoute;
         break;
       case 'ACCEPTED':
         label = "Start Route";
@@ -634,6 +649,36 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
       });
       widget.onTaskUpdated?.call();
       _showMessage("Task updated: ${_statusLabel(newStatus)}");
+    } catch (e) {
+      setState(() => _isLoadingRoute = false);
+      _showMessage(e.toString(), isError: true);
+    }
+  }
+
+  Future<void> _acceptAndStartRoute() async {
+    try {
+      setState(() => _isLoadingRoute = true);
+      // Automatically accept first
+      await _collectorService.acceptTask(_task['id'] as int);
+      // Then start the route (status EN_ROUTE_TO_PICKUP)
+      final updatedTask = await _collectorService.updateTaskStatus(_task['id'] as int, 'EN_ROUTE_TO_PICKUP');
+      
+      if (_currentPosition != null) {
+        await _collectorService.recordLocation(
+          taskId: _task['id'] as int,
+          latitude: _currentPosition!.latitude,
+          longitude: _currentPosition!.longitude,
+          status: 'EN_ROUTE_TO_PICKUP',
+        );
+      }
+      
+      setState(() {
+        _task = updatedTask;
+        _initializePoints();
+        _isLoadingRoute = false;
+      });
+      widget.onTaskUpdated?.call();
+      _showMessage("Route started");
     } catch (e) {
       setState(() => _isLoadingRoute = false);
       _showMessage(e.toString(), isError: true);
@@ -772,6 +817,10 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
                 final weight = double.tryParse(weightController.text.trim());
                 if (weight == null || weight <= 0) {
                   _showMessage('Enter a valid verified weight', isError: true);
+                  return;
+                }
+                if (proofFiles.isEmpty) {
+                  _showMessage('Proof photo is required. Please take a picture of the weighing scale.', isError: true);
                   return;
                 }
                 Navigator.pop(context);

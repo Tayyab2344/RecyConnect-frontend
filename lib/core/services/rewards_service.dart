@@ -28,7 +28,7 @@ class RewardsService extends ChangeNotifier {
   Future<Map<String, dynamic>> fetchRewardsStatus() async {
     _setLoading(true);
     try {
-      final res = await _apiService.get('/rewards/status');
+      final res = await _apiService.get('/rewards/status', forceRefresh: true);
       if (res['success'] == true) {
         _rewardsStatus = res['data'];
         notifyListeners();
@@ -48,7 +48,7 @@ class RewardsService extends ChangeNotifier {
   Future<void> fetchHistory() async {
     _setLoading(true);
     try {
-      final res = await _apiService.get('/rewards/history');
+      final res = await _apiService.get('/rewards/history', forceRefresh: true);
       if (res['success'] == true) {
         _history = res['data'] ?? [];
       }
@@ -64,7 +64,7 @@ class RewardsService extends ChangeNotifier {
   Future<void> fetchLeaderboard(String category) async {
     _setLoading(true);
     try {
-      final res = await _apiService.get('/rewards/leaderboard', query: {'category': category});
+      final res = await _apiService.get('/rewards/leaderboard', query: {'category': category}, forceRefresh: true);
       if (res['success'] == true) {
         _leaderboard = res['data'] ?? [];
       }
@@ -80,7 +80,7 @@ class RewardsService extends ChangeNotifier {
   Future<void> fetchChallenges() async {
     _setLoading(true);
     try {
-      final res = await _apiService.get('/rewards/challenges');
+      final res = await _apiService.get('/rewards/challenges', forceRefresh: true);
       if (res['success'] == true) {
         _challenges = res['data'] ?? [];
       }

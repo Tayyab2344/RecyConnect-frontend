@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../core/utils/validators.dart';
-import '../../widgets/common/recyconnect_logo.dart';
 import '../dashboard/dashboard_screen.dart';
 import '../admin/admin_dashboard_screen.dart';
 import 'role_selection_screen.dart';
@@ -390,9 +389,14 @@ class _LoginScreenState extends State<LoginScreen>
               ),
             ],
           ),
-          child: const RecyConnectLogo(
-            size: 100,
-            showText: false,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(22),
+            child: Image.asset(
+              'assets/icons/app_icon.png',
+              width: 100,
+              height: 100,
+              fit: BoxFit.cover,
+            ),
           ),
         );
       },

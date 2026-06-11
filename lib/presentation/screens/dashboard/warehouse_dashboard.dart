@@ -12,6 +12,7 @@ import '../../widgets/curved/curved_bottom_nav.dart';
 import '../../widgets/recycle_loader.dart';
 import '../../widgets/skeleton_loader.dart';
 import '../../widgets/eco_assist_sheet.dart';
+import '../../widgets/animated_robot_icon.dart';
 
 import '../individual/create_listing_screen.dart';
 import '../individual/browse_marketplace_screen.dart';
@@ -103,27 +104,21 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
       body: PageView(
         controller: _pageController,
         onPageChanged: (index) {
-          setState(() => _selectedIndex = index);
+          // Map PageView index back to bottom nav index
+          int navIndex = index;
+          if (navIndex >= 2) {
+            navIndex = navIndex + 1;
+          }
+          setState(() => _selectedIndex = navIndex);
         },
         children: [
           _buildHomeTab(),
           const BrowseMarketplaceScreen(),
-          const CreateListingScreen(),
           const MyOrdersScreen(),
           const ProfileScreen(),
         ],
       ),
       bottomNavigationBar: _buildBottomNavBar(),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 16.0),
-        child: FloatingActionButton(
-          onPressed: () => EcoAssistSheet.show(context),
-          backgroundColor: Theme.of(context).brightness == Brightness.dark
-              ? const Color(0xFF00E5FF)
-              : const Color(0xFF4CAF50),
-          child: const Icon(Icons.psychology_outlined, color: Colors.white, size: 28),
-        ),
-      ),
     );
   }
 
@@ -215,7 +210,7 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
             GestureDetector(
               onTap: () {
                 _pageController.animateToPage(
-                  4,
+                  3,
                   duration: const Duration(milliseconds: 300),
                   curve: Curves.easeInOut,
                 );
@@ -403,7 +398,7 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
           childAspectRatio: 0.9,
           children: [
             _buildQuickActionCard('Sell Waste', Icons.add_circle_outline, const Color(0xFF4CAF50), () {
-              _pageController.animateToPage(2, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateListingScreen()));
             }),
             _buildQuickActionCard('Marketplace', Icons.search, const Color(0xFF2196F3), () {
               _pageController.animateToPage(1, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
@@ -851,8 +846,17 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
     return CurvedBottomNav(
       currentIndex: _selectedIndex,
       onTap: (index) {
+        if (index == 2) {
+          EcoAssistSheet.show(context);
+          return;
+        }
         setState(() => _selectedIndex = index);
-        _pageController.jumpToPage(index);
+        // Map navigation bar index to PageView index
+        int pageIndex = index;
+        if (index > 2) {
+          pageIndex = pageIndex - 1;
+        }
+        _pageController.jumpToPage(pageIndex);
       },
       items: const [
         CurvedBottomNavItem(
@@ -865,9 +869,10 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
           activeIcon: Icons.storefront,
           label: 'Market',
         ),
-        CurvedBottomNavItem.simple(
-          icon: Icons.add,
-          label: 'Sell',
+        CurvedBottomNavItem(
+          icon: Icons.smart_toy_outlined,
+          activeIcon: Icons.smart_toy,
+          label: 'EcoAssist',
         ),
         CurvedBottomNavItem(
           icon: Icons.receipt_long_outlined,
@@ -881,11 +886,14 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
         ),
       ],
       floatingButton: CurvedNavFAB(
-        icon: Icons.add,
-        isSelected: _selectedIndex == 2,
+        icon: Icons.smart_toy_rounded,
+        isSelected: false,
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF00E5FF)
+            : const Color(0xFF4CAF50),
+        iconColor: Colors.white,
         onTap: () {
-          setState(() => _selectedIndex = 2);
-          _pageController.jumpToPage(2);
+          EcoAssistSheet.show(context);
         },
       ),
     );

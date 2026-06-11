@@ -73,4 +73,45 @@ void main() {
     expect(listing.updatedAt, listing.createdAt);
     expect(listing.user?.name, 'Seller Account');
   });
+
+  test('Listing custom itemLocation and userCurrentLocation parsing', () {
+    final metadata = {
+      'userCurrentLocation': {
+        'latitude': 33.7687,
+        'longitude': 72.3618,
+      },
+      'itemLocation': {
+        'latitude': 33.8547,
+        'longitude': 72.3993,
+        'address': 'Kamra Collection Point',
+      }
+    };
+
+    final listing = Listing.fromJson({
+      'id': 11,
+      'materialType': 'plastic',
+      'estimatedWeight': 5,
+      'status': 'PUBLISHED',
+      'createdAt': '2026-04-26T08:00:00.000Z',
+      'pickupAddress': 'Kamra Collection Point',
+      'latitude': 33.8547,
+      'longitude': 72.3993,
+      'city': 'Attock',
+      'area': 'Kamra',
+      'metadata': metadata,
+    });
+
+    expect(listing.city, 'Attock');
+    expect(listing.area, 'Kamra');
+    expect(listing.userCurrentLocation?['latitude'], 33.7687);
+    expect(listing.userCurrentLocation?['longitude'], 72.3618);
+    expect(listing.itemLocation?['latitude'], 33.8547);
+    expect(listing.itemLocation?['longitude'], 72.3993);
+    expect(listing.itemLocation?['address'], 'Kamra Collection Point');
+    
+    final toJsonMap = listing.toJson();
+    expect(toJsonMap['city'], 'Attock');
+    expect(toJsonMap['area'], 'Kamra');
+    expect(toJsonMap['metadata'], metadata);
+  });
 }

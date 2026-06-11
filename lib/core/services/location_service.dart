@@ -2,6 +2,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:flutter/foundation.dart';
+import 'package:dio/dio.dart';
 
 class LocationService {
   // Request location permission
@@ -68,7 +69,6 @@ class LocationService {
     }
   }
 
-  /// NEW: Reverse geocode - Convert coordinates to address
   Future<Map<String, String>?> getAddressFromCoordinates(
     double latitude,
     double longitude,
@@ -92,11 +92,27 @@ class LocationService {
           'postalCode': place.postalCode ?? '',
         };
       }
-      return null;
     } catch (e) {
-      if (kDebugMode) print('Error reverse geocoding: $e');
-      return null;
+      if (kDebugMode) print('Native geocoding failed: $e. Using Nominatim fallback...');
     }
+
+    try {
+      final fallback = await reverseGeocodeNominatim(latitude, longitude);
+      if (fallback != null) {
+        return {
+          'street': fallback['street'] ?? '',
+          'subLocality': fallback['subLocality'] ?? '',
+          'locality': fallback['locality'] ?? '',
+          'subAdministrativeArea': '',
+          'administrativeArea': fallback['administrativeArea'] ?? '',
+          'country': fallback['country'] ?? '',
+          'postalCode': fallback['postalCode'] ?? '',
+        };
+      }
+    } catch (err) {
+      if (kDebugMode) print('Nominatim reverse geocoding fallback failed: $err');
+    }
+    return null;
   }
 
   /// NEW: Smart city matcher - Find best matching city from our list
@@ -267,5 +283,82 @@ class LocationService {
     if (await Permission.location.isPermanentlyDenied) {
       await openAppSettings();
     }
+  }
+
+  /// Nominatim-based forward geocoding (search coordinates by address query)
+  Future<List<Map<String, dynamic>>> searchLocation(String query) async {
+    try {
+      final dio = Dio();
+      final response = await dio.get(
+        'https://nominatim.openstreetmap.org/search',
+        queryParameters: {
+          'q': query,
+          'format': 'json',
+          'limit': 5,
+          'addressdetails': 1,
+        },
+        options: Options(
+          headers: {
+            'User-Agent': 'RecyConnectApp/1.0 (contact: attock.dev@gmail.com)',
+          },
+        ),
+      );
+      if (response.statusCode == 200 && response.data is List) {
+        return List<Map<String, dynamic>>.from(response.data);
+      }
+    } catch (e) {
+      if (kDebugMode) print('Nominatim search error: $e');
+    }
+    return [];
+  }
+
+  /// Nominatim-based reverse geocoding fallback
+  Future<Map<String, dynamic>?> reverseGeocodeNominatim(
+    double latitude,
+    double longitude,
+  ) async {
+    try {
+      final dio = Dio();
+      final response = await dio.get(
+        'https://nominatim.openstreetmap.org/reverse',
+        queryParameters: {
+          'lat': latitude.toString(),
+          'lon': longitude.toString(),
+          'format': 'json',
+          'addressdetails': 1,
+        },
+        options: Options(
+          headers: {
+            'User-Agent': 'RecyConnectApp/1.0 (contact: attock.dev@gmail.com)',
+          },
+        ),
+      );
+      if (response.statusCode == 200 && response.data is Map) {
+        final data = response.data as Map<String, dynamic>;
+        final address = data['address'] as Map<String, dynamic>? ?? {};
+        
+        final street = address['road']?.toString() ?? address['suburb']?.toString() ?? '';
+        final subLocality = address['suburb']?.toString() ?? address['neighbourhood']?.toString() ?? '';
+        final locality = address['city']?.toString() ?? address['town']?.toString() ?? address['village']?.toString() ?? address['county']?.toString() ?? '';
+        final province = address['state']?.toString() ?? '';
+        final country = address['country']?.toString() ?? '';
+        final postalCode = address['postcode']?.toString() ?? '';
+        
+        final displayName = data['display_name']?.toString() ?? '';
+        
+        return {
+          'displayName': displayName,
+          'street': street,
+          'subLocality': subLocality,
+          'locality': locality,
+          'administrativeArea': province,
+          'country': country,
+          'postalCode': postalCode,
+        };
+      }
+    } catch (e) {
+      if (kDebugMode) print('Nominatim reverse geocoding error: $e');
+    }
+    return null;
   }
 }

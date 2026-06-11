@@ -1,7 +1,6 @@
-// dart:ui import removed - BackdropFilter no longer used for performance
 import 'package:flutter/material.dart';
 
-class GlassCard extends StatelessWidget {
+class GlassCard extends StatefulWidget {
   final Widget child;
   final double borderRadius;
   final EdgeInsetsGeometry padding;
@@ -22,43 +21,87 @@ class GlassCard extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  State<GlassCard> createState() => _GlassCardState();
+}
+
+class _GlassCardState extends State<GlassCard> with SingleTickerProviderStateMixin {
+  late AnimationController _scaleController;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _scaleController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 120),
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.97).animate(
+      CurvedAnimation(parent: _scaleController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _scaleController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Performance optimization: Removed BackdropFilter blur for low-end device support
-    Widget cardContent = Container(
-      width: width,
-      height: height,
-      padding: padding,
-      decoration: BoxDecoration(
-        color: isDark 
-            ? Colors.white.withOpacity(0.08)
-            : Colors.white.withOpacity(0.85),
-        borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withOpacity(0.1)
-              : Colors.grey.withOpacity(0.2),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+    Widget cardContent = AnimatedBuilder(
+      animation: _scaleAnimation,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _scaleAnimation.value,
+          child: Container(
+            width: widget.width,
+            height: widget.height,
+            padding: widget.padding,
+            decoration: BoxDecoration(
+              color: isDark
+                  ? const Color(0xFF141B2D)
+                  : Colors.white,
+              borderRadius: BorderRadius.circular(widget.borderRadius),
+              border: Border.all(
+                color: isDark
+                    ? Colors.white.withOpacity(0.06)
+                    : const Color(0xFFE8ECF0),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(isDark ? 0.25 : 0.06),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+                if (!isDark)
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.02),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  ),
+              ],
+            ),
+            child: widget.child,
           ),
-        ],
-      ),
-      child: child,
+        );
+      },
     );
 
-    if (margin != null) {
-      cardContent = Padding(padding: margin!, child: cardContent);
+    if (widget.margin != null) {
+      cardContent = Padding(padding: widget.margin!, child: cardContent);
     }
 
-    if (onTap != null) {
+    if (widget.onTap != null) {
       return GestureDetector(
-        onTap: onTap,
+        onTapDown: (_) => _scaleController.forward(),
+        onTapUp: (_) {
+          _scaleController.reverse();
+          widget.onTap!();
+        },
+        onTapCancel: () => _scaleController.reverse(),
         child: cardContent,
       );
     }

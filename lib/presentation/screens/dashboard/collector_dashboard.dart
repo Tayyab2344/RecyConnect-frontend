@@ -10,6 +10,7 @@ import '../../../core/services/location_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../widgets/recycle_loader.dart';
 import '../../widgets/eco_assist_sheet.dart';
+import '../../widgets/animated_robot_icon.dart';
 import '../messages/messages_screen.dart';
 import '../notifications/notifications_screen.dart';
 import '../collector/collector_map_screen.dart';
@@ -128,6 +129,23 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
     }
   }
 
+  Future<void> _acceptAndStartRouteForTask(Map<String, dynamic> task) async {
+    try {
+      setState(() => _isLoading = true);
+      // Automatically accept first
+      await _collectorService.acceptTask(task['id'] as int);
+      // Then start the route
+      await _collectorService.updateTaskStatus(task['id'] as int, 'EN_ROUTE_TO_PICKUP');
+      // Sync location
+      await _syncLocation(taskId: task['id'] as int, status: 'EN_ROUTE_TO_PICKUP');
+      await _loadCollectorData();
+      _showMessage('Route started');
+    } catch (e) {
+      _showMessage(e.toString(), isError: true);
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   Future<void> _acceptTask(Map<String, dynamic> task) async {
     try {
       await _collectorService.acceptTask(task['id'] as int);
@@ -214,7 +232,7 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
           backgroundColor: Theme.of(context).brightness == Brightness.dark
               ? const Color(0xFF00E5FF)
               : const Color(0xFF4CAF50),
-          child: const Icon(Icons.psychology_outlined, color: Colors.white, size: 28),
+          child: const AnimatedRobotIcon(color: Colors.white, size: 28),
         ),
       ),
     );
@@ -590,9 +608,9 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
         children: [
           Expanded(
             child: FilledButton.icon(
-              onPressed: () => _acceptTask(task),
-              icon: const Icon(Icons.check),
-              label: const Text('Accept'),
+              onPressed: () => _acceptAndStartRouteForTask(task),
+              icon: const Icon(Icons.play_arrow),
+              label: const Text('Start Route'),
             ),
           ),
           const SizedBox(width: 8),
@@ -1187,6 +1205,10 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
                   _showMessage('Enter a valid verified weight', isError: true);
                   return;
                 }
+                if (proofFiles.isEmpty) {
+                  _showMessage('Proof photo is required. Please take a picture of the weighing scale.', isError: true);
+                  return;
+                }
                 Navigator.pop(context);
                 try {
                   await _collectorService.verifyWaste(
@@ -1428,14 +1450,27 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: incidentTypes.map((type) => ChoiceChip(
-                  label: Text(type, style: const TextStyle(fontSize: 12)),
-                  selected: selectedType == type,
-                  selectedColor: AppTheme.errorRed.withOpacity(0.16),
-                  onSelected: (selected) {
-                    setSheetState(() => selectedType = selected ? type : null);
-                  },
-                )).toList(),
+                children: incidentTypes.map((type) {
+                  final isSelected = selectedType == type;
+                  return ChoiceChip(
+                    label: Text(
+                      type,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        color: isSelected 
+                            ? AppTheme.errorRed 
+                            : (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.black87),
+                      ),
+                    ),
+                    selected: isSelected,
+                    selectedColor: AppTheme.errorRed.withOpacity(0.16),
+                    backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.grey[850] : Colors.grey[200],
+                    onSelected: (selected) {
+                      setSheetState(() => selectedType = selected ? type : null);
+                    },
+                  );
+                }).toList(),
               ),
               const SizedBox(height: 14),
               TextField(
