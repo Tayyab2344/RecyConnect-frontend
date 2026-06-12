@@ -8,6 +8,9 @@ import '../../../core/services/auth_service.dart';
 import '../../../core/services/collector_service.dart';
 import '../../../core/services/location_service.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/premium_design_system.dart';
+import '../../widgets/premium/premium_components.dart';
+import '../../widgets/skeleton_loader.dart';
 import '../../widgets/recycle_loader.dart';
 import '../../widgets/eco_assist_sheet.dart';
 import '../../widgets/animated_robot_icon.dart';
@@ -140,6 +143,7 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
       await _syncLocation(taskId: task['id'] as int, status: 'EN_ROUTE_TO_PICKUP');
       await _loadCollectorData();
       _showMessage('Route started');
+      _goToTab(2); // Automatically transition to the in-app map screen
     } catch (e) {
       _showMessage(e.toString(), isError: true);
       if (mounted) setState(() => _isLoading = false);
@@ -167,23 +171,8 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
     }
   }
 
-  Future<void> _openMaps(Map<String, dynamic> task, {bool destination = false}) async {
-    final latKey = destination ? 'destinationLatitude' : 'sourceLatitude';
-    final lngKey = destination ? 'destinationLongitude' : 'sourceLongitude';
-    final addressKey = destination ? 'destinationAddress' : 'sourceAddress';
-
-    final lat = task[latKey];
-    final lng = task[lngKey];
-    final query = lat != null && lng != null
-        ? '$lat,$lng'
-        : Uri.encodeComponent(task[addressKey]?.toString() ?? '');
-    final uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=$query');
-
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
-      _showMessage('Unable to open maps', isError: true);
-    }
+  void _openMaps(Map<String, dynamic> task, {bool destination = false}) {
+    _goToTab(2); // Directly open the in-app map tab instead of Google Maps app
   }
 
   void _showMessage(String message, {bool isError = false}) {
@@ -210,7 +199,7 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: _isLoading
-          ? const Center(child: RecycleLoader())
+          ? SkeletonLoader.list()
           : _error != null
               ? _buildErrorState()
               : PageView(
@@ -225,16 +214,6 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
                   ],
                 ),
       bottomNavigationBar: _buildBottomNavigation(),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 16.0),
-        child: FloatingActionButton(
-          onPressed: () => EcoAssistSheet.show(context),
-          backgroundColor: Theme.of(context).brightness == Brightness.dark
-              ? const Color(0xFF00E5FF)
-              : const Color(0xFF4CAF50),
-          child: const AnimatedRobotIcon(color: Colors.white, size: 28),
-        ),
-      ),
     );
   }
 
@@ -305,77 +284,135 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
   }
 
   Widget _buildTopBar(String name) {
-    return Row(
-      children: [
-        Container(
-          height: 48,
-          width: 48,
-          decoration: BoxDecoration(
-            color: AppTheme.earthBrown.withOpacity(0.12),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: const Icon(Icons.local_shipping_outlined, color: AppTheme.earthBrown),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Collector Console',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.textLight),
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Hero(
+            tag: 'collector_avatar',
+            child: Container(
+              height: 52,
+              width: 52,
+              decoration: BoxDecoration(
+                gradient: PremiumDesignSystem.primaryGradient,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: PremiumDesignSystem.glowEffect(PremiumDesignSystem.primary, intensity: 0.2),
               ),
-              Text(
-                name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+              child: Center(
+                child: Text(
+                  name.isNotEmpty ? name[0].toUpperCase() : 'C',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                  ),
+                ),
               ),
-            ],
+            ),
           ),
-        ),
-        IconButton.filledTonal(
-          onPressed: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'COLLECTOR CONSOLE',
+                  style: PremiumDesignSystem.overline.copyWith(
+                    color: isDark ? PremiumDesignSystem.darkTextSecondary : PremiumDesignSystem.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: PremiumDesignSystem.h3.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: isDark ? PremiumDesignSystem.darkTextPrimary : PremiumDesignSystem.textPrimary,
+                  ),
+                ),
+              ],
+            ),
           ),
-          icon: const Icon(Icons.notifications_outlined),
-        ),
-      ],
+          Container(
+            decoration: BoxDecoration(
+              color: isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.04),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: IconButton(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+              ),
+              icon: Icon(
+                Icons.notifications_none_outlined,
+                color: isDark ? PremiumDesignSystem.darkTextPrimary : PremiumDesignSystem.textPrimary,
+              ),
+              tooltip: 'Notifications',
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildShiftCard(Map<String, dynamic>? profile, Map<String, dynamic> summary) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final status = summary['onlineStatus']?.toString() ??
         profile?['availabilityStatus']?.toString() ??
         'OFFLINE';
     final warehouse = profile?['warehouse'] as Map<String, dynamic>?;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.15)),
-      ),
+    final isOffline = status == 'OFFLINE';
+    final statusColor = _statusColor(status);
+
+    return GlassCard(
+      enableHover: true,
+      borderRadius: BorderRadius.circular(20),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      warehouse?['businessName'] ?? warehouse?['name'] ?? 'Assigned warehouse',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                    Row(
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: statusColor,
+                            shape: BoxShape.circle,
+                            boxShadow: PremiumDesignSystem.glowEffect(statusColor, intensity: 0.6),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            warehouse?['businessName'] ?? warehouse?['name'] ?? 'Assigned Warehouse',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: PremiumDesignSystem.subtitle1.copyWith(
+                              fontWeight: FontWeight.w800,
+                              color: isDark ? PremiumDesignSystem.darkTextPrimary : PremiumDesignSystem.textPrimary,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Field logistics and verification',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.textLight),
+                      'Field logistics & route verification',
+                      style: PremiumDesignSystem.caption.copyWith(
+                        color: isDark ? PremiumDesignSystem.darkTextSecondary : PremiumDesignSystem.textSecondary,
+                      ),
                     ),
                   ],
                 ),
@@ -383,33 +420,80 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
               _buildStatusChip(status),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 18),
           Row(
             children: [
               Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => _setAvailability(status == 'OFFLINE' ? 'ON_DUTY' : 'OFFLINE'),
-                  icon: Icon(status == 'OFFLINE' ? Icons.play_arrow : Icons.pause),
-                  label: Text(status == 'OFFLINE' ? 'Check in' : 'Check out'),
+                child: PremiumButton(
+                  text: isOffline ? 'Go On Duty' : 'Go Offline',
+                  icon: isOffline ? Icons.play_arrow_rounded : Icons.power_settings_new_rounded,
+                  gradient: isOffline 
+                      ? PremiumDesignSystem.primaryGradient 
+                      : PremiumDesignSystem.errorGradient,
+                  height: 48,
+                  onPressed: () => _setAvailability(isOffline ? 'ON_DUTY' : 'OFFLINE'),
                 ),
               ),
               const SizedBox(width: 10),
-              IconButton.filledTonal(
-                tooltip: 'Break mode',
-                onPressed: () => _setAvailability('BREAK'),
-                icon: const Icon(Icons.coffee_outlined),
+              Tooltip(
+                message: 'Break mode',
+                child: InkWell(
+                  onTap: () => _setAvailability('BREAK'),
+                  borderRadius: BorderRadius.circular(14),
+                  child: Container(
+                    height: 48,
+                    width: 48,
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.04),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.08),
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.coffee_outlined,
+                      color: status == 'BREAK' 
+                          ? PremiumDesignSystem.accentOrange 
+                          : (isDark ? Colors.white70 : Colors.black87),
+                    ),
+                  ),
+                ),
               ),
-              const SizedBox(width: 8),
-              IconButton.filledTonal(
-                tooltip: 'Sync location',
-                onPressed: _isSyncingLocation ? null : () => _syncLocation(),
-                icon: _isSyncingLocation
-                    ? const SizedBox(
-                        height: 18,
-                        width: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.my_location),
+              const SizedBox(width: 10),
+              Tooltip(
+                message: 'Sync Location',
+                child: InkWell(
+                  onTap: _isSyncingLocation ? null : () => _syncLocation(),
+                  borderRadius: BorderRadius.circular(14),
+                  child: Container(
+                    height: 48,
+                    width: 48,
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.04),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.08),
+                      ),
+                    ),
+                    child: _isSyncingLocation
+                        ? const Center(
+                            child: SizedBox(
+                              height: 18,
+                              width: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(PremiumDesignSystem.primary),
+                              ),
+                            ),
+                          )
+                        : Icon(
+                            Icons.my_location_rounded,
+                            color: _isSyncingLocation 
+                                ? PremiumDesignSystem.primary 
+                                : (isDark ? Colors.white70 : Colors.black87),
+                          ),
+                  ),
+                ),
               ),
             ],
           ),
@@ -420,86 +504,126 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
 
   Widget _buildStatsGrid(Map<String, dynamic> summary, int activeCount) {
     final wallet = _earnings['wallet'] as Map<String, dynamic>? ?? {};
-    final stats = [
-      _StatData('Active', '$activeCount', Icons.route_outlined, AppTheme.infoBlue),
-      _StatData('Done', '${summary['completedTasks'] ?? _history.length}', Icons.task_alt, AppTheme.primaryGreen),
-      _StatData('Weight', '${_numText(summary['totalCollectedKg'])} kg', Icons.scale_outlined, AppTheme.earthBrown),
-      _StatData('Earnings', 'Rs ${_numText(wallet['totalEarned'] ?? 0)}', Icons.account_balance_wallet_outlined, AppTheme.accentPurple),
-    ];
 
-    return GridView.builder(
+    return GridView(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: stats.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        mainAxisSpacing: 10,
-        crossAxisSpacing: 10,
-        childAspectRatio: 1.75,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        childAspectRatio: 1.25,
       ),
-      itemBuilder: (_, index) => _buildStatTile(stats[index]),
-    );
-  }
-
-  Widget _buildStatTile(_StatData stat) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.12)),
-      ),
-      child: Row(
-        children: [
-          Icon(stat.icon, color: stat.color),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  stat.value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
-                ),
-                Text(
-                  stat.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.textLight),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+      children: [
+        PremiumStatCard(
+          title: 'Active Route',
+          value: '$activeCount',
+          icon: Icons.route_outlined,
+          gradient: PremiumDesignSystem.blueGradient,
+          iconColor: PremiumDesignSystem.accentBlue,
+        ),
+        PremiumStatCard(
+          title: 'Tasks Done',
+          value: '${summary['completedTasks'] ?? _history.length}',
+          icon: Icons.task_alt_rounded,
+          gradient: PremiumDesignSystem.primaryGradient,
+          iconColor: PremiumDesignSystem.primary,
+        ),
+        PremiumStatCard(
+          title: 'Total Weight',
+          value: '${_numText(summary['totalCollectedKg'])} kg',
+          icon: Icons.scale_rounded,
+          gradient: PremiumDesignSystem.orangeGradient,
+          iconColor: PremiumDesignSystem.accentOrange,
+        ),
+        PremiumStatCard(
+          title: 'Total Earned',
+          value: 'Rs ${_numText(wallet['totalEarned'] ?? 0)}',
+          icon: Icons.account_balance_wallet_rounded,
+          gradient: PremiumDesignSystem.purpleGradient,
+          iconColor: PremiumDesignSystem.accentPurple,
+        ),
+      ],
     );
   }
 
   Widget _buildQuickActions() {
     return Row(
       children: [
-        Expanded(child: _buildActionButton('Tasks', Icons.assignment_outlined, () => _goToTab(1))),
+        Expanded(
+          child: _buildActionButton(
+            'Task Console',
+            Icons.assignment_outlined,
+            () => _goToTab(1),
+            gradient: PremiumDesignSystem.primaryGradient,
+          ),
+        ),
         const SizedBox(width: 10),
-        Expanded(child: _buildActionButton('Map', Icons.map_outlined, () => _goToTab(2))),
+        Expanded(
+          child: _buildActionButton(
+            'Live Map',
+            Icons.map_outlined,
+            () => _goToTab(2),
+            gradient: PremiumDesignSystem.blueGradient,
+          ),
+        ),
         const SizedBox(width: 10),
-        Expanded(child: _buildActionButton('SOS', Icons.sos_outlined, _showSafetySheet, color: AppTheme.errorRed)),
+        Expanded(
+          child: _buildActionButton(
+            'SOS Alert',
+            Icons.sos_outlined,
+            _showSafetySheet,
+            gradient: PremiumDesignSystem.errorGradient,
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildActionButton(String label, IconData icon, VoidCallback onTap, {Color? color}) {
-    final resolvedColor = color ?? AppTheme.primaryGreen;
-    return OutlinedButton.icon(
-      onPressed: onTap,
-      icon: Icon(icon, size: 18, color: resolvedColor),
-      label: Text(label, overflow: TextOverflow.ellipsis),
-      style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
-        foregroundColor: resolvedColor,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+  Widget _buildActionButton(String label, IconData icon, VoidCallback onTap, {required Gradient gradient}) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+        decoration: BoxDecoration(
+          color: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.06),
+            width: 1,
+          ),
+          boxShadow: PremiumDesignSystem.softShadowSmall,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                gradient: gradient,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, size: 16, color: Colors.white),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: PremiumDesignSystem.subtitle2.copyWith(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? PremiumDesignSystem.darkTextPrimary : PremiumDesignSystem.textPrimary,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -534,69 +658,77 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
   }
 
   Widget _buildTaskCard(Map<String, dynamic> task, {bool compact = false, bool history = false}) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final status = task['status']?.toString() ?? 'ASSIGNED';
-    final color = _statusColor(status);
+    final statusColor = _statusColor(status);
+    final taskType = task['taskType']?.toString();
+    final materialCategory = task['materialCategory'] ?? 'Material';
+    final estimatedWeight = task['estimatedWeight'];
+    final unit = task['unit'] ?? 'kg';
 
-    return Container(
+    return GlassCard(
+      enableHover: true,
+      borderRadius: BorderRadius.circular(16),
       margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.18)),
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(8),
-        onTap: () => _showTaskDetails(task),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.all(16),
+      onTap: () => _showTaskDetails(task),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  Container(
-                    height: 38,
-                    width: 38,
-                    decoration: BoxDecoration(
-                      color: color.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(_taskIcon(task['taskType']?.toString()), color: color, size: 20),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _taskTypeLabel(task['taskType']?.toString()),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
-                        ),
-                        Text(
-                          '${task['materialCategory'] ?? 'Material'} | ${_numText(task['estimatedWeight'])} ${task['unit'] ?? 'kg'}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.textLight),
-                        ),
-                      ],
-                    ),
-                  ),
-                  _buildStatusChip(status),
-                ],
+              Container(
+                height: 42,
+                width: 42,
+                decoration: BoxDecoration(
+                  color: statusColor.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  _taskIcon(taskType),
+                  color: statusColor,
+                  size: 22,
+                ),
               ),
-              const SizedBox(height: 12),
-              _buildAddressLine(Icons.trip_origin, task['sourceAddress']?.toString() ?? 'Pickup source'),
-              const SizedBox(height: 6),
-              _buildAddressLine(Icons.flag_outlined, task['destinationAddress']?.toString() ?? 'Destination'),
-              if (!compact && !history) ...[
-                const SizedBox(height: 12),
-                _buildTaskActions(task),
-              ],
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _taskTypeLabel(taskType),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: PremiumDesignSystem.subtitle2.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: isDark ? PremiumDesignSystem.darkTextPrimary : PremiumDesignSystem.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '$materialCategory | ${_numText(estimatedWeight)} $unit',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: PremiumDesignSystem.caption.copyWith(
+                        color: isDark ? PremiumDesignSystem.darkTextSecondary : PremiumDesignSystem.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              _buildStatusChip(status),
             ],
           ),
-        ),
+          const SizedBox(height: 14),
+          _buildAddressLine(Icons.trip_origin_rounded, task['sourceAddress']?.toString() ?? 'Pickup source'),
+          const SizedBox(height: 8),
+          _buildAddressLine(Icons.flag_rounded, task['destinationAddress']?.toString() ?? 'Destination'),
+          if (!compact && !history) ...[
+            const SizedBox(height: 14),
+            _buildTaskActions(task),
+          ],
+        ],
       ),
     );
   }
@@ -638,7 +770,7 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
       return _wideAction(_statusActionLabel(next), Icons.arrow_forward, () => _updateTaskStatus(task, next));
     }
 
-    return _wideAction('Open navigation', Icons.navigation_outlined, () => _openMaps(task));
+    return _wideAction('Open built-in map', Icons.map_outlined, () => _openMaps(task));
   }
 
   Widget _wideAction(String label, IconData icon, VoidCallback onTap) {
@@ -1242,7 +1374,7 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
     final notesController = TextEditingController();
     final otpController = TextEditingController();
     List<XFile> proofFiles = [];
-    final bool hasOtp = task['otpCode'] != null;
+    final bool hasOtp = false; // Disabled PIN verification per request
 
     showDialog(
       context: context,
@@ -1557,39 +1689,83 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
   }
 
   Widget _buildSectionHeader(String title, {String? action, VoidCallback? onTap}) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(
-          child: Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
+        Text(
+          title,
+          style: PremiumDesignSystem.h4.copyWith(
+            fontWeight: FontWeight.w800,
+            color: isDark ? PremiumDesignSystem.darkTextPrimary : PremiumDesignSystem.textPrimary,
+          ),
         ),
         if (action != null)
           TextButton(
             onPressed: onTap,
-            child: Text(action),
+            style: TextButton.styleFrom(
+              foregroundColor: PremiumDesignSystem.primary,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  action,
+                  style: PremiumDesignSystem.subtitle2.copyWith(
+                    color: PremiumDesignSystem.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(width: 2),
+                const Icon(Icons.chevron_right_rounded, size: 16),
+              ],
+            ),
           ),
       ],
     );
   }
 
   Widget _buildEmptyPanel(String title, String subtitle) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.12)),
-      ),
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return GlassCard(
+      enableHover: false,
+      borderRadius: BorderRadius.circular(16),
+      padding: const EdgeInsets.all(24),
       child: Column(
         children: [
-          const Icon(Icons.inbox_outlined, color: AppTheme.textLight),
-          const SizedBox(height: 8),
-          Text(title, style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800)),
-          const SizedBox(height: 4),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: (isDark ? Colors.white : Colors.black).withOpacity(0.04),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.inbox_outlined,
+              size: 28,
+              color: isDark ? PremiumDesignSystem.darkTextTertiary : PremiumDesignSystem.textTertiary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: PremiumDesignSystem.subtitle1.copyWith(
+              fontWeight: FontWeight.w800,
+              color: isDark ? PremiumDesignSystem.darkTextPrimary : PremiumDesignSystem.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 6),
           Text(
             subtitle,
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.textLight),
+            style: PremiumDesignSystem.caption.copyWith(
+              color: isDark ? PremiumDesignSystem.darkTextSecondary : PremiumDesignSystem.textSecondary,
+            ),
           ),
         ],
       ),

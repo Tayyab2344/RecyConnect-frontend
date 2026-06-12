@@ -10,6 +10,7 @@ import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/collector_service.dart';
+import '../../widgets/skeleton_loader.dart';
 
 class CollectorMapScreen extends StatefulWidget {
   final Map<String, dynamic> task;
@@ -65,6 +66,15 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
   LatLng _getCoordinatesFallback(String? address, LatLng defaultFallback) {
     if (address == null) return defaultFallback;
     final lower = address.toLowerCase();
+    
+    // Check specific sub-locations first to provide realistic local routing
+    if (lower.contains('jinnahabad') || lower.contains('jinnah abad')) {
+      return const LatLng(34.1680, 73.2230);
+    }
+    if (lower.contains('supply bazar') || lower.contains('supply')) {
+      return const LatLng(34.1504, 73.2078);
+    }
+    
     if (lower.contains('abbottabad')) {
       return const LatLng(34.1504, 73.2078);
     }
@@ -145,9 +155,17 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
           _currentPosition = LatLng(pos.latitude, pos.longitude);
         });
         
-        // Relocate map focus dynamically
+        // Relocate map focus dynamically only if the driver is near the task area
         if (_currentPosition != null) {
-          _mapController.move(_currentPosition!, _mapController.camera.zoom);
+          final double distanceToTask = Geolocator.distanceBetween(
+            _currentPosition!.latitude,
+            _currentPosition!.longitude,
+            _pickupPosition?.latitude ?? 34.1504,
+            _pickupPosition?.longitude ?? 73.2078,
+          ) / 1000.0;
+          if (distanceToTask <= 30.0) {
+            _mapController.move(_currentPosition!, _mapController.camera.zoom);
+          }
         }
         
         // Refresh route as location shifts
@@ -181,16 +199,30 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
   }
 
   Future<void> _fetchRoute() async {
-    final LatLng start = _currentPosition ?? const LatLng(34.1504, 73.2078);
     final LatLng pickup = _pickupPosition ?? const LatLng(34.1504, 73.2078);
     final LatLng dest = _warehousePosition ?? const LatLng(34.1504, 73.2078);
     final String status = _task['status']?.toString() ?? 'ASSIGNED';
 
     final isPickedUp = ['PICKED_UP', 'IN_TRANSIT', 'ARRIVED_AT_DESTINATION', 'COMPLETED'].contains(status);
 
+    LatLng start = _currentPosition ?? pickup;
+    bool isFarAway = false;
+    if (_currentPosition != null) {
+      final double distanceToTask = Geolocator.distanceBetween(
+        _currentPosition!.latitude,
+        _currentPosition!.longitude,
+        pickup.latitude,
+        pickup.longitude,
+      ) / 1000.0;
+      if (distanceToTask > 30.0) {
+        isFarAway = true;
+        start = pickup;
+      }
+    }
+
     try {
-      if (isPickedUp) {
-        // Only Leg 2 is active
+      if (isPickedUp || isFarAway) {
+        // Only Leg 2 (Pickup/Start -> Dest) is active/shown
         final String leg2Url = 'https://router.project-osrm.org/route/v1/driving/'
             '${start.longitude},${start.latitude};${dest.longitude},${dest.latitude}'
             '?overview=full&geometries=geojson';
@@ -275,37 +307,66 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
   }
 
   Future<void> _startNativeNavigation() async {
-    final LatLng dest = _navigationMode == "pickup" ? _pickupPosition! : _warehousePosition!;
-    
-    // Construct Google Maps Turn-by-Turn Navigation URL
-    final String googleMapsUrl = "google.navigation:q=${dest.latitude},${dest.longitude}&mode=d";
-    final String fallbackUrl = "https://www.google.com/maps/dir/?api=1&destination=${dest.latitude},${dest.longitude}&travelmode=driving";
-
-    try {
-      final Uri googleUri = Uri.parse(googleMapsUrl);
-      final Uri webUri = Uri.parse(fallbackUrl);
-      
-      if (await canLaunchUrl(googleUri)) {
-        await launchUrl(googleUri);
-      } else if (await canLaunchUrl(webUri)) {
-        await launchUrl(webUri, mode: LaunchMode.externalApplication);
-      } else {
-        throw "Could not open map navigation application.";
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error launching navigation: $e")),
-        );
-      }
+    final LatLng centerPos = _currentPosition ?? (_navigationMode == "pickup" ? _pickupPosition! : _warehousePosition!);
+    _mapController.move(centerPos, 16.0);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("In-App tracking active. Please follow the highlighted route."),
+          backgroundColor: AppTheme.primaryGreen,
+        ),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final LatLng center = _currentPosition ?? _pickupPosition ?? const LatLng(34.1504, 73.2078);
+    final LatLng pickup = _pickupPosition ?? const LatLng(34.1504, 73.2078);
+    final LatLng dest = _warehousePosition ?? const LatLng(34.1504, 73.2078);
+    
+    // Check if the current position is far away from the task area (e.g. > 30 km)
+    // to determine if we should fall back to a local route preview
+    bool isFarAway = false;
+    if (_currentPosition != null) {
+      final double distanceToTask = Geolocator.distanceBetween(
+        _currentPosition!.latitude,
+        _currentPosition!.longitude,
+        pickup.latitude,
+        pickup.longitude,
+      ) / 1000.0;
+      if (distanceToTask > 30.0) {
+        isFarAway = true;
+      }
+    }
+
+    final LatLng center = (isFarAway || _currentPosition == null)
+        ? pickup
+        : _currentPosition!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final String status = _task['status']?.toString() ?? 'ASSIGNED';
+    final String taskType = _task['taskType']?.toString() ?? '';
+    
+    String pickupLabel = "Pickup";
+    String destLabel = "Delivery";
+    IconData pickupIcon = Icons.hail;
+    IconData destIcon = Icons.warehouse;
+
+    if (taskType == 'WAREHOUSE_TO_BUYER') {
+      pickupLabel = "Warehouse";
+      destLabel = "Buyer";
+      pickupIcon = Icons.warehouse;
+      destIcon = Icons.person;
+    } else if (taskType == 'SELLER_TO_WAREHOUSE') {
+      pickupLabel = "Seller";
+      destLabel = "Warehouse";
+      pickupIcon = Icons.person;
+      destIcon = Icons.warehouse;
+    } else if (taskType == 'SELLER_TO_BUYER') {
+      pickupLabel = "Seller";
+      destLabel = "Buyer";
+      pickupIcon = Icons.person;
+      destIcon = Icons.person;
+    }
 
     return Scaffold(
       body: Stack(
@@ -359,7 +420,7 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
               MarkerLayer(
                 markers: [
                   // Collector Vehicle Marker
-                  if (_currentPosition != null)
+                  if (_currentPosition != null && !isFarAway)
                     Marker(
                       point: _currentPosition!,
                       width: 60,
@@ -482,44 +543,61 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
             ],
           ),
 
-          // Floating Safe Area Elements (Back Button)
+          // Floating Cohesive Top Bar
           Positioned(
             top: MediaQuery.of(context).padding.top + 12,
             left: 16,
-            child: FloatingActionButton.small(
-              heroTag: 'map_back',
-              backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-              foregroundColor: isDark ? Colors.white : Colors.black,
-              onPressed: () {
-                if (widget.onBack != null) {
-                  widget.onBack!();
-                } else {
-                  Navigator.pop(context);
-                }
-              },
-              child: const Icon(Icons.arrow_back),
-            ),
-          ),
-
-          // Floating Navigation Target Selector
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 12,
             right: 16,
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 8),
-                ],
-              ),
-              child: Row(
-                children: [
-                  _buildModeButton("pickup", "Pickup Pin", Icons.hail),
-                  _buildModeButton("warehouse", "Warehouse", Icons.warehouse),
-                ],
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Glassmorphic Back Button
+                Container(
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF1E1E1E).withOpacity(0.85) : Colors.white.withOpacity(0.85),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 2)),
+                    ],
+                  ),
+                  child: ClipOval(
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          if (widget.onBack != null) {
+                            widget.onBack!();
+                          } else {
+                            Navigator.pop(context);
+                          }
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.all(10),
+                          child: Icon(Icons.arrow_back, color: isDark ? Colors.white : Colors.black87),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                
+                // Glassmorphic Mode Selector Tabs
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF1E1E1E).withOpacity(0.85) : Colors.white.withOpacity(0.85),
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 2)),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      _buildModeButton("pickup", pickupLabel, pickupIcon),
+                      _buildModeButton("warehouse", destLabel, destIcon),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
 
@@ -606,7 +684,7 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
                         ),
                       ),
                       if (_isLoadingRoute)
-                        const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+                        const SizedBox(width: 14, height: 14, child: SkeletonLoader(width: 14, height: 14, borderRadius: 7))
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -660,43 +738,71 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
                   ),
                   const SizedBox(height: 20),
                   
-                  // Status Action Button
-                  _buildStatusActionButton(),
-                  const SizedBox(height: 12),
-
-                  // Primary Navigation & Action row
-                  Row(
-                    children: [
-                      // Re-center map button
-                      IconButton.filledTonal(
-                        onPressed: () {
-                          if (center != null) {
-                            _mapController.move(center, 15);
-                          }
-                        },
-                        icon: const Icon(Icons.my_location),
-                        tooltip: "Re-center",
-                      ),
-                      const SizedBox(width: 12),
+                  Builder(
+                    builder: (context) {
+                      final hasAction = !['COMPLETED', 'CANCELLED', 'REJECTED', 'DELIVERED'].contains(status);
                       
-                      // Launch native navigation deep-link
-                      Expanded(
-                        child: SizedBox(
-                          height: 48,
-                          child: ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.primaryGreen,
-                              foregroundColor: Colors.white,
-                              elevation: 2,
+                      return Row(
+                        children: [
+                          // Re-center map button
+                          IconButton.filledTonal(
+                            onPressed: () {
+                              if (center != null) {
+                                _mapController.move(center, 15);
+                              }
+                            },
+                            icon: const Icon(Icons.my_location),
+                            tooltip: "Re-center",
+                            style: IconButton.styleFrom(
+                              backgroundColor: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05),
+                              foregroundColor: isDark ? Colors.white : Colors.black87,
+                              padding: const EdgeInsets.all(12),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                             ),
-                            onPressed: _startNativeNavigation,
-                            icon: const Icon(Icons.navigation),
-                            label: const Text('Start Turn-by-Turn Nav', style: TextStyle(fontWeight: FontWeight.bold)),
                           ),
-                        ),
-                      ),
-                    ],
+                          const SizedBox(width: 8),
+                          
+                          if (hasAction) ...[
+                            // Launch native navigation as a compact icon button
+                            IconButton.filledTonal(
+                              onPressed: _startNativeNavigation,
+                              icon: const Icon(Icons.navigation),
+                              tooltip: "Start Navigation",
+                              style: IconButton.styleFrom(
+                                backgroundColor: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05),
+                                foregroundColor: AppTheme.primaryGreen,
+                                padding: const EdgeInsets.all(12),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            
+                            // Expanded Main Status Action Button
+                            Expanded(
+                              child: _buildStatusActionButton(),
+                            ),
+                          ] else ...[
+                            // If no status action, expand the Navigation button
+                            Expanded(
+                              child: SizedBox(
+                                height: 48,
+                                child: ElevatedButton.icon(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppTheme.primaryGreen,
+                                    foregroundColor: Colors.white,
+                                    elevation: 2,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  ),
+                                  onPressed: _startNativeNavigation,
+                                  icon: const Icon(Icons.navigation),
+                                  label: const Text('Start Navigation', style: TextStyle(fontWeight: FontWeight.bold)),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      );
+                    },
                   ),
                 ],
               ),
@@ -1115,7 +1221,7 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
     final notesController = TextEditingController();
     final otpController = TextEditingController();
     List<XFile> proofFiles = [];
-    final bool hasOtp = _task['otpCode'] != null;
+    final bool hasOtp = false; // Disabled PIN verification per request
 
     showDialog(
       context: context,

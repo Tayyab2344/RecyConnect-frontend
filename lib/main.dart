@@ -131,9 +131,12 @@ class _AuthWrapperState extends State<AuthWrapper> {
           }
         }
       } else {
-        setState(() {
-          _networkError = true;
-        });
+        // Only trigger network error if we are not in the middle of initial auth/onboarding checks
+        if (!_isCheckingAuth) {
+          setState(() {
+            _networkError = true;
+          });
+        }
       }
     });
   }
@@ -163,7 +166,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
     // If we have a saved token, try to fetch the user profile
     if (authService.isAuthenticated) {
       try {
-        final result = await authService.fetchProfile().timeout(const Duration(seconds: 2));
+        final result = await authService.fetchProfile().timeout(const Duration(seconds: 10));
         if (!result['success']) {
           final msg = (result['message'] ?? '').toString().toLowerCase();
           final isNetworkError = msg.contains('network') ||
