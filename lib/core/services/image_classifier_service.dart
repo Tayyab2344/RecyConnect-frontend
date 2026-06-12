@@ -111,6 +111,9 @@ class ImageClassifierService {
         final category = data['category'] as String? ?? materialType;
         final condition = data['condition'] as String? ?? 'fair';
         final isRecyclable = data['isRecyclable'] as bool? ?? true;
+        final isValidRecyclable = data['isValidRecyclable'] as bool? ?? true;
+        final validationMessage = data['validationMessage'] as String?;
+        final title = data['title'] as String?;
 
         // Map to display name
         final displayName = _labelToDisplayName[materialType] ??
@@ -129,6 +132,9 @@ class ImageClassifierService {
           category: category,
           condition: condition,
           isRecyclable: isRecyclable,
+          isValidRecyclable: isValidRecyclable,
+          validationMessage: validationMessage,
+          title: title,
         );
       }
     } catch (e) {
@@ -258,6 +264,9 @@ class ClassificationResult {
   final String? category;    // Sub-category (cloud only)
   final String? condition;   // Condition assessment (cloud only)
   final bool? isRecyclable;  // Recyclability flag (cloud only)
+  final bool isValidRecyclable;     // Valid category and not a fake image
+  final String? validationMessage;  // Validation error explanation
+  final String? title;              // Suggested listing title
 
   ClassificationResult({
     required this.label,
@@ -268,6 +277,9 @@ class ClassificationResult {
     this.category,
     this.condition,
     this.isRecyclable,
+    this.isValidRecyclable = true,
+    this.validationMessage,
+    this.title,
   });
 
   /// Human-readable source name for UI display

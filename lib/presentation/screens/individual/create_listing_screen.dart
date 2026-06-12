@@ -527,6 +527,41 @@ class _CreateListingScreenState extends State<CreateListingScreen>
         if (!mounted) return;
 
         if (result != null) {
+          // If the item is detected as invalid/fake or unsupported
+          if (result.isValidRecyclable == false) {
+            setState(() {
+              _isAnalyzing = false;
+              _scanController.stop();
+              _scanController.reset();
+              _selectedImages.clear(); // Clear the invalid image so they must upload a valid one
+            });
+
+            showDialog(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: const Row(
+                  children: [
+                    Icon(Icons.warning_amber_rounded, color: Colors.orange),
+                    SizedBox(width: 8),
+                    Text('Unsupported Item'),
+                  ],
+                ),
+                content: Text(
+                  result.validationMessage ?? 
+                  'The uploaded image is not recognized as a supported recyclable material. '
+                  'RecyConnect only accepts Plastic, Metal, E-Waste, and Paper.'
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text('OK'),
+                  ),
+                ],
+              ),
+            );
+            return;
+          }
+
           // Find the exact key in _materialRates that matches the AI result,
           // using case-insensitive comparison to avoid DropdownButton crash.
           final matchedKey = _materialRates.keys.firstWhere(
@@ -540,6 +575,14 @@ class _CreateListingScreenState extends State<CreateListingScreen>
             _scanController.stop();
             _scanController.reset();
             _selectedMaterial = matchedKey;
+            
+            // Populate Title and Description with AI generated ones
+            if (result.title != null && result.title!.isNotEmpty) {
+              _titleController.text = result.title!;
+            }
+            if (result.description != null && result.description!.isNotEmpty) {
+              _descriptionController.text = result.description!;
+            }
           });
 
           ScaffoldMessenger.of(context).showSnackBar(
