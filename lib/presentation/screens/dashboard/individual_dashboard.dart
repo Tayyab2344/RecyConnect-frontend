@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:latlong2/latlong.dart';
+import '../../../core/services/location_service.dart';
+import '../marketplace/location_selection_screen.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../core/services/listing_service.dart';
 import '../../../core/services/order_service.dart';
@@ -80,6 +83,37 @@ class _IndividualDashboardState extends State<IndividualDashboard> {
         }
       }
 
+      // Safe GPS Auto-Detection Fallback
+      if (location == 'Unknown Location' || location == 'Set Location') {
+        try {
+          final locationService = LocationService();
+          if (await locationService.isLocationPermissionGranted()) {
+            final gpsPos = await locationService.getCurrentLocationWithTimeout(
+              timeout: const Duration(seconds: 3),
+            );
+            if (gpsPos != null) {
+              final address = await locationService.getAddressFromCoordinates(
+                gpsPos['latitude']!,
+                gpsPos['longitude']!,
+              );
+              if (address != null) {
+                final gpsCity = address['locality'];
+                final gpsArea = address['subLocality'];
+                if (gpsCity != null && gpsCity.isNotEmpty) {
+                  location = (gpsArea != null && gpsArea.isNotEmpty)
+                      ? '$gpsArea, $gpsCity'
+                      : gpsCity;
+                } else if (gpsArea != null && gpsArea.isNotEmpty) {
+                  location = gpsArea;
+                }
+              }
+            }
+          }
+        } catch (e) {
+          if (kDebugMode) print('Auto-location detection failed: $e');
+        }
+      }
+
       final rewardsService = Provider.of<RewardsService>(context, listen: false);
       // Load stats, recent listings, recent orders, and rewards in parallel
       final results = await Future.wait([
@@ -104,6 +138,54 @@ class _IndividualDashboardState extends State<IndividualDashboard> {
     } catch (e) {
       if (kDebugMode) print('Error loading stats: $e');
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _changeLocation() async {
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final user = authService.currentUser;
+    final double initialLat = user?['latitude'] != null 
+        ? (user!['latitude'] as num).toDouble() 
+        : 33.7687;
+    final double initialLng = user?['longitude'] != null 
+        ? (user!['longitude'] as num).toDouble() 
+        : 72.3618;
+    final String? initialAddr = user?['address'] as String?;
+
+    final result = await Navigator.push<Map<String, dynamic>>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => LocationSelectionScreen(
+          initialLocation: LatLng(initialLat, initialLng),
+          initialAddress: initialAddr,
+        ),
+      ),
+    );
+
+    if (result != null) {
+      setState(() => _isLoading = true);
+      final updateResult = await authService.updateProfile({
+        'latitude': result['latitude'],
+        'longitude': result['longitude'],
+        'address': result['address'],
+        'city': result['city'] ?? '',
+        'area': result['area'] ?? '',
+        'locationMethod': 'MANUAL',
+      }, null);
+
+      if (updateResult['success'] == true) {
+        await _loadDashboardStats();
+      } else {
+        setState(() => _isLoading = false);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(updateResult['message'] ?? 'Failed to update location'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
     }
   }
 
@@ -191,19 +273,43 @@ class _IndividualDashboardState extends State<IndividualDashboard> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Row(
-          children: [
-            Icon(Icons.location_on, color: Theme.of(context).colorScheme.primary, size: 20),
-            const SizedBox(width: 8),
-            Text(
-              _location,
-              style: TextStyle(
-                color: Theme.of(context).textTheme.bodyLarge?.color,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
+        GestureDetector(
+          onTap: _changeLocation,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
+                width: 1,
               ),
             ),
-          ],
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.location_on, color: Theme.of(context).colorScheme.primary, size: 18),
+                const SizedBox(width: 6),
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: MediaQuery.of(context).size.width * 0.45,
+                  ),
+                  child: Text(
+                    _location,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(Icons.arrow_drop_down, color: Theme.of(context).colorScheme.primary, size: 18),
+              ],
+            ),
+          ),
         ),
         Row(
           children: [

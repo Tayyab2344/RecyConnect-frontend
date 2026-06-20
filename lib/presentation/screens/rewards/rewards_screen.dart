@@ -505,21 +505,27 @@ class _RewardsScreenState extends State<RewardsScreen> with TickerProviderStateM
       builder: (context, child) {
         return Transform.scale(
           scale: _pulseAnimation.value,
-          child: ElevatedButton(
-            onPressed: () => _performCheckIn(service),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: isDark ? AppColors.neonGreen : AppColors.primaryGreen,
-              elevation: isDark ? 8 : 4,
-              shadowColor: (isDark ? AppColors.neonGreen : AppColors.primaryGreen).withValues(alpha: 0.4),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            ),
-            child: Text(
-              'Check In',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: isDark ? const Color(0xFF070B19) : Colors.white,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 120),
+            child: ElevatedButton(
+              onPressed: () => _performCheckIn(service),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isDark ? AppColors.neonGreen : AppColors.primaryGreen,
+                elevation: isDark ? 8 : 4,
+                shadowColor: (isDark ? AppColors.neonGreen : AppColors.primaryGreen).withValues(alpha: 0.4),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                minimumSize: const Size(80, 36),
+                maximumSize: const Size(120, 44),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Text(
+                'Check In',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? const Color(0xFF070B19) : Colors.white,
+                ),
               ),
             ),
           ),

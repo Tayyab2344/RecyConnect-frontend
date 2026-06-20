@@ -312,6 +312,25 @@ class LocationService {
     return [];
   }
 
+  /// Forward-geocode an address string to lat/lng via Nominatim.
+  /// Returns the first result's coordinates, or null if nothing found.
+  Future<Map<String, double>?> geocodeAddress(String address) async {
+    try {
+      final results = await searchLocation(address);
+      if (results.isNotEmpty) {
+        final first = results.first;
+        final lat = double.tryParse('${first['lat']}');
+        final lng = double.tryParse('${first['lon']}');
+        if (lat != null && lng != null) {
+          return {'latitude': lat, 'longitude': lng};
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) print('geocodeAddress error: $e');
+    }
+    return null;
+  }
+
   /// Nominatim-based reverse geocoding fallback
   Future<Map<String, dynamic>?> reverseGeocodeNominatim(
     double latitude,

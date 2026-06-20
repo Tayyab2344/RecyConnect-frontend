@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -158,59 +157,48 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
     }
   }
 
-  void _useProfileLocationFallback() {
+  /// Fallback: geocode the user's profile city/area via Nominatim (OSM)
+  Future<void> _useProfileLocationFallback() async {
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
       final user = authService.currentUser;
       if (user != null) {
         final city = user['city'] as String?;
         final area = (user['area'] ?? user['address']) as String?;
-        
+
         if (city != null && city.isNotEmpty) {
           setState(() {
             _currentCity = city;
             _currentArea = area ?? '';
-            _userLocation = _getFallbackCoordinates(city, area ?? '');
-            _locationLoading = false;
           });
-          return;
+
+          // Use Nominatim to get real coordinates for this city/area
+          final query = area != null && area.isNotEmpty
+              ? '$area, $city, Pakistan'
+              : '$city, Pakistan';
+          final coords = await _locationService.geocodeAddress(query);
+          if (coords != null && mounted) {
+            setState(() {
+              _userLocation = LatLng(coords['latitude']!, coords['longitude']!);
+              _locationLoading = false;
+            });
+            return;
+          }
         }
       }
     } catch (e) {
       debugPrint('Error getting profile location fallback: $e');
     }
 
-    // Default ultimate fallback to Abbottabad
-    setState(() {
-      _userLocation = const LatLng(34.1688, 73.2215);
-      _currentCity = 'Abbottabad';
-      _currentArea = 'Jinnahabad';
-      _locationLoading = false;
-    });
-  }
-
-  LatLng _getFallbackCoordinates(String city, String area) {
-    final combined = '$area, $city'.toLowerCase();
-    if (combined.contains('attock') || combined.contains('kamra')) {
-      return const LatLng(33.7686, 72.3614);
-    } else if (combined.contains('abbottabad') || combined.contains('jinnahabad')) {
-      return const LatLng(34.1688, 73.2215);
-    } else if (combined.contains('haripur')) {
-      return const LatLng(33.9998, 72.9344);
-    } else if (combined.contains('mansehra')) {
-      return const LatLng(34.3313, 73.2038);
-    } else if (combined.contains('islamabad')) {
-      return const LatLng(33.6844, 73.0479);
-    } else if (combined.contains('rawalpindi')) {
-      return const LatLng(33.5651, 73.0169);
-    } else if (combined.contains('lahore')) {
-      return const LatLng(31.5204, 74.3587);
-    } else if (combined.contains('karachi')) {
-      return const LatLng(24.8607, 67.0011);
-    } else if (combined.contains('peshawar')) {
-      return const LatLng(34.0151, 71.5249);
+    // Ultimate fallback — no GPS and geocoding failed
+    if (mounted) {
+      setState(() {
+        _userLocation = null; // Don't fake a location
+        _currentCity = 'Unknown';
+        _currentArea = '';
+        _locationLoading = false;
+      });
     }
-    return const LatLng(34.1688, 73.2215); // Default to Abbottabad
   }
 
   Future<void> _loadItems() async {
@@ -242,9 +230,10 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
     }
   }
 
-  /// Calculate real distance using LocationService (Geolocator)
-  double _calculateDistance(double lat, double lng) {
-    if (_userLocation == null) return 0.0;
+  /// Calculate real distance using LocationService (Geolocator).
+  /// Returns null if either the user or item location is unknown.
+  double? _calculateDistance(double? lat, double? lng) {
+    if (_userLocation == null || lat == null || lng == null) return null;
     return _locationService.calculateDistance(
       _userLocation!.latitude,
       _userLocation!.longitude,
@@ -253,66 +242,15 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
     );
   }
 
-  /// Assign fallback coordinates to API listings missing lat/lng
-  List<Listing> _processListings(List<Listing> rawListings) {
-    return rawListings.map((item) {
-      double? lat = item.latitude;
-      double? lng = item.longitude;
-      String address = item.pickupAddress.toLowerCase();
-
-      if (lat == null || lng == null) {
-        if (address.contains('jinnahabad')) {
-          lat = 34.1725; lng = 73.2185;
-        } else if (address.contains('cantonment') || address.contains('cantt')) {
-          lat = 34.1620; lng = 73.2260;
-        } else if (address.contains('supply')) {
-          lat = 34.1800; lng = 73.2180;
-        } else if (address.contains('mandian')) {
-          lat = 34.1950; lng = 73.2420;
-        } else if (address.contains('kakul')) {
-          lat = 34.1850; lng = 73.2550;
-        } else if (address.contains('haripur')) {
-          lat = 33.9998; lng = 72.9344;
-        } else if (address.contains('mansehra')) {
-          lat = 34.3313; lng = 73.2038;
-        } else if (address.contains('islamabad') || address.contains('g-11') || address.contains('f-7')) {
-          lat = 33.6844; lng = 73.0479;
-        } else {
-          final seed = item.id;
-          lat = (_userLocation?.latitude ?? 34.1688) + (math.sin(seed * 0.5) * 0.03);
-          lng = (_userLocation?.longitude ?? 73.2215) + (math.cos(seed * 0.5) * 0.03);
-        }
-      }
-
-      return Listing(
-        id: item.id,
-        userId: item.userId,
-        materialType: item.materialType,
-        estimatedWeight: item.estimatedWeight,
-        pickupAddress: item.pickupAddress,
-        latitude: lat,
-        longitude: lng,
-        locationMethod: item.locationMethod,
-        title: item.title,
-        notes: item.notes,
-        status: item.status,
-        buyerInfo: item.buyerInfo,
-        createdAt: item.createdAt,
-        updatedAt: item.updatedAt,
-        user: item.user,
-        images: item.images,
-        quantity: item.quantity,
-        orderItems: item.orderItems,
-      );
-    }).toList();
+  /// Whether a listing has real GPS coordinates from the database
+  bool _hasRealCoordinates(Listing item) {
+    return item.latitude != null && item.longitude != null;
   }
 
-  /// Filtered & sorted items — only real API data, no mocks
+  /// Filtered & sorted items — uses real API data only, no fake coordinates
   List<Listing> get _filteredAndSortedItems {
-    final processedItems = _processListings(_items);
-
     // 1. Search filter
-    var filtered = processedItems.where((item) {
+    var filtered = _items.where((item) {
       if (_searchQuery.isEmpty) return true;
       final q = _searchQuery.toLowerCase();
       final title = (item.title ?? '').toLowerCase();
@@ -328,13 +266,13 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
       }).toList();
     }
 
-    // 3. Radius filter (only if GPS is available)
+    // 3. Radius filter (only if user GPS is available)
     if (_userLocation != null) {
       filtered = filtered.where((item) {
-        final double distance = _calculateDistance(
-          item.latitude ?? _userLocation!.latitude,
-          item.longitude ?? _userLocation!.longitude,
-        );
+        // Items without real coordinates pass through all radius filters
+        if (!_hasRealCoordinates(item)) return true;
+        final double? distance = _calculateDistance(item.latitude, item.longitude);
+        if (distance == null) return true;
         switch (_selectedRadius) {
           case 'Within 5 km': return distance <= 5.0;
           case 'Within 10 km': return distance <= 10.0;
@@ -349,30 +287,15 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
     // 4. Sort
     if (_selectedSort == 'Nearest First' && _userLocation != null) {
       filtered.sort((a, b) {
-        final addressA = a.pickupAddress.toLowerCase();
-        final addressB = b.pickupAddress.toLowerCase();
-        
-        int scoreA = 0;
-        int scoreB = 0;
+        // Items without coordinates go to the end
+        final hasA = _hasRealCoordinates(a);
+        final hasB = _hasRealCoordinates(b);
+        if (!hasA && !hasB) return 0;
+        if (!hasA) return 1;
+        if (!hasB) return -1;
 
-        if (_currentArea.isNotEmpty && _currentArea != 'Detecting...') {
-          if (addressA.contains(_currentArea.toLowerCase())) scoreA = 2;
-          if (addressB.contains(_currentArea.toLowerCase())) scoreB = 2;
-        }
-
-        if (scoreA == 0 && _currentCity.isNotEmpty && _currentCity != 'Detecting...') {
-          if (addressA.contains(_currentCity.toLowerCase())) scoreA = 1;
-        }
-        if (scoreB == 0 && _currentCity.isNotEmpty && _currentCity != 'Detecting...') {
-          if (addressB.contains(_currentCity.toLowerCase())) scoreB = 1;
-        }
-
-        if (scoreA != scoreB) {
-          return scoreB.compareTo(scoreA); // Higher score (closer match) comes first
-        }
-
-        final distA = _calculateDistance(a.latitude ?? _userLocation!.latitude, a.longitude ?? _userLocation!.longitude);
-        final distB = _calculateDistance(b.latitude ?? _userLocation!.latitude, b.longitude ?? _userLocation!.longitude);
+        final distA = _calculateDistance(a.latitude, a.longitude) ?? double.infinity;
+        final distB = _calculateDistance(b.latitude, b.longitude) ?? double.infinity;
         return distA.compareTo(distB);
       });
     } else if (_selectedSort == 'Best Price') {
@@ -826,10 +749,7 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
 
   Widget _buildCard(Listing item, bool isDark) {
     final gradient = _getGradient(item.materialType);
-    final double distance = _calculateDistance(
-      item.latitude ?? (_userLocation?.latitude ?? 34.1688),
-      item.longitude ?? (_userLocation?.longitude ?? 73.2215),
-    );
+    final double? distance = _calculateDistance(item.latitude, item.longitude);
     final double rate = MaterialData.materialRates[item.materialType.toLowerCase()] ?? 40.0;
     final double price = item.estimatedWeight * rate;
     final bool hasImages = item.hasNetworkImages;
@@ -913,9 +833,9 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
                           const Icon(Icons.near_me_rounded, color: Colors.white, size: 10),
                           const SizedBox(width: 4),
                           Text(
-                            _userLocation != null
+                            distance != null
                                 ? '${distance.toStringAsFixed(1)} km'
-                                : '...',
+                                : 'N/A',
                             style: GoogleFonts.outfit(
                               color: Colors.white,
                               fontSize: 10,
@@ -1092,22 +1012,24 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
   Widget _buildMapView(bool isDark, List<Listing> items) {
     final center = _userLocation ?? const LatLng(34.1688, 73.2215);
 
-    final markers = items.map((item) {
+    // Only create markers for listings that have real coordinates
+    final geoItems = items.where((item) => _hasRealCoordinates(item)).toList();
+    final markers = geoItems.map((item) {
       final gradient = _getGradient(item.materialType);
-      final index = items.indexOf(item);
-      final isSelected = _activeMapCardIndex == index;
+      final fullIndex = items.indexOf(item);
+      final isSelected = _activeMapCardIndex == fullIndex;
 
       return Marker(
-        point: LatLng(item.latitude ?? center.latitude, item.longitude ?? center.longitude),
+        point: LatLng(item.latitude!, item.longitude!),
         width: isSelected ? 48 : 36,
         height: isSelected ? 48 : 36,
         child: GestureDetector(
           onTap: () {
-            setState(() => _activeMapCardIndex = index);
-            _pageController.animateToPage(index,
+            setState(() => _activeMapCardIndex = fullIndex);
+            _pageController.animateToPage(fullIndex,
                 duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
             _mapController.move(
-              LatLng(item.latitude ?? center.latitude, item.longitude ?? center.longitude), 13.5);
+              LatLng(item.latitude!, item.longitude!), 13.5);
           },
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
@@ -1197,7 +1119,7 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
                 setState(() => _activeMapCardIndex = index);
                 final item = items[index];
                 _mapController.move(
-                  LatLng(item.latitude ?? center.latitude, item.longitude ?? center.longitude), 13.5);
+                  LatLng(item.latitude ?? center.latitude, item.longitude ?? center.longitude), 13.5);  // carousel can still show all items
               },
               itemBuilder: (context, index) => _buildMapCard(items[index], isDark),
             ),
@@ -1209,10 +1131,7 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
 
   Widget _buildMapCard(Listing item, bool isDark) {
     final gradient = _getGradient(item.materialType);
-    final double distance = _calculateDistance(
-      item.latitude ?? (_userLocation?.latitude ?? 34.1688),
-      item.longitude ?? (_userLocation?.longitude ?? 73.2215),
-    );
+    final double? distance = _calculateDistance(item.latitude, item.longitude);
     final double rate = MaterialData.materialRates[item.materialType.toLowerCase()] ?? 40.0;
     final double price = item.estimatedWeight * rate;
 
@@ -1277,7 +1196,7 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '${item.pickupAddress} · ${distance.toStringAsFixed(1)} km',
+                        '${item.pickupAddress} · ${distance != null ? '${distance.toStringAsFixed(1)} km' : 'N/A'}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.outfit(

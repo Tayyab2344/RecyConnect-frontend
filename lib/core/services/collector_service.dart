@@ -16,12 +16,7 @@ class CollectorService {
     };
   }
 
-  Future<Map<String, String>> _authOnlyHeaders() async {
-    final token = await _authService.getToken();
-    return {
-      'Authorization': 'Bearer $token',
-    };
-  }
+
 
   Map<String, dynamic> _decode(http.Response response) {
     final body = response.body.isEmpty ? <String, dynamic>{} : jsonDecode(response.body);
@@ -384,5 +379,24 @@ class CollectorService {
     final response = await http.get(uri, headers: await _headers());
     final decoded = _decode(response);
     return decoded['data'] ?? [];
+  }
+
+  Future<Map<String, dynamic>> markTaskAsCollected(int taskId) async {
+    final response = await http.post(
+      Uri.parse('${ApiConstants.baseUrl}/collector/task/$taskId/collected'),
+      headers: await _headers(),
+    );
+    return _decode(response)['data'] ?? {};
+  }
+
+  Future<Map<String, dynamic>> markTaskAsDelivered(int taskId, {double? distance}) async {
+    final response = await http.post(
+      Uri.parse('${ApiConstants.baseUrl}/collector/task/$taskId/delivered'),
+      headers: await _headers(),
+      body: jsonEncode({
+        if (distance != null) 'distance': distance,
+      }),
+    );
+    return _decode(response)['data'] ?? {};
   }
 }
