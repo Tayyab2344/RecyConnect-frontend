@@ -42,6 +42,7 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
   double _totalDistanceKm = 0.0;
   double _totalDurationMinutes = 0.0;
   bool _isLoadingRoute = true;
+  DateTime? _lastRouteFetchTime;
 
   @override
   void initState() {
@@ -49,7 +50,6 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
     _task = Map<String, dynamic>.from(widget.task);
     _initializePoints();
     _startLocationTracking();
-    _fetchRoute();
   }
 
   @override
@@ -139,6 +139,9 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
     // Log initial location
     _recordLocation(position);
 
+    // Fetch initial route
+    _fetchRoute();
+
     // Subscribe to continuous location updates
     _positionSubscription = Geolocator.getPositionStream(
       locationSettings: const LocationSettings(
@@ -160,8 +163,11 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
             _mapController.move(_currentPosition!, _mapController.camera.zoom);
           }
           
-          // Refresh route as location shifts
-          _fetchRoute();
+          // Only refresh route at most once every 30 seconds to prevent OSRM rate-limiting
+          if (_lastRouteFetchTime == null || now.difference(_lastRouteFetchTime!).inSeconds > 30) {
+            _lastRouteFetchTime = now;
+            _fetchRoute();
+          }
 
           // Log location to server
           _recordLocation(pos);
@@ -187,15 +193,37 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
     }
   }
 
+  String _getStageDescription(String taskType, bool isPickedUp) {
+    if (isPickedUp) {
+      if (taskType == 'SELLER_TO_WAREHOUSE') {
+        return "Delivering to Warehouse";
+      }
+      return "Delivering to Buyer";
+    } else {
+      if (taskType == 'WAREHOUSE_TO_BUYER') {
+        return "Picking up from Warehouse";
+      }
+      return "Picking up from Seller";
+    }
+  }
+
   Future<void> _fetchRoute() async {
+    if (_currentPosition == null) {
+      if (mounted) {
+        setState(() {
+          _isLoadingRoute = true;
+        });
+      }
+      return;
+    }
+
     final LatLng pickup = _pickupPosition ?? const LatLng(34.1504, 73.2078);
     final LatLng dest = _warehousePosition ?? const LatLng(34.1504, 73.2078);
     final String status = _task['status']?.toString() ?? 'ASSIGNED';
 
     final bool isPickedUp = ['PICKED_UP', 'IN_TRANSIT', 'ARRIVED_AT_DESTINATION', 'COMPLETED', 'DELIVERED'].contains(status);
     final LatLng target = isPickedUp ? dest : pickup;
-
-    LatLng start = _currentPosition ?? target;
+    final LatLng start = _currentPosition!;
 
     try {
       final String url = 'https://router.project-osrm.org/route/v1/driving/'
@@ -217,15 +245,31 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
             _isLoadingRoute = false;
           });
         }
+      } else {
+        // Fallback to straight line & direct distance calculation
+        final directDistanceMeters = Geolocator.distanceBetween(
+          start.latitude, start.longitude, target.latitude, target.longitude
+        );
+        if (mounted) {
+          setState(() {
+            _routePoints = [start, target];
+            _totalDistanceKm = directDistanceMeters / 1000.0;
+            _totalDurationMinutes = (directDistanceMeters / 1000.0) * 2.0; // Estimate 2 mins per km
+            _isLoadingRoute = false;
+          });
+        }
       }
     } catch (e) {
       debugPrint("OSRM routing API error: $e");
+      final directDistanceMeters = Geolocator.distanceBetween(
+        start.latitude, start.longitude, target.latitude, target.longitude
+      );
       if (mounted) {
         setState(() {
           _isLoadingRoute = false;
           _routePoints = [start, target];
-          _totalDistanceKm = 0.0;
-          _totalDurationMinutes = 0.0;
+          _totalDistanceKm = directDistanceMeters / 1000.0;
+          _totalDurationMinutes = (directDistanceMeters / 1000.0) * 2.0;
         });
       }
     }
@@ -350,10 +394,10 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
                 // Glassmorphic Back Button
                 Container(
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E1E1E).withOpacity(0.85) : Colors.white.withOpacity(0.85),
+                    color: isDark ? const Color(0xFF1E1E1E).withValues(alpha: 0.85) : Colors.white.withValues(alpha: 0.85),
                     shape: BoxShape.circle,
                     boxShadow: [
-                      BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 2)),
+                      BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 8, offset: const Offset(0, 2)),
                     ],
                   ),
                   child: ClipOval(
@@ -380,14 +424,14 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E1E1E).withOpacity(0.85) : Colors.white.withOpacity(0.85),
+                    color: isDark ? const Color(0xFF1E1E1E).withValues(alpha: 0.85) : Colors.white.withValues(alpha: 0.85),
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
-                      BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 2)),
+                      BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 8, offset: const Offset(0, 2)),
                     ],
                   ),
                   child: Text(
-                    isPickedUp ? "Delivery Stage" : "Pickup Stage",
+                    _getStageDescription(_task['taskType']?.toString() ?? '', isPickedUp),
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
@@ -409,11 +453,11 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E293B).withOpacity(0.9) : Colors.white.withOpacity(0.9),
+                    color: isDark ? const Color(0xFF1E293B).withValues(alpha: 0.9) : Colors.white.withValues(alpha: 0.9),
                     borderRadius: BorderRadius.circular(30),
-                    border: Border.all(color: AppTheme.primaryGreen.withOpacity(0.3), width: 1.5),
+                    border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.3), width: 1.5),
                     boxShadow: [
-                      BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 10, offset: const Offset(0, 4)),
+                      BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 10, offset: const Offset(0, 4)),
                     ],
                   ),
                   child: Row(
@@ -426,7 +470,7 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
                         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: isDark ? Colors.white : Colors.black87),
                       ),
                       const SizedBox(width: 8),
-                      Container(width: 1.5, height: 12, color: Colors.grey.withOpacity(0.5)),
+                      Container(width: 1.5, height: 12, color: Colors.grey.withValues(alpha: 0.5)),
                       const SizedBox(width: 8),
                       const Icon(Icons.access_time_outlined, color: AppTheme.primaryGreen, size: 18),
                       const SizedBox(width: 8),
@@ -448,11 +492,11 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
             child: Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF121212).withOpacity(0.95) : Colors.white.withOpacity(0.95),
+                color: isDark ? const Color(0xFF121212).withValues(alpha: 0.95) : Colors.white.withValues(alpha: 0.95),
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                border: Border(top: BorderSide(color: Colors.grey.withOpacity(0.2))),
+                border: Border(top: BorderSide(color: Colors.grey.withValues(alpha: 0.2))),
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 15, offset: const Offset(0, -5)),
+                  BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 15, offset: const Offset(0, -5)),
                 ],
               ),
               child: Column(
@@ -469,11 +513,11 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: isPickedUp ? Colors.blue.withOpacity(0.1) : Colors.orange.withOpacity(0.1),
+                          color: isPickedUp ? Colors.blue.withValues(alpha: 0.1) : Colors.orange.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          isPickedUp ? "OUT FOR DELIVERY" : "PENDING PICKUP",
+                          _getStageDescription(_task['taskType']?.toString() ?? '', isPickedUp).toUpperCase(),
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
@@ -515,9 +559,11 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
                       const Icon(Icons.directions_car_outlined, size: 16, color: Colors.grey),
                       const SizedBox(width: 6),
                       Text(
-                        _isLoadingRoute 
-                            ? 'Calculating route...' 
-                            : '${_totalDistanceKm.toStringAsFixed(1)} km (${_totalDurationMinutes.toStringAsFixed(0)} mins away)',
+                        _currentPosition == null
+                            ? 'Awaiting location...'
+                            : (_isLoadingRoute
+                                ? 'Calculating route...'
+                                : '${_totalDistanceKm.toStringAsFixed(1)} km (${_totalDurationMinutes.toStringAsFixed(0)} mins away)'),
                         style: const TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w500),
                       ),
                     ],
@@ -563,7 +609,7 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
                             icon: const Icon(Icons.my_location),
                             tooltip: "Re-center",
                             style: IconButton.styleFrom(
-                              backgroundColor: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05),
+                              backgroundColor: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.05),
                               foregroundColor: isDark ? Colors.white : Colors.black87,
                               padding: const EdgeInsets.all(12),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -575,16 +621,29 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
                           Expanded(
                             child: SizedBox(
                               height: 48,
-                              child: ElevatedButton.icon(
+                              child: ElevatedButton(
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppTheme.primaryGreen,
                                   foregroundColor: Colors.white,
                                   elevation: 2,
+                                  padding: const EdgeInsets.symmetric(horizontal: 4),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                 ),
                                 onPressed: _startNativeNavigation,
-                                icon: const Icon(Icons.navigation),
-                                label: const Text('Navigate', style: TextStyle(fontWeight: FontWeight.bold)),
+                                child: const Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.navigation, size: 16),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'Navigate',
+                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
@@ -652,7 +711,7 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
                   shape: BoxShape.circle,
                   color: isDone 
                       ? accentColor 
-                      : (isActive ? accentColor.withOpacity(0.2) : Colors.transparent),
+                      : (isActive ? accentColor.withValues(alpha: 0.2) : Colors.transparent),
                   border: Border.all(
                     color: (isDone || isActive) ? accentColor : (isDark ? Colors.white24 : Colors.black26),
                     width: 2,
@@ -699,23 +758,36 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
     
     final bool isPickedUp = ['PICKED_UP', 'IN_TRANSIT', 'ARRIVED_AT_DESTINATION'].contains(status);
 
-    String label = isPickedUp ? "Mark as Delivered" : "Mark as Collected";
+    String label = isPickedUp ? "Deliver" : "Collect";
     IconData icon = isPickedUp ? Icons.fact_check : Icons.inventory_2;
     VoidCallback onPressed = isPickedUp ? _markAsDelivered : _markAsCollected;
 
     return SizedBox(
       width: double.infinity,
       height: 48,
-      child: ElevatedButton.icon(
+      child: ElevatedButton(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppTheme.primaryGreen,
           foregroundColor: Colors.white,
           elevation: 2,
+          padding: const EdgeInsets.symmetric(horizontal: 4),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
         onPressed: onPressed,
-        icon: Icon(icon),
-        label: Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -846,7 +918,7 @@ class _PulsingCollectorMarkerState extends State<PulsingCollectorMarker>
                 height: 44,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.blue.withOpacity(0.3),
+                  color: Colors.blue.withValues(alpha: 0.3),
                 ),
               ),
               Container(
@@ -858,7 +930,7 @@ class _PulsingCollectorMarkerState extends State<PulsingCollectorMarker>
                   border: Border.all(color: Colors.white, width: 2),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.blue.withOpacity(0.5),
+                      color: Colors.blue.withValues(alpha: 0.5),
                       blurRadius: 6,
                       spreadRadius: 2,
                     ),
