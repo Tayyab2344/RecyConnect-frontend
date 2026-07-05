@@ -408,7 +408,7 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
-                                          purchase.seller?.name ?? 'Unknown Seller',
+                                          purchase.sellerName,
                                           style: TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w500,

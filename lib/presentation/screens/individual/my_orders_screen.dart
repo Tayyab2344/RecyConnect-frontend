@@ -258,7 +258,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
                     '#ORD0${order.id}',
                     DateFormat('yyyy-MM-dd').format(order.createdAt),
                     order.materialTypeDisplay,
-                    order.seller?.name ?? 'Unknown Seller',
+                    order.sellerName,
                     order.statusDisplay,
                     '${order.weight.toStringAsFixed(1)} kg',
                     'Rs ${price.toStringAsFixed(0)}',
@@ -335,7 +335,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
             '#ORD0${order.id}',
             DateFormat('yyyy-MM-dd').format(order.createdAt),
             order.materialTypeDisplay,
-            order.seller?.name ?? 'Unknown Seller',
+            order.sellerName,
             order.statusDisplay,
             order.weight,
             price,
@@ -969,7 +969,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
                         Expanded(
                           child: _buildInfoChip(
                             Icons.store_rounded,
-                            order.seller?.name ?? 'Unknown Seller',
+                            order.sellerName,
                             isDark,
                           ),
                         ),

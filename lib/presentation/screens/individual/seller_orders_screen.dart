@@ -103,7 +103,7 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
         final matchesSearch = _searchQuery.isEmpty ||
             order.materialType.toLowerCase().contains(_searchQuery.toLowerCase()) ||
             order.id.toString().contains(_searchQuery) ||
-            (order.buyer?.name?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false);
+            order.buyerName.toLowerCase().contains(_searchQuery.toLowerCase());
 
         return matchesStatus && matchesSearch;
       }).toList();
@@ -366,7 +366,7 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
                   '#${order.id.toString().padLeft(5, '0')}',
                   DateFormat('yyyy-MM-dd').format(order.createdAt),
                   order.materialTypeDisplay,
-                  order.buyer?.name ?? 'Unknown Buyer',
+                  order.buyerName,
                   order.statusDisplay,
                   '${order.weight.toStringAsFixed(1)} kg',
                   'Rs ${order.totalAmount.toStringAsFixed(0)}',
@@ -440,7 +440,7 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
           '#${order.id.toString().padLeft(5, '0')}',
           DateFormat('yyyy-MM-dd').format(order.createdAt),
           order.materialTypeDisplay,
-          order.buyer?.name ?? 'Unknown Buyer',
+          order.buyerName,
           order.statusDisplay,
           order.weight,
           order.totalAmount,
@@ -879,7 +879,7 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
                           ),
                         ),
                         Text(
-                          order.buyer?.name ?? 'Unknown Buyer',
+                          order.buyerName,
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,

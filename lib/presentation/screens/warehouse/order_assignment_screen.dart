@@ -292,8 +292,8 @@ class _OrderAssignmentScreenState extends State<OrderAssignmentScreen> {
                               final isSelected = _selectedOrderIds.contains(order.id);
                               final isBuying = _selectedRole == 'buyer';
                               final counterpartName = isBuying
-                                  ? (order.seller?.name ?? 'Unknown Seller')
-                                  : (order.buyer?.name ?? 'Unknown Buyer');
+                                  ? order.sellerName
+                                  : order.buyerName;
                               final address = isBuying
                                   ? (order.seller?.address ?? 'No Address Provided')
                                   : (order.buyer?.address ?? 'No Address Provided');

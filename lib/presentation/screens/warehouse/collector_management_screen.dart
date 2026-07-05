@@ -732,7 +732,7 @@ class _DispatchTaskDialogState extends State<DispatchTaskDialog> {
         // Warehouse is the BUYER (we are buying from a seller)
         _taskType = 'SELLER_TO_WAREHOUSE';
         _sourceType = 'individual';
-        _sourceNameController.text = order.seller?.name ?? 'Seller';
+        _sourceNameController.text = order.sellerName;
         _sourceAddressController.text = order.seller?.address ?? '';
         _sourceContactController.text = order.seller?.contactNo ?? '';
         
@@ -749,7 +749,7 @@ class _DispatchTaskDialogState extends State<DispatchTaskDialog> {
         _sourceContactController.text = warehouseContact;
         
         _destinationType = 'company';
-        _destinationNameController.text = order.buyer?.name ?? 'Buyer';
+        _destinationNameController.text = order.buyerName;
         _destinationAddressController.text = order.buyer?.address ?? '';
         _destinationContactController.text = order.buyer?.contactNo ?? '';
       }
@@ -1060,8 +1060,8 @@ class _OrderSelectionDialogState extends State<OrderSelectionDialog> {
       if (query.isNotEmpty) {
         final idMatches = order.id.toString().contains(query);
         final materialMatches = order.materialType.toLowerCase().contains(query);
-        final sellerMatches = (order.seller?.name ?? '').toLowerCase().contains(query);
-        final buyerMatches = (order.buyer?.name ?? '').toLowerCase().contains(query);
+        final sellerMatches = order.sellerName.toLowerCase().contains(query);
+        final buyerMatches = order.buyerName.toLowerCase().contains(query);
         return idMatches || materialMatches || sellerMatches || buyerMatches;
       }
       
@@ -1186,8 +1186,8 @@ class _OrderSelectionDialogState extends State<OrderSelectionDialog> {
                                     Expanded(
                                       child: Text(
                                         isBuying
-                                            ? 'From: ${order.seller?.name ?? 'Unknown Seller'}'
-                                            : 'To: ${order.buyer?.name ?? 'Unknown Buyer'}',
+                                            ? 'From: ${order.sellerName}'
+                                            : 'To: ${order.buyerName}',
                                         style: TextStyle(fontSize: 12, color: Colors.grey[700]),
                                         overflow: TextOverflow.ellipsis,
                                       ),

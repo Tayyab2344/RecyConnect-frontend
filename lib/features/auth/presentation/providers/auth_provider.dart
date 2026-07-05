@@ -109,6 +109,7 @@ class AuthProvider extends ChangeNotifier {
       map.addAll({
         'email': user.email,
         'phone': user.phone,
+        'contactNo': user.phone,
         'address': user.address,
         'city': user.city,
         'area': user.area,
