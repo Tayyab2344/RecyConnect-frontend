@@ -20,12 +20,12 @@ class BrowseMarketplaceScreen extends StatefulWidget {
   final bool initialMapView;
 
   const BrowseMarketplaceScreen({
-    Key? key,
+    super.key,
     this.initialMaterial,
     this.initialRadius,
     this.initialSort,
     this.initialMapView = false,
-  }) : super(key: key);
+  });
 
   @override
   State<BrowseMarketplaceScreen> createState() => _BrowseMarketplaceScreenState();
@@ -159,23 +159,38 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
 
   /// Fallback: geocode the user's profile city/area via Nominatim (OSM)
   Future<void> _useProfileLocationFallback() async {
+    String? profileCity;
+    String? profileArea;
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
       final user = authService.currentUser;
       if (user != null) {
-        final city = user['city'] as String?;
-        final area = (user['area'] ?? user['address']) as String?;
+        profileCity = user['city'] as String?;
+        profileArea = (user['area'] ?? user['address']) as String?;
 
-        if (city != null && city.isNotEmpty) {
+        if (profileCity == null || profileCity.isEmpty) {
+          final addr = user['address'] as String?;
+          if (addr != null && addr.isNotEmpty) {
+            final parts = addr.split(',').map((s) => s.trim()).toList();
+            if (parts.isNotEmpty) {
+              profileCity = parts.last;
+              if (profileCity.toLowerCase() == 'pakistan' && parts.length > 1) {
+                profileCity = parts[parts.length - 2];
+              }
+            }
+          }
+        }
+
+        if (profileCity != null && profileCity.isNotEmpty) {
           setState(() {
-            _currentCity = city;
-            _currentArea = area ?? '';
+            _currentCity = profileCity!;
+            _currentArea = profileArea ?? '';
           });
 
           // Use Nominatim to get real coordinates for this city/area
-          final query = area != null && area.isNotEmpty
-              ? '$area, $city, Pakistan'
-              : '$city, Pakistan';
+          final query = profileArea != null && profileArea.isNotEmpty
+              ? '$profileArea, $profileCity, Pakistan'
+              : '$profileCity, Pakistan';
           final coords = await _locationService.geocodeAddress(query);
           if (coords != null && mounted) {
             setState(() {
@@ -194,8 +209,8 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
     if (mounted) {
       setState(() {
         _userLocation = null; // Don't fake a location
-        _currentCity = 'Unknown';
-        _currentArea = '';
+        _currentCity = (profileCity != null && profileCity.isNotEmpty) ? profileCity : 'Unknown';
+        _currentArea = profileArea ?? '';
         _locationLoading = false;
       });
     }
@@ -448,11 +463,11 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
               borderRadius: BorderRadius.circular(14),
               color: isDark ? const Color(0xFF1A2035) : Colors.white,
               border: Border.all(
-                color: isDark ? Colors.white.withOpacity(0.06) : const Color(0xFFE8ECF0),
+                color: isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFE8ECF0),
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
+                  color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
@@ -495,7 +510,7 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
           margin: const EdgeInsets.only(right: 8),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: const Color(0xFF4CAF50).withOpacity(_pulseAnimation.value),
+            color: const Color(0xFF4CAF50).withValues(alpha: _pulseAnimation.value),
           ),
         );
       },
@@ -509,7 +524,7 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: isDark ? Colors.white.withOpacity(0.06) : const Color(0xFFF0F2F5),
+          color: isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFF0F2F5),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Icon(icon, color: isDark ? Colors.white60 : Colors.black54, size: 20),
@@ -548,10 +563,10 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
                       border: Border.all(
                         color: isSelected
                             ? Colors.transparent
-                            : (isDark ? Colors.white.withOpacity(0.08) : const Color(0xFFE0E4E8)),
+                            : (isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE0E4E8)),
                       ),
                       boxShadow: isSelected
-                          ? [BoxShadow(color: const Color(0xFF1565C0).withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 2))]
+                          ? [BoxShadow(color: const Color(0xFF1565C0).withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 2))]
                           : [],
                     ),
                     child: Text(
@@ -604,10 +619,10 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
             border: Border.all(
               color: isSelected
                   ? Colors.transparent
-                  : (isDark ? Colors.white.withOpacity(0.08) : const Color(0xFFE0E4E8)),
+                  : (isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE0E4E8)),
             ),
             boxShadow: isSelected
-                ? [BoxShadow(color: gradient[0].withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 2))]
+                ? [BoxShadow(color: gradient[0].withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 2))]
                 : [],
           ),
           child: Row(
@@ -715,7 +730,7 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
               : Colors.transparent,
           borderRadius: BorderRadius.circular(7),
           boxShadow: active
-              ? [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 4, offset: const Offset(0, 1))]
+              ? [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 4, offset: const Offset(0, 1))]
               : [],
         ),
         child: Center(
@@ -750,7 +765,7 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
   Widget _buildCard(Listing item, bool isDark) {
     final gradient = _getGradient(item.materialType);
     final double? distance = _calculateDistance(item.latitude, item.longitude);
-    final double rate = MaterialData.materialRates[item.materialType.toLowerCase()] ?? 40.0;
+    final double rate = item.price > 0 ? item.price : (MaterialData.materialRates[item.materialType.toLowerCase()] ?? 40.0);
     final double price = item.estimatedWeight * rate;
     final bool hasImages = item.hasNetworkImages;
 
@@ -761,11 +776,11 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
           color: isDark ? const Color(0xFF141B2D) : Colors.white,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: isDark ? Colors.white.withOpacity(0.06) : const Color(0xFFE8ECF0),
+            color: isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFE8ECF0),
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(isDark ? 0.25 : 0.06),
+              color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.06),
               blurRadius: 16,
               offset: const Offset(0, 4),
             ),
@@ -804,7 +819,7 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
                         gradient: LinearGradient(colors: gradient),
                         borderRadius: BorderRadius.circular(8),
                         boxShadow: [
-                          BoxShadow(color: gradient[0].withOpacity(0.4), blurRadius: 6, offset: const Offset(0, 2)),
+                          BoxShadow(color: gradient[0].withValues(alpha: 0.4), blurRadius: 6, offset: const Offset(0, 2)),
                         ],
                       ),
                       child: Text(
@@ -824,7 +839,7 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.65),
+                        color: Colors.black.withValues(alpha: 0.65),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
@@ -922,7 +937,7 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
                             children: [
                               CircleAvatar(
                                 radius: 10,
-                                backgroundColor: gradient[0].withOpacity(0.2),
+                                backgroundColor: gradient[0].withValues(alpha: 0.2),
                                 child: Icon(Icons.person, size: 12, color: gradient[0]),
                               ),
                               const SizedBox(width: 5),
@@ -965,7 +980,7 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [gradient[0].withOpacity(0.15), gradient[1].withOpacity(0.08)],
+          colors: [gradient[0].withValues(alpha: 0.15), gradient[1].withValues(alpha: 0.08)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -974,7 +989,7 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
         child: Icon(
           _getIconForMaterial(materialType),
           size: 48,
-          color: gradient[0].withOpacity(0.4),
+          color: gradient[0].withValues(alpha: 0.4),
         ),
       ),
     );
@@ -984,7 +999,7 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withOpacity(0.05) : const Color(0xFFF5F7FA),
+        color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF5F7FA),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Row(
@@ -1038,7 +1053,7 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
               shape: BoxShape.circle,
               border: Border.all(color: Colors.white, width: isSelected ? 3 : 2),
               boxShadow: [
-                BoxShadow(color: gradient[0].withOpacity(0.5), blurRadius: 8, offset: const Offset(0, 3)),
+                BoxShadow(color: gradient[0].withValues(alpha: 0.5), blurRadius: 8, offset: const Offset(0, 3)),
               ],
             ),
             child: Icon(
@@ -1067,7 +1082,7 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
                   width: 36 * _pulseAnimation.value,
                   height: 36 * _pulseAnimation.value,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1565C0).withOpacity(0.15),
+                    color: const Color(0xFF1565C0).withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -1138,11 +1153,11 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF141B2D).withOpacity(0.95) : Colors.white.withOpacity(0.95),
+        color: isDark ? const Color(0xFF141B2D).withValues(alpha: 0.95) : Colors.white.withValues(alpha: 0.95),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isDark ? Colors.white.withOpacity(0.08) : const Color(0xFFE8ECF0)),
+        border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE8ECF0)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 12, offset: const Offset(0, 4)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 12, offset: const Offset(0, 4)),
         ],
       ),
       child: Material(
@@ -1160,7 +1175,7 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
                   height: 100,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [gradient[0].withOpacity(0.15), gradient[1].withOpacity(0.08)],
+                      colors: [gradient[0].withValues(alpha: 0.15), gradient[1].withValues(alpha: 0.08)],
                     ),
                     borderRadius: BorderRadius.circular(14),
                   ),
@@ -1252,8 +1267,8 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    const Color(0xFF43A047).withOpacity(0.12),
-                    const Color(0xFF66BB6A).withOpacity(0.06),
+                    const Color(0xFF43A047).withValues(alpha: 0.12),
+                    const Color(0xFF66BB6A).withValues(alpha: 0.06),
                   ],
                 ),
                 shape: BoxShape.circle,
@@ -1286,15 +1301,24 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
             // Expand radius button
             SizedBox(
               width: 220,
-              height: 46,
+              height: 48,
               child: ElevatedButton.icon(
                 onPressed: () => setState(() => _selectedRadius = 'Nearby Cities'),
                 icon: const Icon(Icons.radar_rounded, size: 18),
-                label: Text('Expand Radius', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                label: Text(
+                  'Expand Radius',
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1565C0),
                   foregroundColor: Colors.white,
                   elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 ),
               ),
@@ -1303,16 +1327,25 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
             // Create listing button
             SizedBox(
               width: 220,
-              height: 46,
+              height: 48,
               child: OutlinedButton.icon(
                 onPressed: () {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateListingScreen()));
                 },
                 icon: const Icon(Icons.add_rounded, size: 18),
-                label: Text('Create Listing', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                label: Text(
+                  'Create Listing',
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: const Color(0xFF43A047),
                   side: const BorderSide(color: Color(0xFF43A047)),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 ),
               ),
@@ -1336,7 +1369,7 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: Colors.redAccent.withOpacity(0.1),
+                color: Colors.redAccent.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: const Center(
@@ -1398,7 +1431,7 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF43A047).withOpacity(0.4),
+            color: const Color(0xFF43A047).withValues(alpha: 0.4),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),

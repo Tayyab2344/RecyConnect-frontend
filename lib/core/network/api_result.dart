@@ -1,5 +1,5 @@
 /// A simple Result wrapper for clean error handling across the app.
-/// Replaces raw Map<String, dynamic> returns with type-safe results.
+/// Replaces raw `Map<String, dynamic>` returns with type-safe results.
 ///
 /// Usage:
 ///   final result = await loginUseCase.execute(email, password);

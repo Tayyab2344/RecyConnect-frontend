@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/models/listing_model.dart';
 
 class WishlistScreen extends StatefulWidget {
-  const WishlistScreen({Key? key}) : super(key: key);
+  const WishlistScreen({super.key});
 
   @override
   State<WishlistScreen> createState() => _WishlistScreenState();
@@ -196,7 +195,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: isDark
-                          ? AppTheme.darkSecondaryGreen.withOpacity(0.3)
+                          ? AppTheme.darkSecondaryGreen.withValues(alpha: 0.3)
                           : AppTheme.lightGray,
                     ),
                   ),
@@ -209,7 +208,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
                           width: 56,
                           height: 56,
                           decoration: BoxDecoration(
-                            color: materialColor.withOpacity(0.1),
+                            color: materialColor.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Icon(
@@ -234,7 +233,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
                                       vertical: 4,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: materialColor.withOpacity(0.1),
+                                      color: materialColor.withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(6),
                                     ),
                                     child: Text(
@@ -317,8 +316,8 @@ class _WishlistScreenState extends State<WishlistScreen> {
                                 style: TextStyle(
                                   fontSize: 11,
                                   color: isDark
-                                      ? AppTheme.darkTextSecondary.withOpacity(0.7)
-                                      : AppTheme.textLight.withOpacity(0.7),
+                                      ? AppTheme.darkTextSecondary.withValues(alpha: 0.7)
+                                      : AppTheme.textLight.withValues(alpha: 0.7),
                                 ),
                               ),
                             ],

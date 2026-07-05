@@ -59,7 +59,7 @@ class ThemeProvider extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(_themeKey, isDarkMode);
     } catch (e) {
-
+      // Ignore storage errors if SharedPreferences is unavailable
     }
   }
 }

@@ -7,6 +7,7 @@
 /// ```dart
 /// import 'package:recyclick/presentation/widgets/curved/curved_widgets.dart';
 /// ```
+library;
 
 // Painters
 export 'wave_painter.dart';

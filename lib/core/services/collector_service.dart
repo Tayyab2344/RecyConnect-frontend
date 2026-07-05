@@ -399,4 +399,34 @@ class CollectorService {
     );
     return _decode(response)['data'] ?? {};
   }
+
+  // Reset collector password
+  Future<Map<String, dynamic>> resetCollectorPassword(int id) async {
+    final response = await http.post(
+      Uri.parse('${ApiConstants.baseUrl}/warehouse/collectors/$id/reset-password'),
+      headers: await _headers(),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(error['message'] ?? 'Failed to reset password');
+    }
+  }
+
+  // Get available unassigned tasks for independent collectors
+  Future<List<dynamic>> getAvailableTasks({String? materialType}) async {
+    String url = '${ApiConstants.baseUrl}/collector/available-tasks';
+    if (materialType != null && materialType.isNotEmpty) {
+      url += '?materialType=${Uri.encodeComponent(materialType)}';
+    }
+    final response = await http.get(
+      Uri.parse(url),
+      headers: await _headers(),
+    );
+    final decoded = _decode(response);
+    return decoded['data'] ?? [];
+  }
 }
+

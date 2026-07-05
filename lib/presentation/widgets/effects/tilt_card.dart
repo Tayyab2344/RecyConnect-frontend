@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart' show PointerExitEvent;
-import 'dart:math' as math;
 
 /// 3D Tilt Card Effect
 ///
@@ -130,7 +129,7 @@ class _TiltCardState extends State<TiltCard>
                   ..setEntry(3, 2, 0.001) // Perspective
                   ..rotateX(_rotateX)
                   ..rotateY(_rotateY)
-                  ..scale(widget.addElevation ? _scaleAnimation.value : 1.0),
+                  ..scaleByDouble(widget.addElevation ? _scaleAnimation.value : 1.0, widget.addElevation ? _scaleAnimation.value : 1.0, widget.addElevation ? _scaleAnimation.value : 1.0, 1.0),
                 transformAlignment: Alignment.center,
                 child: widget.child,
               );
@@ -267,8 +266,8 @@ class _LiftCardState extends State<LiftCard> {
         duration: widget.duration,
         curve: widget.curve,
         transform: Matrix4.identity()
-          ..translate(0.0, _isPressed ? 2.0 : 0.0)
-          ..scale(_isPressed ? 0.98 : 1.0),
+          ..translateByDouble(0.0, _isPressed ? 2.0 : 0.0, 0.0, 1.0)
+          ..scaleByDouble(_isPressed ? 0.98 : 1.0, _isPressed ? 0.98 : 1.0, _isPressed ? 0.98 : 1.0, 1.0),
         child: AnimatedContainer(
           duration: widget.duration,
           decoration: BoxDecoration(

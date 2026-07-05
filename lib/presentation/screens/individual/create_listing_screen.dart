@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 
@@ -28,12 +27,12 @@ class CreateListingScreen extends StatefulWidget {
   final bool requestCollector;
 
   const CreateListingScreen({
-    Key? key,
+    super.key,
     this.listing,
     this.initialMaterial,
     this.triggerCamera = false,
     this.requestCollector = false,
-  }) : super(key: key);
+  });
 
   @override
   State<CreateListingScreen> createState() => _CreateListingScreenState();
@@ -188,6 +187,8 @@ class _CreateListingScreenState extends State<CreateListingScreen>
   Future<void> _initGPSLocation() async {
     try {
       final locationService = LocationService();
+      // Explicitly request location permission
+      await locationService.requestLocationPermission();
       // Set a 4-second timeout to check GPS coordinates so UI loading is responsive
       final gpsData = await locationService.getCurrentLocationWithTimeout(
         timeout: const Duration(seconds: 4),
@@ -311,13 +312,13 @@ class _CreateListingScreenState extends State<CreateListingScreen>
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: _isGpsLocationVerified
-                      ? Colors.green.withOpacity(0.15)
-                      : (isDark ? MarketplaceTheme.darkAccentCyan : MarketplaceTheme.lightAccent).withOpacity(0.15),
+                      ? Colors.green.withValues(alpha: 0.15)
+                      : (isDark ? MarketplaceTheme.darkAccentCyan : MarketplaceTheme.lightAccent).withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: _isGpsLocationVerified
-                        ? Colors.green.withOpacity(0.4)
-                        : (isDark ? MarketplaceTheme.darkAccentCyan : MarketplaceTheme.lightAccent).withOpacity(0.4),
+                        ? Colors.green.withValues(alpha: 0.4)
+                        : (isDark ? MarketplaceTheme.darkAccentCyan : MarketplaceTheme.lightAccent).withValues(alpha: 0.4),
                   ),
                 ),
                 child: Text(
@@ -348,7 +349,7 @@ class _CreateListingScreenState extends State<CreateListingScreen>
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             decoration: BoxDecoration(
-              color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.02),
+              color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.02),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: isDark ? Colors.white12 : Colors.black12),
             ),
@@ -377,6 +378,7 @@ class _CreateListingScreenState extends State<CreateListingScreen>
                 height: 150,
                 width: double.infinity,
                 child: FlutterMap(
+                  key: ValueKey('$_latitude,$_longitude'),
                   options: MapOptions(
                     initialCenter: LatLng(_latitude!, _longitude!),
                     initialZoom: 14.5,
@@ -414,7 +416,7 @@ class _CreateListingScreenState extends State<CreateListingScreen>
               height: 150,
               width: double.infinity,
               decoration: BoxDecoration(
-                color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.02),
+                color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.02),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Center(
@@ -427,7 +429,7 @@ class _CreateListingScreenState extends State<CreateListingScreen>
             width: double.infinity,
             child: OutlinedButton.icon(
               icon: const Icon(Icons.map_outlined, size: 18),
-              label: const Text('CHANGE LOCATION'),
+              label: const Text('CONFIRM LOCATION'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: isDark ? MarketplaceTheme.darkAccentCyan : MarketplaceTheme.lightAccent,
                 side: BorderSide(
@@ -507,9 +509,11 @@ class _CreateListingScreenState extends State<CreateListingScreen>
         _runAIClassification();
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error picking image: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error picking image: $e')),
+        );
+      }
     }
   }
   Future<void> _runAIClassification() async {
@@ -677,12 +681,14 @@ class _CreateListingScreenState extends State<CreateListingScreen>
         status: 'PENDING',
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
+        price: _materialRates[_selectedMaterial] ?? 0.0,
         images: base64Images,
         latitude: _latitude,
         longitude: _longitude,
         city: _selectedCity,
         area: _selectedArea,
         metadata: {
+          'pickupRequired': _requestCollector,
           'userCurrentLocation': {
             'latitude': _userGpsLatitude ?? _latitude ?? 0.0,
             'longitude': _userGpsLongitude ?? _longitude ?? 0.0,
@@ -744,7 +750,7 @@ class _CreateListingScreenState extends State<CreateListingScreen>
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: (isDark ? MarketplaceTheme.darkAccentCyan : MarketplaceTheme.lightAccent).withOpacity(0.1),
+                color: (isDark ? MarketplaceTheme.darkAccentCyan : MarketplaceTheme.lightAccent).withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -813,7 +819,6 @@ class _CreateListingScreenState extends State<CreateListingScreen>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final size = MediaQuery.of(context).size;
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -957,7 +962,7 @@ class _CreateListingScreenState extends State<CreateListingScreen>
                         ),
                       ],
                     );
-                  }).toList(),
+                  }),
 
                 ],
               ),
@@ -970,45 +975,67 @@ class _CreateListingScreenState extends State<CreateListingScreen>
       children: [
         // AI Detected Material Badge
         if (_isAnalyzing)
-           const LinearProgressIndicator(
-             backgroundColor: Colors.transparent,
-             color: MarketplaceTheme.darkAccentCyan,
+           const Padding(
+             padding: EdgeInsets.only(bottom: 12),
+             child: ClipRRect(
+               borderRadius: BorderRadius.all(Radius.circular(4)),
+               child: LinearProgressIndicator(
+                 backgroundColor: Colors.transparent,
+                 color: MarketplaceTheme.darkAccentCyan,
+               ),
+             ),
            ),
         
         // Material Dropdown
         GlassCard(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: _isLoadingRates 
             ? const Center(child: Padding(padding: EdgeInsets.all(12.0), child: CircularProgressIndicator()))
-            : DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: _selectedMaterial,
-              isExpanded: true,
-              dropdownColor: isDark ? MarketplaceTheme.darkBackgroundEnd : Colors.white,
-              style: TextStyle(
-                color: isDark ? Colors.white : Colors.black87,
-                fontSize: 16,
-              ),
-              items: _materialRates.keys.map((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Row(
-                    children: [
-                      Icon(_getMaterialIcon(value), 
-                          color: isDark ? MarketplaceTheme.darkAccentGreen : MarketplaceTheme.lightAccent, size: 20),
-                      const SizedBox(width: 12),
-                      Text(value),
-                    ],
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Material Category',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: isDark ? Colors.white60 : Colors.black45,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                );
-              }).toList(),
-              onChanged: (newValue) {
-                setState(() {
-                  _selectedMaterial = newValue!;
-                });
-              },
-            ),
-          ),
+                  const SizedBox(height: 4),
+                  DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _selectedMaterial,
+                      isExpanded: true,
+                      dropdownColor: isDark ? MarketplaceTheme.darkBackgroundEnd : Colors.white,
+                      icon: Icon(Icons.arrow_drop_down, color: isDark ? Colors.white54 : Colors.black45),
+                      style: TextStyle(
+                        color: isDark ? Colors.white : Colors.black87,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      items: _materialRates.keys.map((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Row(
+                            children: [
+                              Icon(_getMaterialIcon(value), 
+                                  color: isDark ? MarketplaceTheme.darkAccentGreen : MarketplaceTheme.lightAccent, size: 20),
+                              const SizedBox(width: 12),
+                              Text(value),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (newValue) {
+                        setState(() {
+                          _selectedMaterial = newValue!;
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              ),
         ),
         const SizedBox(height: 12),
 
@@ -1035,51 +1062,29 @@ class _CreateListingScreenState extends State<CreateListingScreen>
         const SizedBox(height: 12),
 
         // Weight Field
-        Row(
-          children: [
-            Expanded(
-              flex: 2,
-              child: _buildTextField(
-                controller: _weightController,
-                label: 'Weight (kg)',
-                hint: '0.0',
-                icon: Icons.scale_outlined,
-                isDark: isDark,
-                keyboardType: TextInputType.number,
-                onChanged: (val) => setState(() {}), // Trigger total recalc
-                validator: (v) {
-                  if (v == null || v.isEmpty) return 'Required';
-                  final n = double.tryParse(v);
-                  if (n == null || n <= 0) return 'Invalid';
-                  
-                  // Role-based validation
-                  final authService = Provider.of<AuthService>(context, listen: false);
-                  final userRole = authService.userRole;
-                  // Fallback if role is not readily available synchronously
-                  if (userRole == 'individual' && n > 20) return 'Max 20kg for individuals';
-                  if ((userRole == 'warehouse' || userRole == 'company') && n < 10) return 'Min 10kg required';
-                  
-                  return null;
-                },
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              flex: 1,
-              child: GlassCard(
-                height: 60,
-                child: Center(
-                  child: Text(
-                    'KG',
-                    style: TextStyle(
-                      color: isDark ? Colors.white70 : Colors.black54,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
+        _buildTextField(
+          controller: _weightController,
+          label: 'Weight',
+          hint: '0.0',
+          icon: Icons.scale_outlined,
+          isDark: isDark,
+          keyboardType: TextInputType.number,
+          suffixText: 'kg',
+          onChanged: (val) => setState(() {}), // Trigger total recalc
+          validator: (v) {
+            if (v == null || v.isEmpty) return 'Required';
+            final n = double.tryParse(v);
+            if (n == null || n <= 0) return 'Invalid';
+            
+            // Role-based validation
+            final authService = Provider.of<AuthService>(context, listen: false);
+            final userRole = authService.userRole;
+            // Fallback if role is not readily available synchronously
+            if (userRole == 'individual' && n > 20) return 'Max 20kg for individuals';
+            if ((userRole == 'warehouse' || userRole == 'company') && n < 10) return 'Min 10kg required';
+            
+            return null;
+          },
         ),
       ],
     );
@@ -1092,10 +1097,10 @@ class _CreateListingScreenState extends State<CreateListingScreen>
         Container(
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
           decoration: BoxDecoration(
-            color: (isDark ? MarketplaceTheme.darkAccentGreen : MarketplaceTheme.lightAccent).withOpacity(0.1),
+            color: (isDark ? MarketplaceTheme.darkAccentGreen : MarketplaceTheme.lightAccent).withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: (isDark ? MarketplaceTheme.darkAccentGreen : MarketplaceTheme.lightAccent).withOpacity(0.3),
+              color: (isDark ? MarketplaceTheme.darkAccentGreen : MarketplaceTheme.lightAccent).withValues(alpha: 0.3),
             ),
           ),
           child: Row(
@@ -1143,47 +1148,47 @@ class _CreateListingScreenState extends State<CreateListingScreen>
                 ],
               ),
               const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: RadioListTile<bool>(
-                      title: Text(
-                        'Yes',
-                        style: TextStyle(
-                          color: isDark ? Colors.white : Colors.black87,
-                          fontSize: 14,
+              RadioGroup<bool>(
+                groupValue: _requestCollector,
+                onChanged: (val) => setState(() => _requestCollector = val!),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: RadioListTile<bool>(
+                        title: Text(
+                          'Yes',
+                          style: TextStyle(
+                            color: isDark ? Colors.white : Colors.black87,
+                            fontSize: 14,
+                          ),
                         ),
+                        value: true,
+                        activeColor: isDark
+                            ? MarketplaceTheme.darkAccentCyan
+                            : MarketplaceTheme.lightAccent,
+                        contentPadding: EdgeInsets.zero,
+                        dense: true,
                       ),
-                      value: true,
-                      groupValue: _requestCollector,
-                      activeColor: isDark
-                          ? MarketplaceTheme.darkAccentCyan
-                          : MarketplaceTheme.lightAccent,
-                      contentPadding: EdgeInsets.zero,
-                      dense: true,
-                      onChanged: (val) => setState(() => _requestCollector = val!),
                     ),
-                  ),
-                  Expanded(
-                    child: RadioListTile<bool>(
-                      title: Text(
-                        'No',
-                        style: TextStyle(
-                          color: isDark ? Colors.white : Colors.black87,
-                          fontSize: 14,
+                    Expanded(
+                      child: RadioListTile<bool>(
+                        title: Text(
+                          'No',
+                          style: TextStyle(
+                            color: isDark ? Colors.white : Colors.black87,
+                            fontSize: 14,
+                          ),
                         ),
+                        value: false,
+                        activeColor: isDark
+                            ? MarketplaceTheme.darkAccentCyan
+                            : MarketplaceTheme.lightAccent,
+                        contentPadding: EdgeInsets.zero,
+                        dense: true,
                       ),
-                      value: false,
-                      groupValue: _requestCollector,
-                      activeColor: isDark
-                          ? MarketplaceTheme.darkAccentCyan
-                          : MarketplaceTheme.lightAccent,
-                      contentPadding: EdgeInsets.zero,
-                      dense: true,
-                      onChanged: (val) => setState(() => _requestCollector = val!),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),
@@ -1198,11 +1203,11 @@ class _CreateListingScreenState extends State<CreateListingScreen>
     return Container(
       padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + safeAreaBottom),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0F172A).withOpacity(0.9) : Colors.white.withOpacity(0.9),
+        color: isDark ? const Color(0xFF0F172A).withValues(alpha: 0.9) : Colors.white.withValues(alpha: 0.9),
         border: Border(top: BorderSide(color: isDark ? Colors.white10 : Colors.black12)),
         boxShadow: [
           BoxShadow(
-             color: Colors.black.withOpacity(0.1),
+             color: Colors.black.withValues(alpha: 0.1),
              blurRadius: 10,
              offset: const Offset(0, -4),
           )
@@ -1305,6 +1310,7 @@ class _CreateListingScreenState extends State<CreateListingScreen>
     TextInputType? keyboardType,
     String? Function(String?)? validator,
     void Function(String)? onChanged,
+    String? suffixText,
   }) {
     return GlassCard(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -1317,11 +1323,20 @@ class _CreateListingScreenState extends State<CreateListingScreen>
         style: TextStyle(color: isDark ? Colors.white : Colors.black87),
         decoration: InputDecoration(
           border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          errorBorder: InputBorder.none,
+          focusedErrorBorder: InputBorder.none,
           labelText: label,
           hintText: hint,
           labelStyle: TextStyle(color: isDark ? Colors.white60 : Colors.black45),
           hintStyle: TextStyle(color: isDark ? Colors.white24 : Colors.black12),
           icon: Icon(icon, color: isDark ? Colors.white54 : Colors.black38),
+          suffixText: suffixText,
+          suffixStyle: TextStyle(
+            color: isDark ? Colors.white70 : Colors.black54,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
     );
@@ -1346,14 +1361,13 @@ class DottedBorderPlaceholder extends StatelessWidget {
   final bool isAnalyzing;
 
   const DottedBorderPlaceholder(
-      {Key? key, required this.isDark, required this.isAnalyzing})
-      : super(key: key);
+      {super.key, required this.isDark, required this.isAnalyzing});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.02),
+        color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.02),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isDark ? Colors.white24 : Colors.black26, 

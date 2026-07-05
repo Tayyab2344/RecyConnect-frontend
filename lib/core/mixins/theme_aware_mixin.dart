@@ -36,7 +36,7 @@ mixin ThemeAwareMixin<T extends StatefulWidget> on State<T> {
 
   /// Secondary text color
   Color get textSecondaryColor =>
-      textTheme.bodyMedium?.color?.withOpacity(0.7) ?? Colors.grey;
+      textTheme.bodyMedium?.color?.withValues(alpha: 0.7) ?? Colors.grey;
 
   /// Error color
   Color get errorColor => colors.error;
@@ -53,8 +53,8 @@ mixin ThemeAwareMixin<T extends StatefulWidget> on State<T> {
   List<BoxShadow> get themedShadow => [
         BoxShadow(
           color: isDarkMode
-              ? Colors.black.withOpacity(0.3)
-              : Colors.black.withOpacity(0.08),
+              ? Colors.black.withValues(alpha: 0.3)
+              : Colors.black.withValues(alpha: 0.08),
           blurRadius: 10,
           offset: const Offset(0, 4),
         ),
@@ -63,8 +63,8 @@ mixin ThemeAwareMixin<T extends StatefulWidget> on State<T> {
   /// Get themed border
   Border get themedBorder => Border.all(
         color: isDarkMode
-            ? Colors.white.withOpacity(0.1)
-            : Colors.black.withOpacity(0.05),
+            ? Colors.white.withValues(alpha: 0.1)
+            : Colors.black.withValues(alpha: 0.05),
         width: 1,
       );
 }
@@ -88,8 +88,8 @@ class ThemeHelper {
   List<BoxShadow> get shadow => [
         BoxShadow(
           color: isDarkMode
-              ? Colors.black.withOpacity(0.3)
-              : Colors.black.withOpacity(0.08),
+              ? Colors.black.withValues(alpha: 0.3)
+              : Colors.black.withValues(alpha: 0.08),
           blurRadius: 10,
           offset: const Offset(0, 4),
         ),

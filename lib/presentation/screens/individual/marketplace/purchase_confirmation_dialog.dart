@@ -8,8 +8,7 @@ import 'order_details_screen.dart';
 class PurchaseConfirmationDialog extends StatelessWidget {
   final Listing item;
 
-  const PurchaseConfirmationDialog({Key? key, required this.item})
-      : super(key: key);
+  const PurchaseConfirmationDialog({super.key, required this.item});
 
   void _onConfirm(BuildContext context) {
     Navigator.pop(context); // Close dialog

@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../core/theme/premium_design_system.dart';
@@ -533,7 +532,7 @@ class _PremiumAdminDashboardScreenState
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: PremiumDesignSystem.primary.withOpacity(0.1),
+                  color: PremiumDesignSystem.primary.withValues(alpha: 0.1),
                   borderRadius: PremiumDesignSystem.borderRadiusSmall,
                 ),
                 child: Icon(
@@ -641,8 +640,8 @@ class _PremiumAdminDashboardScreenState
           getDrawingHorizontalLine: (value) {
             return FlLine(
               color: isDark
-                  ? Colors.white.withOpacity(0.05)
-                  : Colors.grey.withOpacity(0.1),
+                  ? Colors.white.withValues(alpha: 0.05)
+                  : Colors.grey.withValues(alpha: 0.1),
               strokeWidth: 1,
             );
           },
@@ -727,8 +726,8 @@ class _PremiumAdminDashboardScreenState
               show: true,
               gradient: LinearGradient(
                 colors: [
-                  PremiumDesignSystem.accentBlue.withOpacity(0.3),
-                  PremiumDesignSystem.accentBlue.withOpacity(0.0),
+                  PremiumDesignSystem.accentBlue.withValues(alpha: 0.3),
+                  PremiumDesignSystem.accentBlue.withValues(alpha: 0.0),
                 ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
@@ -1005,8 +1004,8 @@ class _PremiumAdminDashboardScreenState
     return Divider(
       height: 1,
       color: isDark
-          ? Colors.white.withOpacity(0.05)
-          : Colors.grey.withOpacity(0.1),
+          ? Colors.white.withValues(alpha: 0.05)
+          : Colors.grey.withValues(alpha: 0.1),
     );
   }
 }

@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/services/item_service.dart';
+import '../../../core/theme/app_theme.dart';
 
 class AddItemScreen extends StatefulWidget {
   const AddItemScreen({super.key});
@@ -20,8 +21,8 @@ class _AddItemScreenState extends State<AddItemScreen> {
   double _price = 0;
   double _quantity = 0;
   String _category = 'Plastic';
-  String _unit = 'kg';
-  List<File> _images = [];
+  final String _unit = 'kg';
+  final List<File> _images = [];
   bool _isLoading = false;
 
   final List<String> _categories = ['Plastic', 'Metal', 'Paper', 'Glass', 'E-Waste'];
@@ -110,7 +111,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
                 ],
               ),
               DropdownButtonFormField<String>(
-                value: _category,
+                initialValue: _category,
                 decoration: const InputDecoration(labelText: 'Category'),
                 items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
                 onChanged: (value) => setState(() => _category = value!),
@@ -142,9 +143,35 @@ class _AddItemScreenState extends State<AddItemScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: _isLoading ? null : _submit,
-                child: _isLoading ? const CircularProgressIndicator() : const Text('List Item'),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _submit,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryGreen,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : const Text(
+                          'List Item',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                ),
               ),
             ],
           ),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 
 class PrivacyPolicyScreen extends StatelessWidget {
-  const PrivacyPolicyScreen({Key? key}) : super(key: key);
+  const PrivacyPolicyScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -154,11 +154,11 @@ class PrivacyPolicyScreen extends StatelessWidget {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: (isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen)
-                    .withOpacity(0.1),
+                    .withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: (isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen)
-                      .withOpacity(0.3),
+                      .withValues(alpha: 0.3),
                 ),
               ),
               child: Row(

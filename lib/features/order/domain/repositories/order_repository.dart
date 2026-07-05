@@ -3,7 +3,7 @@ import '../../../../core/network/api_result.dart';
 /// Abstract repository for order operations.
 abstract class OrderRepository {
   Future<ApiResult<Map<String, dynamic>>> createOrder(
-      int listingId, double weight, {String paymentMethod = 'cod'});
+      int listingId, double weight, {String paymentMethod = 'cod', String? deliveryMethod, double? buyerLatitude, double? buyerLongitude, int? chosenWarehouseId});
 
   Future<ApiResult<Map<String, dynamic>>> getOrders({
     String? role,

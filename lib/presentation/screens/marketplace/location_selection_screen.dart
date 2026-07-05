@@ -15,10 +15,10 @@ class LocationSelectionScreen extends StatefulWidget {
   final String? initialAddress;
 
   const LocationSelectionScreen({
-    Key? key,
+    super.key,
     required this.initialLocation,
     this.initialAddress,
-  }) : super(key: key);
+  });
 
   @override
   State<LocationSelectionScreen> createState() => _LocationSelectionScreenState();
@@ -166,6 +166,7 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
       await _updateLocation(pos);
     } else {
       setState(() => _isReverseGeocoding = false);
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Failed to fetch GPS coordinates. Ensure location is enabled.')),
       );
@@ -219,35 +220,33 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
                     point: _selectedLatLng,
                     width: 60,
                     height: 60,
-                    child: Container(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: isDark ? MarketplaceTheme.darkAccentCyan : MarketplaceTheme.lightAccent,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.3),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 2),
-                                )
-                              ],
-                            ),
-                            child: const Icon(Icons.location_on, color: Colors.white, size: 28),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: isDark ? MarketplaceTheme.darkAccentCyan : MarketplaceTheme.lightAccent,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.3),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              )
+                            ],
                           ),
-                          Container(
-                            width: 10,
-                            height: 10,
-                            decoration: BoxDecoration(
-                              color: isDark ? MarketplaceTheme.darkAccentCyan.withOpacity(0.5) : MarketplaceTheme.lightAccent.withOpacity(0.5),
-                              shape: BoxShape.circle,
-                            ),
-                          )
-                        ],
-                      ),
+                          child: const Icon(Icons.location_on, color: Colors.white, size: 28),
+                        ),
+                        Container(
+                          width: 10,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            color: isDark ? MarketplaceTheme.darkAccentCyan.withValues(alpha: 0.5) : MarketplaceTheme.lightAccent.withValues(alpha: 0.5),
+                            shape: BoxShape.circle,
+                          ),
+                        )
+                      ],
                     ),
                   ),
                 ],
@@ -370,7 +369,7 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
               left: 0,
               right: 0,
               bottom: 155,
-              child: Container(
+              child: SizedBox(
                 height: 55,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
@@ -435,12 +434,12 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF0F172A).withOpacity(0.9) : Colors.white.withOpacity(0.9),
+                color: isDark ? const Color(0xFF0F172A).withValues(alpha: 0.9) : Colors.white.withValues(alpha: 0.9),
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
                 border: Border(top: BorderSide(color: isDark ? Colors.white10 : Colors.black12)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.15),
+                    color: Colors.black.withValues(alpha: 0.15),
                     blurRadius: 10,
                     offset: const Offset(0, -3),
                   )

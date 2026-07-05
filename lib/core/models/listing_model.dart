@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 
 class ListingUser {
@@ -7,6 +6,7 @@ class ListingUser {
   final String? name;
   final String? email;
   final String? contactNo;
+  final String? role;
   final DateTime? createdAt;
 
   ListingUser({
@@ -14,6 +14,7 @@ class ListingUser {
     this.name,
     this.email,
     this.contactNo,
+    this.role,
     this.createdAt,
   });
 
@@ -23,6 +24,7 @@ class ListingUser {
       name: json['name'],
       email: json['email'],
       contactNo: json['contactNo'],
+      role: json['role'],
       createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt']) : null,
     );
   }
@@ -49,6 +51,7 @@ class Listing {
   final ListingUser? user;
   final List<String>? images; // Image URLs or paths
   final double quantity;
+  final double price;
   final List<ListingOrderItem> orderItems;
 
   Listing({
@@ -69,6 +72,7 @@ class Listing {
     this.user,
     this.images,
     this.quantity = 0,
+    this.price = 0.0,
     this.orderItems = const [],
     this.city,
     this.area,
@@ -109,6 +113,7 @@ class Listing {
           : const [],
       city: json['city'],
       area: json['area'],
+      price: json['price'] != null ? (json['price'] as num).toDouble() : 0.0,
       metadata: json['metadata'] is Map ? Map<String, dynamic>.from(json['metadata'] as Map) : null,
     );
   }
@@ -133,6 +138,7 @@ class Listing {
       'quantity': quantity,
       'city': city,
       'area': area,
+      'price': price,
       'metadata': metadata,
     };
   }
@@ -151,6 +157,7 @@ class Listing {
       if (images != null && images!.isNotEmpty) 'images': images,
       if (city != null) 'city': city,
       if (area != null) 'area': area,
+      'price': price,
       if (metadata != null) 'metadata': metadata,
     };
   }

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class AnimatedRobotIcon extends StatefulWidget {
   final Color color;
   final double size;
-  const AnimatedRobotIcon({Key? key, required this.color, this.size = 28}) : super(key: key);
+  const AnimatedRobotIcon({super.key, required this.color, this.size = 28});
 
   @override
   State<AnimatedRobotIcon> createState() => _AnimatedRobotIconState();

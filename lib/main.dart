@@ -13,7 +13,7 @@ import 'core/providers/theme_provider.dart';
 import 'presentation/screens/auth/login_screen.dart';
 import 'presentation/screens/dashboard/dashboard_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'core/services/observability_service.dart';
 import 'core/services/sync_manager.dart';
 import 'core/services/complaint_service.dart';
@@ -117,6 +117,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
     _connectivitySubscription = Connectivity().onConnectivityChanged.listen((results) {
       final hasConnection = results.contains(ConnectivityResult.wifi) || results.contains(ConnectivityResult.mobile);
       if (hasConnection) {
+        if (!mounted) return;
         if (_networkError) {
           setState(() {
             _networkError = false;
@@ -158,6 +159,8 @@ class _AuthWrapperState extends State<AuthWrapper> {
     // Check onboarding status
     final prefs = await SharedPreferences.getInstance();
     final hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
+
+    if (!mounted) return;
 
     // Try to restore saved authentication
     final authService = Provider.of<AuthService>(context, listen: false);

@@ -51,19 +51,19 @@ class MarketplaceTheme {
   }) {
     return BoxDecoration(
       color: isDark
-          ? darkGlassColor.withOpacity(opacity)
-          : lightGlassColor.withOpacity(opacity),
+          ? darkGlassColor.withValues(alpha: opacity)
+          : lightGlassColor.withValues(alpha: opacity),
       borderRadius: BorderRadius.circular(radius),
       border: Border.all(
         color: isDark
-            ? darkGlassBorder.withOpacity(0.5)
-            : lightGlassBorder.withOpacity(0.5),
+            ? darkGlassBorder.withValues(alpha: 0.5)
+            : lightGlassBorder.withValues(alpha: 0.5),
         width: 1.5,
       ),
       boxShadow: [
         BoxShadow(
           color: isDark
-              ? darkCardShadow.withOpacity(0.15) // Subtle neon glow
+              ? darkCardShadow.withValues(alpha: 0.15) // Subtle neon glow
               : lightCardShadow,
           blurRadius: 16,
           offset: const Offset(0, 8),
@@ -79,13 +79,13 @@ class MarketplaceTheme {
     final shadowColor = color ?? darkAccentCyan;
     return [
       BoxShadow(
-        color: shadowColor.withOpacity(0.6),
+        color: shadowColor.withValues(alpha: 0.6),
         blurRadius: 12,
         spreadRadius: 1,
         offset: const Offset(0, 0),
       ),
       BoxShadow(
-        color: shadowColor.withOpacity(0.3),
+        color: shadowColor.withValues(alpha: 0.3),
         blurRadius: 24,
         spreadRadius: 2,
         offset: const Offset(0, 0),

@@ -158,6 +158,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       final prefs = await SharedPreferences.getInstance();
       _hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
 
+      if (!mounted) return;
       final authService = Provider.of<AuthService>(context, listen: false);
       await authService.loadToken();
 
@@ -282,7 +283,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
           center: Alignment.center,
           radius: 1.2,
           colors: [
-            const Color(0xFF0D2818).withOpacity(0.8),
+            const Color(0xFF0D2818).withValues(alpha: 0.8),
             const Color(0xFF071410),
             const Color(0xFF030A07),
           ],
@@ -326,12 +327,12 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: const Color(0xFF4CAF50).withOpacity(0.25),
+                          color: const Color(0xFF4CAF50).withValues(alpha: 0.25),
                           width: 2,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF4CAF50).withOpacity(0.15),
+                            color: const Color(0xFF4CAF50).withValues(alpha: 0.15),
                             blurRadius: 40,
                             spreadRadius: 10,
                           ),
@@ -352,8 +353,8 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
                         colors: [
-                          const Color(0xFF4CAF50).withOpacity(0.1),
-                          const Color(0xFF2196F3).withOpacity(0.05),
+                          const Color(0xFF4CAF50).withValues(alpha: 0.1),
+                          const Color(0xFF2196F3).withValues(alpha: 0.05),
                           Colors.transparent,
                         ],
                       ),
@@ -369,12 +370,12 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                   borderRadius: BorderRadius.circular(logoSize * 0.22),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF4CAF50).withOpacity(0.3 * _glowOpacity.value),
+                      color: const Color(0xFF4CAF50).withValues(alpha: 0.3 * _glowOpacity.value),
                       blurRadius: 30,
                       spreadRadius: 5,
                     ),
                     BoxShadow(
-                      color: const Color(0xFF2196F3).withOpacity(0.15 * _glowOpacity.value),
+                      color: const Color(0xFF2196F3).withValues(alpha: 0.15 * _glowOpacity.value),
                       blurRadius: 50,
                       spreadRadius: 10,
                     ),
@@ -435,7 +436,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
         style: GoogleFonts.outfit(
           fontSize: 11,
           fontWeight: FontWeight.w600,
-          color: Colors.white.withOpacity(0.5),
+          color: Colors.white.withValues(alpha: 0.5),
           letterSpacing: 2.0,
         ),
       ),
@@ -472,8 +473,8 @@ class _ParticlePainter extends CustomPainter {
 
       final isGreen = i % 3 != 0;
       final color = isGreen
-          ? const Color(0xFF4CAF50).withOpacity(0.2 * opacity)
-          : const Color(0xFF2196F3).withOpacity(0.15 * opacity);
+          ? const Color(0xFF4CAF50).withValues(alpha: 0.2 * opacity)
+          : const Color(0xFF2196F3).withValues(alpha: 0.15 * opacity);
 
       canvas.drawCircle(
         Offset(baseX + dx, baseY + dy),
@@ -492,8 +493,8 @@ class _ParticlePainter extends CustomPainter {
       final dy = math.cos((progress * 2 * math.pi * speed * 0.5) + i * 2) * 30;
 
       final color = i % 2 == 0
-          ? const Color(0xFF4CAF50).withOpacity(0.06 * opacity)
-          : const Color(0xFF2196F3).withOpacity(0.04 * opacity);
+          ? const Color(0xFF4CAF50).withValues(alpha: 0.06 * opacity)
+          : const Color(0xFF2196F3).withValues(alpha: 0.04 * opacity);
 
       canvas.drawCircle(
         Offset(baseX + dx, baseY + dy),

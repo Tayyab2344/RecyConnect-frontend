@@ -45,6 +45,79 @@ class _CollectorManagementScreenState extends State<CollectorManagementScreen> {
     });
   }
 
+  void _resetPassword(Map<String, dynamic> collector) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Reset Password'),
+        content: Text('Are you sure you want to reset the password for ${collector['name']}?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(dialogContext); // Close confirm dialog
+              
+              // Show loading dialog
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (_) => const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(24.0),
+                    child: CircularProgressIndicator(),
+                  ),
+                ),
+              );
+
+              try {
+                final response = await _collectorService.resetCollectorPassword(collector['id']);
+                if (mounted) {
+                  Navigator.pop(context); // Close loading dialog
+                  // Show new password dialog
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (successContext) => AlertDialog(
+                      title: const Text('Password Reset Success'),
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('The password has been reset successfully. Please share the new password securely:'),
+                          const SizedBox(height: 16),
+                          SelectableText('Collector ID: ${response['data']['collectorId']}'),
+                          const SizedBox(height: 8),
+                          SelectableText('New Password: ${response['data']['password']}'),
+                        ],
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(successContext),
+                          child: const Text('Done'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  Navigator.pop(context); // Close loading dialog
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error: $e')),
+                  );
+                }
+              }
+            },
+            child: const Text('Reset', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -161,9 +234,9 @@ class _CollectorManagementScreenState extends State<CollectorManagementScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
-                              color: statusColor.withOpacity(0.12),
+                              color: statusColor.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: statusColor.withOpacity(0.3)),
+                              border: Border.all(color: statusColor.withValues(alpha: 0.3)),
                             ),
                             child: Text(
                               statusText,
@@ -195,23 +268,25 @@ class _CollectorManagementScreenState extends State<CollectorManagementScreen> {
                                   ),
                                 ],
                               ),
-                              if (collector['plainPassword'] != null) ...[
-                                const SizedBox(height: 4),
-                                Row(
+                              const SizedBox(height: 4),
+                              InkWell(
+                                onTap: () => _resetPassword(collector),
+                                child: Row(
                                   children: [
-                                    const Icon(Icons.lock_open, size: 14, color: Colors.grey),
+                                    const Icon(Icons.lock_reset, size: 14, color: Colors.grey),
                                     const SizedBox(width: 6),
                                     Text(
-                                      'Pass: ${collector['plainPassword']}',
+                                      'Reset Password',
                                       style: TextStyle(
-                                        color: Colors.red[700],
+                                        color: Colors.blue[700],
                                         fontWeight: FontWeight.w500,
                                         fontSize: 12,
+                                        decoration: TextDecoration.underline,
                                       ),
                                     ),
                                   ],
                                 ),
-                              ],
+                              ),
                             ],
                           ),
                           Column(
@@ -257,7 +332,7 @@ class _CollectorManagementScreenState extends State<CollectorManagementScreen> {
                                 padding: const EdgeInsets.symmetric(vertical: 8),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                 foregroundColor: AppTheme.primaryGreen,
-                                side: BorderSide(color: AppTheme.primaryGreen.withOpacity(0.5)),
+                                side: BorderSide(color: AppTheme.primaryGreen.withValues(alpha: 0.5)),
                               ),
                             ),
                           ),
@@ -282,7 +357,7 @@ class _CollectorManagementScreenState extends State<CollectorManagementScreen> {
                                 padding: const EdgeInsets.symmetric(vertical: 8),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                 foregroundColor: Colors.blue[700],
-                                side: BorderSide(color: Colors.blue.withOpacity(0.5)),
+                                side: BorderSide(color: Colors.blue.withValues(alpha: 0.5)),
                               ),
                             ),
                           ),
@@ -305,7 +380,7 @@ class _CollectorManagementScreenState extends State<CollectorManagementScreen> {
                                 padding: const EdgeInsets.symmetric(vertical: 8),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                 foregroundColor: Colors.grey[800],
-                                side: BorderSide(color: Colors.grey.withOpacity(0.5)),
+                                side: BorderSide(color: Colors.grey.withValues(alpha: 0.5)),
                               ),
                             ),
                           ),
@@ -539,10 +614,27 @@ class _AddCollectorDialogState extends State<AddCollectorDialog> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryGreen,
                       foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     child: _isLoading
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text('Create Collector'),
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Text(
+                            'Create Collector',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
                 ),
               ],
@@ -756,9 +848,9 @@ class _DispatchTaskDialogState extends State<DispatchTaskDialog> {
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryGreen.withOpacity(0.08),
+                    color: AppTheme.primaryGreen.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AppTheme.primaryGreen.withOpacity(0.2)),
+                    border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.2)),
                   ),
                   child: Row(
                     children: [
@@ -797,7 +889,7 @@ class _DispatchTaskDialogState extends State<DispatchTaskDialog> {
 
                 // Task Type Dropdown
                 DropdownButtonFormField<String>(
-                  value: _taskType,
+                  initialValue: _taskType,
                   decoration: const InputDecoration(labelText: 'Task Type', border: OutlineInputBorder()),
                   items: const [
                     DropdownMenuItem(value: 'SELLER_TO_WAREHOUSE', child: Text('Seller to Warehouse')),
@@ -909,10 +1001,27 @@ class _DispatchTaskDialogState extends State<DispatchTaskDialog> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryGreen,
                       foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     child: _isLoading
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text('Dispatch Task'),
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Text(
+                            'Dispatch Task',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
                 ),
               ],
@@ -1041,7 +1150,7 @@ class _OrderSelectionDialogState extends State<OrderSelectionDialog> {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                   decoration: BoxDecoration(
-                                    color: (isBuying ? Colors.blue : Colors.green).withOpacity(0.12),
+                                    color: (isBuying ? Colors.blue : Colors.green).withValues(alpha: 0.12),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Text(

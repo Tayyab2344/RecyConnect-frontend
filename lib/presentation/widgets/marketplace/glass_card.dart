@@ -10,7 +10,7 @@ class GlassCard extends StatefulWidget {
   final VoidCallback? onTap;
 
   const GlassCard({
-    Key? key,
+    super.key,
     required this.child,
     this.borderRadius = 20,
     this.padding = const EdgeInsets.all(16),
@@ -18,7 +18,7 @@ class GlassCard extends StatefulWidget {
     this.width,
     this.height,
     this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   State<GlassCard> createState() => _GlassCardState();
@@ -66,19 +66,19 @@ class _GlassCardState extends State<GlassCard> with SingleTickerProviderStateMix
               borderRadius: BorderRadius.circular(widget.borderRadius),
               border: Border.all(
                 color: isDark
-                    ? Colors.white.withOpacity(0.06)
+                    ? Colors.white.withValues(alpha: 0.06)
                     : const Color(0xFFE8ECF0),
                 width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(isDark ? 0.25 : 0.06),
+                  color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.06),
                   blurRadius: 16,
                   offset: const Offset(0, 4),
                 ),
                 if (!isDark)
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.02),
+                    color: Colors.black.withValues(alpha: 0.02),
                     blurRadius: 4,
                     offset: const Offset(0, 1),
                   ),

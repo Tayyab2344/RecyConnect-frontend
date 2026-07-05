@@ -79,10 +79,10 @@ class ModernColors {
   );
 
   // ============ GLASSMORPHISM ============
-  static Color glassBackground = Colors.white.withOpacity(0.7);
-  static Color glassBackgroundDark = Colors.white.withOpacity(0.15);
-  static Color glassBorder = Colors.white.withOpacity(0.2);
-  static Color glassBorderLight = Colors.white.withOpacity(0.5);
+  static Color glassBackground = Colors.white.withValues(alpha: 0.7);
+  static Color glassBackgroundDark = Colors.white.withValues(alpha: 0.15);
+  static Color glassBorder = Colors.white.withValues(alpha: 0.2);
+  static Color glassBorderLight = Colors.white.withValues(alpha: 0.5);
   
   // Dark Mode Neon Colors (matching app theme)
   static const Color neonCyan = Color(0xFF00E5FF);
@@ -96,15 +96,15 @@ class ModernColors {
     double opacity = 0.7,
   }) {
     return BoxDecoration(
-      color: (color ?? Colors.white).withOpacity(opacity),
+      color: (color ?? Colors.white).withValues(alpha: opacity),
       borderRadius: BorderRadius.circular(borderRadius),
       border: Border.all(
-        color: Colors.white.withOpacity(0.2),
+        color: Colors.white.withValues(alpha: 0.2),
         width: 1.5,
       ),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withOpacity(0.1),
+          color: Colors.black.withValues(alpha: 0.1),
           offset: const Offset(0, 8),
           blurRadius: 32,
         ),
@@ -123,23 +123,23 @@ class ModernColors {
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [
-          Colors.white.withOpacity(0.12),
-          Colors.white.withOpacity(0.05),
+          Colors.white.withValues(alpha: 0.12),
+          Colors.white.withValues(alpha: 0.05),
         ],
       ),
       borderRadius: BorderRadius.circular(borderRadius),
       border: Border.all(
-        color: glowColor.withOpacity(glowIntensity),
+        color: glowColor.withValues(alpha: glowIntensity),
         width: 1.5,
       ),
       boxShadow: [
         BoxShadow(
-          color: glowColor.withOpacity(0.08),
+          color: glowColor.withValues(alpha: 0.08),
           blurRadius: 20,
           spreadRadius: 0,
         ),
         BoxShadow(
-          color: Colors.black.withOpacity(0.3),
+          color: Colors.black.withValues(alpha: 0.3),
           offset: const Offset(0, 8),
           blurRadius: 15,
         ),
@@ -154,10 +154,10 @@ class ModernColors {
     double opacity = 0.15,
   }) {
     return BoxDecoration(
-      color: color.withOpacity(opacity),
+      color: color.withValues(alpha: opacity),
       borderRadius: BorderRadius.circular(borderRadius),
       border: Border.all(
-        color: color.withOpacity(0.3),
+        color: color.withValues(alpha: 0.3),
         width: 1.5,
       ),
     );
@@ -166,12 +166,12 @@ class ModernColors {
   // ============ NEUMORPHISM ============
   static List<BoxShadow> neumorphicShadow = [
     BoxShadow(
-      color: Colors.white.withOpacity(0.8),
+      color: Colors.white.withValues(alpha: 0.8),
       offset: const Offset(-4, -4),
       blurRadius: 8,
     ),
     BoxShadow(
-      color: Colors.grey.withOpacity(0.3),
+      color: Colors.grey.withValues(alpha: 0.3),
       offset: const Offset(4, 4),
       blurRadius: 8,
     ),
@@ -179,12 +179,12 @@ class ModernColors {
 
   static List<BoxShadow> neumorphicShadowInset = [
     BoxShadow(
-      color: Colors.grey.withOpacity(0.3),
+      color: Colors.grey.withValues(alpha: 0.3),
       offset: const Offset(-2, -2),
       blurRadius: 4,
     ),
     BoxShadow(
-      color: Colors.white.withOpacity(0.8),
+      color: Colors.white.withValues(alpha: 0.8),
       offset: const Offset(2, 2),
       blurRadius: 4,
     ),
@@ -193,7 +193,7 @@ class ModernColors {
   // ============ MODERN SOFT SHADOWS ============
   static List<BoxShadow> softShadow = [
     BoxShadow(
-      color: Colors.black.withOpacity(0.05),
+      color: Colors.black.withValues(alpha: 0.05),
       offset: const Offset(0, 4),
       blurRadius: 20,
       spreadRadius: 0,
@@ -202,7 +202,7 @@ class ModernColors {
 
   static List<BoxShadow> softShadowMedium = [
     BoxShadow(
-      color: Colors.black.withOpacity(0.08),
+      color: Colors.black.withValues(alpha: 0.08),
       offset: const Offset(0, 8),
       blurRadius: 24,
       spreadRadius: 0,
@@ -211,7 +211,7 @@ class ModernColors {
 
   static List<BoxShadow> softShadowLarge = [
     BoxShadow(
-      color: Colors.black.withOpacity(0.1),
+      color: Colors.black.withValues(alpha: 0.1),
       offset: const Offset(0, 12),
       blurRadius: 32,
       spreadRadius: 0,
@@ -222,7 +222,7 @@ class ModernColors {
   static List<BoxShadow> coloredShadow(Color color, {double opacity = 0.3}) {
     return [
       BoxShadow(
-        color: color.withOpacity(opacity),
+        color: color.withValues(alpha: opacity),
         offset: const Offset(0, 8),
         blurRadius: 24,
         spreadRadius: 0,
@@ -234,7 +234,7 @@ class ModernColors {
   static List<BoxShadow> elevatedColoredShadow(Color color) {
     return [
       BoxShadow(
-        color: color.withOpacity(0.4),
+        color: color.withValues(alpha: 0.4),
         offset: const Offset(0, 12),
         blurRadius: 28,
         spreadRadius: 0,
@@ -243,8 +243,8 @@ class ModernColors {
   }
 
   // ============ HOVER EFFECTS ============
-  static Color hoverColor = const Color(0xFF10B981).withOpacity(0.1);
-  static Color hoverColorLight = const Color(0xFF10B981).withOpacity(0.05);
+  static Color hoverColor = const Color(0xFF10B981).withValues(alpha: 0.1);
+  static Color hoverColorLight = const Color(0xFF10B981).withValues(alpha: 0.05);
 
   // ============ CARD DECORATIONS ============
   static BoxDecoration modernCardDecoration({
@@ -261,7 +261,7 @@ class ModernColors {
           : softShadow,
       border: Border.all(
         color: isHovered
-            ? (hoverColor ?? const Color(0xFF10B981)).withOpacity(0.5)
+            ? (hoverColor ?? const Color(0xFF10B981)).withValues(alpha: 0.5)
             : Colors.transparent,
         width: 2,
       ),
@@ -288,7 +288,7 @@ class ModernColors {
   }) {
     return BoxDecoration(
       gradient: LinearGradient(
-        colors: [color, color.withOpacity(0.8)],
+        colors: [color, color.withValues(alpha: 0.8)],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       ),
@@ -296,7 +296,7 @@ class ModernColors {
       boxShadow: withShadow
           ? [
               BoxShadow(
-                color: color.withOpacity(0.3),
+                color: color.withValues(alpha: 0.3),
                 offset: const Offset(0, 4),
                 blurRadius: 12,
               ),
@@ -334,7 +334,7 @@ class ModernColors {
   /// Get gradient for specific color
   static LinearGradient getGradientForColor(Color color) {
     return LinearGradient(
-      colors: [color, color.withOpacity(0.7)],
+      colors: [color, color.withValues(alpha: 0.7)],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
     );
@@ -342,7 +342,7 @@ class ModernColors {
 
   /// Get light version of color
   static Color getLightColor(Color color, {double opacity = 0.1}) {
-    return color.withOpacity(opacity);
+    return color.withValues(alpha: opacity);
   }
 
   /// Create blur filter for glassmorphism
@@ -355,7 +355,7 @@ class ModernColors {
 extension GradientExtension on Color {
   LinearGradient toGradient({double endOpacity = 0.7}) {
     return LinearGradient(
-      colors: [this, withOpacity(endOpacity)],
+      colors: [this, withValues(alpha: endOpacity)],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
     );

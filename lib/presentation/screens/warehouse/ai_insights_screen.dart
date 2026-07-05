@@ -39,9 +39,9 @@ class _AIInsightsScreenState extends State<AIInsightsScreen> with SingleTickerPr
     final items = await _warehouseService.getInventory();
     if (items.isNotEmpty) {
       double weight = 0;
-      items.forEach((item) {
+      for (var item in items) {
         weight += (item['quantityInStock'] ?? 0.0);
-      });
+      }
       setState(() {
         _totalInventoryWeight = weight > 0 ? weight : 4250.0;
         _co2SavingsKg = _totalInventoryWeight * 0.75; // average conversion factor
@@ -133,7 +133,7 @@ class _AIInsightsScreenState extends State<AIInsightsScreen> with SingleTickerPr
         gradient: LinearGradient(
           colors: [
             primaryColor,
-            primaryColor.withOpacity(0.8),
+            primaryColor.withValues(alpha: 0.8),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -141,7 +141,7 @@ class _AIInsightsScreenState extends State<AIInsightsScreen> with SingleTickerPr
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: primaryColor.withOpacity(0.3),
+            color: primaryColor.withValues(alpha: 0.3),
             blurRadius: 16,
             offset: const Offset(0, 8),
           )
@@ -159,7 +159,7 @@ class _AIInsightsScreenState extends State<AIInsightsScreen> with SingleTickerPr
                   Text(
                     'Warehouse Footprint',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.8),
+                      color: Colors.white.withValues(alpha: 0.8),
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       letterSpacing: 1.0,
@@ -179,7 +179,7 @@ class _AIInsightsScreenState extends State<AIInsightsScreen> with SingleTickerPr
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -203,7 +203,7 @@ class _AIInsightsScreenState extends State<AIInsightsScreen> with SingleTickerPr
               Container(
                 height: 40,
                 width: 1,
-                color: Colors.white.withOpacity(0.3),
+                color: Colors.white.withValues(alpha: 0.3),
               ),
               Expanded(
                 child: _buildFootprintStat(
@@ -222,7 +222,7 @@ class _AIInsightsScreenState extends State<AIInsightsScreen> with SingleTickerPr
   Widget _buildFootprintStat(String label, String value, IconData icon) {
     return Row(
       children: [
-        Icon(icon, color: Colors.white.withOpacity(0.9), size: 28),
+        Icon(icon, color: Colors.white.withValues(alpha: 0.9), size: 28),
         const SizedBox(width: 12),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -230,7 +230,7 @@ class _AIInsightsScreenState extends State<AIInsightsScreen> with SingleTickerPr
             Text(
               label,
               style: TextStyle(
-                color: Colors.white.withOpacity(0.7),
+                color: Colors.white.withValues(alpha: 0.7),
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 0.8,
@@ -358,12 +358,12 @@ class _AIInsightsScreenState extends State<AIInsightsScreen> with SingleTickerPr
         color: isDark ? AppTheme.darkCardSurface : Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.04),
+          color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04),
           width: 1.0,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 12,
             offset: const Offset(0, 6),
           )
@@ -378,7 +378,7 @@ class _AIInsightsScreenState extends State<AIInsightsScreen> with SingleTickerPr
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: _getCategoryColor(category).withOpacity(0.1),
+                  color: _getCategoryColor(category).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -404,7 +404,7 @@ class _AIInsightsScreenState extends State<AIInsightsScreen> with SingleTickerPr
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: impactColor.withOpacity(0.1),
+                  color: impactColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Row(
@@ -464,7 +464,7 @@ class _AIInsightsScreenState extends State<AIInsightsScreen> with SingleTickerPr
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
               decoration: BoxDecoration(
-                color: isDark ? Colors.white.withOpacity(0.04) : Colors.black.withOpacity(0.02),
+                color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.02),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
                   color: isDark ? Colors.white10 : Colors.black12,
@@ -531,7 +531,7 @@ class _AIInsightsScreenState extends State<AIInsightsScreen> with SingleTickerPr
             Icons.lightbulb_outline,
             size: 64,
             color: (isDark ? AppTheme.darkTextSecondary : AppTheme.textLight)
-                .withOpacity(0.5),
+                .withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
           Text(

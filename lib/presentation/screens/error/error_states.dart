@@ -12,7 +12,7 @@ class ErrorStateWidget extends StatelessWidget {
   final double iconSize;
 
   const ErrorStateWidget({
-    Key? key,
+    super.key,
     required this.icon,
     required this.title,
     required this.message,
@@ -20,7 +20,7 @@ class ErrorStateWidget extends StatelessWidget {
     this.onButtonPressed,
     this.iconColor,
     this.iconSize = 80,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -92,7 +92,7 @@ class ErrorStateWidget extends StatelessWidget {
 class NoInternetScreen extends StatelessWidget {
   final VoidCallback? onRetry;
 
-  const NoInternetScreen({Key? key, this.onRetry}) : super(key: key);
+  const NoInternetScreen({super.key, this.onRetry});
 
   @override
   Widget build(BuildContext context) {
@@ -120,10 +120,10 @@ class GpsNotAvailableScreen extends StatelessWidget {
   final VoidCallback? onRetry;
 
   const GpsNotAvailableScreen({
-    Key? key,
+    super.key,
     this.onManualEntry,
     this.onRetry,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -221,10 +221,10 @@ class UploadFailedScreen extends StatelessWidget {
   final String? errorMessage;
 
   const UploadFailedScreen({
-    Key? key,
+    super.key,
     this.onRetry,
     this.errorMessage,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -256,10 +256,10 @@ class SomethingWentWrongScreen extends StatelessWidget {
   final String? errorMessage;
 
   const SomethingWentWrongScreen({
-    Key? key,
+    super.key,
     this.onRetry,
     this.errorMessage,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -291,10 +291,10 @@ class InvalidFileFormatScreen extends StatelessWidget {
   final String? supportedFormats;
 
   const InvalidFileFormatScreen({
-    Key? key,
+    super.key,
     this.onSelectAnother,
     this.supportedFormats,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -341,11 +341,11 @@ class InvalidFileFormatScreen extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: (isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen)
-                    .withOpacity(0.1),
+                    .withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: (isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen)
-                      .withOpacity(0.3),
+                      .withValues(alpha: 0.3),
                 ),
               ),
               child: Column(

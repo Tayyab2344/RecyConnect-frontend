@@ -16,9 +16,14 @@ class OrderService {
 
   // Create a new order from a listing
   Future<Order> createOrder(int listingId, double weight,
-      {String paymentMethod = 'cod'}) async {
+      {String paymentMethod = 'cod', String? deliveryMethod, double? buyerLatitude, double? buyerLongitude, int? chosenWarehouseId}) async {
     final data = _unwrapMap(
-      await _repository.createOrder(listingId, weight, paymentMethod: paymentMethod),
+      await _repository.createOrder(listingId, weight,
+          paymentMethod: paymentMethod,
+          deliveryMethod: deliveryMethod,
+          buyerLatitude: buyerLatitude,
+          buyerLongitude: buyerLongitude,
+          chosenWarehouseId: chosenWarehouseId),
       'Failed to create order'
     );
     return Order.fromJson(data);

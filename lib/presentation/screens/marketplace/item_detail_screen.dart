@@ -10,7 +10,7 @@ import '../individual/marketplace/checkout_screen.dart'; // Route to the checkou
 class ItemDetailScreen extends StatefulWidget {
   final Map<String, dynamic> itemMap;
 
-  const ItemDetailScreen({Key? key, required this.itemMap}) : super(key: key);
+  const ItemDetailScreen({super.key, required this.itemMap});
 
   @override
   State<ItemDetailScreen> createState() => _ItemDetailScreenState();
@@ -182,7 +182,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                                       shape: BoxShape.circle,
                                       color: _currentImageIndex == index
                                           ? (isDark ? MarketplaceTheme.darkAccentCyan : MarketplaceTheme.lightAccent)
-                                          : Colors.white.withOpacity(0.5),
+                                          : Colors.white.withValues(alpha: 0.5),
                                     ),
                                   ),
                                 ),
@@ -208,9 +208,9 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                               decoration: BoxDecoration(
                                 color: isDark
                                     ? MarketplaceTheme.darkAccentGreen
-                                        .withOpacity(0.2)
+                                        .withValues(alpha: 0.2)
                                     : MarketplaceTheme.lightAccent
-                                        .withOpacity(0.2),
+                                        .withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(

@@ -11,7 +11,7 @@ class NeonButton extends StatelessWidget {
   final bool isLoading;
 
   const NeonButton({
-    Key? key,
+    super.key,
     required this.text,
     required this.onPressed,
     this.color,
@@ -19,7 +19,7 @@ class NeonButton extends StatelessWidget {
     this.width,
     this.icon,
     this.isLoading = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +40,7 @@ class NeonButton extends StatelessWidget {
             ? MarketplaceTheme.getNeonShadow(isDark: true, color: buttonColor)
             : [
                 BoxShadow(
-                  color: buttonColor.withOpacity(0.3),
+                  color: buttonColor.withValues(alpha: 0.3),
                   blurRadius: 8,
                   offset: const Offset(0, 4),
                 )

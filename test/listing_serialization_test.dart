@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:recyconnect/core/models/listing_model.dart';
-import 'package:recyconnect/core/services/listing_service.dart';
 
 void main() {
   test('Listing serialization test', () {
@@ -29,8 +28,7 @@ void main() {
 
     // Test jsonEncode of the map (simulating ApiService)
     try {
-      final jsonString = jsonEncode(jsonMap);
-      print('Serialization successful: ${jsonString.substring(0, 100)}...');
+      jsonEncode(jsonMap);
     } catch (e) {
       fail('JSON encoding failed: $e');
     }

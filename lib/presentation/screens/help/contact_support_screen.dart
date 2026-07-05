@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 
 class ContactSupportScreen extends StatefulWidget {
-  const ContactSupportScreen({Key? key}) : super(key: key);
+  const ContactSupportScreen({super.key});
 
   @override
   State<ContactSupportScreen> createState() => _ContactSupportScreenState();
@@ -65,7 +65,7 @@ class _ContactSupportScreenState extends State<ContactSupportScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppTheme.primaryGreen.withOpacity(0.1),
+                color: AppTheme.primaryGreen.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -229,7 +229,7 @@ class _ContactSupportScreenState extends State<ContactSupportScreen> {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: isDark
-                        ? AppTheme.darkSecondaryGreen.withOpacity(0.3)
+                        ? AppTheme.darkSecondaryGreen.withValues(alpha: 0.3)
                         : AppTheme.lightGray,
                   ),
                 ),
@@ -313,7 +313,7 @@ class _ContactSupportScreenState extends State<ContactSupportScreen> {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: isDark
-                          ? AppTheme.darkSecondaryGreen.withOpacity(0.3)
+                          ? AppTheme.darkSecondaryGreen.withValues(alpha: 0.3)
                           : AppTheme.lightGray,
                       style: BorderStyle.solid,
                       width: 2,
@@ -386,11 +386,11 @@ class _ContactSupportScreenState extends State<ContactSupportScreen> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: (isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen)
-                      .withOpacity(0.1),
+                      .withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: (isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen)
-                        .withOpacity(0.3),
+                        .withValues(alpha: 0.3),
                   ),
                 ),
                 child: Row(

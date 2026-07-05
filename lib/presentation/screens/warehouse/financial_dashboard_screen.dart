@@ -134,11 +134,11 @@ class _FinancialDashboardScreenState extends State<FinancialDashboardScreen> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: (isDark ? AppTheme.darkSecondaryGreen : AppTheme.lightGray)
-              .withOpacity(0.2),
+              .withValues(alpha: 0.2),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 6,
             offset: const Offset(0, 3),
           )
@@ -201,7 +201,7 @@ class _FinancialDashboardScreenState extends State<FinancialDashboardScreen> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: (isDark ? AppTheme.darkSecondaryGreen : AppTheme.lightGray)
-              .withOpacity(0.2),
+              .withValues(alpha: 0.2),
         ),
       ),
       child: Column(
@@ -287,7 +287,7 @@ class _FinancialDashboardScreenState extends State<FinancialDashboardScreen> {
                     dotData: const FlDotData(show: true),
                     belowBarData: BarAreaData(
                       show: true,
-                      color: Colors.green.withOpacity(0.1),
+                      color: Colors.green.withValues(alpha: 0.1),
                     ),
                   ),
                   // Expenses Line (purchases + expenses)
@@ -303,7 +303,7 @@ class _FinancialDashboardScreenState extends State<FinancialDashboardScreen> {
                     dotData: const FlDotData(show: true),
                     belowBarData: BarAreaData(
                       show: true,
-                      color: Colors.orange.withOpacity(0.05),
+                      color: Colors.orange.withValues(alpha: 0.05),
                     ),
                   ),
                 ],
@@ -351,7 +351,7 @@ class _FinancialDashboardScreenState extends State<FinancialDashboardScreen> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: (isDark ? AppTheme.darkSecondaryGreen : AppTheme.lightGray)
-              .withOpacity(0.2),
+              .withValues(alpha: 0.2),
         ),
       ),
       child: Column(

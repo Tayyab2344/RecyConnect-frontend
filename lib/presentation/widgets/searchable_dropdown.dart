@@ -125,7 +125,7 @@ class _SearchableDropdownState extends State<SearchableDropdown> {
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide(
                             color: isDark 
-                                ? AppTheme.darkSecondaryGreen.withOpacity(0.3)
+                                ? AppTheme.darkSecondaryGreen.withValues(alpha: 0.3)
                                 : Colors.grey.shade300,
                           ),
                         ),
@@ -190,7 +190,7 @@ class _SearchableDropdownState extends State<SearchableDropdown> {
                           decoration: BoxDecoration(
                             border: Border.all(
                               color: isDark 
-                                  ? AppTheme.darkSecondaryGreen.withOpacity(0.3)
+                                  ? AppTheme.darkSecondaryGreen.withValues(alpha: 0.3)
                                   : Colors.grey.shade300,
                             ),
                             borderRadius: BorderRadius.circular(12),
@@ -201,7 +201,7 @@ class _SearchableDropdownState extends State<SearchableDropdown> {
                             separatorBuilder: (context, index) => Divider(
                               height: 1,
                               color: isDark 
-                                  ? AppTheme.darkSecondaryGreen.withOpacity(0.2)
+                                  ? AppTheme.darkSecondaryGreen.withValues(alpha: 0.2)
                                   : Colors.grey.shade200,
                             ),
                             itemBuilder: (context, index) {
@@ -226,8 +226,8 @@ class _SearchableDropdownState extends State<SearchableDropdown> {
                                 ),
                                 selected: isSelected,
                                 selectedTileColor: isDark 
-                                    ? AppTheme.darkPrimaryGreen.withOpacity(0.1)
-                                    : AppTheme.primaryGreen.withOpacity(0.05),
+                                    ? AppTheme.darkPrimaryGreen.withValues(alpha: 0.1)
+                                    : AppTheme.primaryGreen.withValues(alpha: 0.05),
                                 onTap: () {
                                   widget.onChanged(item);
                                   Navigator.pop(context);
@@ -251,7 +251,6 @@ class _SearchableDropdownState extends State<SearchableDropdown> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final hasError = widget.validator != null && widget.validator!(widget.value) != null;
 
     return FormField<String>(
       initialValue: widget.value,
@@ -276,13 +275,13 @@ class _SearchableDropdownState extends State<SearchableDropdown> {
                         : widget.value != null && widget.value!.isNotEmpty
                             ? (isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen)
                             : (isDark 
-                                ? AppTheme.darkSecondaryGreen.withOpacity(0.3)
+                                ? AppTheme.darkSecondaryGreen.withValues(alpha: 0.3)
                                 : Colors.grey.shade300),
                     width: field.hasError ? 2 : 1,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.03),
+                      color: Colors.black.withValues(alpha: 0.03),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),

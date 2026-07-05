@@ -128,8 +128,19 @@ class Order {
     return 0.0;
   }
 
-  String get sellerName => seller?.name ?? 'Unknown';
-  String get buyerName => buyer?.name ?? 'Unknown';
+  String get sellerName {
+    if (seller?.name != null && seller!.name!.isNotEmpty) return seller!.name!;
+    if (seller?.businessName != null && seller!.businessName!.isNotEmpty) return seller!.businessName!;
+    if (seller?.companyName != null && seller!.companyName!.isNotEmpty) return seller!.companyName!;
+    return 'Unknown';
+  }
+
+  String get buyerName {
+    if (buyer?.name != null && buyer!.name!.isNotEmpty) return buyer!.name!;
+    if (buyer?.businessName != null && buyer!.businessName!.isNotEmpty) return buyer!.businessName!;
+    if (buyer?.companyName != null && buyer!.companyName!.isNotEmpty) return buyer!.companyName!;
+    return 'Unknown';
+  }
   double get totalQuantity => weight;
 
   String get statusDisplay {
@@ -223,6 +234,10 @@ class OrderUser {
   final String? email;
   final String? contactNo;
   final String? address;
+  final String? businessName;
+  final String? companyName;
+  final double? latitude;
+  final double? longitude;
 
   OrderUser({
     required this.id,
@@ -230,6 +245,10 @@ class OrderUser {
     this.email,
     this.contactNo,
     this.address,
+    this.businessName,
+    this.companyName,
+    this.latitude,
+    this.longitude,
   });
 
   factory OrderUser.fromJson(Map<String, dynamic> json) {
@@ -239,6 +258,10 @@ class OrderUser {
       email: json['email'] as String?,
       contactNo: json['contactNo'] as String?,
       address: json['address'] as String?,
+      businessName: json['businessName'] as String?,
+      companyName: json['companyName'] as String?,
+      latitude: json['latitude'] != null ? (json['latitude'] as num).toDouble() : null,
+      longitude: json['longitude'] != null ? (json['longitude'] as num).toDouble() : null,
     );
   }
 
@@ -249,6 +272,10 @@ class OrderUser {
       'email': email,
       'contactNo': contactNo,
       'address': address,
+      'businessName': businessName,
+      'companyName': companyName,
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
     };
   }
 }

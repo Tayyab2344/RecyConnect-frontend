@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb, compute, kDebugMode;
 import 'package:flutter/services.dart';
 import 'dart:ui' as ui;

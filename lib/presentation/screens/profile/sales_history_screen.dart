@@ -4,7 +4,7 @@ import '../../../core/services/order_service.dart';
 import '../../../core/models/order_model.dart';
 
 class SalesHistoryScreen extends StatefulWidget {
-  const SalesHistoryScreen({Key? key}) : super(key: key);
+  const SalesHistoryScreen({super.key});
 
   @override
   State<SalesHistoryScreen> createState() => _SalesHistoryScreenState();
@@ -153,7 +153,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     decoration: BoxDecoration(
                       border: Border.all(
-                        color: isDark ? AppTheme.darkSecondaryGreen.withOpacity(0.3) : AppTheme.lightGray,
+                        color: isDark ? AppTheme.darkSecondaryGreen.withValues(alpha: 0.3) : AppTheme.lightGray,
                       ),
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -232,7 +232,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
         });
       },
       backgroundColor: isDark ? AppTheme.darkBackground : Colors.white,
-      selectedColor: isDark ? AppTheme.darkPrimaryGreen.withOpacity(0.2) : AppTheme.primaryGreen.withOpacity(0.2),
+      selectedColor: isDark ? AppTheme.darkPrimaryGreen.withValues(alpha: 0.2) : AppTheme.primaryGreen.withValues(alpha: 0.2),
       checkmarkColor: isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen,
       labelStyle: TextStyle(
         color: isSelected
@@ -245,7 +245,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
         side: BorderSide(
           color: isSelected
               ? (isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen)
-              : (isDark ? AppTheme.darkSecondaryGreen.withOpacity(0.3) : AppTheme.lightGray),
+              : (isDark ? AppTheme.darkSecondaryGreen.withValues(alpha: 0.3) : AppTheme.lightGray),
         ),
       ),
     );
@@ -332,7 +332,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                               color: isDark ? AppTheme.darkCardSurface : Colors.white,
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: isDark ? AppTheme.darkSecondaryGreen.withOpacity(0.3) : AppTheme.lightGray,
+                                color: isDark ? AppTheme.darkSecondaryGreen.withValues(alpha: 0.3) : AppTheme.lightGray,
                               ),
                             ),
                             child: Column(
@@ -452,9 +452,9 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.5)),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
       ),
       child: Text(
         status,

@@ -77,12 +77,12 @@ class _AddressInputSectionState extends State<AddressInputSection> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: widget.isDark 
-              ? AppTheme.darkSecondaryGreen.withOpacity(0.3)
+              ? AppTheme.darkSecondaryGreen.withValues(alpha: 0.3)
               : AppTheme.lightGray,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -98,7 +98,7 @@ class _AddressInputSectionState extends State<AddressInputSection> {
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: (widget.isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen)
-                      .withOpacity(0.1),
+                      .withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
@@ -216,10 +216,10 @@ class _AddressInputSectionState extends State<AddressInputSection> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppTheme.infoBlue.withOpacity(0.05),
+              color: AppTheme.infoBlue.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: AppTheme.infoBlue.withOpacity(0.1),
+                color: AppTheme.infoBlue.withValues(alpha: 0.1),
               ),
             ),
             child: Row(

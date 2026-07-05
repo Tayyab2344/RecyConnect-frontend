@@ -1,9 +1,6 @@
 import 'dart:math' as math;
-import 'dart:ui';
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_colors.dart';
-import 'collector_registration_screen.dart';
 import 'registration_screen.dart';
 import 'individual_registration_screen.dart';
 
@@ -163,14 +160,14 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
                     radius: 1.2,
                     colors: isDark
                         ? [
-                            AppColors.neonTeal.withOpacity(0.05),
+                            AppColors.neonTeal.withValues(alpha: 0.05),
                             Colors.transparent,
-                            AppColors.neonBlue.withOpacity(0.03),
+                            AppColors.neonBlue.withValues(alpha: 0.03),
                           ]
                         : [
-                            AppColors.primaryGreen.withOpacity(0.03),
+                            AppColors.primaryGreen.withValues(alpha: 0.03),
                             Colors.transparent,
-                            AppColors.ecoTeal.withOpacity(0.02),
+                            AppColors.ecoTeal.withValues(alpha: 0.02),
                           ],
                     stops: const [0.0, 0.5, 1.0],
                   ),
@@ -250,17 +247,17 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: isDark
-                    ? Colors.white.withOpacity(0.1)
-                    : Colors.white.withOpacity(0.9),
+                    ? Colors.white.withValues(alpha: 0.1)
+                    : Colors.white.withValues(alpha: 0.9),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
                   color: isDark
-                      ? Colors.white.withOpacity(0.15)
-                      : Colors.black.withOpacity(0.05),
+                      ? Colors.white.withValues(alpha: 0.15)
+                      : Colors.black.withValues(alpha: 0.05),
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(isDark ? 0.2 : 0.08),
+                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.08),
                     blurRadius: 15,
                     offset: const Offset(0, 4),
                   ),
@@ -282,7 +279,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
     final glowColor = isDark ? AppColors.neonTeal : AppColors.primaryGreen;
     final textColor = isDark ? Colors.white : AppColors.darkText;
     final subtextColor = isDark
-        ? Colors.white.withOpacity(0.7)
+        ? Colors.white.withValues(alpha: 0.7)
         : AppColors.darkGrey;
 
     return AnimatedBuilder(
@@ -298,15 +295,15 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: isDark
-                      ? Colors.white.withOpacity(0.08)
-                      : Colors.white.withOpacity(0.9),
+                      ? Colors.white.withValues(alpha: 0.08)
+                      : Colors.white.withValues(alpha: 0.9),
                   border: Border.all(
-                    color: glowColor.withOpacity(0.4),
+                    color: glowColor.withValues(alpha: 0.4),
                     width: 2,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: glowColor.withOpacity(0.2 * _pulseAnimation.value),
+                      color: glowColor.withValues(alpha: 0.2 * _pulseAnimation.value),
                       blurRadius: 25,
                       spreadRadius: 2,
                     ),
@@ -346,7 +343,6 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
 
   Widget _buildRoleCard(_RoleData role, bool isDark) {
     final isSelected = _selectedRole == role.id;
-    final glowColor = isDark ? AppColors.neonTeal : AppColors.primaryGreen;
 
     return GestureDetector(
       onTap: () => setState(() => _selectedRole = role.id),
@@ -356,21 +352,21 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
           return AnimatedContainer(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeOutCubic,
-            transform: Matrix4.identity()..scale(isSelected ? 1.02 : 1.0),
+            transform: Matrix4.identity()..scaleByDouble(isSelected ? 1.02 : 1.0, isSelected ? 1.02 : 1.0, isSelected ? 1.02 : 1.0, 1.0),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
                   color: isSelected
-                      ? role.color.withOpacity(0.25 * _pulseAnimation.value)
-                      : Colors.black.withOpacity(isDark ? 0.2 : 0.08),
+                      ? role.color.withValues(alpha: 0.25 * _pulseAnimation.value)
+                      : Colors.black.withValues(alpha: isDark ? 0.2 : 0.08),
                   blurRadius: isSelected ? 25 : 15,
                   offset: const Offset(0, 6),
                   spreadRadius: isSelected ? 2 : 0,
                 ),
                 if (isDark)
                   BoxShadow(
-                    color: Colors.white.withOpacity(0.03),
+                    color: Colors.white.withValues(alpha: 0.03),
                     blurRadius: 20,
                     spreadRadius: -5,
                   ),
@@ -385,20 +381,20 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
                   end: Alignment.bottomRight,
                   colors: isDark
                       ? [
-                          Colors.white.withOpacity(0.12),
-                          Colors.white.withOpacity(0.05),
+                          Colors.white.withValues(alpha: 0.12),
+                          Colors.white.withValues(alpha: 0.05),
                         ]
                       : [
-                          Colors.white.withOpacity(0.85),
-                          Colors.white.withOpacity(0.65),
+                          Colors.white.withValues(alpha: 0.85),
+                          Colors.white.withValues(alpha: 0.65),
                         ],
                 ),
                 border: Border.all(
                   color: isSelected
-                      ? role.color.withOpacity(0.7)
+                      ? role.color.withValues(alpha: 0.7)
                       : isDark
-                          ? Colors.white.withOpacity(0.12)
-                          : Colors.white.withOpacity(0.6),
+                          ? Colors.white.withValues(alpha: 0.12)
+                          : Colors.white.withValues(alpha: 0.6),
                   width: isSelected ? 2.5 : 1.5,
                 ),
               ),
@@ -414,13 +410,13 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
                         end: Alignment.bottomRight,
                         colors: [
                           role.color,
-                          role.color.withOpacity(0.8),
+                          role.color.withValues(alpha: 0.8),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(14),
                       boxShadow: [
                         BoxShadow(
-                          color: role.color.withOpacity(0.3),
+                          color: role.color.withValues(alpha: 0.3),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),
@@ -453,7 +449,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
                           style: TextStyle(
                             fontSize: 13,
                             color: isDark
-                                ? Colors.white.withOpacity(0.6)
+                                ? Colors.white.withValues(alpha: 0.6)
                                 : AppColors.darkGrey,
                             height: 1.3,
                           ),
@@ -476,7 +472,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
                         color: isSelected
                             ? role.color
                             : isDark
-                                ? Colors.white.withOpacity(0.3)
+                                ? Colors.white.withValues(alpha: 0.3)
                                 : Colors.grey.shade300,
                         width: 2,
                       ),
@@ -506,13 +502,13 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: isDark
-            ? AppColors.loginNavyDeep.withOpacity(0.9)
-            : Colors.white.withOpacity(0.95),
+            ? AppColors.loginNavyDeep.withValues(alpha: 0.9)
+            : Colors.white.withValues(alpha: 0.95),
         border: Border(
           top: BorderSide(
             color: isDark
-                ? Colors.white.withOpacity(0.08)
-                : Colors.black.withOpacity(0.05),
+                ? Colors.white.withValues(alpha: 0.08)
+                : Colors.black.withValues(alpha: 0.05),
           ),
         ),
       ),
@@ -528,7 +524,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
                 boxShadow: isEnabled
                     ? [
                         BoxShadow(
-                          color: buttonColor.withOpacity(0.35 * _pulseAnimation.value),
+                          color: buttonColor.withValues(alpha: 0.35 * _pulseAnimation.value),
                           blurRadius: 20,
                           offset: const Offset(0, 6),
                         ),
@@ -541,10 +537,10 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
                   backgroundColor: buttonColor,
                   foregroundColor: buttonTextColor,
                   disabledBackgroundColor: isDark
-                      ? Colors.white.withOpacity(0.08)
+                      ? Colors.white.withValues(alpha: 0.08)
                       : Colors.grey.shade200,
                   disabledForegroundColor: isDark
-                      ? Colors.white.withOpacity(0.3)
+                      ? Colors.white.withValues(alpha: 0.3)
                       : Colors.grey.shade500,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
@@ -627,8 +623,8 @@ class _RoleSelectionBackgroundPainter extends CustomPainter {
 
     // Grid pattern
     final gridColor = isDark
-        ? Colors.white.withOpacity(0.03)
-        : Colors.black.withOpacity(0.02);
+        ? Colors.white.withValues(alpha: 0.03)
+        : Colors.black.withValues(alpha: 0.02);
     paint.color = gridColor;
 
     const gridSpacing = 60.0;
@@ -656,8 +652,8 @@ class _RoleSelectionBackgroundPainter extends CustomPainter {
       final opacity = 0.3 + 0.2 * math.sin(animationValue * 2 * math.pi + i);
       
       dotPaint.color = isDark
-          ? AppColors.neonTeal.withOpacity(opacity * 0.3)
-          : AppColors.primaryGreen.withOpacity(opacity * 0.15);
+          ? AppColors.neonTeal.withValues(alpha: opacity * 0.3)
+          : AppColors.primaryGreen.withValues(alpha: opacity * 0.15);
       
       canvas.drawCircle(
         Offset(x, y + offset),

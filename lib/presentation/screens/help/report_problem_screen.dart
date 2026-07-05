@@ -5,7 +5,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/services/complaint_service.dart';
 
 class ReportProblemScreen extends StatefulWidget {
-  const ReportProblemScreen({Key? key}) : super(key: key);
+  const ReportProblemScreen({super.key});
 
   @override
   State<ReportProblemScreen> createState() => _ReportProblemScreenState();
@@ -105,7 +105,7 @@ class _ReportProblemScreenState extends State<ReportProblemScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppTheme.primaryGreen.withOpacity(0.1),
+                color: AppTheme.primaryGreen.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -199,14 +199,14 @@ class _ReportProblemScreenState extends State<ReportProblemScreen> {
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? (category['color'] as Color).withOpacity(0.1)
+                            ? (category['color'] as Color).withValues(alpha: 0.1)
                             : (isDark ? AppTheme.darkCardSurface : Colors.white),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: isSelected
                               ? (category['color'] as Color)
                               : (isDark
-                                  ? AppTheme.darkSecondaryGreen.withOpacity(0.3)
+                                  ? AppTheme.darkSecondaryGreen.withValues(alpha: 0.3)
                                   : AppTheme.lightGray),
                           width: isSelected ? 2 : 1,
                         ),
@@ -303,7 +303,7 @@ class _ReportProblemScreenState extends State<ReportProblemScreen> {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: isDark
-                          ? AppTheme.darkSecondaryGreen.withOpacity(0.3)
+                          ? AppTheme.darkSecondaryGreen.withValues(alpha: 0.3)
                           : AppTheme.lightGray,
                       style: BorderStyle.solid,
                       width: 2,
@@ -360,7 +360,7 @@ class _ReportProblemScreenState extends State<ReportProblemScreen> {
                   color: const Color(0xFFFFF3E0),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: const Color(0xFFFFA726).withOpacity(0.3),
+                    color: const Color(0xFFFFA726).withValues(alpha: 0.3),
                   ),
                 ),
                 child: Row(
@@ -423,7 +423,7 @@ class _ReportProblemScreenState extends State<ReportProblemScreen> {
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color: isDark
-                                    ? AppTheme.darkSecondaryGreen.withOpacity(0.3)
+                                    ? AppTheme.darkSecondaryGreen.withValues(alpha: 0.3)
                                     : AppTheme.lightGray,
                               ),
                             ),
@@ -445,8 +445,8 @@ class _ReportProblemScreenState extends State<ReportProblemScreen> {
                                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                       decoration: BoxDecoration(
                                         color: isSynced
-                                            ? AppTheme.primaryGreen.withOpacity(0.1)
-                                            : Colors.orange.withOpacity(0.1),
+                                            ? AppTheme.primaryGreen.withValues(alpha: 0.1)
+                                            : Colors.orange.withValues(alpha: 0.1),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: Row(

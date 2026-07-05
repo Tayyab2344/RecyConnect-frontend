@@ -268,8 +268,8 @@ class AdminGlassCard extends StatelessWidget {
       padding: padding ?? const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: isDark
-            ? AdminColors.darkCardBackground.withOpacity(0.8)
-            : Colors.white.withOpacity(0.9),
+            ? AdminColors.darkCardBackground.withValues(alpha: 0.8)
+            : Colors.white.withValues(alpha: 0.9),
         borderRadius: radius,
         gradient: AdminColors.getCardGradient(isDark),
         border: Border.all(

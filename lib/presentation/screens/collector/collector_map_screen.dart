@@ -233,7 +233,7 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final List<dynamic> coordinates = data['routes'][0]['geometry']['coordinates'];
-        final List<LatLng> points = coordinates.map((c) => LatLng(c[1] as double, c[0] as double)).toList();
+        final List<LatLng> points = coordinates.map((c) => LatLng((c[1] as num).toDouble(), (c[0] as num).toDouble())).toList();
         final distanceMeters = data['routes'][0]['distance'] as num? ?? 0;
         final durationSeconds = data['routes'][0]['duration'] as num? ?? 0;
 
@@ -325,6 +325,7 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
         children: [
           // Flutter OpenStreetMap Widget
           FlutterMap(
+            key: ValueKey('${_routePoints.length},${_currentPosition?.latitude}'),
             mapController: _mapController,
             options: MapOptions(
               initialCenter: center,

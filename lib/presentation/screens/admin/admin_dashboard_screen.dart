@@ -1019,9 +1019,8 @@ class _GlassCard extends StatelessWidget {
     required this.child,
     required this.isDark,
     required this.pulseValue,
-    this.borderRadius,
     this.glowColor,
-  });
+  }) : borderRadius = null;
 
   @override
   Widget build(BuildContext context) {
@@ -1031,8 +1030,8 @@ class _GlassCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: isDark
-            ? AppColors.darkCard.withOpacity(0.8)
-            : Colors.white.withOpacity(0.9),
+            ? AppColors.darkCard.withValues(alpha: 0.8)
+            : Colors.white.withValues(alpha: 0.9),
         borderRadius: radius,
         gradient: isDark ? AppColors.darkCardGradient : AppColors.lightCardGradient,
         border: Border.all(

@@ -12,7 +12,7 @@ class ReminderCard extends StatelessWidget {
   final VoidCallback? onDismiss;
 
   const ReminderCard({
-    Key? key,
+    super.key,
     required this.title,
     required this.message,
     required this.time,
@@ -20,7 +20,7 @@ class ReminderCard extends StatelessWidget {
     this.iconColor = AppTheme.primaryGreen,
     this.onTap,
     this.onDismiss,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -33,12 +33,12 @@ class ReminderCard extends StatelessWidget {
         color: isDark ? AppTheme.darkCardSurface : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: iconColor.withOpacity(0.3),
+          color: iconColor.withValues(alpha: 0.3),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: iconColor.withOpacity(0.1),
+            color: iconColor.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -55,7 +55,7 @@ class ReminderCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: iconColor.withOpacity(0.1),
+                  color: iconColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
@@ -125,14 +125,14 @@ class ReminderCard extends StatelessWidget {
 
 // Example static reminders that can be shown on dashboard
 class RemindersSection extends StatefulWidget {
-  const RemindersSection({Key? key}) : super(key: key);
+  const RemindersSection({super.key});
 
   @override
   State<RemindersSection> createState() => _RemindersSectionState();
 }
 
 class _RemindersSectionState extends State<RemindersSection> {
-  List<Map<String, dynamic>> _reminders = [
+  final List<Map<String, dynamic>> _reminders = [
     {
       'id': 1,
       'title': 'Pickup Scheduled',

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 
 class TermsConditionsScreen extends StatelessWidget {
-  const TermsConditionsScreen({Key? key}) : super(key: key);
+  const TermsConditionsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -164,8 +164,8 @@ class TermsConditionsScreen extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 14,
                       color: isDark
-                          ? AppTheme.darkBackground.withOpacity(0.8)
-                          : Colors.white.withOpacity(0.9),
+                          ? AppTheme.darkBackground.withValues(alpha: 0.8)
+                          : Colors.white.withValues(alpha: 0.9),
                     ),
                   ),
                 ],

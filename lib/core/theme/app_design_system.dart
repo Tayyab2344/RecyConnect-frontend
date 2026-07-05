@@ -84,7 +84,7 @@ class AppDesignSystem {
 
   static List<BoxShadow> cardShadow = [
     BoxShadow(
-      color: Colors.black.withOpacity(0.04),
+      color: Colors.black.withValues(alpha: 0.04),
       offset: const Offset(0, 4),
       blurRadius: 16,
       spreadRadius: 0,
@@ -93,7 +93,7 @@ class AppDesignSystem {
 
   static List<BoxShadow> elevatedShadow = [
     BoxShadow(
-      color: Colors.black.withOpacity(0.08),
+      color: Colors.black.withValues(alpha: 0.08),
       offset: const Offset(0, 8),
       blurRadius: 24,
       spreadRadius: 0,
@@ -102,7 +102,7 @@ class AppDesignSystem {
 
   static List<BoxShadow> hoverShadow = [
     BoxShadow(
-      color: primary.withOpacity(0.2),
+      color: primary.withValues(alpha: 0.2),
       offset: const Offset(0, 12),
       blurRadius: 32,
       spreadRadius: 0,
@@ -111,7 +111,7 @@ class AppDesignSystem {
 
   static List<BoxShadow> glowShadow(Color color) => [
     BoxShadow(
-      color: color.withOpacity(0.4),
+      color: color.withValues(alpha: 0.4),
       offset: const Offset(0, 4),
       blurRadius: 20,
       spreadRadius: 0,

@@ -148,11 +148,13 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
           }
 
           // Fallback to login screen
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (context) => const LoginScreen()),
-            (route) => false,
-          );
+          if (mounted) {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => const LoginScreen()),
+              (route) => false,
+            );
+          }
         }
       } else {
         if (mounted) {
@@ -340,8 +342,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  AppTheme.primaryGreen.withOpacity(0.2),
-                  AppTheme.primaryGreen.withOpacity(0.1),
+                  AppTheme.primaryGreen.withValues(alpha: 0.2),
+                  AppTheme.primaryGreen.withValues(alpha: 0.1),
                 ],
               ),
               shape: BoxShape.circle,
@@ -352,13 +354,13 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
                 gradient: LinearGradient(
                   colors: [
                     AppTheme.primaryGreen,
-                    AppTheme.primaryGreen.withOpacity(0.8),
+                    AppTheme.primaryGreen.withValues(alpha: 0.8),
                   ],
                 ),
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: AppTheme.primaryGreen.withOpacity(0.3),
+                    color: AppTheme.primaryGreen.withValues(alpha: 0.3),
                     blurRadius: 20,
                     spreadRadius: 5,
                   ),
@@ -439,7 +441,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
         boxShadow: _otpControllers[index].text.isNotEmpty
             ? [
                 BoxShadow(
-                  color: AppTheme.primaryGreen.withOpacity(0.2),
+                  color: AppTheme.primaryGreen.withValues(alpha: 0.2),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 )
@@ -512,10 +514,10 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: AppTheme.primaryGreen.withOpacity(0.1),
+                color: AppTheme.primaryGreen.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: AppTheme.primaryGreen.withOpacity(0.3),
+                  color: AppTheme.primaryGreen.withValues(alpha: 0.3),
                 ),
               ),
               child: _isResending
@@ -561,7 +563,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
           backgroundColor: AppTheme.primaryGreen,
           foregroundColor: Colors.white,
           elevation: 0,
-          disabledBackgroundColor: AppTheme.primaryGreen.withOpacity(0.6),
+          disabledBackgroundColor: AppTheme.primaryGreen.withValues(alpha: 0.6),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
@@ -598,10 +600,10 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.infoBlue.withOpacity(0.05),
+        color: AppTheme.infoBlue.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppTheme.infoBlue.withOpacity(0.1),
+          color: AppTheme.infoBlue.withValues(alpha: 0.1),
         ),
       ),
       child: Row(

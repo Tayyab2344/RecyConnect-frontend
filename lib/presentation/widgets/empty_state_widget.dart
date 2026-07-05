@@ -16,7 +16,7 @@ class EmptyStateWidget extends StatelessWidget {
   final Color? iconColor;
 
   const EmptyStateWidget({
-    Key? key,
+    super.key,
     required this.icon,
     required this.title,
     required this.message,
@@ -24,7 +24,7 @@ class EmptyStateWidget extends StatelessWidget {
     this.onAction,
     this.illustration,
     this.iconColor,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +42,7 @@ class EmptyStateWidget extends StatelessWidget {
                 width: 120,
                 height: 120,
                 decoration: BoxDecoration(
-                  color: (iconColor ?? AppTheme.primaryGreen).withOpacity(0.1),
+                  color: (iconColor ?? AppTheme.primaryGreen).withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -114,7 +114,7 @@ class EmptyStateWidget extends StatelessWidget {
 class NoListingsEmptyState extends StatelessWidget {
   final VoidCallback? onCreateListing;
 
-  const NoListingsEmptyState({Key? key, this.onCreateListing}) : super(key: key);
+  const NoListingsEmptyState({super.key, this.onCreateListing});
 
   @override
   Widget build(BuildContext context) {
@@ -132,7 +132,7 @@ class NoListingsEmptyState extends StatelessWidget {
 class NoOrdersEmptyState extends StatelessWidget {
   final VoidCallback? onBrowseMarketplace;
 
-  const NoOrdersEmptyState({Key? key, this.onBrowseMarketplace}) : super(key: key);
+  const NoOrdersEmptyState({super.key, this.onBrowseMarketplace});
 
   @override
   Widget build(BuildContext context) {
@@ -150,7 +150,7 @@ class NoOrdersEmptyState extends StatelessWidget {
 class NoInternetEmptyState extends StatelessWidget {
   final VoidCallback? onRetry;
 
-  const NoInternetEmptyState({Key? key, this.onRetry}) : super(key: key);
+  const NoInternetEmptyState({super.key, this.onRetry});
 
   @override
   Widget build(BuildContext context) {
@@ -168,7 +168,7 @@ class NoInternetEmptyState extends StatelessWidget {
 class SearchNoResultsEmptyState extends StatelessWidget {
   final String? searchQuery;
 
-  const SearchNoResultsEmptyState({Key? key, this.searchQuery}) : super(key: key);
+  const SearchNoResultsEmptyState({super.key, this.searchQuery});
 
   @override
   Widget build(BuildContext context) {
@@ -188,10 +188,10 @@ class LocationDisabledEmptyState extends StatelessWidget {
   final VoidCallback? onEnterManually;
 
   const LocationDisabledEmptyState({
-    Key? key,
+    super.key,
     this.onEnableLocation,
     this.onEnterManually,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -205,7 +205,7 @@ class LocationDisabledEmptyState extends StatelessWidget {
               width: 120,
               height: 120,
               decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.1),
+                color: Colors.orange.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(

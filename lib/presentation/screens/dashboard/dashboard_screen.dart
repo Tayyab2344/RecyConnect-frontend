@@ -5,7 +5,6 @@ import 'warehouse_dashboard.dart';
 import 'company_dashboard.dart';
 import 'individual_dashboard.dart';
 import 'collector_dashboard.dart';
-import '../seller/seller_dashboard.dart';
 import '../marketplace/buyer_dashboard.dart';
 import '../admin/admin_dashboard_screen.dart';
 
@@ -25,7 +24,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      onPopInvoked: (didPop) async {
+      onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
 
         final now = DateTime.now();

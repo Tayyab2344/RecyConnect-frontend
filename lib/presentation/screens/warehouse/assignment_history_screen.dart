@@ -138,7 +138,7 @@ class _AssignmentHistoryScreenState extends State<AssignmentHistoryScreen> {
               color: Colors.white,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.grey.withOpacity(0.08),
+                  color: Colors.grey.withValues(alpha: 0.08),
                   spreadRadius: 1,
                   blurRadius: 5,
                   offset: const Offset(0, 2),
@@ -152,7 +152,7 @@ class _AssignmentHistoryScreenState extends State<AssignmentHistoryScreen> {
                     // Collector filter dropdown
                     Expanded(
                       child: DropdownButtonFormField<int>(
-                        value: _selectedCollectorId,
+                        initialValue: _selectedCollectorId,
                         decoration: InputDecoration(
                           labelText: 'Collector',
                           contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -182,7 +182,7 @@ class _AssignmentHistoryScreenState extends State<AssignmentHistoryScreen> {
                     // Status filter dropdown
                     Expanded(
                       child: DropdownButtonFormField<String>(
-                        value: _selectedStatus,
+                        initialValue: _selectedStatus,
                         decoration: InputDecoration(
                           labelText: 'Status',
                           contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -221,7 +221,7 @@ class _AssignmentHistoryScreenState extends State<AssignmentHistoryScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           foregroundColor: AppTheme.primaryGreen,
-                          side: BorderSide(color: AppTheme.primaryGreen.withOpacity(0.5)),
+                          side: BorderSide(color: AppTheme.primaryGreen.withValues(alpha: 0.5)),
                         ),
                       ),
                     ),
@@ -310,7 +310,7 @@ class _AssignmentHistoryScreenState extends State<AssignmentHistoryScreen> {
                                         Container(
                                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                           decoration: BoxDecoration(
-                                            color: statusColor.withOpacity(0.12),
+                                            color: statusColor.withValues(alpha: 0.12),
                                             borderRadius: BorderRadius.circular(6),
                                           ),
                                           child: Text(

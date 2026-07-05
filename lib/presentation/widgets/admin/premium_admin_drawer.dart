@@ -1,9 +1,7 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../../core/theme/premium_design_system.dart';
 import '../../../core/navigation/premium_transitions.dart';
 import '../../../core/services/preferences_service.dart';
-import '../../../core/constants/admin_colors.dart';
 import '../../screens/admin/admin_dashboard_screen.dart';
 import '../../screens/admin/admin_users_screen.dart';
 import '../../screens/admin/admin_collectors_screen.dart';
@@ -813,7 +811,7 @@ class _PremiumDrawerItemState extends State<_PremiumDrawerItem>
             duration: PremiumDesignSystem.animationNormal,
             curve: PremiumDesignSystem.animationCurve,
             transform: _isHovered || widget.isSelected
-                ? (Matrix4.identity()..translate(4.0, 0.0, 0.0))
+                ? (Matrix4.identity()..translateByDouble(4.0, 0.0, 0.0, 1.0))
                 : Matrix4.identity(),
             decoration: BoxDecoration(
               gradient: widget.isSelected ? widget.gradient : null,

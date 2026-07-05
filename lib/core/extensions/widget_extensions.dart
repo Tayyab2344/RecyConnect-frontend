@@ -72,10 +72,10 @@ extension WidgetExtensions on Widget {
         filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
         child: Container(
           decoration: BoxDecoration(
-            color: (tint ?? Colors.white).withOpacity(opacity),
+            color: (tint ?? Colors.white).withValues(alpha: opacity),
             borderRadius: BorderRadius.circular(radius),
             border: Border.all(
-              color: Colors.white.withOpacity(DesignTokens.glassBorderOpacity),
+              color: Colors.white.withValues(alpha: DesignTokens.glassBorderOpacity),
               width: 1,
             ),
           ),
@@ -96,7 +96,7 @@ extension WidgetExtensions on Widget {
       decoration: BoxDecoration(
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(opacity),
+            color: color.withValues(alpha: opacity),
             blurRadius: blurRadius,
             offset: offset,
           ),
@@ -213,10 +213,10 @@ extension ColorExtensions on Color {
     assert(percent >= 0 && percent <= 100);
     final factor = 1 - percent / 100;
     return Color.fromARGB(
-      alpha,
-      (red * factor).round(),
-      (green * factor).round(),
-      (blue * factor).round(),
+      (a * 255.0).round().clamp(0, 255),
+      ((r * 255.0).round().clamp(0, 255) * factor).round(),
+      ((g * 255.0).round().clamp(0, 255) * factor).round(),
+      ((b * 255.0).round().clamp(0, 255) * factor).round(),
     );
   }
 
@@ -224,11 +224,14 @@ extension ColorExtensions on Color {
   Color lighten([int percent = 10]) {
     assert(percent >= 0 && percent <= 100);
     final factor = percent / 100;
+    final redVal = (r * 255.0).round().clamp(0, 255);
+    final greenVal = (g * 255.0).round().clamp(0, 255);
+    final blueVal = (b * 255.0).round().clamp(0, 255);
     return Color.fromARGB(
-      alpha,
-      red + ((255 - red) * factor).round(),
-      green + ((255 - green) * factor).round(),
-      blue + ((255 - blue) * factor).round(),
+      (a * 255.0).round().clamp(0, 255),
+      redVal + ((255 - redVal) * factor).round(),
+      greenVal + ((255 - greenVal) * factor).round(),
+      blueVal + ((255 - blueVal) * factor).round(),
     );
   }
 }

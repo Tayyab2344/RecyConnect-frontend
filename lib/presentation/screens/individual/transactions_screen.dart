@@ -3,12 +3,11 @@ import 'package:intl/intl.dart';
 import '../../../core/services/transaction_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/error_message_helper.dart';
-import '../../widgets/recycle_loader.dart';
 import '../../widgets/skeleton_loader.dart';
 import 'package:flutter/foundation.dart';
 
 class TransactionsScreen extends StatefulWidget {
-  const TransactionsScreen({Key? key}) : super(key: key);
+  const TransactionsScreen({super.key});
 
   @override
   State<TransactionsScreen> createState() => _TransactionsScreenState();
@@ -116,12 +115,12 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
                             color: isDark
-                                ? AppTheme.darkSecondaryGreen.withOpacity(0.3)
+                                ? AppTheme.darkSecondaryGreen.withValues(alpha: 0.3)
                                 : Colors.grey.shade200,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
+                              color: Colors.black.withValues(alpha: 0.05),
                               blurRadius: 10,
                               offset: const Offset(0, 4),
                             ),
@@ -132,7 +131,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: amountColor.withOpacity(0.1),
+                                color: amountColor.withValues(alpha: 0.1),
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(typeIcon, color: amountColor, size: 24),

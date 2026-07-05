@@ -2,18 +2,15 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/services/auth_service.dart';
 import '../../../core/services/collector_service.dart';
 import '../../../core/services/location_service.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/premium_design_system.dart';
 import '../../widgets/premium/premium_components.dart';
 import '../../widgets/skeleton_loader.dart';
-import '../../widgets/recycle_loader.dart';
-import '../../widgets/eco_assist_sheet.dart';
-import '../../widgets/animated_robot_icon.dart';
 import '../messages/messages_screen.dart';
 import '../notifications/notifications_screen.dart';
 import '../collector/collector_map_screen.dart';
@@ -40,6 +37,8 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
   List<dynamic> _tasks = [];
   List<dynamic> _history = [];
   Map<String, dynamic> _earnings = {};
+  int _activeTasksTab = 0;
+  List<dynamic> _availableTasks = [];
 
   static const List<String> _taskProgression = [
     'EN_ROUTE_TO_PICKUP',
@@ -61,8 +60,8 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
     super.dispose();
   }
 
-  Future<void> _loadCollectorData() async {
-    if (mounted) {
+  Future<void> _loadCollectorData({bool showSkeleton = true}) async {
+    if (mounted && showSkeleton) {
       setState(() {
         _isLoading = true;
         _error = null;
@@ -78,13 +77,26 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
         _collectorService.getEarnings(),
       ]);
 
+      final profile = results[1] as Map<String, dynamic>;
+      final isIndependent = profile['profile']?['collectorType'] == 'INDEPENDENT';
+
+      List<dynamic> availableJobs = [];
+      if (isIndependent) {
+        try {
+          availableJobs = await _collectorService.getAvailableTasks();
+        } catch (e) {
+          debugPrint('Error getting available tasks: $e');
+        }
+      }
+
       if (!mounted) return;
       setState(() {
         _dashboard = results[0] as Map<String, dynamic>;
-        _profile = results[1] as Map<String, dynamic>;
+        _profile = profile;
         _tasks = results[2] as List<dynamic>;
         _history = results[3] as List<dynamic>;
         _earnings = results[4] as Map<String, dynamic>;
+        _availableTasks = availableJobs;
         _isLoading = false;
       });
     } catch (e) {
@@ -96,20 +108,35 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
     }
   }
 
+  void _showLoadingDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
+        ),
+      ),
+    );
+  }
+
   Future<void> _setAvailability(String status) async {
+    _showLoadingDialog();
     try {
       await _collectorService.updateAvailability(
         availabilityStatus: status,
         dutyStatus: status == 'OFFLINE' ? 'OFF_DUTY' : 'ON_DUTY',
       );
-      await _loadCollectorData();
+      await _loadCollectorData(showSkeleton: false);
+      if (mounted) Navigator.pop(context);
       _showMessage('Status updated');
     } catch (e) {
+      if (mounted) Navigator.pop(context);
       _showMessage(e.toString(), isError: true);
     }
   }
 
-  Future<void> _syncLocation({int? taskId, String? status}) async {
+  Future<void> _syncLocation({int? taskId, String? status, bool reload = true}) async {
     setState(() => _isSyncingLocation = true);
     try {
       final location = await _locationService.getCurrentLocationWithTimeout();
@@ -123,8 +150,9 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
         longitude: location['longitude']!,
         status: status,
       );
-      await _loadCollectorData();
-      _showMessage('Location synced');
+      if (reload) {
+        await _loadCollectorData(showSkeleton: false);
+      }
     } catch (e) {
       _showMessage(e.toString(), isError: true);
     } finally {
@@ -133,45 +161,39 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
   }
 
   Future<void> _acceptAndStartRouteForTask(Map<String, dynamic> task) async {
+    _showLoadingDialog();
     try {
-      setState(() => _isLoading = true);
       // Automatically accept first
       await _collectorService.acceptTask(task['id'] as int);
       // Then start the route
       await _collectorService.updateTaskStatus(task['id'] as int, 'EN_ROUTE_TO_PICKUP');
-      // Sync location
-      await _syncLocation(taskId: task['id'] as int, status: 'EN_ROUTE_TO_PICKUP');
-      await _loadCollectorData();
+      // Sync location without full reload
+      await _syncLocation(taskId: task['id'] as int, status: 'EN_ROUTE_TO_PICKUP', reload: false);
+      await _loadCollectorData(showSkeleton: false);
+      if (mounted) Navigator.pop(context);
       _showMessage('Route started');
       _goToTab(2); // Automatically transition to the in-app map screen
     } catch (e) {
-      _showMessage(e.toString(), isError: true);
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _acceptTask(Map<String, dynamic> task) async {
-    try {
-      await _collectorService.acceptTask(task['id'] as int);
-      await _loadCollectorData();
-      _showMessage('Task accepted');
-    } catch (e) {
+      if (mounted) Navigator.pop(context);
       _showMessage(e.toString(), isError: true);
     }
   }
 
   Future<void> _updateTaskStatus(Map<String, dynamic> task, String status) async {
+    _showLoadingDialog();
     try {
       await _collectorService.updateTaskStatus(task['id'] as int, status);
-      await _syncLocation(taskId: task['id'] as int, status: status);
-      await _loadCollectorData();
+      await _syncLocation(taskId: task['id'] as int, status: status, reload: false);
+      await _loadCollectorData(showSkeleton: false);
+      if (mounted) Navigator.pop(context);
       _showMessage(_statusLabel(status));
     } catch (e) {
+      if (mounted) Navigator.pop(context);
       _showMessage(e.toString(), isError: true);
     }
   }
 
-  void _openMaps(Map<String, dynamic> task, {bool destination = false}) {
+  void _openMaps(Map<String, dynamic> task) {
     _goToTab(2); // Directly open the in-app map tab instead of Google Maps app
   }
 
@@ -338,7 +360,7 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
           ),
           Container(
             decoration: BoxDecoration(
-              color: isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.04),
+              color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04),
               borderRadius: BorderRadius.circular(12),
             ),
             child: IconButton(
@@ -444,10 +466,10 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
                     height: 48,
                     width: 48,
                     decoration: BoxDecoration(
-                      color: isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.04),
+                      color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.08),
+                        color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.08),
                       ),
                     ),
                     child: Icon(
@@ -469,10 +491,10 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
                     height: 48,
                     width: 48,
                     decoration: BoxDecoration(
-                      color: isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.04),
+                      color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.08),
+                        color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.08),
                       ),
                     ),
                     child: _isSyncingLocation
@@ -590,10 +612,10 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
         decoration: BoxDecoration(
-          color: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
+          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.06),
+            color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.06),
             width: 1,
           ),
           boxShadow: PremiumDesignSystem.softShadowSmall,
@@ -630,6 +652,7 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
 
   Widget _buildTasksScreen() {
     final active = _tasks.where((task) => !_isTerminal(task['status']?.toString())).toList();
+    final isIndependent = _profile['profile']?['collectorType'] == 'INDEPENDENT';
 
     return SafeArea(
       child: RefreshIndicator(
@@ -637,25 +660,225 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            _buildScreenTitle('Assigned Tasks', '${active.length} active operations'),
+            _buildScreenTitle(isIndependent ? 'Logistics Board' : 'Assigned Tasks', isIndependent ? 'Freelance & dispatch hub' : '${active.length} active operations'),
             const SizedBox(height: 16),
-            if (active.isEmpty)
-              _buildEmptyPanel('No assigned tasks', 'Your warehouse has not assigned a pickup or delivery yet.')
-            else
-              ...active.map((task) => _buildTaskCard(task as Map<String, dynamic>)),
-            const SizedBox(height: 16),
-            _buildSectionHeader('History'),
-            const SizedBox(height: 10),
-            if (_history.isEmpty)
-              _buildEmptyPanel('No completed records', 'Completed deliveries will be stored here.')
-            else
-              ..._history.take(8).map((task) => _buildTaskCard(task as Map<String, dynamic>, history: true)),
+            if (isIndependent) ...[
+              _buildSegmentControl(),
+              const SizedBox(height: 16),
+            ],
+            if (!isIndependent || _activeTasksTab == 0) ...[
+              _buildSectionHeader('Active Assignments (${active.length})'),
+              const SizedBox(height: 10),
+              if (active.isEmpty)
+                _buildEmptyPanel('No assigned tasks', 'No pickup or delivery assignments are active.')
+              else
+                ...active.map((task) => _buildTaskCard(task as Map<String, dynamic>)),
+              const SizedBox(height: 16),
+              _buildSectionHeader('Completed History'),
+              const SizedBox(height: 10),
+              if (_history.isEmpty)
+                _buildEmptyPanel('No completed records', 'Completed deliveries will be stored here.')
+              else
+                ..._history.take(8).map((task) => _buildTaskCard(task as Map<String, dynamic>, history: true)),
+            ] else ...[
+              _buildSectionHeader('Available Freelance Jobs (${_availableTasks.length})'),
+              const SizedBox(height: 10),
+              if (_availableTasks.isEmpty)
+                _buildEmptyPanel('No jobs available', 'There are no unclaimed tasks in your area.')
+              else
+                ..._availableTasks.map((task) => _buildAvailableTaskCard(task as Map<String, dynamic>)),
+            ],
             const SizedBox(height: 88),
           ],
         ),
       ),
     );
   }
+
+  Widget _buildSegmentControl() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final activeColor = isDark ? AppColors.neonCyan : AppColors.primaryGreen;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      padding: const EdgeInsets.all(4),
+      child: Row(
+        children: [
+          Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => _activeTasksTab = 0),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: _activeTasksTab == 0 ? activeColor : Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                alignment: Alignment.center,
+                child: Text(
+                  'My Tasks',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: _activeTasksTab == 0 ? Colors.black : (isDark ? Colors.white70 : Colors.black87),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => _activeTasksTab = 1),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: _activeTasksTab == 1 ? activeColor : Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                alignment: Alignment.center,
+                child: Text(
+                  'Available Jobs',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: _activeTasksTab == 1 ? Colors.black : (isDark ? Colors.white70 : Colors.black87),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAvailableTaskCard(Map<String, dynamic> task) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final materialCategory = task['materialCategory'] ?? 'Material';
+    final estimatedWeight = task['estimatedWeight'] ?? 0;
+    final unit = task['unit'] ?? 'kg';
+    final sourceAddress = task['sourceAddress'] ?? '';
+    final destinationAddress = task['destinationAddress'] ?? '';
+    final deliveryFee = task['deliveryFee'] ?? 0.0;
+
+    return GlassCard(
+      enableHover: true,
+      borderRadius: BorderRadius.circular(16),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '$materialCategory pick up',
+                style: PremiumDesignSystem.subtitle2.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: isDark ? PremiumDesignSystem.darkTextPrimary : PremiumDesignSystem.textPrimary,
+                ),
+              ),
+              Text(
+                'Rs ${deliveryFee.toStringAsFixed(0)}',
+                style: PremiumDesignSystem.subtitle2.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: Colors.green,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Icon(Icons.scale_outlined, size: 16, color: Colors.grey),
+              const SizedBox(width: 8),
+              Text(
+                'Weight: ${_numText(estimatedWeight)} $unit',
+                style: PremiumDesignSystem.body2.copyWith(color: isDark ? Colors.white70 : Colors.black87),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.location_on_outlined, size: 16, color: Colors.red),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'From: $sourceAddress',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: PremiumDesignSystem.caption.copyWith(color: Colors.grey),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.flag_outlined, size: 16, color: Colors.blue),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'To: $destinationAddress',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: PremiumDesignSystem.caption.copyWith(color: Colors.grey),
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 24),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: () => _claimAvailableTask(task['id'] as int),
+              style: FilledButton.styleFrom(
+                backgroundColor: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
+                foregroundColor: Colors.black,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text('Claim Pick Up Job', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _claimAvailableTask(int taskId) async {
+    _showLoadingDialog();
+    try {
+      await _collectorService.acceptTask(taskId);
+      await _loadCollectorData(showSkeleton: false);
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Job claimed successfully! Check "My Tasks" to start navigation.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        setState(() => _activeTasksTab = 0);
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceAll('Exception: ', '')),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
 
   Widget _buildTaskCard(Map<String, dynamic> task, {bool compact = false, bool history = false}) {
     final theme = Theme.of(context);
@@ -682,7 +905,7 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
                 height: 42,
                 width: 42,
                 decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.12),
+                  color: statusColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
@@ -741,9 +964,30 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
           Expanded(
             child: FilledButton.icon(
               onPressed: () => _acceptAndStartRouteForTask(task),
-              icon: const Icon(Icons.play_arrow),
-              label: const Text('Start Route'),
+              icon: const Icon(Icons.check),
+              label: const Text('Accept'),
             ),
+          ),
+          const SizedBox(width: 8),
+          OutlinedButton(
+            onPressed: () async {
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Decline Assignment'),
+                  content: const Text('Are you sure you want to decline this delivery assignment?'),
+                  actions: [
+                    TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+                    TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Decline', style: TextStyle(color: Colors.red))),
+                  ],
+                ),
+              );
+              if (confirm == true) {
+                _updateTaskStatus(task, 'REJECTED');
+              }
+            },
+            style: OutlinedButton.styleFrom(foregroundColor: Colors.red, side: const BorderSide(color: Colors.red)),
+            child: const Text('Decline'),
           ),
           const SizedBox(width: 8),
           IconButton.filledTonal(
@@ -848,13 +1092,13 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
               decoration: BoxDecoration(
                 color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.12)),
+                border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.12)),
               ),
               child: Column(
                 children: [
                   CircleAvatar(
                     radius: 34,
-                    backgroundColor: AppTheme.earthBrown.withOpacity(0.12),
+                    backgroundColor: AppTheme.earthBrown.withValues(alpha: 0.12),
                     child: const Icon(Icons.person, color: AppTheme.earthBrown, size: 34),
                   ),
                   const SizedBox(height: 12),
@@ -901,7 +1145,7 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [AppTheme.primaryGreen, AppTheme.primaryGreen.withOpacity(0.7)],
+              colors: [AppTheme.primaryGreen, AppTheme.primaryGreen.withValues(alpha: 0.7)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -969,7 +1213,7 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
               decoration: BoxDecoration(
                 color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.12)),
+                border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.12)),
               ),
               child: Row(
                 children: [
@@ -977,7 +1221,7 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
                     height: 36,
                     width: 36,
                     decoration: BoxDecoration(
-                      color: (earning['status'] == 'PAID' ? AppTheme.primaryGreen : AppTheme.warningOrange).withOpacity(0.12),
+                      color: (earning['status'] == 'PAID' ? AppTheme.primaryGreen : AppTheme.warningOrange).withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
@@ -1048,9 +1292,9 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.errorRed.withOpacity(0.08),
+        color: AppTheme.errorRed.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.errorRed.withOpacity(0.16)),
+        border: Border.all(color: AppTheme.errorRed.withValues(alpha: 0.16)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1082,9 +1326,9 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
   Widget _buildLogoutTile() {
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.errorRed.withOpacity(0.08),
+        color: AppTheme.errorRed.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.errorRed.withOpacity(0.16)),
+        border: Border.all(color: AppTheme.errorRed.withValues(alpha: 0.16)),
       ),
       child: Material(
         color: Colors.transparent,
@@ -1200,7 +1444,7 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.12)),
+        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.12)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1262,9 +1506,9 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryGreen.withOpacity(0.06),
+                    color: AppTheme.primaryGreen.withValues(alpha: 0.06),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppTheme.primaryGreen.withOpacity(0.2)),
+                    border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.2)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1374,7 +1618,7 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
     final notesController = TextEditingController();
     final otpController = TextEditingController();
     List<XFile> proofFiles = [];
-    final bool hasOtp = false; // Disabled PIN verification per request
+    final bool hasOtp = task['hasOtp'] == true; // Disabled PIN verification per request
 
     showDialog(
       context: context,
@@ -1391,9 +1635,9 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: AppTheme.warningOrange.withOpacity(0.08),
+                      color: AppTheme.warningOrange.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: AppTheme.warningOrange.withOpacity(0.2)),
+                      border: Border.all(color: AppTheme.warningOrange.withValues(alpha: 0.2)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1447,9 +1691,9 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppTheme.infoBlue.withOpacity(0.06),
+                    color: AppTheme.infoBlue.withValues(alpha: 0.06),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppTheme.infoBlue.withOpacity(0.2)),
+                    border: Border.all(color: AppTheme.infoBlue.withValues(alpha: 0.2)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1596,7 +1840,7 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
                       ),
                     ),
                     selected: isSelected,
-                    selectedColor: AppTheme.errorRed.withOpacity(0.16),
+                    selectedColor: AppTheme.errorRed.withValues(alpha: 0.16),
                     backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.grey[850] : Colors.grey[200],
                     onSelected: (selected) {
                       setSheetState(() => selectedType = selected ? type : null);
@@ -1741,7 +1985,7 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: (isDark ? Colors.white : Colors.black).withOpacity(0.04),
+              color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.04),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -1795,7 +2039,7 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
@@ -1921,40 +2165,4 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
   }
 }
 
-class _StatData {
-  const _StatData(this.label, this.value, this.icon, this.color);
 
-  final String label;
-  final String value;
-  final IconData icon;
-  final Color color;
-}
-
-class _RoutePreviewPainter extends CustomPainter {
-  const _RoutePreviewPainter({required this.lineColor, required this.nodeColor});
-
-  final Color lineColor;
-  final Color nodeColor;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = lineColor
-      ..strokeWidth = 4
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-
-    final path = Path()
-      ..moveTo(size.width * 0.15, size.height * 0.72)
-      ..quadraticBezierTo(size.width * 0.34, size.height * 0.18, size.width * 0.54, size.height * 0.48)
-      ..quadraticBezierTo(size.width * 0.72, size.height * 0.76, size.width * 0.86, size.height * 0.26);
-    canvas.drawPath(path, paint);
-
-    final nodePaint = Paint()..color = nodeColor;
-    canvas.drawCircle(Offset(size.width * 0.15, size.height * 0.72), 8, nodePaint);
-    canvas.drawCircle(Offset(size.width * 0.86, size.height * 0.26), 8, nodePaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}

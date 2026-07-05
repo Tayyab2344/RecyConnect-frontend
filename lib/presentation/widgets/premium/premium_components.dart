@@ -189,7 +189,7 @@ class _GlassCardState extends State<GlassCard> {
         height: widget.height,
         margin: widget.margin,
         transform: _isHovered
-            ? (Matrix4.identity()..translate(0.0, -4.0, 0.0))
+            ? (Matrix4.identity()..translateByDouble(0.0, -4.0, 0.0, 1.0))
             : Matrix4.identity(),
         decoration: BoxDecoration(
           borderRadius:
@@ -203,14 +203,14 @@ class _GlassCardState extends State<GlassCard> {
           decoration: BoxDecoration(
             color: widget.color ??
                 (isDark
-                    ? Colors.white.withOpacity(0.08)
-                    : Colors.white.withOpacity(0.85)),
+                    ? Colors.white.withValues(alpha: 0.08)
+                    : Colors.white.withValues(alpha: 0.85)),
             borderRadius: widget.borderRadius ??
                 PremiumDesignSystem.borderRadiusLarge,
             border: Border.all(
               color: isDark
-                  ? Colors.white.withOpacity(0.1)
-                  : Colors.white.withOpacity(0.3),
+                  ? Colors.white.withValues(alpha: 0.1)
+                  : Colors.white.withValues(alpha: 0.3),
               width: 1.5,
             ),
           ),
@@ -308,7 +308,7 @@ class _PremiumStatCardState extends State<PremiumStatCard>
           duration: PremiumDesignSystem.animationNormal,
           curve: PremiumDesignSystem.animationCurve,
           transform: _isHovered
-              ? (Matrix4.identity()..translate(0.0, -8.0, 0.0))
+              ? (Matrix4.identity()..translateByDouble(0.0, -8.0, 0.0, 1.0))
               : Matrix4.identity(),
           decoration: BoxDecoration(
             borderRadius: PremiumDesignSystem.borderRadiusXLarge,
@@ -326,8 +326,8 @@ class _PremiumStatCardState extends State<PremiumStatCard>
                 borderRadius: PremiumDesignSystem.borderRadiusXLarge,
                 border: Border.all(
                   color: isDark
-                      ? Colors.white.withOpacity(0.05)
-                      : Colors.grey.withOpacity(0.1),
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : Colors.grey.withValues(alpha: 0.1),
                   width: 1,
                 ),
               ),
@@ -371,8 +371,8 @@ class _PremiumStatCardState extends State<PremiumStatCard>
                             ),
                             decoration: BoxDecoration(
                               color: (widget.isPositive ?? true)
-                                  ? PremiumDesignSystem.success.withOpacity(0.1)
-                                  : PremiumDesignSystem.error.withOpacity(0.1),
+                                  ? PremiumDesignSystem.success.withValues(alpha: 0.1)
+                                  : PremiumDesignSystem.error.withValues(alpha: 0.1),
                               borderRadius:
                                   PremiumDesignSystem.borderRadiusSmall,
                             ),
@@ -480,8 +480,8 @@ class PremiumAppBar extends StatelessWidget implements PreferredSizeWidget {
         border: Border(
           bottom: BorderSide(
             color: isDark
-                ? Colors.white.withOpacity(0.05)
-                : Colors.grey.withOpacity(0.1),
+                ? Colors.white.withValues(alpha: 0.05)
+                : Colors.grey.withValues(alpha: 0.1),
             width: 1,
           ),
         ),

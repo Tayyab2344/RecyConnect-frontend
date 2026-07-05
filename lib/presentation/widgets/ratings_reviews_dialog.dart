@@ -8,10 +8,10 @@ class RatingsReviewsDialog extends StatefulWidget {
   final String sellerName;
 
   const RatingsReviewsDialog({
-    Key? key,
+    super.key,
     required this.orderId,
     required this.sellerName,
-  }) : super(key: key);
+  });
 
   @override
   State<RatingsReviewsDialog> createState() => _RatingsReviewsDialogState();
@@ -108,7 +108,7 @@ class _RatingsReviewsDialogState extends State<RatingsReviewsDialog> {
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: (isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen)
-                          .withOpacity(0.1),
+                          .withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -178,7 +178,7 @@ class _RatingsReviewsDialogState extends State<RatingsReviewsDialog> {
                       fontSize: 14,
                       color: isDark
                           ? AppTheme.darkTextSecondary
-                          : AppTheme.textLight.withOpacity(0.7),
+                          : AppTheme.textLight.withValues(alpha: 0.7),
                     ),
                     filled: true,
                     fillColor: isDark ? AppTheme.darkCardSurface : AppTheme.backgroundLight,

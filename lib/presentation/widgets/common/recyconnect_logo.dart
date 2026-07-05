@@ -316,10 +316,6 @@ class RecyConnectLogoPainterStatic extends CustomPainter {
 
     canvas.restore();
   }
-
-  void _buildLeafShape(Path path, Offset center, double radius, {required bool isLeft}) {
-    // Left empty since leaves are drawn inside paint
-  }
   
   @override
   bool shouldRepaint(covariant RecyConnectLogoPainterStatic oldDelegate) {

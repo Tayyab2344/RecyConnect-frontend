@@ -116,7 +116,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
                 leading: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AdminColors.accentBlue.withOpacity(0.1),
+                    color: AdminColors.accentBlue.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child:
@@ -131,7 +131,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
                 leading: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AdminColors.primaryGreen.withOpacity(0.1),
+                    color: AdminColors.primaryGreen.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Icon(Icons.camera_alt,
@@ -519,7 +519,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.1),
+                color: iconColor.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, color: iconColor, size: 48),
@@ -659,7 +659,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: theme.shadowColor.withOpacity(0.1),
+                color: theme.shadowColor.withValues(alpha: 0.1),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               ),
@@ -706,7 +706,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
                   onPressed: _isSavingProfile ? null : _saveProfileChanges,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: theme.colorScheme.primary,
-                    disabledBackgroundColor: theme.colorScheme.primary.withOpacity(0.6),
+                    disabledBackgroundColor: theme.colorScheme.primary.withValues(alpha: 0.6),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -755,7 +755,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
                   : null,
               boxShadow: [
                 BoxShadow(
-                  color: AdminColors.primaryGreen.withOpacity(0.3),
+                  color: AdminColors.primaryGreen.withValues(alpha: 0.3),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
@@ -799,7 +799,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     offset: const Offset(0, 2),
                     blurRadius: 8,
                   ),
@@ -846,7 +846,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: theme.shadowColor.withOpacity(0.1),
+                color: theme.shadowColor.withValues(alpha: 0.1),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               ),
@@ -1026,7 +1026,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
                   onPressed: _isUpdatingPassword ? null : _updatePassword,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: theme.colorScheme.primary,
-                    disabledBackgroundColor: theme.colorScheme.primary.withOpacity(0.6),
+                    disabledBackgroundColor: theme.colorScheme.primary.withValues(alpha: 0.6),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -1102,7 +1102,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: theme.shadowColor.withOpacity(0.1),
+                color: theme.shadowColor.withValues(alpha: 0.1),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               ),
@@ -1124,7 +1124,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
                       value ? 'Dark mode enabled' : 'Light mode enabled',
                     );
                   },
-                  activeColor: AdminColors.primaryGreen,
+                  activeThumbColor: AdminColors.primaryGreen,
                 ),
                 onTap: () {
                   themeProvider.toggleTheme();
@@ -1156,7 +1156,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: theme.shadowColor.withOpacity(0.1),
+                color: theme.shadowColor.withValues(alpha: 0.1),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               ),
@@ -1348,7 +1348,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: iconColor.withOpacity(0.1),
+          color: iconColor.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(icon, color: iconColor, size: 22),

@@ -4,7 +4,7 @@ import '../../../core/theme/app_theme.dart';
 class FaqsScreen extends StatefulWidget {
   final String? category;
   
-  const FaqsScreen({Key? key, this.category}) : super(key: key);
+  const FaqsScreen({super.key, this.category});
 
   @override
   State<FaqsScreen> createState() => _FaqsScreenState();
@@ -160,7 +160,7 @@ class _FaqsScreenState extends State<FaqsScreen> {
                       color: isExpanded
                           ? (isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen)
                           : (isDark
-                              ? AppTheme.darkSecondaryGreen.withOpacity(0.3)
+                              ? AppTheme.darkSecondaryGreen.withValues(alpha: 0.3)
                               : AppTheme.lightGray),
                     ),
                   ),
@@ -254,8 +254,8 @@ class _FaqsScreenState extends State<FaqsScreen> {
                     style: TextStyle(
                       fontSize: 14,
                       color: isDark
-                          ? AppTheme.darkBackground.withOpacity(0.8)
-                          : Colors.white.withOpacity(0.9),
+                          ? AppTheme.darkBackground.withValues(alpha: 0.8)
+                          : Colors.white.withValues(alpha: 0.9),
                     ),
                   ),
                   const SizedBox(height: 16),

@@ -9,12 +9,9 @@ import '../../../core/services/order_service.dart';
 import '../../../core/services/rewards_service.dart';
 import '../../../core/models/listing_model.dart';
 import '../../../core/models/order_model.dart';
-import '../../../core/utils/static_data.dart';
 import '../../widgets/curved/curved_bottom_nav.dart';
-import '../../widgets/recycle_loader.dart';
 import '../../widgets/skeleton_loader.dart';
 import '../../widgets/eco_assist_sheet.dart';
-import '../../widgets/animated_robot_icon.dart';
 import '../individual/create_listing_screen.dart';
 import '../individual/browse_marketplace_screen.dart';
 import '../individual/my_listings_screen.dart';
@@ -28,7 +25,7 @@ import 'package:flutter/foundation.dart';
 
 
 class IndividualDashboard extends StatefulWidget {
-  const IndividualDashboard({Key? key}) : super(key: key);
+  const IndividualDashboard({super.key});
 
   @override
   State<IndividualDashboard> createState() => _IndividualDashboardState();
@@ -41,7 +38,7 @@ class _IndividualDashboardState extends State<IndividualDashboard> {
   int _selectedIndex = 0;
   final PageController _pageController = PageController();
 
-  Map<String, dynamic>? _stats;
+
   String _location = 'Loading...';
   bool _isLoading = true;
   List<Listing> _recentListings = [];
@@ -114,6 +111,7 @@ class _IndividualDashboardState extends State<IndividualDashboard> {
         }
       }
 
+      if (!mounted) return;
       final rewardsService = Provider.of<RewardsService>(context, listen: false);
       // Load stats, recent listings, recent orders, and rewards in parallel
       final results = await Future.wait([
@@ -127,12 +125,8 @@ class _IndividualDashboardState extends State<IndividualDashboard> {
       if (!mounted) return;
       setState(() {
         _location = location;
-        _stats = {
-          'listings': results[0],
-          'orders': results[1],
-        };
-        _recentListings = (results[2] as Map<String, dynamic>)['listings'] as List<Listing>? ?? [];
-        _recentOrders = (results[3] as Map<String, dynamic>)['orders'] as List<Order>? ?? [];
+        _recentListings = (results[2])['listings'] as List<Listing>? ?? [];
+        _recentOrders = (results[3])['orders'] as List<Order>? ?? [];
         _isLoading = false;
       });
     } catch (e) {
@@ -278,10 +272,10 @@ class _IndividualDashboardState extends State<IndividualDashboard> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.08),
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
                 width: 1,
               ),
             ),
@@ -326,7 +320,7 @@ class _IndividualDashboardState extends State<IndividualDashboard> {
                   color: Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: Theme.of(context).dividerColor.withOpacity(0.1),
+                    color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
                   ),
                 ),
                 child: Icon(Icons.chat_bubble_outline_rounded, color: Theme.of(context).iconTheme.color, size: 20),
@@ -347,7 +341,7 @@ class _IndividualDashboardState extends State<IndividualDashboard> {
                   color: Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: Theme.of(context).dividerColor.withOpacity(0.1),
+                    color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
                   ),
                 ),
                 child: Icon(Icons.person, color: Theme.of(context).iconTheme.color, size: 20),
@@ -376,7 +370,7 @@ class _IndividualDashboardState extends State<IndividualDashboard> {
         Text(
           'Eco-friendly Marketplace',
           style: TextStyle(
-            color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF1A1A1A)).withOpacity(0.7),
+            color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF1A1A1A)).withValues(alpha: 0.7),
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -477,12 +471,12 @@ class _IndividualDashboardState extends State<IndividualDashboard> {
           color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: Theme.of(context).dividerColor.withOpacity(0.1),
+            color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
             width: 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -510,7 +504,7 @@ class _IndividualDashboardState extends State<IndividualDashboard> {
                   subtitle,
                   style: TextStyle(
                     fontSize: 12,
-                    color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
+                    color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
                   ),
                 ),
               ],
@@ -609,12 +603,12 @@ class _IndividualDashboardState extends State<IndividualDashboard> {
                 children: [
                   Icon(Icons.inbox_outlined,
                       size: 40,
-                      color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.4)),
+                      color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.4)),
                   const SizedBox(height: 8),
                   Text(
                     'No recent activity',
                     style: TextStyle(
-                      color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.6),
+                      color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.6),
                     ),
                   ),
                 ],
@@ -629,12 +623,12 @@ class _IndividualDashboardState extends State<IndividualDashboard> {
                   color: Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: Theme.of(context).dividerColor.withOpacity(0.1),
+                    color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
                     width: 1,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
@@ -645,7 +639,7 @@ class _IndividualDashboardState extends State<IndividualDashboard> {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: (activity['iconBg'] as Color).withOpacity(0.1),
+                        color: (activity['iconBg'] as Color).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
@@ -672,7 +666,7 @@ class _IndividualDashboardState extends State<IndividualDashboard> {
                             activity['subtitle'] as String,
                             style: TextStyle(
                               fontSize: 12,
-                              color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
+                              color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
                             ),
                           ),
                         ],
@@ -682,7 +676,7 @@ class _IndividualDashboardState extends State<IndividualDashboard> {
                       activity['time'] as String,
                       style: TextStyle(
                         fontSize: 12,
-                        color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.5),
+                        color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.5),
                       ),
                     ),
                   ],
@@ -748,12 +742,12 @@ class _IndividualDashboardState extends State<IndividualDashboard> {
                 color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: (alert['color'] as Color).withOpacity(0.2),
+                  color: (alert['color'] as Color).withValues(alpha: 0.2),
                   width: 1,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
@@ -764,7 +758,7 @@ class _IndividualDashboardState extends State<IndividualDashboard> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: (alert['color'] as Color).withOpacity(0.1),
+                      color: (alert['color'] as Color).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
@@ -791,7 +785,7 @@ class _IndividualDashboardState extends State<IndividualDashboard> {
                           alert['subtitle'] as String,
                           style: TextStyle(
                             fontSize: 12,
-                            color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
+                            color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -896,12 +890,12 @@ class _IndividualDashboardState extends State<IndividualDashboard> {
                 : [Colors.green.shade50, Colors.green.shade100],
           ),
           border: Border.all(
-            color: isDark ? primaryColor.withOpacity(0.3) : Colors.green.shade200,
+            color: isDark ? primaryColor.withValues(alpha: 0.3) : Colors.green.shade200,
             width: 1.5,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),

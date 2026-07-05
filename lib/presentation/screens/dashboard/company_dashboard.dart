@@ -11,7 +11,6 @@ import '../../../core/theme/app_theme.dart';
 import '../../widgets/curved/curved_bottom_nav.dart';
 import '../../widgets/skeleton_loader.dart';
 import '../../widgets/eco_assist_sheet.dart';
-import '../../widgets/animated_robot_icon.dart';
 
 import '../individual/create_listing_screen.dart';
 import '../individual/browse_marketplace_screen.dart';
@@ -718,12 +717,12 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                 : [Colors.green.shade50, Colors.green.shade100],
           ),
           border: Border.all(
-            color: isDark ? primaryColor.withOpacity(0.3) : Colors.green.shade200,
+            color: isDark ? primaryColor.withValues(alpha: 0.3) : Colors.green.shade200,
             width: 1.5,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),

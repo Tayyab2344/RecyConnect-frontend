@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -12,7 +11,6 @@ import 'package:path_provider/path_provider.dart';
 import '../../../core/models/order_model.dart';
 import '../../../core/services/order_service.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../widgets/recycle_loader.dart';
 import '../../widgets/skeleton_loader.dart';
 import '../individual/browse_marketplace_screen.dart';
 import 'package:flutter/foundation.dart';
@@ -21,7 +19,7 @@ import 'marketplace/order_details_screen.dart';
 /// Premium My Orders Screen with Glassmorphism Design
 /// Features: Glass cards, animated backgrounds, neon accents (dark), soft pastels (light)
 class MyOrdersScreen extends StatefulWidget {
-  const MyOrdersScreen({Key? key}) : super(key: key);
+  const MyOrdersScreen({super.key});
 
   @override
   State<MyOrdersScreen> createState() => _MyOrdersScreenState();
@@ -162,7 +160,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
                 leading: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.1),
+                    color: Colors.red.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(Icons.picture_as_pdf, color: Colors.red),
@@ -179,7 +177,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
                 leading: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.1),
+                    color: Colors.green.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(Icons.grid_on, color: Colors.green),
@@ -327,7 +325,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
         ['Total Expense (Rs)', '', '', '', '', _totalMoney],
       ];
 
-      String csvContent = const ListToCsvConverter().convert(csvData);
+      String csvContent = Csv().encode(csvData);
       
       await Clipboard.setData(ClipboardData(text: csvContent));
       
@@ -368,14 +366,14 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08),
             blurRadius: 16,
             offset: const Offset(0, -4),
           ),
         ],
         border: Border(
           top: BorderSide(
-            color: isDark ? accentColor.withOpacity(0.3) : Colors.black.withOpacity(0.05),
+            color: isDark ? accentColor.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.05),
             width: 1.5,
           ),
         ),
@@ -962,7 +960,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: isDark ? Colors.white.withOpacity(0.04) : Colors.black.withOpacity(0.03),
+                          color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Row(
@@ -1112,22 +1110,6 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
     }
   }
 
-  IconData _getMaterialIcon(String material) {
-    switch (material.toLowerCase()) {
-      case 'plastic':
-        return Icons.recycling_rounded;
-      case 'paper':
-        return Icons.description_rounded;
-      case 'metal':
-        return Icons.build_rounded;
-      case 'e-waste':
-        return Icons.devices_rounded;
-      case 'glass':
-        return Icons.wine_bar_rounded;
-      default:
-        return Icons.inventory_2_rounded;
-    }
-  }
 
   ImageProvider _getImageProvider(String? imageUrl, String material) {
     if (imageUrl != null && imageUrl.isNotEmpty) {

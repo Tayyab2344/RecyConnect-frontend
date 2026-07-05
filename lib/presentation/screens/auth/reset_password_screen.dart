@@ -101,9 +101,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              AppTheme.primaryGreen.withOpacity(0.1),
+              AppTheme.primaryGreen.withValues(alpha: 0.1),
               Colors.white,
-              AppTheme.primaryGreen.withOpacity(0.05),
+              AppTheme.primaryGreen.withValues(alpha: 0.05),
             ],
           ),
         ),
@@ -125,7 +125,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
                             borderRadius: BorderRadius.circular(12),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
+                                color: Colors.black.withValues(alpha: 0.05),
                                 blurRadius: 10,
                                 offset: const Offset(0, 4),
                               ),
@@ -158,13 +158,13 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
                                 gradient: LinearGradient(
                                   colors: [
                                     AppTheme.primaryGreen,
-                                    AppTheme.primaryGreen.withOpacity(0.8),
+                                    AppTheme.primaryGreen.withValues(alpha: 0.8),
                                   ],
                                 ),
                                 shape: BoxShape.circle,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: AppTheme.primaryGreen.withOpacity(0.3),
+                                    color: AppTheme.primaryGreen.withValues(alpha: 0.3),
                                     blurRadius: 20,
                                     spreadRadius: 2,
                                   ),
@@ -202,7 +202,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
                               borderRadius: BorderRadius.circular(24),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.08),
+                                  color: Colors.black.withValues(alpha: 0.08),
                                   blurRadius: 30,
                                   offset: const Offset(0, 10),
                                 ),
@@ -349,7 +349,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
                                             shape: RoundedRectangleBorder(
                                               borderRadius: BorderRadius.circular(16),
                                             ),
-                                            disabledBackgroundColor: AppTheme.primaryGreen.withOpacity(0.6),
+                                            disabledBackgroundColor: AppTheme.primaryGreen.withValues(alpha: 0.6),
                                           ),
                                           child: authService.isLoading
                                               ? const SizedBox(

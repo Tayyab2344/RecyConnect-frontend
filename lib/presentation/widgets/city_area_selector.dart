@@ -15,7 +15,7 @@ class CityAreaSelector extends StatefulWidget {
   final String? areaValidator;
 
   const CityAreaSelector({
-    Key? key,
+    super.key,
     required this.selectedCity,
     required this.selectedArea,
     required this.onCityChanged,
@@ -24,7 +24,7 @@ class CityAreaSelector extends StatefulWidget {
     this.isRequired = true,
     this.cityValidator,
     this.areaValidator,
-  }) : super(key: key);
+  });
 
   @override
   State<CityAreaSelector> createState() => _CityAreaSelectorState();

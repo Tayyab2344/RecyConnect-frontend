@@ -90,11 +90,13 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           });
         });
       } else {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Microphone permission is required to record voice notes.')),
         );
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to start recording: $e'), backgroundColor: Colors.red),
       );
@@ -142,6 +144,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         }
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to send voice note: $e'), backgroundColor: Colors.red),
       );
@@ -262,7 +265,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
     try {
       final Position pos = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
       );
 
       final locationContent = 'LOCATION_SHARE:${pos.latitude},${pos.longitude}';
@@ -315,7 +318,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         title: Row(
           children: [
             CircleAvatar(
-              backgroundColor: Colors.white.withOpacity(0.2),
+              backgroundColor: Colors.white.withValues(alpha: 0.2),
               child: Text(
                 widget.otherParticipantName.isNotEmpty ? widget.otherParticipantName[0] : 'U',
                 style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
@@ -426,7 +429,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       decoration: BoxDecoration(
                         color: isDark ? const Color(0xFF1F2937) : Colors.white,
-                        border: Border(top: BorderSide(color: Colors.grey.withOpacity(0.2))),
+                        border: Border(top: BorderSide(color: Colors.grey.withValues(alpha: 0.2))),
                       ),
                       child: SafeArea(
                         child: Row(
@@ -454,10 +457,10 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       decoration: BoxDecoration(
                         color: isDark ? const Color(0xFF1F2937) : Colors.white,
-                        border: Border(top: BorderSide(color: Colors.grey.withOpacity(0.2))),
+                        border: Border(top: BorderSide(color: Colors.grey.withValues(alpha: 0.2))),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withValues(alpha: 0.05),
                             blurRadius: 5,
                             spreadRadius: 1,
                             offset: const Offset(0, -2),
@@ -595,7 +598,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                 bottomLeft: Radius.circular(isMe ? 16 : 0),
                 bottomRight: Radius.circular(isMe ? 0 : 16),
               ),
-              border: isLocation ? Border.all(color: Colors.orange.withOpacity(0.5)) : null,
+              border: isLocation ? Border.all(color: Colors.orange.withValues(alpha: 0.5)) : null,
             ),
             child: body,
           ),

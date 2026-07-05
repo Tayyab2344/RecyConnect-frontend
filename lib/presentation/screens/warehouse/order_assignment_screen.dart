@@ -36,7 +36,7 @@ class _OrderAssignmentScreenState extends State<OrderAssignmentScreen> {
 
     try {
       final data = await _collectorService.getUnassignedOrders(role: _selectedRole);
-      final fetchedOrders = (data as List).map((json) => Order.fromJson(json)).toList();
+      final fetchedOrders = (data).map((json) => Order.fromJson(json)).toList();
       setState(() {
         _orders = fetchedOrders;
         _isLoading = false;
@@ -131,7 +131,7 @@ class _OrderAssignmentScreenState extends State<OrderAssignmentScreen> {
           ),
         ),
         elevation: 4,
-        shadowColor: PremiumDesignSystem.primary.withOpacity(0.3),
+        shadowColor: PremiumDesignSystem.primary.withValues(alpha: 0.3),
         foregroundColor: Colors.white,
         actions: [
           if (_orders.isNotEmpty && !_isLoading)
@@ -169,7 +169,7 @@ class _OrderAssignmentScreenState extends State<OrderAssignmentScreen> {
                 ),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
-                  value: _selectedRole,
+                  initialValue: _selectedRole,
                   dropdownColor: isDark ? PremiumDesignSystem.darkSurface : Colors.white,
                   style: PremiumDesignSystem.body2.copyWith(
                     color: isDark ? PremiumDesignSystem.darkTextPrimary : PremiumDesignSystem.textPrimary,
@@ -255,7 +255,7 @@ class _OrderAssignmentScreenState extends State<OrderAssignmentScreen> {
                                   Container(
                                     padding: const EdgeInsets.all(20),
                                     decoration: BoxDecoration(
-                                      color: PremiumDesignSystem.primary.withOpacity(0.08),
+                                      color: PremiumDesignSystem.primary.withValues(alpha: 0.08),
                                       shape: BoxShape.circle,
                                     ),
                                     child: const Icon(
@@ -303,7 +303,7 @@ class _OrderAssignmentScreenState extends State<OrderAssignmentScreen> {
                                 padding: const EdgeInsets.all(16),
                                 margin: const EdgeInsets.only(bottom: 14),
                                 color: isSelected
-                                    ? PremiumDesignSystem.primary.withOpacity(0.08)
+                                    ? PremiumDesignSystem.primary.withValues(alpha: 0.08)
                                     : (isDark ? PremiumDesignSystem.darkSurface : Colors.white),
                                 borderRadius: BorderRadius.circular(PremiumDesignSystem.radiusLarge),
                                 onTap: () {
@@ -375,7 +375,7 @@ class _OrderAssignmentScreenState extends State<OrderAssignmentScreen> {
                                               Container(
                                                 padding: const EdgeInsets.all(6),
                                                 decoration: BoxDecoration(
-                                                  color: PremiumDesignSystem.primary.withOpacity(0.1),
+                                                  color: PremiumDesignSystem.primary.withValues(alpha: 0.1),
                                                   borderRadius: BorderRadius.circular(8),
                                                 ),
                                                 child: const Icon(
@@ -463,7 +463,7 @@ class _OrderAssignmentScreenState extends State<OrderAssignmentScreen> {
                 boxShadow: PremiumDesignSystem.elevatedShadow,
                 border: Border(
                   top: BorderSide(
-                    color: isDark ? Colors.white10 : Colors.grey.withOpacity(0.1),
+                    color: isDark ? Colors.white10 : Colors.grey.withValues(alpha: 0.1),
                     width: 1,
                   ),
                 ),

@@ -10,7 +10,7 @@ import 'checkout_screen.dart';
 class ItemDetailScreen extends StatefulWidget {
   final Listing item;
 
-  const ItemDetailScreen({Key? key, required this.item}) : super(key: key);
+  const ItemDetailScreen({super.key, required this.item});
 
   @override
   State<ItemDetailScreen> createState() => _ItemDetailScreenState();
@@ -38,12 +38,12 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
 
   Widget _buildImagePlaceholder(bool isDark) {
     return Container(
-      color: _materialColor().withOpacity(isDark ? 0.15 : 0.08),
+      color: _materialColor().withValues(alpha: isDark ? 0.15 : 0.08),
       child: Center(
         child: Icon(
           Icons.recycling_rounded,
           size: 72,
-          color: _materialColor().withOpacity(0.5),
+          color: _materialColor().withValues(alpha: 0.5),
         ),
       ),
     );
@@ -122,7 +122,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                     shape: BoxShape.circle,
                     color: _currentImageIndex == index
                         ? const Color(0xFF4CAF50)
-                        : Colors.white.withOpacity(0.5),
+                        : Colors.white.withValues(alpha: 0.5),
                   ),
                 );
               }),
@@ -141,7 +141,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
             blurRadius: 12,
             offset: const Offset(0, 2),
           ),
@@ -213,7 +213,8 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     final bgColor = isDark ? const Color(0xFF0F172A) : const Color(0xFFF5FAF5);
     final primaryGreen = const Color(0xFF2E7D32);
     final lightGreen = const Color(0xFF4CAF50);
-    final totalPrice = (widget.item.estimatedWeight * 20).toStringAsFixed(0);
+    final rate = widget.item.price > 0 ? widget.item.price : 20.0;
+    final totalPrice = (widget.item.estimatedWeight * rate).toStringAsFixed(0);
     final size = MediaQuery.of(context).size;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -260,7 +261,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                               gradient: LinearGradient(
                                 begin: Alignment.bottomCenter,
                                 end: Alignment.topCenter,
-                                colors: [bgColor, bgColor.withOpacity(0)],
+                                colors: [bgColor, bgColor.withValues(alpha: 0)],
                               ),
                             ),
                           ),
@@ -281,10 +282,10 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                 decoration: BoxDecoration(
-                                  color: _materialColor().withOpacity(isDark ? 0.2 : 0.1),
+                                  color: _materialColor().withValues(alpha: isDark ? 0.2 : 0.1),
                                   borderRadius: BorderRadius.circular(20),
                                   border: Border.all(
-                                    color: _materialColor().withOpacity(isDark ? 0.4 : 0.25),
+                                    color: _materialColor().withValues(alpha: isDark ? 0.4 : 0.25),
                                     width: 1,
                                   ),
                                 ),
@@ -294,7 +295,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                                     fontSize: 11,
                                     fontWeight: FontWeight.w700,
                                     color: isDark
-                                        ? _materialColor().withOpacity(0.9)
+                                        ? _materialColor().withValues(alpha: 0.9)
                                         : _materialColor(),
                                     letterSpacing: 0.8,
                                   ),
@@ -530,7 +531,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
               color: isDark ? const Color(0xFF1E293B) : Colors.white,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(isDark ? 0.4 : 0.08),
+                  color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.08),
                   blurRadius: 20,
                   offset: const Offset(0, -4),
                 ),

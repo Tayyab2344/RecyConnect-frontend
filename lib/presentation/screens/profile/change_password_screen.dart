@@ -126,9 +126,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AppTheme.skyBlue.withOpacity(0.1),
+                    color: AppTheme.skyBlue.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppTheme.skyBlue.withOpacity(0.3)),
+                    border: Border.all(color: AppTheme.skyBlue.withValues(alpha: 0.3)),
                   ),
                   child: const Row(
                     children: [

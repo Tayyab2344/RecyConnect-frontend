@@ -582,7 +582,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> with SingleTicker
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                color: AdminColors.primaryGreen.withOpacity(0.1),
+                color: AdminColors.primaryGreen.withValues(alpha: 0.1),
                 border: const Border(
                   bottom: BorderSide(color: AdminColors.border, width: 1),
                 ),
@@ -683,7 +683,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> with SingleTicker
         decoration: BoxDecoration(
           color: theme.cardColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.withOpacity(0.1), width: 1),
+          border: Border.all(color: Colors.grey.withValues(alpha: 0.1), width: 1),
           boxShadow: ModernColors.softShadow,
         ),
       child: Row(
@@ -734,7 +734,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> with SingleTicker
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
-                          color: statusColor.withOpacity(0.15),
+                          color: statusColor.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
@@ -805,7 +805,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> with SingleTicker
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: materialColor.withOpacity(0.1),
+                                color: materialColor.withValues(alpha: 0.1),
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
@@ -833,7 +833,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> with SingleTicker
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: AdminColors.accentBlue.withOpacity(0.1),
+                                color: AdminColors.accentBlue.withValues(alpha: 0.1),
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(
@@ -861,7 +861,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> with SingleTicker
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: AdminColors.success.withOpacity(0.1),
+                                color: AdminColors.success.withValues(alpha: 0.1),
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(
@@ -958,7 +958,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> with SingleTicker
           Icon(
             Icons.shopping_bag_outlined,
             size: 80,
-            color: AdminColors.textLight.withOpacity(0.5),
+            color: AdminColors.textLight.withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
           const Text(
@@ -1037,7 +1037,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> with SingleTicker
                                   horizontal: 12, vertical: 8),
                               decoration: BoxDecoration(
                                 color: _getStatusColor(order.status)
-                                    .withOpacity(0.15),
+                                    .withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: Row(
@@ -1271,7 +1271,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> with SingleTicker
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.1),
+              color: iconColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(6),
             ),
             child: Icon(icon, size: 16, color: iconColor),

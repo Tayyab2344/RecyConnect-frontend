@@ -7,8 +7,6 @@ import 'dart:io';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../core/utils/image_source_helper.dart';
-import '../../../core/services/location_service.dart';
-import '../../../core/utils/pakistan_locations.dart';
 import '../../widgets/city_area_selector.dart';
 import 'otp_verification_screen.dart';
 
@@ -26,14 +24,14 @@ class _IndividualRegistrationScreenState extends State<IndividualRegistrationScr
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  final ImagePicker _imagePicker = ImagePicker();
+
   
   // Location dropdowns
   String? _selectedCity;
   String? _selectedArea;
   double? _latitude;
   double? _longitude;
-  bool _isDetectingLocation = false;
+
   String? _locationMethod; // "auto" or "manual"
   
   XFile? _profileImage;
@@ -135,78 +133,7 @@ class _IndividualRegistrationScreenState extends State<IndividualRegistrationScr
     }
   }
 
-  Future<void> _detectLocation() async {
-    setState(() => _isDetectingLocation = true);
 
-    try {
-      final locationService = LocationService();
-
-      // Detect location with smart matching
-      final result = await locationService.detectLocationAndMatch(
-        PakistanLocations.cities,
-        (city) => PakistanLocations.getAreasForCity(city),
-      );
-
-      if (result == null) {
-        // Location detection failed
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Unable to detect location. Please select manually.'),
-              backgroundColor: AppTheme.errorRed,
-              action: SnackBarAction(
-                label: 'Enable',
-                textColor: Colors.white,
-                onPressed: () async{
-                  await locationService.openLocationSettings();
-                },
-              ),
-            ),
-          );
-        }
-        setState(() => _isDetectingLocation = false);
-        return;
-      }
-
-      // Update state with detected location
-      setState(() {
-        _latitude = result['latitude'];
-        _longitude = result['longitude'];
-        _selectedCity = result['city'];
-        _selectedArea = result['area'];
-        _locationMethod = 'auto';
-        _isDetectingLocation = false;
-      });
-
-      if (mounted) {
-        String message = 'Location detected!';
-        if (_selectedCity != null) {
-          message += ' ✓ $_selectedCity';
-          if (_selectedArea != null) {
-            message += ', $_selectedArea';
-          }
-        }
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(message),
-            backgroundColor: AppTheme.primaryGreen,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    } catch (e) {
-      setState(() => _isDetectingLocation = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error detecting location: $e'),
-            backgroundColor: AppTheme.errorRed,
-          ),
-        );
-      }
-    }
-  }
 
   void _checkPasswordStrength(String password) {
     double strength = 0.0;
@@ -316,9 +243,9 @@ class _IndividualRegistrationScreenState extends State<IndividualRegistrationScr
                       height: 120,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: AppTheme.primaryGreen.withOpacity(0.1),
+                        color: AppTheme.primaryGreen.withValues(alpha: 0.1),
                         border: Border.all(
-                          color: AppTheme.primaryGreen.withOpacity(0.3),
+                          color: AppTheme.primaryGreen.withValues(alpha: 0.3),
                           width: 3,
                         ),
                       ),
@@ -335,7 +262,7 @@ class _IndividualRegistrationScreenState extends State<IndividualRegistrationScr
                                           child: Icon(
                                             Icons.person_outline,
                                             size: 60,
-                                            color: AppTheme.primaryGreen.withOpacity(0.5),
+                                            color: AppTheme.primaryGreen.withValues(alpha: 0.5),
                                           ),
                                         );
                                       },
@@ -362,7 +289,7 @@ class _IndividualRegistrationScreenState extends State<IndividualRegistrationScr
                                       : Icon(
                                           Icons.person_outline,
                                           size: 60,
-                                          color: AppTheme.primaryGreen.withOpacity(0.5),
+                                          color: AppTheme.primaryGreen.withValues(alpha: 0.5),
                                         ),
                                 ),
                                 Positioned(
@@ -599,7 +526,7 @@ class _IndividualRegistrationScreenState extends State<IndividualRegistrationScr
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      disabledBackgroundColor: AppTheme.primaryGreen.withOpacity(0.6),
+                      disabledBackgroundColor: AppTheme.primaryGreen.withValues(alpha: 0.6),
                     ),
                     child: _isLoading
                         ? const SizedBox(
@@ -720,7 +647,7 @@ class _IndividualRegistrationScreenState extends State<IndividualRegistrationScr
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(
-              color: AppTheme.textLight.withOpacity(0.5),
+              color: AppTheme.textLight.withValues(alpha: 0.5),
               fontSize: 14,
             ),
             prefixIcon: Icon(icon, color: AppTheme.primaryGreen),

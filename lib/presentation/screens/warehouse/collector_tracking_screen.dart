@@ -165,7 +165,7 @@ class _CollectorTrackingScreenState extends State<CollectorTrackingScreen> {
         final data = jsonDecode(response.body);
         final List<dynamic> coordinates = data['routes'][0]['geometry']['coordinates'];
         
-        final List<LatLng> points = coordinates.map((c) => LatLng(c[1] as double, c[0] as double)).toList();
+        final List<LatLng> points = coordinates.map((c) => LatLng((c[1] as num).toDouble(), (c[0] as num).toDouble())).toList();
         
         if (mounted) {
           setState(() {
@@ -236,6 +236,7 @@ class _CollectorTrackingScreenState extends State<CollectorTrackingScreen> {
                   children: [
                     // The OSM Map
                     FlutterMap(
+                      key: ValueKey('${_routePoints.length},${_collectorLocation?.latitude}'),
                       mapController: _mapController,
                       options: MapOptions(
                         initialCenter: centerLatLng,
@@ -256,9 +257,9 @@ class _CollectorTrackingScreenState extends State<CollectorTrackingScreen> {
                             polylines: [
                               Polyline(
                                 points: _routePoints,
-                                color: AppTheme.primaryGreen.withOpacity(0.8),
+                                color: AppTheme.primaryGreen.withValues(alpha: 0.8),
                                 strokeWidth: 5.0,
-                                borderColor: Colors.black.withOpacity(0.3),
+                                borderColor: Colors.black.withValues(alpha: 0.3),
                                 borderStrokeWidth: 1.0,
                               ),
                             ],
@@ -280,7 +281,7 @@ class _CollectorTrackingScreenState extends State<CollectorTrackingScreen> {
                                     border: Border.all(color: Colors.white, width: 2),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withOpacity(0.3),
+                                        color: Colors.black.withValues(alpha: 0.3),
                                         blurRadius: 6,
                                         offset: const Offset(0, 3),
                                       ),
@@ -324,7 +325,7 @@ class _CollectorTrackingScreenState extends State<CollectorTrackingScreen> {
                                         ),
                                         Container(
                                           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                                          decoration: BoxDecoration(color: Colors.black.withOpacity(0.7), borderRadius: BorderRadius.circular(4)),
+                                          decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.7), borderRadius: BorderRadius.circular(4)),
                                           child: const Text('PICKUP', style: TextStyle(color: Colors.white, fontSize: 7, fontWeight: FontWeight.bold)),
                                         ),
                                       ],
@@ -353,7 +354,7 @@ class _CollectorTrackingScreenState extends State<CollectorTrackingScreen> {
                                         ),
                                         Container(
                                           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                                          decoration: BoxDecoration(color: Colors.black.withOpacity(0.7), borderRadius: BorderRadius.circular(4)),
+                                          decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.7), borderRadius: BorderRadius.circular(4)),
                                           child: const Text('DROPOFF', style: TextStyle(color: Colors.white, fontSize: 7, fontWeight: FontWeight.bold)),
                                         ),
                                       ],
@@ -372,7 +373,7 @@ class _CollectorTrackingScreenState extends State<CollectorTrackingScreen> {
                     // No location warning overlay
                     if (hasNoLocation)
                       Container(
-                        color: Colors.black.withOpacity(0.6),
+                        color: Colors.black.withValues(alpha: 0.6),
                         width: double.infinity,
                         height: double.infinity,
                         alignment: Alignment.center,
@@ -438,7 +439,7 @@ class _CollectorTrackingScreenState extends State<CollectorTrackingScreen> {
                           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.15),
+                              color: Colors.black.withValues(alpha: 0.15),
                               blurRadius: 10,
                               spreadRadius: 2,
                             ),
@@ -467,7 +468,7 @@ class _CollectorTrackingScreenState extends State<CollectorTrackingScreen> {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                                   decoration: BoxDecoration(
-                                    color: (_activeTrip?['status'] == 'IN_TRANSIT' ? Colors.green : Colors.blue).withOpacity(0.12),
+                                    color: (_activeTrip?['status'] == 'IN_TRANSIT' ? Colors.green : Colors.blue).withValues(alpha: 0.12),
                                     borderRadius: BorderRadius.circular(20),
                                   ),
                                   child: Text(

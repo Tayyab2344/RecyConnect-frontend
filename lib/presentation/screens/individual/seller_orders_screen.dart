@@ -18,7 +18,7 @@ import 'package:flutter/foundation.dart';
 import 'marketplace/order_details_screen.dart';
 
 class SellerOrdersScreen extends StatefulWidget {
-  const SellerOrdersScreen({Key? key}) : super(key: key);
+  const SellerOrdersScreen({super.key});
 
   @override
   State<SellerOrdersScreen> createState() => _SellerOrdersScreenState();
@@ -69,7 +69,13 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
         // Filter by status
         bool matchesStatus = false;
         if (_selectedStatus == 'Active') {
-          matchesStatus = order.status == 'PENDING' || order.status == 'COLLECTED';
+          matchesStatus = order.status == 'CREATED' ||
+              order.status == 'CONFIRMED' ||
+              order.status == 'PENDING' ||
+              order.status == 'COLLECTED' ||
+              order.status == 'PROCESSING' ||
+              order.status == 'SHIPPED' ||
+              order.status == 'DELIVERED';
         } else if (_selectedStatus == 'Completed') {
           matchesStatus = order.status == 'COMPLETED';
         } else if (_selectedStatus == 'Cancelled') {
@@ -113,6 +119,7 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
       );
 
       if (confirmed == true) {
+        if (!mounted) return;
         // Show loading
         showDialog(
           context: context,
@@ -146,6 +153,64 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
         ErrorMessageHelper.showErrorSnackBar(
           context,
           message: 'Failed to update order: ${e.toString()}',
+        );
+      }
+    }
+  }
+
+  Future<void> _confirmOrder(Order order) async {
+    try {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Confirm Order'),
+          content: const Text('Are you sure you want to accept/confirm this order?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryGreen,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Confirm'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirmed == true) {
+        if (!mounted) return;
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const Center(child: RecycleLoader()),
+        );
+
+        await _orderService.confirmOrder(order.id);
+
+        if (mounted) Navigator.pop(context); // Close loading
+
+        await _loadOrders(); // Reload orders
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Order confirmed successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) Navigator.pop(context); // Close loading if open
+      if (mounted) {
+        ErrorMessageHelper.showErrorSnackBar(
+          context,
+          message: 'Failed to confirm order: ${e.toString()}',
         );
       }
     }
@@ -209,7 +274,7 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
                 leading: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.1),
+                    color: Colors.red.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(Icons.picture_as_pdf, color: Colors.red),
@@ -226,7 +291,7 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
                 leading: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.1),
+                    color: Colors.green.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(Icons.grid_on, color: Colors.green),
@@ -368,7 +433,7 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
         ['Total Revenue (Rs)', '', '', '', '', _totalMoney],
       ];
 
-      String csvContent = const ListToCsvConverter().convert(csvData);
+      String csvContent = Csv().encode(csvData);
       
       await Clipboard.setData(ClipboardData(text: csvContent));
       
@@ -409,14 +474,14 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08),
             blurRadius: 16,
             offset: const Offset(0, -4),
           ),
         ],
         border: Border(
           top: BorderSide(
-            color: isDark ? AppTheme.darkSecondaryGreen.withOpacity(0.3) : Colors.grey.shade200,
+            color: isDark ? AppTheme.darkSecondaryGreen.withValues(alpha: 0.3) : Colors.grey.shade200,
             width: 1.5,
           ),
         ),
@@ -507,7 +572,7 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
               color: isDark ? AppTheme.darkCardSurface : Colors.white,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -642,13 +707,13 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
             color: isSelected
                 ? (isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen)
                 : (isDark
-                    ? AppTheme.darkSecondaryGreen.withOpacity(0.3)
+                    ? AppTheme.darkSecondaryGreen.withValues(alpha: 0.3)
                     : Colors.grey.shade300),
             width: isSelected ? 1.5 : 1,
           ),
           boxShadow: isSelected ? [
             BoxShadow(
-              color: (isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen).withOpacity(0.2),
+              color: (isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen).withValues(alpha: 0.2),
               blurRadius: 8,
               offset: const Offset(0, 2),
             )
@@ -690,12 +755,12 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isDark
-              ? AppTheme.darkSecondaryGreen.withOpacity(0.3)
+              ? AppTheme.darkSecondaryGreen.withValues(alpha: 0.3)
               : Colors.grey.shade200,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -713,7 +778,7 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: materialColor.withOpacity(0.2),
+                    color: materialColor.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
                     image: DecorationImage(
                       image: _getImageProvider(order.imageUrl, order.materialType),
@@ -911,7 +976,7 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.white.withOpacity(0.04) : Colors.black.withOpacity(0.03),
+                  color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
@@ -960,10 +1025,27 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
             ],
 
             // Action Buttons (only for active orders)
-            if (order.status == 'PENDING' || order.status == 'COLLECTED') ...[
+            if (order.status == 'CREATED' ||
+                order.status == 'CONFIRMED' ||
+                order.status == 'PENDING' ||
+                order.status == 'COLLECTED') ...[
               const SizedBox(height: 16),
               Row(
                 children: [
+                  if (order.status == 'CREATED')
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () => _confirmOrder(order),
+                        icon: const Icon(Icons.check_circle_outline, size: 18),
+                        label: const Text('Confirm Order'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          elevation: 0,
+                        ),
+                      ),
+                    ),
                   if (order.status == 'PENDING')
                     Expanded(
                       child: OutlinedButton.icon(
@@ -979,7 +1061,8 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
                         ),
                       ),
                     ),
-                  if (order.status == 'COLLECTED') ...[
+                  if (order.status == 'COLLECTED' ||
+                      (order.status == 'CONFIRMED' && order.deliveryMethod == 'SELF_TRANSPORTATION')) ...[
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: () => _updateOrderStatus(order, 'COMPLETED'),
@@ -1032,21 +1115,6 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
     }
   }
 
-  IconData _getMaterialIcon(String material) {
-    switch (material.toLowerCase()) {
-      case 'plastic':
-        return Icons.recycling;
-      case 'paper':
-        return Icons.description;
-      case 'metal':
-        return Icons.build;
-      case 'e-waste':
-        return Icons.devices;
-      default:
-        return Icons.inventory_2;
-    }
-  }
-
   ImageProvider _getImageProvider(String? imageUrl, String material) {
     if (imageUrl != null && imageUrl.isNotEmpty) {
       if (imageUrl.startsWith('http')) {
@@ -1079,12 +1147,17 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
   }
 
   Map<String, Color> _getStatusColor(String status) {
-    switch (status) {
+    switch (status.trim().toUpperCase()) {
+      case 'CREATED':
       case 'PENDING':
         return {
           'background': const Color(0xFFFFF3E0),
           'text': const Color(0xFFF57C00),
         };
+      case 'CONFIRMED':
+      case 'PROCESSING':
+      case 'SHIPPED':
+      case 'DELIVERED':
       case 'COLLECTED':
         return {
           'background': const Color(0xFFE3F2FD),

@@ -143,9 +143,9 @@ class _CollectorRegistrationScreenState
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              AppTheme.primaryGreen.withOpacity(0.05),
+              AppTheme.primaryGreen.withValues(alpha: 0.05),
               Colors.white,
-              AppTheme.primaryGreen.withOpacity(0.03),
+              AppTheme.primaryGreen.withValues(alpha: 0.03),
             ],
           ),
         ),
@@ -276,13 +276,13 @@ class _CollectorRegistrationScreenState
             gradient: LinearGradient(
               colors: [
                 AppTheme.primaryGreen,
-                AppTheme.primaryGreen.withOpacity(0.8),
+                AppTheme.primaryGreen.withValues(alpha: 0.8),
               ],
             ),
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: AppTheme.primaryGreen.withOpacity(0.3),
+                color: AppTheme.primaryGreen.withValues(alpha: 0.3),
                 blurRadius: 15,
                 spreadRadius: 3,
               ),
@@ -353,7 +353,7 @@ class _CollectorRegistrationScreenState
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(
-              color: AppTheme.textLight.withOpacity(0.5),
+              color: AppTheme.textLight.withValues(alpha: 0.5),
               fontWeight: FontWeight.w400,
             ),
             prefixIcon: Padding(
@@ -404,7 +404,7 @@ class _CollectorRegistrationScreenState
         backgroundColor: AppTheme.primaryGreen,
         foregroundColor: Colors.white,
         elevation: 0,
-        disabledBackgroundColor: AppTheme.primaryGreen.withOpacity(0.6),
+        disabledBackgroundColor: AppTheme.primaryGreen.withValues(alpha: 0.6),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
         ),

@@ -37,7 +37,7 @@ class _SellerDashboardState extends State<SellerDashboard> {
             icon: const Icon(Icons.logout),
             onPressed: () async {
               await _authService.logout();
-              if (!mounted) return;
+              if (!context.mounted) return;
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (context) => const LoginScreen()),

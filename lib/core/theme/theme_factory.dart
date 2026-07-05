@@ -145,8 +145,8 @@ class ThemeFactory {
   // CARD THEME (Curvy Design)
   // ============================================
 
-  static CardTheme _buildCardTheme({required bool isDark}) {
-    return CardTheme(
+  static CardThemeData _buildCardTheme({required bool isDark}) {
+    return CardThemeData(
       color: isDark ? AppColors.darkCard : AppColors.white,
       elevation: DesignTokens.elevationLow,
       shadowColor: isDark ? Colors.black45 : Colors.black12,
@@ -168,7 +168,7 @@ class ThemeFactory {
         foregroundColor: isDark ? AppColors.darkBackground : AppColors.white,
         elevation: DesignTokens.elevationLow,
         shadowColor: (isDark ? AppColors.darkPrimaryGreen : AppColors.primaryGreen)
-            .withOpacity(0.4),
+            .withValues(alpha: 0.4),
         padding: const EdgeInsets.symmetric(
           horizontal: DesignTokens.spacing24,
           vertical: DesignTokens.spacing16,
@@ -226,7 +226,7 @@ class ThemeFactory {
 
   static InputDecorationTheme _buildInputDecorationTheme({required bool isDark}) {
     final borderColor = isDark
-        ? AppColors.darkSecondaryGreen.withOpacity(0.3)
+        ? AppColors.darkSecondaryGreen.withValues(alpha: 0.3)
         : AppColors.lightGrey;
     final focusColor = isDark ? AppColors.darkPrimaryGreen : AppColors.primaryGreen;
     final fillColor = isDark ? AppColors.darkCard : AppColors.white;
@@ -263,7 +263,7 @@ class ThemeFactory {
       ),
       hintStyle: GoogleFonts.lato(
         color: (isDark ? AppColors.darkTextSecondary : AppColors.mediumGrey)
-            .withOpacity(0.5),
+            .withValues(alpha: 0.5),
       ),
       errorStyle: GoogleFonts.lato(
         color: AppColors.error,
@@ -335,8 +335,8 @@ class ThemeFactory {
   // DIALOG THEME
   // ============================================
 
-  static DialogTheme _buildDialogTheme({required bool isDark}) {
-    return DialogTheme(
+  static DialogThemeData _buildDialogTheme({required bool isDark}) {
+    return DialogThemeData(
       backgroundColor: isDark ? AppColors.darkCard : AppColors.white,
       elevation: DesignTokens.elevationHigh,
       shape: RoundedRectangleBorder(

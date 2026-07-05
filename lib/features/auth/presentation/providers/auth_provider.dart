@@ -126,7 +126,7 @@ class AuthProvider extends ChangeNotifier {
   }
 
   /// Generic wrapper that handles loading state, error handling, and
-  /// return-map construction for simple ApiResult<T> operations.
+  /// return-map construction for simple `ApiResult<T>` operations.
   /// Eliminates the repeated try/setLoading/setError/catch boilerplate
   /// across verifyOtp, resendOtp, forgotPassword, resetPassword, etc.
   Future<Map<String, dynamic>> _runWithLoading<T>(

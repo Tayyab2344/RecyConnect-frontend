@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 
 class ReturnRefundPolicyScreen extends StatelessWidget {
-  const ReturnRefundPolicyScreen({Key? key}) : super(key: key);
+  const ReturnRefundPolicyScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +45,7 @@ class ReturnRefundPolicyScreen extends StatelessWidget {
                color: const Color(0xFFFFF3E0),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: const Color(0xFFFFA726).withOpacity(0.3),
+                  color: const Color(0xFFFFA726).withValues(alpha: 0.3),
                 ),
               ),
               child: Row(
@@ -235,8 +235,8 @@ class ReturnRefundPolicyScreen extends StatelessWidget {
                       fontSize: 13,
                       height: 1.6,
                       color: isDark
-                          ? AppTheme.darkBackground.withOpacity(0.9)
-                          : Colors.white.withOpacity(0.95),
+                          ? AppTheme.darkBackground.withValues(alpha: 0.9)
+                          : Colors.white.withValues(alpha: 0.95),
                     ),
                   ),
                 ],

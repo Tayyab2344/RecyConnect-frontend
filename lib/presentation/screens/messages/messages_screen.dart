@@ -134,11 +134,11 @@ class _MessagesScreenState extends State<MessagesScreen> {
                           decoration: BoxDecoration(
                             border: Border(
                               bottom: BorderSide(
-                                color: Colors.grey.withOpacity(0.2),
+                                color: Colors.grey.withValues(alpha: 0.2),
                               ),
                             ),
                             color: unreadCount > 0
-                                ? AppTheme.primaryGreen.withOpacity(0.05)
+                                ? AppTheme.primaryGreen.withValues(alpha: 0.05)
                                 : null,
                           ),
                           child: ListTile(
@@ -147,7 +147,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                               children: [
                                 CircleAvatar(
                                   radius: 24,
-                                  backgroundColor: AppTheme.primaryGreen.withOpacity(0.2),
+                                  backgroundColor: AppTheme.primaryGreen.withValues(alpha: 0.2),
                                   backgroundImage: otherParticipant['profileImage'] != null
                                       ? NetworkImage(otherParticipant['profileImage'])
                                       : null,

@@ -10,10 +10,10 @@ class LoadingStateWidget extends StatelessWidget {
   final bool showMessage;
 
   const LoadingStateWidget({
-    Key? key,
+    super.key,
     this.message,
     this.showMessage = true,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -49,11 +49,11 @@ class ShimmerLoading extends StatefulWidget {
   final BorderRadius? borderRadius;
 
   const ShimmerLoading({
-    Key? key,
+    super.key,
     required this.width,
     required this.height,
     this.borderRadius,
-  }) : super(key: key);
+  });
 
   @override
   State<ShimmerLoading> createState() => _ShimmerLoadingState();
@@ -111,7 +111,7 @@ class _ShimmerLoadingState extends State<ShimmerLoading>
 
 /// List Item Skeleton (for marketplace, orders, etc.)
 class ListItemSkeleton extends StatelessWidget {
-  const ListItemSkeleton({Key? key}) : super(key: key);
+  const ListItemSkeleton({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -168,11 +168,11 @@ class LoadingOverlay extends StatelessWidget {
   final String? message;
 
   const LoadingOverlay({
-    Key? key,
+    super.key,
     required this.isLoading,
     required this.child,
     this.message,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -195,10 +195,10 @@ class InlineLoading extends StatelessWidget {
   final double size;
 
   const InlineLoading({
-    Key? key,
+    super.key,
     this.color,
     this.size = 16,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

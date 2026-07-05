@@ -47,6 +47,7 @@ class _ExpenseManagementScreenState extends State<ExpenseManagementScreen> {
 
   Future<void> _deleteExpense(int id) async {
     final success = await _warehouseService.deleteExpense(id);
+    if (!mounted) return;
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Expense deleted successfully')),
@@ -183,7 +184,7 @@ class _ExpenseManagementScreenState extends State<ExpenseManagementScreen> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: (isDark ? AppTheme.darkSecondaryGreen : AppTheme.lightGray)
-              .withOpacity(0.2),
+              .withValues(alpha: 0.2),
         ),
       ),
       child: Row(
@@ -192,7 +193,7 @@ class _ExpenseManagementScreenState extends State<ExpenseManagementScreen> {
           Row(
             children: [
               CircleAvatar(
-                backgroundColor: _getCategoryColor(exp['category']).withOpacity(0.1),
+                backgroundColor: _getCategoryColor(exp['category']).withValues(alpha: 0.1),
                 child: Icon(
                   _getCategoryIcon(exp['category']),
                   color: _getCategoryColor(exp['category']),
@@ -224,7 +225,7 @@ class _ExpenseManagementScreenState extends State<ExpenseManagementScreen> {
                     style: TextStyle(
                       fontSize: 10,
                       color: (isDark ? AppTheme.darkTextSecondary : AppTheme.textLight)
-                          .withOpacity(0.6),
+                          .withValues(alpha: 0.6),
                     ),
                   ),
                 ],
@@ -339,7 +340,7 @@ class _ExpenseManagementScreenState extends State<ExpenseManagementScreen> {
             Icons.receipt_long,
             size: 64,
             color: (isDark ? AppTheme.darkTextSecondary : AppTheme.textLight)
-                .withOpacity(0.5),
+                .withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
           Text(
@@ -413,6 +414,8 @@ class _AddExpenseFormState extends State<AddExpenseForm> {
 
     setState(() => _isSaving = false);
 
+    if (!mounted) return;
+
     if (result['success'] == true) {
       widget.onExpenseAdded();
     } else {
@@ -450,7 +453,7 @@ class _AddExpenseFormState extends State<AddExpenseForm> {
               ),
               const SizedBox(height: 20),
               DropdownButtonFormField<String>(
-                value: _selectedCategory,
+                initialValue: _selectedCategory,
                 decoration: const InputDecoration(labelText: 'Expense Category'),
                 items: widget.categories.map((c) {
                   return DropdownMenuItem(
@@ -490,7 +493,7 @@ class _AddExpenseFormState extends State<AddExpenseForm> {
                   height: 100,
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: isDark ? Colors.white10 : Colors.black.withOpacity(0.04),
+                    color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.04),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: isDark ? Colors.white24 : Colors.black12,

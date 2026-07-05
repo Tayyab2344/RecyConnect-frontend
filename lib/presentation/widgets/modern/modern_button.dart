@@ -11,7 +11,7 @@ class ModernButton extends StatefulWidget {
   final bool outlined;
 
   const ModernButton({
-    Key? key,
+    super.key,
     required this.text,
     this.onPressed,
     this.icon,
@@ -19,7 +19,7 @@ class ModernButton extends StatefulWidget {
     this.gradient,
     this.color,
     this.outlined = false,
-  }) : super(key: key);
+  });
 
   @override
   State<ModernButton> createState() => _ModernButtonState();

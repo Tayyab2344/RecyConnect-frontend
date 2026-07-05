@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../core/models/listing_model.dart';
@@ -13,11 +12,11 @@ class ListingDetailScreen extends StatelessWidget {
   final VoidCallback onEdit;
 
   const ListingDetailScreen({
-    Key? key,
+    super.key,
     required this.listing,
     required this.onDelete,
     required this.onEdit,
-  }) : super(key: key);
+  });
 
   Color _getMaterialColor(String material) {
     switch (material.toLowerCase()) {
@@ -68,8 +67,8 @@ class ListingDetailScreen extends StatelessWidget {
         centerTitle: true,
         flexibleSpace: Container(
           color: isDark
-              ? Colors.black.withOpacity(0.4)
-              : Colors.white.withOpacity(0.8),
+              ? Colors.black.withValues(alpha: 0.4)
+              : Colors.white.withValues(alpha: 0.8),
         ),
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new, color: isDark ? Colors.white : Colors.black87),
@@ -137,7 +136,7 @@ class ListingDetailScreen extends StatelessWidget {
         child: Container(
           height: 250,
           width: double.infinity,
-          color: _getMaterialColor(listing.materialType).withOpacity(0.1),
+          color: _getMaterialColor(listing.materialType).withValues(alpha: 0.1),
           child: Stack(
             fit: StackFit.expand,
             children: [
@@ -185,7 +184,7 @@ class ListingDetailScreen extends StatelessWidget {
                     end: Alignment.bottomCenter,
                     colors: [
                       Colors.transparent,
-                      Colors.black.withOpacity(0.7),
+                      Colors.black.withValues(alpha: 0.7),
                     ],
                     stops: const [0.6, 1.0],
                   ),
@@ -199,10 +198,10 @@ class ListingDetailScreen extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: _getStatusColor(listing.statusDisplay).withOpacity(0.9),
+                    color: _getStatusColor(listing.statusDisplay).withValues(alpha: 0.9),
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
-                      BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 4, offset: const Offset(0, 2))
+                      BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4, offset: const Offset(0, 2))
                     ],
                   ),
                   child: Text(
@@ -227,7 +226,7 @@ class ListingDetailScreen extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.white30),
                       ),
@@ -420,7 +419,7 @@ class ListingDetailScreen extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: (isDark ? MarketplaceTheme.darkAccentCyan : MarketplaceTheme.lightAccent).withOpacity(0.1),
+            color: (isDark ? MarketplaceTheme.darkAccentCyan : MarketplaceTheme.lightAccent).withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: Icon(icon, color: isDark ? MarketplaceTheme.darkAccentCyan : MarketplaceTheme.lightAccent, size: 20),

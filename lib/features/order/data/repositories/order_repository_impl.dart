@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/network/api_result.dart';
 import '../../../../core/services/api_service.dart';
@@ -13,13 +12,19 @@ class OrderRepositoryImpl implements OrderRepository {
 
   @override
   Future<ApiResult<Map<String, dynamic>>> createOrder(
-      int listingId, double weight, {String paymentMethod = 'cod'}) async {
+      int listingId, double weight, {String paymentMethod = 'cod', String? deliveryMethod, double? buyerLatitude, double? buyerLongitude, int? chosenWarehouseId}) async {
     try {
-      final response = await _apiService.post('/orders', {
+      final body = <String, dynamic>{
         'listingId': listingId,
         'weight': weight,
         'paymentMethod': paymentMethod,
-      });
+      };
+      if (deliveryMethod != null) body['deliveryMethod'] = deliveryMethod;
+      if (buyerLatitude != null) body['buyerLatitude'] = buyerLatitude;
+      if (buyerLongitude != null) body['buyerLongitude'] = buyerLongitude;
+      if (chosenWarehouseId != null) body['chosenWarehouseId'] = chosenWarehouseId;
+
+      final response = await _apiService.post('/orders', body);
 
       if (response['success'] == true && response['data'] != null) {
         return ApiResult.success(data: response['data'] as Map<String, dynamic>);

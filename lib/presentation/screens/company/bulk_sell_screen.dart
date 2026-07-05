@@ -6,7 +6,7 @@ import 'package:recyconnect/core/services/image_classifier_service.dart';
 import 'package:flutter/foundation.dart';
 
 class BulkSellScreen extends StatefulWidget {
-  const BulkSellScreen({Key? key}) : super(key: key);
+  const BulkSellScreen({super.key});
 
   @override
   State<BulkSellScreen> createState() => _BulkSellScreenState();
@@ -53,7 +53,7 @@ class _BulkSellScreenState extends State<BulkSellScreen> {
                 const SizedBox(height: 16),
                 _buildTextField('Purity %', 'e.g., 98.5', Icons.verified_outlined, keyboardType: TextInputType.number),
                 const SizedBox(height: 16),
-                _buildTextField('Price per ${_selectedUnit}', 'e.g., 450', Icons.attach_money, keyboardType: TextInputType.number),
+                _buildTextField('Price per $_selectedUnit', 'e.g., 450', Icons.attach_money, keyboardType: TextInputType.number),
                 const SizedBox(height: 16),
                 _buildTextField('Description', 'Describe your material...', Icons.description, maxLines: 4),
                 const SizedBox(height: 16),
@@ -87,7 +87,7 @@ class _BulkSellScreenState extends State<BulkSellScreen> {
           'List your recyclable materials for bulk buyers',
           style: TextStyle(
             fontSize: 14,
-            color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
+            color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
           ),
         ),
       ],
@@ -101,7 +101,7 @@ class _BulkSellScreenState extends State<BulkSellScreen> {
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Theme.of(context).dividerColor.withOpacity(0.1),
+          color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
         ),
       ),
       child: Column(
@@ -127,10 +127,10 @@ class _BulkSellScreenState extends State<BulkSellScreen> {
             child: Container(
               height: 120,
               decoration: BoxDecoration(
-                color: const Color(0xFF2196F3).withOpacity(0.05),
+                color: const Color(0xFF2196F3).withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: const Color(0xFF2196F3).withOpacity(0.2),
+                  color: const Color(0xFF2196F3).withValues(alpha: 0.2),
                   width: 2,
                   style: BorderStyle.solid,
                 ),
@@ -149,7 +149,7 @@ class _BulkSellScreenState extends State<BulkSellScreen> {
                       _uploadedImages.isEmpty ? 'Tap to upload images' : '${_uploadedImages.length} images uploaded',
                       style: TextStyle(
                         fontSize: 13,
-                        color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
+                        color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
                       ),
                     ),
                   ],
@@ -171,7 +171,7 @@ class _BulkSellScreenState extends State<BulkSellScreen> {
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Theme.of(context).dividerColor.withOpacity(0.1),
+          color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
         ),
       ),
       child: Column(
@@ -199,7 +199,7 @@ class _BulkSellScreenState extends State<BulkSellScreen> {
                     color: isSelected ? const Color(0xFF2196F3) : Theme.of(context).scaffoldBackgroundColor,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: isSelected ? const Color(0xFF2196F3) : Theme.of(context).dividerColor.withOpacity(0.2),
+                      color: isSelected ? const Color(0xFF2196F3) : Theme.of(context).dividerColor.withValues(alpha: 0.2),
                     ),
                   ),
                   child: Text(
@@ -226,7 +226,7 @@ class _BulkSellScreenState extends State<BulkSellScreen> {
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Theme.of(context).dividerColor.withOpacity(0.1),
+          color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
         ),
       ),
       child: Column(
@@ -257,7 +257,7 @@ class _BulkSellScreenState extends State<BulkSellScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: DropdownButtonFormField<String>(
-                  value: _selectedUnit,
+                  initialValue: _selectedUnit,
                   decoration: InputDecoration(
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                   ),
@@ -307,7 +307,7 @@ class _BulkSellScreenState extends State<BulkSellScreen> {
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Theme.of(context).dividerColor.withOpacity(0.1),
+          color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
         ),
       ),
       child: Column(
@@ -351,10 +351,10 @@ class _BulkSellScreenState extends State<BulkSellScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF9C27B0).withOpacity(0.1),
+        color: const Color(0xFF9C27B0).withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFF9C27B0).withOpacity(0.3),
+          color: const Color(0xFF9C27B0).withValues(alpha: 0.3),
         ),
       ),
       child: Row(
@@ -362,7 +362,7 @@ class _BulkSellScreenState extends State<BulkSellScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFF9C27B0).withOpacity(0.2),
+              color: const Color(0xFF9C27B0).withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(Icons.auto_awesome, color: Color(0xFF9C27B0), size: 24),
@@ -385,7 +385,7 @@ class _BulkSellScreenState extends State<BulkSellScreen> {
                   'AI will verify material type and purity from uploaded images',
                   style: TextStyle(
                     fontSize: 12,
-                    color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                    color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
                   ),
                 ),
               ],

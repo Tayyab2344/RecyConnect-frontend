@@ -95,7 +95,7 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> with TickerProvid
         title: Row(
           children: [
             CircleAvatar(
-              backgroundColor: primaryColor.withOpacity(0.1),
+              backgroundColor: primaryColor.withValues(alpha: 0.1),
               radius: 18,
               child: Icon(Icons.psychology, color: primaryColor),
             ),
@@ -172,7 +172,7 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> with TickerProvid
               decoration: BoxDecoration(
                 gradient: isUser
                     ? LinearGradient(
-                        colors: [primaryColor, primaryColor.withOpacity(0.85)],
+                        colors: [primaryColor, primaryColor.withValues(alpha: 0.85)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       )
@@ -187,12 +187,12 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> with TickerProvid
                 border: isUser
                     ? null
                     : Border.all(
-                        color: isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.05),
+                        color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.05),
                         width: 1,
                       ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.02),
+                    color: Colors.black.withValues(alpha: 0.02),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   )
@@ -257,7 +257,7 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> with TickerProvid
           decoration: BoxDecoration(
             color: (isDark ? AppTheme.darkCardSurface : Colors.white),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.green.withOpacity(0.3), width: 1.5),
+            border: Border.all(color: Colors.green.withValues(alpha: 0.3), width: 1.5),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -296,7 +296,7 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> with TickerProvid
           decoration: BoxDecoration(
             color: (isDark ? AppTheme.darkCardSurface : Colors.white),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.orange.withOpacity(0.3), width: 1.5),
+            border: Border.all(color: Colors.orange.withValues(alpha: 0.3), width: 1.5),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -335,7 +335,7 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> with TickerProvid
           decoration: BoxDecoration(
             color: isDark ? AppTheme.darkCardSurface : Colors.white,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.grey.withOpacity(0.15)),
+            border: Border.all(color: Colors.grey.withValues(alpha: 0.15)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -354,7 +354,7 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> with TickerProvid
                         width: size,
                         height: size,
                         decoration: BoxDecoration(
-                          color: primaryColor.withOpacity(0.7),
+                          color: primaryColor.withValues(alpha: 0.7),
                           shape: BoxShape.circle,
                         ),
                       );
@@ -416,7 +416,7 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> with TickerProvid
         color: isDark ? AppTheme.darkCardSurface : Colors.white,
         border: Border(
           top: BorderSide(
-            color: (isDark ? AppTheme.darkSecondaryGreen : AppTheme.lightGray).withOpacity(0.2),
+            color: (isDark ? AppTheme.darkSecondaryGreen : AppTheme.lightGray).withValues(alpha: 0.2),
           ),
         ),
       ),
@@ -429,7 +429,7 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> with TickerProvid
                   color: isDark ? AppTheme.darkBackground : AppTheme.backgroundLight,
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.05),
+                    color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.05),
                   ),
                 ),
                 child: TextField(

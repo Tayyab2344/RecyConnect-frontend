@@ -59,7 +59,7 @@ class ExportHelper {
       ]);
     }
 
-    final csvString = const ListToCsvConverter().convert(rows);
+    final csvString = Csv().encode(rows);
     final bytes = const Utf8Encoder().convert(csvString);
 
     await Printing.sharePdf(
@@ -186,7 +186,7 @@ class ExportHelper {
       ]);
     }
 
-    final csvString = const ListToCsvConverter().convert(rows);
+    final csvString = Csv().encode(rows);
     final bytes = const Utf8Encoder().convert(csvString);
 
     await Printing.sharePdf(

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../widgets/curved/curved_card.dart';
@@ -152,15 +151,15 @@ class _NotificationsScreenState extends State<NotificationsScreen>
             radius: DesignTokens.radiusMedium,
             backgroundColor: isDark
                 ? (isUnread
-                    ? AppColors.darkCard.withOpacity(0.9)
+                    ? AppColors.darkCard.withValues(alpha: 0.9)
                     : AppColors.darkCard)
                 : (isUnread
                     ? Colors.white
-                    : Colors.white.withOpacity(0.7)),
+                    : Colors.white.withValues(alpha: 0.7)),
             shadows: isUnread
                 ? [
                     BoxShadow(
-                      color: iconColor.withOpacity(0.15),
+                      color: iconColor.withValues(alpha: 0.15),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -178,7 +177,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: iconColor.withOpacity(0.12),
+                        color: iconColor.withValues(alpha: 0.12),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -274,7 +273,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
           Container(
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: AppColors.primaryGreen.withOpacity(0.1),
+              color: AppColors.primaryGreen.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(

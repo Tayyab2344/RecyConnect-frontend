@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 
 class DataUsagePolicyScreen extends StatelessWidget {
-  const DataUsagePolicyScreen({Key? key}) : super(key: key);
+  const DataUsagePolicyScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -152,11 +152,11 @@ class DataUsagePolicyScreen extends StatelessWidget {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: (isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen)
-                    .withOpacity(0.1),
+                    .withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: (isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen)
-                      .withOpacity(0.3),
+                      .withValues(alpha: 0.3),
                 ),
               ),
               child: Row(

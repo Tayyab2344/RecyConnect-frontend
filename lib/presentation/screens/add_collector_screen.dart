@@ -108,6 +108,8 @@ class _AddCollectorScreenState extends State<AddCollectorScreen>
         return;
       }
 
+      if (!mounted) return;
+
       // Show option to choose camera or gallery
       final source = await showModalBottomSheet<ImageSource>(
         context: context,
@@ -974,7 +976,14 @@ class _AddCollectorScreenState extends State<AddCollectorScreen>
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             ),
             child: _isLoading
-                ? const CircularProgressIndicator(color: Colors.white)
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  )
                 : Text(
                     'Create Collector Account',
                     style: TextStyle(

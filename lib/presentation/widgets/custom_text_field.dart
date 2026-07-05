@@ -87,7 +87,7 @@ class CustomTextField extends StatelessWidget {
               borderSide: const BorderSide(color: AppTheme.errorRed, width: 2),
             ),
             filled: true,
-            fillColor: enabled ? Colors.white : AppTheme.lightGray.withOpacity(0.3),
+            fillColor: enabled ? Colors.white : AppTheme.lightGray.withValues(alpha: 0.3),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           ),
         ),

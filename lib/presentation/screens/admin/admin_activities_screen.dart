@@ -1256,7 +1256,7 @@ class _AdminActivitiesScreenState extends State<AdminActivitiesScreen>
           indicatorColor: AdminColors.textWhite,
           indicatorWeight: 3,
           labelColor: AdminColors.textWhite,
-          unselectedLabelColor: AdminColors.textWhite.withOpacity(0.7),
+          unselectedLabelColor: AdminColors.textWhite.withValues(alpha: 0.7),
           labelStyle: const TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 14,
@@ -1400,7 +1400,7 @@ class _AdminActivitiesScreenState extends State<AdminActivitiesScreen>
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: AdminColors.primaryGreen.withOpacity(0.1),
+      color: AdminColors.primaryGreen.withValues(alpha: 0.1),
       child: Row(
         children: [
           const Icon(
@@ -1780,7 +1780,7 @@ class _AdminActivitiesScreenState extends State<AdminActivitiesScreen>
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: activity.iconColor.withOpacity(0.1),
+                            color: activity.iconColor.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Icon(
@@ -1809,7 +1809,7 @@ class _AdminActivitiesScreenState extends State<AdminActivitiesScreen>
                             color: (isSuccess
                                     ? AdminColors.success
                                     : AdminColors.error)
-                                .withOpacity(0.1),
+                                .withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Row(
@@ -1948,7 +1948,7 @@ class _AdminActivitiesScreenState extends State<AdminActivitiesScreen>
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: activity.iconColor.withOpacity(0.1),
+                            color: activity.iconColor.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Icon(
@@ -1977,7 +1977,7 @@ class _AdminActivitiesScreenState extends State<AdminActivitiesScreen>
                             color: (isSuccess
                                     ? AdminColors.success
                                     : AdminColors.error)
-                                .withOpacity(0.1),
+                                .withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Row(
@@ -2026,7 +2026,7 @@ class _AdminActivitiesScreenState extends State<AdminActivitiesScreen>
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: userTypeColor.withOpacity(0.1),
+                            color: userTypeColor.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(

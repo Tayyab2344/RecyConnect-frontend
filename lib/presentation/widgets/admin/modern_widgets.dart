@@ -34,7 +34,6 @@ class _ModernStatCardState extends State<ModernStatCard>
   bool _isHovered = false;
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
-  late Animation<double> _elevationAnimation;
 
   @override
   void initState() {
@@ -44,9 +43,6 @@ class _ModernStatCardState extends State<ModernStatCard>
       vsync: this,
     );
     _scaleAnimation = Tween<double>(begin: 1.0, end: 1.03).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
-    _elevationAnimation = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
   }
@@ -83,7 +79,7 @@ class _ModernStatCardState extends State<ModernStatCard>
                   gradient: LinearGradient(
                     colors: [
                       Colors.white,
-                      widget.color.withOpacity(0.05),
+                      widget.color.withValues(alpha: 0.05),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -94,7 +90,7 @@ class _ModernStatCardState extends State<ModernStatCard>
                       : ModernColors.softShadow,
                   border: Border.all(
                     color: _isHovered
-                        ? widget.color.withOpacity(0.5)
+                        ? widget.color.withValues(alpha: 0.5)
                         : Colors.transparent,
                     width: 2,
                   ),
@@ -137,8 +133,8 @@ class _ModernStatCardState extends State<ModernStatCard>
                                   ),
                                   decoration: BoxDecoration(
                                     color: widget.isPositive
-                                        ? AdminColors.success.withOpacity(0.1)
-                                        : AdminColors.error.withOpacity(0.1),
+                                        ? AdminColors.success.withValues(alpha: 0.1)
+                                        : AdminColors.error.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(20),
                                   ),
                                   child: Row(
@@ -270,14 +266,14 @@ class _ModernQuickActionCardState extends State<ModernQuickActionCard> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           transform: Matrix4.identity()
-            ..scale(_isPressed ? 0.95 : (_isHovered ? 1.02 : 1.0)),
+            ..scaleByDouble(_isPressed ? 0.95 : (_isHovered ? 1.02 : 1.0), _isPressed ? 0.95 : (_isHovered ? 1.02 : 1.0), _isPressed ? 0.95 : (_isHovered ? 1.02 : 1.0), 1.0),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: _isHovered
-                  ? widget.color.withOpacity(0.5)
+                  ? widget.color.withValues(alpha: 0.5)
                   : AdminColors.border,
               width: _isHovered ? 2 : 1,
             ),
@@ -295,12 +291,12 @@ class _ModernQuickActionCardState extends State<ModernQuickActionCard> {
                   gradient: _isHovered
                       ? ModernColors.getGradientForColor(widget.color)
                       : null,
-                  color: _isHovered ? null : widget.color.withOpacity(0.1),
+                  color: _isHovered ? null : widget.color.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                   boxShadow: _isHovered
                       ? [
                           BoxShadow(
-                            color: widget.color.withOpacity(0.3),
+                            color: widget.color.withValues(alpha: 0.3),
                             offset: const Offset(0, 4),
                             blurRadius: 12,
                           ),
@@ -422,15 +418,15 @@ class GlassContainer extends StatelessWidget {
     return Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: (color ?? Colors.white).withOpacity(0.85),
+        color: (color ?? Colors.white).withValues(alpha: 0.85),
         borderRadius: BorderRadius.circular(borderRadius),
         border: Border.all(
-          color: Colors.white.withOpacity(0.2),
+          color: Colors.white.withValues(alpha: 0.2),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             offset: const Offset(0, 8),
             blurRadius: 32,
           ),
@@ -479,7 +475,7 @@ class _GradientButtonState extends State<GradientButton> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           transform: Matrix4.identity()
-            ..scale(_isPressed ? 0.95 : (_isHovered ? 1.02 : 1.0)),
+            ..scaleByDouble(_isPressed ? 0.95 : (_isHovered ? 1.02 : 1.0), _isPressed ? 0.95 : (_isHovered ? 1.02 : 1.0), _isPressed ? 0.95 : (_isHovered ? 1.02 : 1.0), 1.0),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           decoration: BoxDecoration(
             gradient: widget.gradient ?? ModernColors.primaryGradient,
@@ -557,7 +553,7 @@ class _ModernActivityItemState extends State<ModernActivityItem> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: _isHovered ? widget.color.withOpacity(0.05) : Colors.transparent,
+          color: _isHovered ? widget.color.withValues(alpha: 0.05) : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -569,12 +565,12 @@ class _ModernActivityItemState extends State<ModernActivityItem> {
                 gradient: _isHovered
                     ? ModernColors.getGradientForColor(widget.color)
                     : null,
-                color: _isHovered ? null : widget.color.withOpacity(0.1),
+                color: _isHovered ? null : widget.color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: _isHovered
                     ? [
                         BoxShadow(
-                          color: widget.color.withOpacity(0.3),
+                          color: widget.color.withValues(alpha: 0.3),
                           offset: const Offset(0, 4),
                           blurRadius: 8,
                         ),
@@ -653,7 +649,7 @@ class AnimatedWelcomeHeader extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF10B981).withOpacity(0.3),
+            color: const Color(0xFF10B981).withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -670,7 +666,7 @@ class AnimatedWelcomeHeader extends StatelessWidget {
               height: 120,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.1),
+                color: Colors.white.withValues(alpha: 0.1),
               ),
             ),
           ),
@@ -682,7 +678,7 @@ class AnimatedWelcomeHeader extends StatelessWidget {
               height: 80,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.08),
+                color: Colors.white.withValues(alpha: 0.08),
               ),
             ),
           ),
@@ -731,7 +727,7 @@ class AnimatedWelcomeHeader extends StatelessWidget {
                               subtitle,
                               style: TextStyle(
                                 fontSize: isMobile ? 13 : 15,
-                                color: Colors.white.withOpacity(0.9),
+                                color: Colors.white.withValues(alpha: 0.9),
                               ),
                               overflow: TextOverflow.fade,
                               maxLines: 2,
@@ -755,11 +751,11 @@ class AnimatedWelcomeHeader extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.all(18),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withValues(alpha: 0.2),
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
+                              color: Colors.black.withValues(alpha: 0.1),
                               blurRadius: 20,
                               offset: const Offset(0, 4),
                             ),

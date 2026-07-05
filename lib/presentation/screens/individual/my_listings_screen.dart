@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -7,15 +6,13 @@ import '../../../core/services/listing_service.dart';
 import '../../../core/utils/static_data.dart';
 import '../../../core/utils/export_helper.dart';
 import '../../widgets/marketplace/glass_card.dart';
-import '../../widgets/recycle_loader.dart';
 import '../../widgets/skeleton_loader.dart';
-import '../../../core/theme/marketplace_theme.dart';
 import 'create_listing_screen.dart';
 import 'listing_detail_screen.dart';
 import 'package:flutter/foundation.dart';
 
 class MyListingsScreen extends StatefulWidget {
-  const MyListingsScreen({Key? key}) : super(key: key);
+  const MyListingsScreen({super.key});
 
   @override
   State<MyListingsScreen> createState() => _MyListingsScreenState();
@@ -145,8 +142,8 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
         centerTitle: true,
         flexibleSpace: Container(
           color: isDark 
-              ? Colors.black.withOpacity(0.4) 
-              : Colors.white.withOpacity(0.8),
+              ? Colors.black.withValues(alpha: 0.4) 
+              : Colors.white.withValues(alpha: 0.8),
         ),
         leading: Navigator.canPop(context) ? IconButton(
           icon: Icon(Icons.arrow_back_ios_new, color: isDark ? Colors.white : Colors.black),
@@ -327,7 +324,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
             Padding(
               padding: const EdgeInsets.only(right: 8),
               child: Chip(
-                backgroundColor: const Color(0xFF4CAF50).withOpacity(0.2),
+                backgroundColor: const Color(0xFF4CAF50).withValues(alpha: 0.2),
                 label: Text(
                   'Material: ${_filterMaterial!.toUpperCase()}', 
                   style: TextStyle(color: isDark ? Colors.white : const Color(0xFF2E7D32)),
@@ -343,7 +340,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
             Padding(
               padding: const EdgeInsets.only(right: 8),
               child: Chip(
-                backgroundColor: Colors.blue.withOpacity(0.2),
+                backgroundColor: Colors.blue.withValues(alpha: 0.2),
                 label: Text(
                   'Status: $_filterStatus', 
                   style: TextStyle(color: isDark ? Colors.white : Colors.blue[800]),
@@ -395,9 +392,9 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: statusColor.withOpacity(0.2),
+                      color: statusColor.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: statusColor.withOpacity(0.5)),
+                      border: Border.all(color: statusColor.withValues(alpha: 0.5)),
                     ),
                     child: Text(
                       listing.statusDisplay,
@@ -434,7 +431,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                             padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: _getMaterialColor(listing.materialType).withOpacity(0.15),
+                              color: _getMaterialColor(listing.materialType).withValues(alpha: 0.15),
                             ),
                             child: Text(
                               StaticDataHelper.getMaterialIcon(listing.materialType),
@@ -460,8 +457,8 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                               shape: BoxShape.circle,
                               gradient: LinearGradient(
                                 colors: [
-                                  _getMaterialColor(listing.materialType).withOpacity(0.3),
-                                  _getMaterialColor(listing.materialType).withOpacity(0.1),
+                                  _getMaterialColor(listing.materialType).withValues(alpha: 0.3),
+                                  _getMaterialColor(listing.materialType).withValues(alpha: 0.1),
                                 ],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
@@ -633,7 +630,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
           children: [
             DropdownButtonFormField<String>(
               decoration: const InputDecoration(labelText: 'Material'),
-              value: _filterMaterial,
+              initialValue: _filterMaterial,
               items: [
                 const DropdownMenuItem(value: null, child: Text('All')),
                 ...MaterialData.materialTypes.map((m) =>
@@ -644,7 +641,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               decoration: const InputDecoration(labelText: 'Status'),
-              value: _filterStatus,
+              initialValue: _filterStatus,
               items: [
                 const DropdownMenuItem(value: null, child: Text('All')),
                 ...StatusData.listingStatuses.map((s) =>

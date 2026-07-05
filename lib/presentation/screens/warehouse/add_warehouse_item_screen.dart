@@ -125,7 +125,7 @@ class _AddWarehouseItemScreenState extends State<AddWarehouseItemScreen> {
         color: isDark ? AppTheme.darkCardSurface : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: (isDark ? AppTheme.darkSecondaryGreen : AppTheme.lightGray).withOpacity(0.3),
+          color: (isDark ? AppTheme.darkSecondaryGreen : AppTheme.lightGray).withValues(alpha: 0.3),
         ),
       ),
       child: Column(
@@ -138,7 +138,7 @@ class _AddWarehouseItemScreenState extends State<AddWarehouseItemScreen> {
                 color: isDark ? AppTheme.darkBackground : AppTheme.backgroundLight,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: (isDark ? AppTheme.darkSecondaryGreen : AppTheme.lightGray).withOpacity(0.3),
+                  color: (isDark ? AppTheme.darkSecondaryGreen : AppTheme.lightGray).withValues(alpha: 0.3),
                   width: 2,
                 ),
               ),
@@ -165,7 +165,7 @@ class _AddWarehouseItemScreenState extends State<AddWarehouseItemScreen> {
                           style: TextStyle(
                             fontSize: 12,
                             color: (isDark ? AppTheme.darkTextSecondary : AppTheme.textLight)
-                                .withOpacity(0.6),
+                                .withValues(alpha: 0.6),
                           ),
                         ),
                       ],
@@ -205,7 +205,7 @@ class _AddWarehouseItemScreenState extends State<AddWarehouseItemScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFF4CAF50).withOpacity(0.1),
+                color: const Color(0xFF4CAF50).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Row(
@@ -236,7 +236,7 @@ class _AddWarehouseItemScreenState extends State<AddWarehouseItemScreen> {
         color: isDark ? AppTheme.darkCardSurface : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: (isDark ? AppTheme.darkSecondaryGreen : AppTheme.lightGray).withOpacity(0.3),
+          color: (isDark ? AppTheme.darkSecondaryGreen : AppTheme.lightGray).withValues(alpha: 0.3),
         ),
       ),
       child: Column(
@@ -270,7 +270,7 @@ class _AddWarehouseItemScreenState extends State<AddWarehouseItemScreen> {
         color: isDark ? AppTheme.darkCardSurface : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: (isDark ? AppTheme.darkSecondaryGreen : AppTheme.lightGray).withOpacity(0.3),
+          color: (isDark ? AppTheme.darkSecondaryGreen : AppTheme.lightGray).withValues(alpha: 0.3),
         ),
       ),
       child: Column(
@@ -331,7 +331,7 @@ class _AddWarehouseItemScreenState extends State<AddWarehouseItemScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: (isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen).withOpacity(0.3),
+            color: (isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen).withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -375,7 +375,7 @@ class _AddWarehouseItemScreenState extends State<AddWarehouseItemScreen> {
               Container(
                 width: 1,
                 height: 40,
-                color: Colors.white.withOpacity(0.3),
+                color: Colors.white.withValues(alpha: 0.3),
               ),
               Expanded(
                 child: Column(
@@ -413,7 +413,7 @@ class _AddWarehouseItemScreenState extends State<AddWarehouseItemScreen> {
         color: isDark ? AppTheme.darkCardSurface : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: (isDark ? AppTheme.darkSecondaryGreen : AppTheme.lightGray).withOpacity(0.3),
+          color: (isDark ? AppTheme.darkSecondaryGreen : AppTheme.lightGray).withValues(alpha: 0.3),
         ),
       ),
       child: Column(
@@ -468,7 +468,7 @@ class _AddWarehouseItemScreenState extends State<AddWarehouseItemScreen> {
             hintText: hint,
             prefixText: prefix != null ? '$prefix ' : null,
             hintStyle: TextStyle(
-              color: (isDark ? AppTheme.darkTextSecondary : AppTheme.textLight).withOpacity(0.5),
+              color: (isDark ? AppTheme.darkTextSecondary : AppTheme.textLight).withValues(alpha: 0.5),
             ),
             filled: true,
             fillColor: isDark ? AppTheme.darkBackground : AppTheme.backgroundLight,
@@ -507,6 +507,8 @@ class _AddWarehouseItemScreenState extends State<AddWarehouseItemScreen> {
     );
 
     setState(() => _isProcessing = false);
+
+    if (!mounted) return;
 
     if (result['success'] == true) {
       ScaffoldMessenger.of(context).showSnackBar(

@@ -1,12 +1,10 @@
 import 'dart:io';
-import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../core/services/ocr_service.dart'; // Add OcrService import
 import '../../../core/utils/validators.dart';
@@ -45,16 +43,11 @@ class _RegistrationScreenState extends State<RegistrationScreen>
   XFile? _utilityImage;
   XFile? _ntnImage;
 
-  String? _extractedCnicNumber;
-  String? _extractedUtilityBillNumber;
-  String? _extractedNtnNumber;
-
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   double _passwordStrength = 0.0;
   String _passwordStrengthText = '';
-  Color _passwordStrengthColor = Colors.grey;
   int _currentStep = 0;
   
   
@@ -98,7 +91,6 @@ class _RegistrationScreenState extends State<RegistrationScreen>
           setState(() {
             _cnicController.text = extractedData['cnic']!; // The service already handles formatting? 
             // OcrService regex: \d{5}-\d{7}-\d{1}. If it matches, it's formatted.
-            _extractedCnicNumber = extractedData['cnic'];
           });
           
           if (mounted) {
@@ -125,7 +117,6 @@ class _RegistrationScreenState extends State<RegistrationScreen>
         if (extractedData.containsKey('ntn')) {
           setState(() {
             _ntnController.text = extractedData['ntn']!;
-            _extractedNtnNumber = extractedData['ntn'];
           });
           
           if (mounted) {
@@ -227,13 +218,6 @@ class _RegistrationScreenState extends State<RegistrationScreen>
     setState(() {
       _passwordStrength = strength;
       _passwordStrengthText = strengthText;
-      _passwordStrengthColor = strength <= 0.4
-          ? Colors.red
-          : strength <= 0.6
-              ? Colors.orange
-              : strength <= 0.8
-                  ? Colors.lightGreen
-                  : Colors.green;
     });
   }
 
@@ -368,7 +352,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
     return PopScope(
       canPop: _currentStep == 0,
-      onPopInvoked: (didPop) {
+      onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
         setState(() => _currentStep--);
       },
@@ -473,17 +457,17 @@ class _RegistrationScreenState extends State<RegistrationScreen>
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: isDark
-                    ? Colors.white.withOpacity(0.1)
-                    : Colors.white.withOpacity(0.9),
+                    ? Colors.white.withValues(alpha: 0.1)
+                    : Colors.white.withValues(alpha: 0.9),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: isDark
-                      ? Colors.white.withOpacity(0.15)
-                      : Colors.black.withOpacity(0.05),
+                      ? Colors.white.withValues(alpha: 0.15)
+                      : Colors.black.withValues(alpha: 0.05),
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(isDark ? 0.2 : 0.08),
+                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.08),
                     blurRadius: 10,
                     offset: const Offset(0, 2),
                   ),
@@ -523,7 +507,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: AppTheme.primaryGreen.withOpacity(0.1),
+            color: AppTheme.primaryGreen.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: Icon(
@@ -627,23 +611,23 @@ class _RegistrationScreenState extends State<RegistrationScreen>
               end: Alignment.bottomRight,
               colors: isDark
                   ? [
-                      Colors.white.withOpacity(0.12),
-                      Colors.white.withOpacity(0.05),
+                      Colors.white.withValues(alpha: 0.12),
+                      Colors.white.withValues(alpha: 0.05),
                     ]
                   : [
-                      Colors.white.withOpacity(0.85),
-                      Colors.white.withOpacity(0.65),
+                      Colors.white.withValues(alpha: 0.85),
+                      Colors.white.withValues(alpha: 0.65),
                     ],
             ),
             border: Border.all(
               color: isDark
-                  ? Colors.white.withOpacity(0.15)
-                  : Colors.white.withOpacity(0.6),
+                  ? Colors.white.withValues(alpha: 0.15)
+                  : Colors.white.withValues(alpha: 0.6),
               width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(isDark ? 0.2 : 0.08),
+                color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.08),
                 blurRadius: 25,
                 offset: const Offset(0, 8),
               ),
@@ -673,7 +657,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: AppTheme.primaryGreen.withOpacity(0.2),
+                      color: AppTheme.primaryGreen.withValues(alpha: 0.2),
                       width: 4,
                     ),
                     image: _profileImage != null
@@ -707,7 +691,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                         border: Border.all(color: Colors.white, width: 3),
                         boxShadow: [
                           BoxShadow(
-                            color: AppTheme.primaryGreen.withOpacity(0.4),
+                            color: AppTheme.primaryGreen.withValues(alpha: 0.4),
                             blurRadius: 8,
                             offset: const Offset(0, 4),
                           ),
@@ -928,13 +912,13 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                 color: (_confirmPasswordController.text == _passwordController.text
                         ? AppTheme.primaryGreen
                         : AppTheme.errorRed)
-                    .withOpacity(0.1),
+                    .withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: (_confirmPasswordController.text == _passwordController.text
                           ? AppTheme.primaryGreen
                           : AppTheme.errorRed)
-                      .withOpacity(0.3),
+                      .withValues(alpha: 0.3),
                 ),
               ),
               child: Row(
@@ -971,9 +955,9 @@ class _RegistrationScreenState extends State<RegistrationScreen>
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppTheme.infoBlue.withOpacity(0.05),
+              color: AppTheme.infoBlue.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppTheme.infoBlue.withOpacity(0.1)),
+              border: Border.all(color: AppTheme.infoBlue.withValues(alpha: 0.1)),
             ),
             child: Row(
               children: [
@@ -1006,23 +990,23 @@ class _RegistrationScreenState extends State<RegistrationScreen>
               end: Alignment.bottomRight,
               colors: isDark
                   ? [
-                      Colors.white.withOpacity(0.12),
-                      Colors.white.withOpacity(0.05),
+                      Colors.white.withValues(alpha: 0.12),
+                      Colors.white.withValues(alpha: 0.05),
                     ]
                   : [
-                      Colors.white.withOpacity(0.85),
-                      Colors.white.withOpacity(0.65),
+                      Colors.white.withValues(alpha: 0.85),
+                      Colors.white.withValues(alpha: 0.65),
                     ],
             ),
             border: Border.all(
               color: isDark
-                  ? Colors.white.withOpacity(0.15)
-                  : Colors.white.withOpacity(0.6),
+                  ? Colors.white.withValues(alpha: 0.15)
+                  : Colors.white.withValues(alpha: 0.6),
               width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(isDark ? 0.2 : 0.08),
+                color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.08),
                 blurRadius: 25,
                 offset: const Offset(0, 8),
               ),
@@ -1080,9 +1064,9 @@ class _RegistrationScreenState extends State<RegistrationScreen>
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppTheme.infoBlue.withOpacity(0.05),
+                  color: AppTheme.infoBlue.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppTheme.infoBlue.withOpacity(0.1)),
+                  border: Border.all(color: AppTheme.infoBlue.withValues(alpha: 0.1)),
                 ),
                 child: Row(
                   children: [
@@ -1126,10 +1110,10 @@ class _RegistrationScreenState extends State<RegistrationScreen>
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryGreen.withOpacity(0.08),
+                  color: AppTheme.primaryGreen.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: AppTheme.primaryGreen.withOpacity(0.2),
+                    color: AppTheme.primaryGreen.withValues(alpha: 0.2),
                   ),
                 ),
                 child: Row(
@@ -1174,13 +1158,13 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                   Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryGreen.withOpacity(0.05),
+                      color: AppTheme.primaryGreen.withValues(alpha: 0.05),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
                       Icons.verified_user_rounded,
                       size: 64,
-                      color: AppTheme.primaryGreen.withOpacity(0.5),
+                      color: AppTheme.primaryGreen.withValues(alpha: 0.5),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -1215,23 +1199,23 @@ class _RegistrationScreenState extends State<RegistrationScreen>
               end: Alignment.bottomRight,
               colors: isDark
                   ? [
-                      Colors.white.withOpacity(0.12),
-                      Colors.white.withOpacity(0.05),
+                      Colors.white.withValues(alpha: 0.12),
+                      Colors.white.withValues(alpha: 0.05),
                     ]
                   : [
-                      Colors.white.withOpacity(0.85),
-                      Colors.white.withOpacity(0.65),
+                      Colors.white.withValues(alpha: 0.85),
+                      Colors.white.withValues(alpha: 0.65),
                     ],
             ),
             border: Border.all(
               color: isDark
-                  ? Colors.white.withOpacity(0.15)
-                  : Colors.white.withOpacity(0.6),
+                  ? Colors.white.withValues(alpha: 0.15)
+                  : Colors.white.withValues(alpha: 0.6),
               width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(isDark ? 0.2 : 0.08),
+                color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.08),
                 blurRadius: 25,
                 offset: const Offset(0, 8),
               ),
@@ -1242,7 +1226,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryGreen.withOpacity(0.1),
+                  color: AppTheme.primaryGreen.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
             child: const Icon(
@@ -1318,10 +1302,10 @@ class _RegistrationScreenState extends State<RegistrationScreen>
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppTheme.primaryGreen.withOpacity(0.05),
+                color: AppTheme.primaryGreen.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: AppTheme.primaryGreen.withOpacity(0.2),
+                  color: AppTheme.primaryGreen.withValues(alpha: 0.2),
                 ),
               ),
               child: Column(
@@ -1394,7 +1378,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppTheme.primaryGreen.withOpacity(0.1),
+              color: AppTheme.primaryGreen.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, size: 18, color: AppTheme.primaryGreen),
@@ -1446,7 +1430,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
               borderRadius: BorderRadius.circular(10),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 4,
                 ),
               ],
@@ -1494,7 +1478,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
       child: Container(
         height: 100,
         decoration: BoxDecoration(
-          color: hasImage ? AppTheme.primaryGreen.withOpacity(0.05) : AppTheme.backgroundLight,
+          color: hasImage ? AppTheme.primaryGreen.withValues(alpha: 0.05) : AppTheme.backgroundLight,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: hasImage ? AppTheme.primaryGreen : Colors.grey.shade300,
@@ -1526,7 +1510,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                   ? Center(
                       child: Icon(
                         icon,
-                        color: AppTheme.textLight.withOpacity(0.5),
+                        color: AppTheme.textLight.withValues(alpha: 0.5),
                         size: 32,
                       ),
                     )
@@ -1574,7 +1558,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                   boxShadow: [
                     if (!hasImage)
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 4,
                       ),
                   ],
@@ -1630,7 +1614,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: AppTheme.bodyStyle.copyWith(
-              color: AppTheme.textLight.withOpacity(0.5),
+              color: AppTheme.textLight.withValues(alpha: 0.5),
             ),
             prefixIcon: Padding(
               padding: const EdgeInsets.only(left: 16, right: 12),
@@ -1677,7 +1661,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 20,
             offset: const Offset(0, -4),
           ),
@@ -1948,38 +1932,6 @@ class _RegistrationScreenState extends State<RegistrationScreen>
         setState(() => _isLoading = false);
       }
     }
-  }
-
-  Widget _buildPasswordRequirement(String text, bool isMet) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: isMet ? AppTheme.primaryGreen.withOpacity(0.1) : Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: isMet ? AppTheme.primaryGreen.withOpacity(0.3) : Colors.grey.shade300,
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            isMet ? Icons.check_circle : Icons.circle_outlined,
-            size: 14,
-            color: isMet ? AppTheme.primaryGreen : Colors.grey.shade400,
-          ),
-          const SizedBox(width: 6),
-          Text(
-            text,
-            style: AppTheme.captionStyle.copyWith(
-              fontSize: 11,
-              color: isMet ? AppTheme.primaryGreen : Colors.grey.shade600,
-              fontWeight: isMet ? FontWeight.w600 : FontWeight.normal,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   Widget _buildRequirementItem(String text, bool isMet) {

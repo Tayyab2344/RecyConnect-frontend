@@ -4,7 +4,7 @@ import '../auth/login_screen.dart';
 import '../../../core/theme/app_colors.dart';
 
 class OnboardingScreen extends StatefulWidget {
-  const OnboardingScreen({Key? key}) : super(key: key);
+  const OnboardingScreen({super.key});
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
@@ -137,11 +137,11 @@ class OnboardingContent extends StatelessWidget {
   final String title, text, iconStr;
 
   const OnboardingContent({
-    Key? key,
+    super.key,
     required this.title,
     required this.text,
     required this.iconStr,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -164,7 +164,7 @@ class OnboardingContent extends StatelessWidget {
           height: 300,
           width: 300,
           decoration: BoxDecoration(
-            color: AppColors.primaryGreen.withOpacity(0.1),
+            color: AppColors.primaryGreen.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: Icon(

@@ -16,7 +16,7 @@ class EcoAssistService extends ChangeNotifier {
   /// and returns the structured JSON response containing:
   /// - `reply`: String text in English, Urdu or Roman Urdu
   /// - `intent`: { `action`: String, `params`: Map }
-  /// - `suggestions`: List<String>
+  /// - `suggestions`: `List<String>`
   Future<Map<String, dynamic>> sendQuery(String message, {Map<String, dynamic>? location}) async {
     _setLoading(true);
     try {

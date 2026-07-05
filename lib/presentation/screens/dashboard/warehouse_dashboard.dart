@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:fl_chart/fl_chart.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../core/services/listing_service.dart';
 import '../../../core/services/order_service.dart';
@@ -9,19 +8,16 @@ import '../../../core/services/app_service.dart';
 import '../../../core/services/rewards_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../widgets/curved/curved_bottom_nav.dart';
-import '../../widgets/recycle_loader.dart';
 import '../../widgets/skeleton_loader.dart';
 import '../../widgets/eco_assist_sheet.dart';
-import '../../widgets/animated_robot_icon.dart';
+import '../../../core/models/order_model.dart';
 
 import '../individual/create_listing_screen.dart';
 import '../individual/browse_marketplace_screen.dart';
-import '../individual/my_listings_screen.dart';
 import '../individual/my_orders_screen.dart';
 import '../individual/seller_orders_screen.dart';
 import '../profile/profile_screen.dart';
 import '../warehouse/inventory_list_screen.dart';
-import '../warehouse/collector_performance_screen.dart';
 import '../warehouse/collector_management_screen.dart';
 import '../warehouse/my_earnings_screen.dart';
 import '../rewards/rewards_screen.dart';
@@ -31,7 +27,7 @@ import '../warehouse/customer_management_screen.dart';
 import '../warehouse/ai_insights_screen.dart';
 import '../warehouse/ai_assistant_screen.dart';
 import '../warehouse/business_reports_screen.dart';
-import '../messages/messages_screen.dart';
+import '../warehouse/warehouse_dispatch_dashboard.dart';
 import 'package:flutter/foundation.dart';
 
 class WarehouseDashboard extends StatefulWidget {
@@ -54,6 +50,7 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
   Map<String, dynamic>? _stats;
   List<dynamic>? _recentActivity;
   List<dynamic>? _marketRates;
+  List<Order> _pendingOrders = [];
   bool _isLoading = true;
 
   @override
@@ -79,6 +76,7 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
         _reportService.getActivity(limit: 5),
         _appService.getPublicRates(),
         rewardsService.fetchRewardsStatus(),
+        _orderService.getOrders(limit: 3),
       ]);
       
       setState(() {
@@ -89,6 +87,10 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
         };
         _recentActivity = results[3] as List<dynamic>?;
         _marketRates = results[4] as List<dynamic>?;
+        
+        final ordersData = results[6] as Map<String, dynamic>?;
+        _pendingOrders = List<Order>.from(ordersData?['orders'] ?? []);
+        
         _isLoading = false;
       });
     } catch (e) {
@@ -221,7 +223,7 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
                   color: Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: Theme.of(context).dividerColor.withOpacity(0.1),
+                    color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
                   ),
                 ),
                 child: Icon(Icons.person, color: Theme.of(context).iconTheme.color, size: 20),
@@ -250,7 +252,7 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
         Text(
           'Warehouse Management',
           style: TextStyle(
-            color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.textDark).withOpacity(0.7),
+            color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.textDark).withValues(alpha: 0.7),
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -313,11 +315,11 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
             color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: Theme.of(context).dividerColor.withOpacity(0.1),
+              color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -334,7 +336,7 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: (stat['color'] as Color).withOpacity(0.1),
+                      color: (stat['color'] as Color).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -364,7 +366,7 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
                     stat['title'] as String,
                     style: TextStyle(
                       fontSize: 12,
-                      color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
+                      color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
                     ),
                   ),
                 ],
@@ -421,6 +423,9 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
             _buildQuickActionCard('My Rewards', Icons.emoji_events_outlined, const Color(0xFFFF9800), () {
               Navigator.push(context, MaterialPageRoute(builder: (context) => const RewardsScreen()));
             }),
+            _buildQuickActionCard('Logistics', Icons.local_shipping_outlined, Colors.indigo, () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const WarehouseDispatchDashboard()));
+            }),
           ],
         ),
       ],
@@ -448,7 +453,7 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: erpColor.withOpacity(0.1),
+                color: erpColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -509,7 +514,7 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
           color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: Theme.of(context).dividerColor.withOpacity(0.1),
+            color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
           ),
         ),
         child: Column(
@@ -545,7 +550,7 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Theme.of(context).dividerColor.withOpacity(0.1),
+          color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
         ),
       ),
       child: Column(
@@ -565,7 +570,7 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF2196F3).withOpacity(0.1),
+                  color: const Color(0xFF2196F3).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -603,39 +608,64 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
                 ),
               ],
             ),
-          )).toList(),
+          )),
         ],
       ),
     );
   }
 
   Widget _buildPendingOrders() {
-    final orders = [
-      {
-        'id': '#ORD-2401',
-        'material': 'Aluminum Scrap',
-        'quantity': '50 tons',
-        'status': 'Awaiting Pickup',
-        'supplier': 'Green Warehouse Co.',
-        'date': '2 days ago',
-      },
-      {
-        'id': '#ORD-2402',
-        'material': 'Plastic Mix',
-        'quantity': '30 tons',
-        'status': 'In Transit',
-        'supplier': 'EcoSupply Ltd.',
-        'date': '1 day ago',
-      },
-      {
-        'id': '#ORD-2403',
-        'material': 'Glass Bottles',
-        'quantity': '20 tons',
-        'status': 'Processing',
-        'supplier': 'RecyclePro Inc.',
-        'date': '3 hours ago',
-      },
-    ];
+    if (_pendingOrders.isEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Pending Orders',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const MyOrdersScreen()),
+                  );
+                },
+                child: const Text('View All', style: TextStyle(color: Color(0xFF4CAF50))),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
+              ),
+            ),
+            child: Column(
+              children: [
+                Icon(Icons.shopping_bag_outlined, color: Colors.grey.withValues(alpha: 0.5), size: 40),
+                const SizedBox(height: 8),
+                Text(
+                  'No pending orders found',
+                  style: TextStyle(color: Colors.grey[500], fontSize: 14, fontWeight: FontWeight.w500),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -663,86 +693,93 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
           ],
         ),
         const SizedBox(height: 12),
-        ...orders.map((order) => Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: Theme.of(context).dividerColor.withOpacity(0.1),
+        ..._pendingOrders.map((order) {
+          final material = order.materialTypeDisplay;
+          final weight = '${order.weight.toStringAsFixed(1)} kg';
+          final supplierName = order.sellerName;
+          final orderId = '#ORD-${order.id}';
+          
+          return Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
+              ),
             ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    order['id'] as String,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF4CAF50),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFFA726).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      order['status'] as String,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      orderId,
                       style: const TextStyle(
-                        fontSize: 10,
+                        fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFFFFA726),
+                        color: Color(0xFF4CAF50),
                       ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                order['material'] as String,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).textTheme.bodyLarge?.color,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Icon(Icons.scale, size: 14, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6)),
-                  const SizedBox(width: 4),
-                  Text(
-                    order['quantity'] as String,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFA726).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        order.status,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFFFFA726),
+                        ),
+                      ),
                     ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  material,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
                   ),
-                  const SizedBox(width: 16),
-                  Icon(Icons.business, size: 14, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6)),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      order['supplier'] as String,
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(Icons.scale, size: 14, color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6)),
+                    const SizedBox(width: 4),
+                    Text(
+                      weight,
                       style: TextStyle(
                         fontSize: 12,
-                        color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
+                        color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
                       ),
-                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        )),
+                    const SizedBox(width: 16),
+                    Icon(Icons.business, size: 14, color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6)),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        supplierName,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
+        }),
       ],
     );
   }
@@ -787,7 +824,7 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
             color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: Theme.of(context).dividerColor.withOpacity(0.1),
+              color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
             ),
           ),
           child: Row(
@@ -795,7 +832,7 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF4CAF50).withOpacity(0.1),
+                  color: const Color(0xFF4CAF50).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(
@@ -822,7 +859,7 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
                       activity['details'] ?? activity['description'] ?? '',
                       style: TextStyle(
                         fontSize: 12,
-                        color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                        color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
                       ),
                     ),
                   ],
@@ -832,7 +869,7 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
                 _formatTime(activity['createdAt'] ?? ''),
                 style: TextStyle(
                   fontSize: 11,
-                  color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.5),
+                  color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
                 ),
               ),
             ],
@@ -963,12 +1000,12 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
                 : [Colors.green.shade50, Colors.green.shade100],
           ),
           border: Border.all(
-            color: isDark ? primaryColor.withOpacity(0.3) : Colors.green.shade200,
+            color: isDark ? primaryColor.withValues(alpha: 0.3) : Colors.green.shade200,
             width: 1.5,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),

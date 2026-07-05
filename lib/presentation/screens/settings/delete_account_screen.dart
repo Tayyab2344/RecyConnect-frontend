@@ -4,7 +4,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/services/auth_service.dart';
 
 class DeleteAccountScreen extends StatefulWidget {
-  const DeleteAccountScreen({Key? key}) : super(key: key);
+  const DeleteAccountScreen({super.key});
 
   @override
   State<DeleteAccountScreen> createState() => _DeleteAccountScreenState();
@@ -94,6 +94,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
     );
 
     if (confirmed == true) {
+      if (!mounted) return;
       setState(() => _isDeleting = true);
       
       try {
@@ -173,10 +174,10 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: AppTheme.errorRed.withOpacity(0.1),
+                  color: AppTheme.errorRed.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: AppTheme.errorRed.withOpacity(0.3),
+                    color: AppTheme.errorRed.withValues(alpha: 0.3),
                     width: 2,
                   ),
                 ),
@@ -248,7 +249,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: isDark
-                        ? AppTheme.darkSecondaryGreen.withOpacity(0.3)
+                        ? AppTheme.darkSecondaryGreen.withValues(alpha: 0.3)
                         : AppTheme.lightGray,
                   ),
                 ),
@@ -320,7 +321,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: isDark
-                        ? AppTheme.darkSecondaryGreen.withOpacity(0.3)
+                        ? AppTheme.darkSecondaryGreen.withValues(alpha: 0.3)
                         : AppTheme.lightGray,
                   ),
                 ),
@@ -414,11 +415,11 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: (isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen)
-                      .withOpacity(0.1),
+                      .withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: (isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen)
-                        .withOpacity(0.3),
+                        .withValues(alpha: 0.3),
                   ),
                 ),
                 child: Row(

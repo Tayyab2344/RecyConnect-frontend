@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import '../../../core/theme/app_theme.dart';
 
 class WeightCalculatorScreen extends StatefulWidget {
-  const WeightCalculatorScreen({Key? key}) : super(key: key);
+  const WeightCalculatorScreen({super.key});
 
   @override
   State<WeightCalculatorScreen> createState() => _WeightCalculatorScreenState();
@@ -168,14 +168,14 @@ class _WeightCalculatorScreenState extends State<WeightCalculatorScreen> {
                   child: Container(
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? color.withOpacity(0.1)
+                          ? color.withValues(alpha: 0.1)
                           : (isDark ? AppTheme.darkCardSurface : Colors.white),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: isSelected
                             ? color
                             : (isDark
-                                ? AppTheme.darkSecondaryGreen.withOpacity(0.3)
+                                ? AppTheme.darkSecondaryGreen.withValues(alpha: 0.3)
                                 : AppTheme.lightGray),
                         width: isSelected ? 2 : 1,
                       ),
@@ -216,7 +216,7 @@ class _WeightCalculatorScreenState extends State<WeightCalculatorScreen> {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: isDark
-                      ? AppTheme.darkSecondaryGreen.withOpacity(0.3)
+                      ? AppTheme.darkSecondaryGreen.withValues(alpha: 0.3)
                       : AppTheme.lightGray,
                 ),
               ),
@@ -323,7 +323,7 @@ class _WeightCalculatorScreenState extends State<WeightCalculatorScreen> {
                   boxShadow: [
                     BoxShadow(
                       color: (isDark ? AppTheme.darkPrimaryGreen : const Color(0xFF00BFA5))
-                          .withOpacity(0.3),
+                          .withValues(alpha: 0.3),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -336,7 +336,7 @@ class _WeightCalculatorScreenState extends State<WeightCalculatorScreen> {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: isDark ? AppTheme.darkBackground : Colors.white.withOpacity(0.9),
+                        color: isDark ? AppTheme.darkBackground : Colors.white.withValues(alpha: 0.9),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -355,8 +355,8 @@ class _WeightCalculatorScreenState extends State<WeightCalculatorScreen> {
                       style: TextStyle(
                         fontSize: 13,
                         color: isDark
-                            ? AppTheme.darkBackground.withOpacity(0.8)
-                            : Colors.white.withOpacity(0.85),
+                            ? AppTheme.darkBackground.withValues(alpha: 0.8)
+                            : Colors.white.withValues(alpha: 0.85),
                       ),
                     ),
                   ],
@@ -373,7 +373,7 @@ class _WeightCalculatorScreenState extends State<WeightCalculatorScreen> {
                 color: const Color(0xFFFFF3E0),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: const Color(0xFFFFA726).withOpacity(0.3),
+                  color: const Color(0xFFFFA726).withValues(alpha: 0.3),
                 ),
               ),
               child: Row(

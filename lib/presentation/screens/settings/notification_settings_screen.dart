@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/theme/app_theme.dart';
 
 class NotificationSettingsScreen extends StatefulWidget {
-  const NotificationSettingsScreen({Key? key}) : super(key: key);
+  const NotificationSettingsScreen({super.key});
 
   @override
   State<NotificationSettingsScreen> createState() => _NotificationSettingsScreenState();
@@ -230,11 +230,11 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: (isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen)
-                    .withOpacity(0.1),
+                    .withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: (isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen)
-                      .withOpacity(0.3),
+                      .withValues(alpha: 0.3),
                 ),
               ),
               child: Row(
@@ -304,7 +304,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isDark
-              ? AppTheme.darkSecondaryGreen.withOpacity(0.3)
+              ? AppTheme.darkSecondaryGreen.withValues(alpha: 0.3)
               : AppTheme.lightGray,
         ),
       ),
@@ -314,7 +314,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: (isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen)
-                  .withOpacity(0.1),
+                  .withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
@@ -350,7 +350,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen,
+            activeThumbColor: isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen,
           ),
         ],
       ),

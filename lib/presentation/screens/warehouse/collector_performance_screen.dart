@@ -154,7 +154,7 @@ class _CollectorPerformanceScreenState extends State<CollectorPerformanceScreen>
       decoration: BoxDecoration(
         color: isDark ? AppTheme.darkCardSurface : Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -199,7 +199,7 @@ class _CollectorPerformanceScreenState extends State<CollectorPerformanceScreen>
           final index = entry.key;
           final collector = entry.value;
           return _buildCollectorCard(collector, index + 1, isDark);
-        }).toList(),
+        }),
       ],
     );
   }
@@ -212,11 +212,11 @@ class _CollectorPerformanceScreenState extends State<CollectorPerformanceScreen>
         color: isDark ? AppTheme.darkCardSurface : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: (isDark ? AppTheme.darkSecondaryGreen : AppTheme.lightGray).withOpacity(0.3),
+          color: (isDark ? AppTheme.darkSecondaryGreen : AppTheme.lightGray).withValues(alpha: 0.3),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -341,7 +341,7 @@ class _CollectorPerformanceScreenState extends State<CollectorPerformanceScreen>
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: (isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen).withOpacity(0.1),
+              color: (isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Row(
@@ -441,7 +441,7 @@ class _CollectorPerformanceScreenState extends State<CollectorPerformanceScreen>
           borderRadius: BorderRadius.circular(4),
           child: LinearProgressIndicator(
             value: value / 100,
-            backgroundColor: (isDark ? AppTheme.darkSecondaryGreen : AppTheme.lightGray).withOpacity(0.3),
+            backgroundColor: (isDark ? AppTheme.darkSecondaryGreen : AppTheme.lightGray).withValues(alpha: 0.3),
             valueColor: AlwaysStoppedAnimation<Color>(color),
             minHeight: 8,
           ),

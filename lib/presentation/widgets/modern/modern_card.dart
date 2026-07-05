@@ -10,14 +10,14 @@ class ModernCard extends StatefulWidget {
   final Gradient? gradient;
 
   const ModernCard({
-    Key? key,
+    super.key,
     required this.child,
     this.padding,
     this.hoverable = false,
     this.onTap,
     this.color,
     this.gradient,
-  }) : super(key: key);
+  });
 
   @override
   State<ModernCard> createState() => _ModernCardState();

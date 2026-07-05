@@ -153,15 +153,16 @@ void main() {
     });
     
     testWidgets('Button should be disabled during loading', (WidgetTester tester) async {
-      bool isLoading = true;
+      final state = {'isLoading': true};
       
       await tester.pumpWidget(MaterialApp(
         home: StatefulBuilder(
           builder: (context, setState) {
+            final loading = state['isLoading']!;
             return Scaffold(
               body: ElevatedButton(
-                onPressed: isLoading ? null : () {},
-                child: isLoading
+                onPressed: loading ? null : () {},
+                child: loading
                     ? const CircularProgressIndicator()
                     : const Text('Submit'),
               ),

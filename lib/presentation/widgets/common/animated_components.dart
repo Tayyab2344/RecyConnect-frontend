@@ -20,7 +20,7 @@ class AnimatedGradientButton extends StatefulWidget {
   final double borderRadius;
 
   const AnimatedGradientButton({
-    Key? key,
+    super.key,
     required this.text,
     required this.onPressed,
     this.gradient,
@@ -29,7 +29,7 @@ class AnimatedGradientButton extends StatefulWidget {
     this.isDisabled = false,
     this.height = 48,
     this.borderRadius = 12,
-  }) : super(key: key);
+  });
 
   @override
   State<AnimatedGradientButton> createState() => _AnimatedGradientButtonState();
@@ -65,7 +65,7 @@ class _AnimatedGradientButtonState extends State<AnimatedGradientButton> {
           curve: Curves.easeOutCubic,
           height: widget.height,
           transform: Matrix4.identity()
-            ..scale(_isPressed ? 0.95 : (_isHovered ? 1.02 : 1.0)),
+            ..scaleByDouble(_isPressed ? 0.95 : (_isHovered ? 1.02 : 1.0), _isPressed ? 0.95 : (_isHovered ? 1.02 : 1.0), _isPressed ? 0.95 : (_isHovered ? 1.02 : 1.0), 1.0),
           decoration: BoxDecoration(
             gradient: widget.isDisabled
                 ? const LinearGradient(
@@ -77,8 +77,8 @@ class _AnimatedGradientButtonState extends State<AnimatedGradientButton> {
                 ? null
                 : [
                     BoxShadow(
-                      color: const Color(0xFF10B981).withOpacity(
-                        _isHovered ? 0.4 : 0.2,
+                      color: const Color(0xFF10B981).withValues(
+                        alpha: _isHovered ? 0.4 : 0.2,
                       ),
                       blurRadius: _isHovered ? 20 : 12,
                       offset: Offset(0, _isHovered ? 8 : 4),
@@ -149,14 +149,14 @@ class AnimatedCounter extends StatefulWidget {
   final int decimals;
 
   const AnimatedCounter({
-    Key? key,
+    super.key,
     required this.value,
     this.prefix = '',
     this.suffix = '',
     this.textStyle,
     this.duration = const Duration(milliseconds: 800),
     this.decimals = 0,
-  }) : super(key: key);
+  });
 
   @override
   State<AnimatedCounter> createState() => _AnimatedCounterState();
@@ -230,11 +230,11 @@ class SkeletonLoader extends StatelessWidget {
   final double borderRadius;
 
   const SkeletonLoader({
-    Key? key,
+    super.key,
     this.width = double.infinity,
     required this.height,
     this.borderRadius = 8,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -261,11 +261,11 @@ class SkeletonText extends StatelessWidget {
   final double spacing;
 
   const SkeletonText({
-    Key? key,
+    super.key,
     this.lines = 3,
     this.lineHeight = 16,
     this.spacing = 8,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -291,9 +291,9 @@ class SkeletonAvatar extends StatelessWidget {
   final double size;
 
   const SkeletonAvatar({
-    Key? key,
+    super.key,
     this.size = 48,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -327,7 +327,7 @@ class AnimatedProgressBar extends StatelessWidget {
   final double borderRadius;
 
   const AnimatedProgressBar({
-    Key? key,
+    super.key,
     required this.value,
     this.height = 6,
     this.backgroundColor = const Color(0xFFE5E7EB),
@@ -335,7 +335,7 @@ class AnimatedProgressBar extends StatelessWidget {
     this.color,
     this.duration = const Duration(milliseconds: 500),
     this.borderRadius = 3,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -381,7 +381,7 @@ class AnimatedCircularProgress extends StatelessWidget {
   final Widget? child;
 
   const AnimatedCircularProgress({
-    Key? key,
+    super.key,
     required this.value,
     this.size = 100,
     this.strokeWidth = 8,
@@ -389,7 +389,7 @@ class AnimatedCircularProgress extends StatelessWidget {
     this.gradient,
     this.color,
     this.child,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -480,11 +480,11 @@ class PulseBadge extends StatefulWidget {
   final double size;
 
   const PulseBadge({
-    Key? key,
+    super.key,
     required this.text,
     this.color = const Color(0xFFEF4444),
     this.size = 20,
-  }) : super(key: key);
+  });
 
   @override
   State<PulseBadge> createState() => _PulseBadgeState();
@@ -526,7 +526,7 @@ class _PulseBadgeState extends State<PulseBadge>
             height: widget.size,
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [widget.color, widget.color.withOpacity(0.8)],
+                colors: [widget.color, widget.color.withValues(alpha: 0.8)],
               ),
               shape: BoxShape.circle,
             ),
@@ -559,12 +559,12 @@ class RippleEffect extends StatefulWidget {
   final double borderRadius;
 
   const RippleEffect({
-    Key? key,
+    super.key,
     required this.child,
     required this.onTap,
     this.rippleColor = const Color(0xFF10B981),
     this.borderRadius = 12,
-  }) : super(key: key);
+  });
 
   @override
   State<RippleEffect> createState() => _RippleEffectState();
@@ -578,8 +578,8 @@ class _RippleEffectState extends State<RippleEffect> {
       child: InkWell(
         onTap: widget.onTap,
         borderRadius: BorderRadius.circular(widget.borderRadius),
-        splashColor: widget.rippleColor.withOpacity(0.2),
-        highlightColor: widget.rippleColor.withOpacity(0.1),
+        splashColor: widget.rippleColor.withValues(alpha: 0.2),
+        highlightColor: widget.rippleColor.withValues(alpha: 0.1),
         child: widget.child,
       ),
     );

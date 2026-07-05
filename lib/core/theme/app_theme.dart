@@ -124,7 +124,7 @@ class AppTheme {
   static List<BoxShadow> getCardShadow(bool isDark) {
     return [
       BoxShadow(
-        color: isDark ? Colors.black26 : Colors.black.withOpacity(0.08),
+        color: isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.08),
         blurRadius: 10,
         offset: const Offset(0, 4),
       ),

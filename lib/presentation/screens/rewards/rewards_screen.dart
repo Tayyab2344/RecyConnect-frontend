@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/services/rewards_service.dart';
-import '../../../core/services/auth_service.dart';
 
 class RewardsScreen extends StatefulWidget {
   const RewardsScreen({super.key});
@@ -20,7 +19,6 @@ class _RewardsScreenState extends State<RewardsScreen> with TickerProviderStateM
   late Animation<double> _radialProgressAnimation;
 
   String _leaderboardCategory = 'individuals';
-  bool _isInit = true;
 
   @override
   void initState() {
@@ -614,7 +612,7 @@ class _RewardsScreenState extends State<RewardsScreen> with TickerProviderStateM
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 14,
-                  color: isDark ? Colors.white70 : Colors.black.withOpacity(0.60),
+                  color: isDark ? Colors.white70 : Colors.black.withValues(alpha: 0.60),
                 ),
               ),
               const SizedBox(height: 24),

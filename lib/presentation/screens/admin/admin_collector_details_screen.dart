@@ -290,7 +290,7 @@ class _AdminCollectorDetailsScreenState
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AdminColors.primaryGreen.withOpacity(0.1),
+            AdminColors.primaryGreen.withValues(alpha: 0.1),
             AdminColors.cardBackground,
           ],
           begin: Alignment.topCenter,
@@ -299,7 +299,7 @@ class _AdminCollectorDetailsScreenState
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AdminColors.shadow.withOpacity(0.1),
+            color: AdminColors.shadow.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -312,7 +312,7 @@ class _AdminCollectorDetailsScreenState
             width: 100,
             height: 100,
             decoration: BoxDecoration(
-              color: AdminColors.primaryGreen.withOpacity(0.15),
+              color: AdminColors.primaryGreen.withValues(alpha: 0.15),
               shape: BoxShape.circle,
               border: Border.all(
                 color: AdminColors.primaryGreen,
@@ -345,7 +345,7 @@ class _AdminCollectorDetailsScreenState
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: _getStatusColor(_collector.status).withOpacity(0.15),
+              color: _getStatusColor(_collector.status).withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
@@ -382,7 +382,7 @@ class _AdminCollectorDetailsScreenState
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AdminColors.shadow.withOpacity(0.08),
+            color: AdminColors.shadow.withValues(alpha: 0.08),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -429,7 +429,7 @@ class _AdminCollectorDetailsScreenState
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: iconColor.withOpacity(0.1),
+            color: iconColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(icon, size: 20, color: iconColor),

@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../core/theme/app_theme.dart';
 import '../../../core/services/auth_service.dart';
 import '../../widgets/dashboard_card.dart';
 import '../admin/admin_activities_screen.dart';
 
 class AdminDashboard extends StatelessWidget {
-      AdminDashboard({super.key});
+      const AdminDashboard({super.key});
 
   @override
   Widget build(BuildContext context) {

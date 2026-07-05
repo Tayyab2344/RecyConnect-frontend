@@ -3,8 +3,8 @@ import '../theme/design_tokens.dart';
 
 /// Mixin for screen entrance animations
 /// DRY: Reusable animation setup across all screens
-/// Usage: class _MyScreenState extends State<MyScreen> 
-///        with TickerProviderStateMixin, ScreenAnimationMixin
+/// Usage: `class _MyScreenState extends State<MyScreen>`
+///        `with TickerProviderStateMixin, ScreenAnimationMixin`
 mixin ScreenAnimationMixin<T extends StatefulWidget>
     on State<T>, TickerProviderStateMixin<T> {
   
@@ -115,8 +115,8 @@ mixin ScreenAnimationMixin<T extends StatefulWidget>
 }
 
 /// Mixin for button press animations
-/// Usage: class _MyButtonState extends State<MyButton> 
-///        with SingleTickerProviderStateMixin, ButtonAnimationMixin
+/// Usage: `class _MyButtonState extends State<MyButton>`
+///        `with SingleTickerProviderStateMixin, ButtonAnimationMixin`
 mixin ButtonAnimationMixin<T extends StatefulWidget>
     on State<T>, SingleTickerProviderStateMixin<T> {
   
@@ -189,7 +189,7 @@ mixin LoadingStateMixin<T extends StatefulWidget> on State<T> {
     }
   }
 
-  Future<T> withLoading<T>(Future<T> Function() action, [String? message]) async {
+  Future<R> withLoading<R>(Future<R> Function() action, [String? message]) async {
     startLoading(message);
     try {
       return await action();

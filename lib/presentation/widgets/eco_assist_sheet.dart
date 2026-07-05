@@ -4,24 +4,20 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../core/services/eco_assist_service.dart';
 import '../../core/services/auth_service.dart';
-import '../../core/services/rewards_service.dart';
-import '../../core/theme/marketplace_theme.dart';
-import '../../core/theme/app_colors.dart';
-import '../widgets/marketplace/glass_card.dart';
 import '../screens/individual/create_listing_screen.dart';
 import '../screens/individual/browse_marketplace_screen.dart';
 import '../screens/rewards/rewards_screen.dart';
 import '../screens/individual/my_orders_screen.dart';
 
 class EcoAssistSheet extends StatefulWidget {
-  const EcoAssistSheet({Key? key}) : super(key: key);
+  const EcoAssistSheet({super.key});
 
   static void show(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withOpacity(0.5),
+      barrierColor: Colors.black.withValues(alpha: 0.5),
       builder: (context) => const EcoAssistSheet(),
     );
   }
@@ -321,17 +317,17 @@ class _EcoAssistSheetState extends State<EcoAssistSheet> {
       child: Container(
         height: size.height * 0.72,
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF0F172A).withOpacity(0.92) : Colors.white.withOpacity(0.95),
+          color: isDark ? const Color(0xFF0F172A).withValues(alpha: 0.92) : Colors.white.withValues(alpha: 0.95),
           borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
           boxShadow: [
             BoxShadow(
-              color: isDark ? const Color(0xFF00E5FF).withOpacity(0.2) : Colors.black12,
+              color: isDark ? const Color(0xFF00E5FF).withValues(alpha: 0.2) : Colors.black12,
               blurRadius: 24,
               offset: const Offset(0, -4),
             )
           ],
           border: Border.all(
-            color: isDark ? const Color(0xFF00E5FF).withOpacity(0.4) : Colors.green.shade200,
+            color: isDark ? const Color(0xFF00E5FF).withValues(alpha: 0.4) : Colors.green.shade200,
             width: 1.5,
           )
         ),
@@ -361,7 +357,7 @@ class _EcoAssistSheetState extends State<EcoAssistSheet> {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: (isDark ? const Color(0xFF00E5FF) : const Color(0xFF4CAF50)).withOpacity(0.12),
+                          color: (isDark ? const Color(0xFF00E5FF) : const Color(0xFF4CAF50)).withValues(alpha: 0.12),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -426,7 +422,7 @@ class _EcoAssistSheetState extends State<EcoAssistSheet> {
                               ),
                               decoration: BoxDecoration(
                                 color: isUser
-                                    ? (isDark ? const Color(0xFF00E5FF).withOpacity(0.15) : const Color(0xFF4CAF50).withOpacity(0.12))
+                                    ? (isDark ? const Color(0xFF00E5FF).withValues(alpha: 0.15) : const Color(0xFF4CAF50).withValues(alpha: 0.12))
                                     : (isDark ? const Color(0xFF1E293B) : Colors.grey.shade100),
                                 borderRadius: BorderRadius.only(
                                   topLeft: const Radius.circular(16),
@@ -436,7 +432,7 @@ class _EcoAssistSheetState extends State<EcoAssistSheet> {
                                 ),
                                 border: Border.all(
                                   color: isUser
-                                      ? (isDark ? const Color(0xFF00E5FF).withOpacity(0.4) : const Color(0xFF4CAF50).withOpacity(0.3))
+                                      ? (isDark ? const Color(0xFF00E5FF).withValues(alpha: 0.4) : const Color(0xFF4CAF50).withValues(alpha: 0.3))
                                       : Colors.transparent,
                                 ),
                               ),
@@ -456,9 +452,9 @@ class _EcoAssistSheetState extends State<EcoAssistSheet> {
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                                       decoration: BoxDecoration(
-                                        color: Colors.green.withOpacity(0.12),
+                                        color: Colors.green.withValues(alpha: 0.12),
                                         borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(color: Colors.green.withOpacity(0.3)),
+                                        border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
                                       ),
                                       child: Row(
                                         mainAxisSize: MainAxisSize.min,
@@ -516,7 +512,7 @@ class _EcoAssistSheetState extends State<EcoAssistSheet> {
                       if (_isListening)
                         Positioned.fill(
                           child: Container(
-                            color: Colors.black.withOpacity(0.65),
+                            color: Colors.black.withValues(alpha: 0.65),
                             child: Center(
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -591,7 +587,7 @@ class _EcoAssistSheetState extends State<EcoAssistSheet> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B).withOpacity(0.5) : Colors.grey.shade50,
+                color: isDark ? const Color(0xFF1E293B).withValues(alpha: 0.5) : Colors.grey.shade50,
                 border: Border(
                   top: BorderSide(color: isDark ? Colors.white10 : Colors.grey.shade200),
                 ),
@@ -604,7 +600,7 @@ class _EcoAssistSheetState extends State<EcoAssistSheet> {
                     child: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF00E5FF).withOpacity(0.12) : const Color(0xFF4CAF50).withOpacity(0.1),
+                        color: isDark ? const Color(0xFF00E5FF).withValues(alpha: 0.12) : const Color(0xFF4CAF50).withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -667,7 +663,7 @@ class _EcoAssistSheetState extends State<EcoAssistSheet> {
 
 class VoiceEqualizer extends StatefulWidget {
   final bool isListening;
-  const VoiceEqualizer({Key? key, required this.isListening}) : super(key: key);
+  const VoiceEqualizer({super.key, required this.isListening});
 
   @override
   State<VoiceEqualizer> createState() => _VoiceEqualizerState();

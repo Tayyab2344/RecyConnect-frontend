@@ -47,7 +47,9 @@ class NotificationService {
       iOS: iosSettings,
     );
 
-    await _localNotifications.initialize(initSettings);
+    await _localNotifications.initialize(
+      settings: initSettings,
+    );
     await _requestPermission();
 
     FirebaseMessaging.onMessage.listen(_showForegroundNotification);
@@ -97,7 +99,7 @@ class NotificationService {
     );
 
     if (kDebugMode && response.statusCode >= 400) {
-      print('Failed to save FCM token: ${response.statusCode} ${response.body}');
+      debugPrint('Failed to save FCM token: ${response.statusCode} ${response.body}');
     }
   }
 
@@ -131,10 +133,10 @@ class NotificationService {
     }
 
     await _localNotifications.show(
-      notification.hashCode,
-      notification.title,
-      notification.body,
-      NotificationDetails(
+      id: notification.hashCode,
+      title: notification.title,
+      body: notification.body,
+      notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           _ordersChannel.id,
           _ordersChannel.name,
@@ -162,10 +164,10 @@ class NotificationService {
     Map<String, dynamic>? payload,
   }) async {
     await _localNotifications.show(
-      id,
-      title,
-      body,
-      NotificationDetails(
+      id: id,
+      title: title,
+      body: body,
+      notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           _ordersChannel.id,
           _ordersChannel.name,

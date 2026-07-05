@@ -1,20 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import '../../../../core/models/listing_model.dart';
 import '../../../../core/models/order_model.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../../../core/services/order_service.dart';
 import '../../../../core/services/payment_service.dart';
+import '../../../../core/services/location_service.dart';
+import '../../../../core/services/api_service.dart';
 import '../../../../core/theme/marketplace_theme.dart';
 import '../../../widgets/marketplace/glass_card.dart';
 import '../../../widgets/marketplace/neon_button.dart';
+import '../../marketplace/location_selection_screen.dart';
 import 'order_details_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
   final Listing item;
 
-  const CheckoutScreen({Key? key, required this.item}) : super(key: key);
+  const CheckoutScreen({super.key, required this.item});
 
   @override
   State<CheckoutScreen> createState() => _CheckoutScreenState();
@@ -23,16 +28,58 @@ class CheckoutScreen extends StatefulWidget {
 class _CheckoutScreenState extends State<CheckoutScreen> {
   final OrderService _orderService = OrderService();
   final PaymentService _paymentService = PaymentService();
+  final ApiService _apiService = ApiService();
 
   final TextEditingController _addressController = TextEditingController();
   bool _isLoading = false;
+  double? _latitude;
+  double? _longitude;
 
   // 'cod' = Cash on Delivery, 'stripe' = Stripe online payment
   String _selectedPaymentMethod = 'cod';
+  String _selectedDeliveryMethod = 'RECYCONNECT_PICKUP';
+
+  List<dynamic> _nearbyWarehouses = [];
+  bool _loadingWarehouses = false;
+  int? _selectedWarehouseId;
+  String _assignmentType = 'automatic'; // 'automatic' or 'manual'
+
+  Future<void> _loadNearbyWarehouses() async {
+    if (_latitude == null || _longitude == null) return;
+    setState(() {
+      _loadingWarehouses = true;
+    });
+    try {
+      final response = await _apiService.get(
+        '/dispatch/nearby-warehouses',
+        query: {
+          'latitude': _latitude,
+          'longitude': _longitude,
+        },
+      );
+      if (response['success'] == true) {
+        setState(() {
+          _nearbyWarehouses = response['data'] as List<dynamic>;
+          _loadingWarehouses = false;
+        });
+      } else {
+        setState(() {
+          _loadingWarehouses = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading nearby warehouses: $e');
+      setState(() {
+        _loadingWarehouses = false;
+      });
+    }
+  }
 
   @override
   void initState() {
     super.initState();
+    final pickupRequired = widget.item.metadata?['pickupRequired'] ?? true;
+    _selectedDeliveryMethod = pickupRequired ? 'RECYCONNECT_PICKUP' : 'SELF_DELIVERY';
     _loadUserLocation();
   }
 
@@ -44,23 +91,84 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   Future<void> _loadUserLocation() async {
     try {
-      final authService = Provider.of<AuthService>(context, listen: false);
-      final response = await authService.fetchProfile();
-      if (response['success'] == true) {
-        final data = response['data'] as Map<String, dynamic>;
-        final addressParts = <String>[];
-        final address = data['address']?.toString().trim();
-        final area = data['area']?.toString().trim();
-        final city = data['city']?.toString().trim();
-        if (address != null && address.isNotEmpty) addressParts.add(address);
-        if (area != null && area.isNotEmpty && !addressParts.contains(area)) {
-          addressParts.add(area);
+      final locationService = LocationService();
+      // Prompt for location permissions on page initialization
+      await locationService.requestLocationPermission();
+
+      double? lat;
+      double? lng;
+      String? addressText;
+
+      // Always try to fetch current GPS coordinates first
+      final gpsData = await locationService.getCurrentLocationWithTimeout(
+        timeout: const Duration(seconds: 4),
+      );
+      if (gpsData != null) {
+        lat = gpsData['latitude'];
+        lng = gpsData['longitude'];
+        if (lat != null && lng != null) {
+          final addressData = await locationService.getAddressFromCoordinates(lat, lng);
+          if (addressData != null) {
+            final street = addressData['street'] ?? '';
+            final subLocality = addressData['subLocality'] ?? '';
+            final locality = addressData['locality'] ?? '';
+            final province = addressData['administrativeArea'] ?? '';
+            final List<String> parts = [
+              if (street.isNotEmpty) street,
+              if (subLocality.isNotEmpty) subLocality,
+              if (locality.isNotEmpty) locality,
+              if (province.isNotEmpty) province,
+            ];
+            if (parts.isNotEmpty) {
+              addressText = parts.join(', ');
+            }
+          }
         }
-        if (city != null && city.isNotEmpty && !addressParts.contains(city)) {
-          addressParts.add(city);
+      }
+
+      // If GPS failed or is null, fallback to profile location
+      if (lat == null || lng == null) {
+        if (!mounted) return;
+        final authService = Provider.of<AuthService>(context, listen: false);
+        final response = await authService.fetchProfile();
+        if (response['success'] == true) {
+          final data = response['data'] as Map<String, dynamic>;
+          final addressParts = <String>[];
+          final address = data['address']?.toString().trim();
+          final area = data['area']?.toString().trim();
+          final city = data['city']?.toString().trim();
+          if (address != null && address.isNotEmpty) addressParts.add(address);
+          if (area != null && area.isNotEmpty && !addressParts.contains(area)) {
+            addressParts.add(area);
+          }
+          if (city != null && city.isNotEmpty && !addressParts.contains(city)) {
+            addressParts.add(city);
+          }
+
+          if (addressParts.isNotEmpty) {
+            addressText = addressParts.join(', ');
+          }
+          if (data['latitude'] != null) {
+            lat = data['latitude'] is String ? double.tryParse(data['latitude']) : (data['latitude'] as num).toDouble();
+          }
+          if (data['longitude'] != null) {
+            lng = data['longitude'] is String ? double.tryParse(data['longitude']) : (data['longitude'] as num).toDouble();
+          }
         }
-        if (addressParts.isNotEmpty && mounted) {
-          setState(() => _addressController.text = addressParts.join(', '));
+      }
+
+      if (mounted) {
+        setState(() {
+          if (addressText != null) {
+            _addressController.text = addressText;
+          }
+          _latitude = lat;
+          _longitude = lng;
+        });
+
+        // Load nearby warehouses once we have coordinates
+        if (_latitude != null && _longitude != null) {
+          _loadNearbyWarehouses();
         }
       }
     } catch (_) {}
@@ -74,7 +182,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       return;
     }
 
-    const rate = 20.0; // Standard rate used in UI
+    final authService = Provider.of<AuthService>(context, listen: false);
+
+    final rate = widget.item.price > 0 ? widget.item.price : 20.0;
     final total = widget.item.estimatedWeight * rate;
     if (_selectedPaymentMethod == 'stripe' && total < 150) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -89,12 +199,67 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     setState(() => _isLoading = true);
 
+    double? lat = _latitude;
+    double? lng = _longitude;
+    String? city;
+
+    if (lat == null || lng == null) {
+      try {
+        final locationService = LocationService();
+        final gpsData = await locationService.getCurrentLocationWithTimeout(
+          timeout: const Duration(seconds: 4),
+        );
+        if (gpsData != null) {
+          lat = gpsData['latitude'];
+          lng = gpsData['longitude'];
+        }
+      } catch (e) {
+        debugPrint('Error fetching GPS for checkout fallback: $e');
+      }
+    }
+
+    if (lat != null && lng != null) {
+      try {
+        final locationService = LocationService();
+        final addressData = await locationService.getAddressFromCoordinates(lat, lng);
+        if (addressData != null) {
+          city = addressData['locality']?.isNotEmpty == true ? addressData['locality'] : null;
+        }
+      } catch (e) {
+        debugPrint('Error geocoding address for checkout: $e');
+      }
+    }
+
+    try {
+      // Update buyer's location on their profile so the backend has updated coordinates
+      final Map<String, dynamic> updateData = {
+        'address': _addressController.text.trim(),
+      };
+      if (lat != null && lng != null) {
+        updateData['latitude'] = lat;
+        updateData['longitude'] = lng;
+      }
+      if (city != null) {
+        updateData['city'] = city;
+      }
+      // Update profile
+      await authService.updateProfile(updateData, null);
+    } catch (e) {
+      debugPrint('Error updating profile with delivery coordinates: $e');
+    }
+
     try {
       // Step 1: Create the order
       final Order order = await _orderService.createOrder(
         widget.item.id,
         widget.item.estimatedWeight,
         paymentMethod: _selectedPaymentMethod,
+        deliveryMethod: _selectedDeliveryMethod,
+        buyerLatitude: lat,
+        buyerLongitude: lng,
+        chosenWarehouseId: _selectedDeliveryMethod == 'RECYCONNECT_PICKUP' && _assignmentType == 'manual'
+            ? _selectedWarehouseId
+            : null,
       );
 
       if (!mounted) return;
@@ -173,6 +338,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       if (!mounted) return;
       // Cancel the order since payment was not completed
       await _orderService.cancelOrder(order.id, reason: 'Stripe payment cancelled/failed');
+      if (!mounted) return;
       if (e.error.code == FailureCode.Canceled) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Payment cancelled.')),
@@ -194,6 +360,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       debugPrint('Stripe payment setup error: $e');
       // Cancel the order since payment setup failed
       await _orderService.cancelOrder(order.id, reason: 'Payment setup failed');
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(errorMsg.isNotEmpty ? errorMsg : 'Payment setup failed. Please try again.'),
@@ -238,15 +405,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
                 color: isDark
-                    ? accentColor.withOpacity(0.3)
+                    ? accentColor.withValues(alpha: 0.3)
                     : Colors.grey.shade200,
                 width: 1.5,
               ),
               boxShadow: [
                 BoxShadow(
                   color: isDark
-                      ? accentColor.withOpacity(0.15)
-                      : Colors.black.withOpacity(0.1),
+                      ? accentColor.withValues(alpha: 0.15)
+                      : Colors.black.withValues(alpha: 0.1),
                   blurRadius: 24,
                   spreadRadius: 2,
                   offset: const Offset(0, 8),
@@ -262,9 +429,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   height: 80,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: accentColor.withOpacity(0.1),
+                    color: accentColor.withValues(alpha: 0.1),
                     border: Border.all(
-                      color: accentColor.withOpacity(0.4),
+                      color: accentColor.withValues(alpha: 0.4),
                       width: 2,
                     ),
                   ),
@@ -322,8 +489,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final item = widget.item;
-    const rate = 20.0; // Rs/kg fallback rate
-    final total = item.estimatedWeight * rate;
+    final authService = Provider.of<AuthService>(context);
+    final userRole = authService.userRole;
+    final rate = item.price > 0 ? item.price : 20.0;
+    final deliveryFee = 0.0; // Collector fee removed for all users
+    final total = item.estimatedWeight * rate + deliveryFee;
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -397,7 +567,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 Text('Delivery Fee',
                                     style: TextStyle(
                                         color: isDark ? Colors.white70 : Colors.black54)),
-                                Text('Free',
+                                Text(deliveryFee > 0 ? 'Rs ${deliveryFee.toStringAsFixed(0)}' : 'Free',
                                     style: TextStyle(
                                         color: isDark ? Colors.white70 : Colors.black54)),
                               ],
@@ -445,6 +615,288 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           ),
                         ),
                       ),
+                      const SizedBox(height: 12),
+                      if (_latitude != null && _longitude != null) ...[
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: SizedBox(
+                            height: 150,
+                            width: double.infinity,
+                            child: FlutterMap(
+                              key: ValueKey('$_latitude,$_longitude'),
+                              options: MapOptions(
+                                initialCenter: LatLng(_latitude!, _longitude!),
+                                initialZoom: 14.5,
+                                maxZoom: 18,
+                                minZoom: 8,
+                                interactionOptions: const InteractionOptions(
+                                  flags: InteractiveFlag.none,
+                                ),
+                              ),
+                              children: [
+                                TileLayer(
+                                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                  userAgentPackageName: 'com.recyconnect.app',
+                                ),
+                                MarkerLayer(
+                                  markers: [
+                                    Marker(
+                                      point: LatLng(_latitude!, _longitude!),
+                                      width: 40,
+                                      height: 40,
+                                      child: Icon(
+                                        Icons.location_on,
+                                        color: isDark ? MarketplaceTheme.darkAccentCyan : MarketplaceTheme.lightAccent,
+                                        size: 30,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          icon: const Icon(Icons.map_outlined, size: 18),
+                          label: const Text('CONFIRM LOCATION'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: isDark ? MarketplaceTheme.darkAccentCyan : MarketplaceTheme.lightAccent,
+                            side: BorderSide(
+                              color: isDark ? MarketplaceTheme.darkAccentCyan : MarketplaceTheme.lightAccent,
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          onPressed: () async {
+                            final result = await Navigator.push<Map<String, dynamic>>(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => LocationSelectionScreen(
+                                  initialLocation: LatLng(_latitude ?? 33.7687, _longitude ?? 72.3618),
+                                  initialAddress: _addressController.text,
+                                ),
+                              ),
+                            );
+                            if (result != null) {
+                              setState(() {
+                                _latitude = result['latitude'];
+                                _longitude = result['longitude'];
+                                _addressController.text = result['address'];
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // ── DELIVERY METHOD ─────────────────────────────
+                      _sectionLabel('DELIVERY METHOD', isDark),
+                      const SizedBox(height: 12),
+                      _buildDeliveryMethodOption(
+                        isDark: isDark,
+                        value: 'SELF_DELIVERY',
+                        icon: Icons.directions_car_rounded,
+                        title: 'Self Delivery',
+                        subtitle: 'Seller will self-deliver the materials to you directly.',
+                      ),
+                      const SizedBox(height: 10),
+                      _buildDeliveryMethodOption(
+                        isDark: isDark,
+                        value: 'BUYER_PICKUP',
+                        icon: Icons.store_rounded,
+                        title: 'Buyer Pickup',
+                        subtitle: 'Go to the seller’s location to pick up materials yourself.',
+                      ),
+                      if (widget.item.metadata?['pickupRequired'] ?? true) ...[
+                        const SizedBox(height: 10),
+                        _buildDeliveryMethodOption(
+                          isDark: isDark,
+                          value: 'RECYCONNECT_PICKUP',
+                          icon: Icons.local_shipping_rounded,
+                          title: 'RecyConnect Pickup',
+                          subtitle: 'RecyConnect logistics warehouse collector picks up and delivers. Free delivery.',
+                          badge: 'RECOMMENDED',
+                        ),
+                      ],
+                      if (_selectedDeliveryMethod == 'RECYCONNECT_PICKUP' && userRole != 'warehouse') ...[
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.02),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: isDark ? Colors.white12 : Colors.black12,
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Logistics Assignment Mode',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                  color: isDark ? Colors.white : Colors.black87,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildAssignmentTypeBtn(
+                                      title: 'Auto-Assign',
+                                      value: 'automatic',
+                                      isSelected: _assignmentType == 'automatic',
+                                      isDark: isDark,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _buildAssignmentTypeBtn(
+                                      title: 'Choose Warehouse',
+                                      value: 'manual',
+                                      isSelected: _assignmentType == 'manual',
+                                      isDark: isDark,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              if (_assignmentType == 'manual') ...[
+                                const SizedBox(height: 16),
+                                if (_loadingWarehouses)
+                                  const Center(child: CircularProgressIndicator())
+                                else if (_nearbyWarehouses.isEmpty)
+                                  Text(
+                                    'No nearby logistics providers found within range.',
+                                    style: TextStyle(color: Colors.red.shade400, fontSize: 13),
+                                  )
+                                else ...[
+                                  Text(
+                                    'Select Nearby Warehouse Provider:',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13,
+                                      color: isDark ? Colors.white70 : Colors.black54,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  ListView.separated(
+                                    shrinkWrap: true,
+                                    physics: const NeverScrollableScrollPhysics(),
+                                    itemCount: _nearbyWarehouses.length,
+                                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                                    itemBuilder: (context, index) {
+                                      final wh = _nearbyWarehouses[index];
+                                      final isWhSelected = _selectedWarehouseId == wh['id'];
+                                      final whAccentColor = isDark
+                                          ? MarketplaceTheme.darkAccentGreen
+                                          : MarketplaceTheme.lightAccent;
+
+                                      return GestureDetector(
+                                        onTap: () {
+                                          setState(() {
+                                            _selectedWarehouseId = wh['id'];
+                                          });
+                                        },
+                                        child: Container(
+                                          padding: const EdgeInsets.all(12),
+                                          decoration: BoxDecoration(
+                                            color: isWhSelected
+                                                ? whAccentColor.withValues(alpha: isDark ? 0.15 : 0.08)
+                                                : (isDark ? Colors.white.withValues(alpha: 0.02) : Colors.white),
+                                            border: Border.all(
+                                              color: isWhSelected
+                                                  ? whAccentColor
+                                                  : (isDark ? Colors.white12 : Colors.black12),
+                                              width: isWhSelected ? 1.5 : 1,
+                                            ),
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      wh['name'] ?? 'Warehouse',
+                                                      style: TextStyle(
+                                                        fontWeight: FontWeight.bold,
+                                                        fontSize: 13,
+                                                        color: isDark ? Colors.white : Colors.black87,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 4),
+                                                    Row(
+                                                      children: [
+                                                        Icon(Icons.location_on, size: 12, color: Colors.grey),
+                                                        const SizedBox(width: 4),
+                                                        Text(
+                                                          '${wh['distance']} km away',
+                                                          style: TextStyle(fontSize: 11, color: Colors.grey),
+                                                        ),
+                                                        const SizedBox(width: 12),
+                                                        Icon(Icons.star, size: 12, color: Colors.amber),
+                                                        const SizedBox(width: 4),
+                                                        Text(
+                                                          '${wh['rating']}',
+                                                          style: TextStyle(fontSize: 11, color: Colors.grey),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              Column(
+                                                crossAxisAlignment: CrossAxisAlignment.end,
+                                                children: [
+                                                  Text(
+                                                    'Delivery: Rs 0',
+                                                    style: TextStyle(
+                                                      fontWeight: FontWeight.w600,
+                                                      fontSize: 12,
+                                                      color: Colors.green,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 4),
+                                                  Container(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                    decoration: BoxDecoration(
+                                                      color: wh['collectorAvailability'] == 'AVAILABLE'
+                                                          ? Colors.green.withValues(alpha: 0.15)
+                                                          : Colors.orange.withValues(alpha: 0.15),
+                                                      borderRadius: BorderRadius.circular(4),
+                                                    ),
+                                                    child: Text(
+                                                      wh['collectorAvailability'] ?? 'UNAVAILABLE',
+                                                      style: TextStyle(
+                                                        fontSize: 9,
+                                                        fontWeight: FontWeight.bold,
+                                                        color: wh['collectorAvailability'] == 'AVAILABLE'
+                                                            ? Colors.green
+                                                            : Colors.orange,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ],
+                            ],
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 24),
 
                       // ── PAYMENT METHOD ─────────────────────────────
@@ -477,9 +929,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: isDark ? Colors.orange.withOpacity(0.1) : Colors.orange.shade50,
+                            color: isDark ? Colors.orange.withValues(alpha: 0.1) : Colors.orange.shade50,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                            border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
                           ),
                           child: Row(
                             children: [
@@ -508,14 +960,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     16, 16, 16, 16 + MediaQuery.of(context).padding.bottom),
                 decoration: BoxDecoration(
                   color: isDark
-                      ? const Color(0xFF0F172A).withOpacity(0.95)
-                      : Colors.white.withOpacity(0.95),
+                      ? const Color(0xFF0F172A).withValues(alpha: 0.95)
+                      : Colors.white.withValues(alpha: 0.95),
                   border: Border(
                       top: BorderSide(
                           color: isDark ? Colors.white10 : Colors.black12)),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: 0.1),
                       blurRadius: 10,
                       offset: const Offset(0, -4),
                     )
@@ -577,10 +1029,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             width: isSelected ? 2 : 1,
           ),
           color: isSelected
-              ? accentColor.withOpacity(isDark ? 0.10 : 0.06)
+              ? accentColor.withValues(alpha: isDark ? 0.10 : 0.06)
               : (isDark
-                  ? Colors.white.withOpacity(0.05)
-                  : Colors.white.withOpacity(0.75)),
+                  ? Colors.white.withValues(alpha: 0.05)
+                  : Colors.white.withValues(alpha: 0.75)),
         ),
         child: Padding(
           padding: const EdgeInsets.all(14),
@@ -591,8 +1043,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? accentColor.withOpacity(0.15)
-                      : (isDark ? Colors.white10 : Colors.black.withOpacity(0.05)),
+                      ? accentColor.withValues(alpha: 0.15)
+                      : (isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05)),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
@@ -626,10 +1078,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF635BFF).withOpacity(0.15),
+                              color: const Color(0xFF635BFF).withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(6),
                               border: Border.all(
-                                  color: const Color(0xFF635BFF).withOpacity(0.4)),
+                                  color: const Color(0xFF635BFF).withValues(alpha: 0.4)),
                             ),
                             child: Text(
                               badge,
@@ -674,12 +1126,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 child: isSelected
                     ? Center(
                         child: Container(
-                          width: 10,
-                          height: 10,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: accentColor,
-                          ),
+                           width: 10,
+                           height: 10,
+                           decoration: BoxDecoration(
+                             shape: BoxShape.circle,
+                             color: accentColor,
+                           ),
                         ),
                       )
                     : null,
@@ -690,4 +1142,194 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ),
     );
   }
+
+  Widget _buildDeliveryMethodOption({
+    required bool isDark,
+    required String value,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    String? badge,
+  }) {
+    final isSelected = _selectedDeliveryMethod == value;
+    final accentColor = isDark
+        ? MarketplaceTheme.darkAccentGreen
+        : MarketplaceTheme.lightAccent;
+
+    return GestureDetector(
+      onTap: () => setState(() => _selectedDeliveryMethod = value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected
+                ? accentColor
+                : (isDark ? Colors.white12 : Colors.black12),
+            width: isSelected ? 2 : 1,
+          ),
+          color: isSelected
+              ? accentColor.withValues(alpha: isDark ? 0.10 : 0.06)
+              : (isDark
+                  ? Colors.white.withValues(alpha: 0.05)
+                  : Colors.white.withValues(alpha: 0.75)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              // Icon box
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? accentColor.withValues(alpha: 0.15)
+                      : (isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05)),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  icon,
+                  color: isSelected
+                      ? accentColor
+                      : (isDark ? Colors.white54 : Colors.black38),
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 14),
+
+              // Text + badge
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          title,
+                          style: TextStyle(
+                            color: isDark ? Colors.white : Colors.black87,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                        if (badge != null) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF635BFF).withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                  color: const Color(0xFF635BFF).withValues(alpha: 0.4)),
+                            ),
+                            child: Text(
+                              badge,
+                              style: const TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF635BFF),
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        color: isDark ? Colors.white54 : Colors.black45,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+
+              // Radio circle
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: 22,
+                height: 22,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: isSelected
+                        ? accentColor
+                        : (isDark ? Colors.white30 : Colors.black26),
+                    width: 2,
+                  ),
+                ),
+                child: isSelected
+                    ? Center(
+                        child: Container(
+                           width: 10,
+                           height: 10,
+                           decoration: BoxDecoration(
+                             shape: BoxShape.circle,
+                             color: accentColor,
+                           ),
+                        ),
+                      )
+                    : null,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAssignmentTypeBtn({
+    required String title,
+    required String value,
+    required bool isSelected,
+    required bool isDark,
+  }) {
+    final accentColor = isDark
+        ? MarketplaceTheme.darkAccentGreen
+        : MarketplaceTheme.lightAccent;
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _assignmentType = value;
+          if (value == 'manual') {
+            _loadNearbyWarehouses();
+          }
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? accentColor.withValues(alpha: isDark ? 0.15 : 0.08)
+              : Colors.transparent,
+          border: Border.all(
+            color: isSelected
+                ? accentColor
+                : (isDark ? Colors.white24 : Colors.black26),
+            width: isSelected ? 1.5 : 1,
+          ),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Center(
+          child: Text(
+            title,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: isSelected
+                  ? accentColor
+                  : (isDark ? Colors.white70 : Colors.black87),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
+

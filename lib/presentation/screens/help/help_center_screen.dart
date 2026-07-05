@@ -5,7 +5,7 @@ import 'contact_support_screen.dart';
 import 'report_problem_screen.dart';
 
 class HelpCenterScreen extends StatelessWidget {
-  const HelpCenterScreen({Key? key}) : super(key: key);
+  const HelpCenterScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +49,7 @@ class HelpCenterScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: isDark
-                      ? AppTheme.darkSecondaryGreen.withOpacity(0.3)
+                      ? AppTheme.darkSecondaryGreen.withValues(alpha: 0.3)
                       : AppTheme.lightGray,
                 ),
               ),
@@ -59,7 +59,7 @@ class HelpCenterScreen extends StatelessWidget {
                   hintStyle: TextStyle(
                     color: isDark
                         ? AppTheme.darkTextSecondary
-                        : AppTheme.textLight.withOpacity(0.7),
+                        : AppTheme.textLight.withValues(alpha: 0.7),
                   ),
                   prefixIcon: Icon(
                     Icons.search,
@@ -244,12 +244,12 @@ class HelpCenterScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isDark
-                ? AppTheme.darkSecondaryGreen.withOpacity(0.3)
+                ? AppTheme.darkSecondaryGreen.withValues(alpha: 0.3)
                 : AppTheme.lightGray,
           ),
           boxShadow: [
             BoxShadow(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -261,7 +261,7 @@ class HelpCenterScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
@@ -315,7 +315,7 @@ class HelpCenterScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isDark
-                ? AppTheme.darkSecondaryGreen.withOpacity(0.3)
+                ? AppTheme.darkSecondaryGreen.withValues(alpha: 0.3)
                 : AppTheme.lightGray,
           ),
         ),
@@ -325,7 +325,7 @@ class HelpCenterScreen extends StatelessWidget {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: (isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen)
-                    .withOpacity(0.1),
+                    .withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(

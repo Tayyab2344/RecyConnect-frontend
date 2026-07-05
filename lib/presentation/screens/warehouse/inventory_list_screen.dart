@@ -49,6 +49,7 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
 
   Future<void> _deleteItem(int id) async {
     final success = await _warehouseService.deleteInventoryItem(id);
+    if (!mounted) return;
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Item deleted successfully')),
@@ -73,7 +74,7 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
 
     showDialog(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         return AlertDialog(
           backgroundColor: isDark ? AppTheme.darkCardSurface : Colors.white,
           title: Text('Edit ${item['materialType']} (${item['category']})'),
@@ -115,18 +116,18 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(context);
+                Navigator.pop(dialogContext);
                 _deleteItem(item['id']);
               },
               child: const Text('Delete', style: TextStyle(color: Colors.red)),
             ),
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(dialogContext),
               child: const Text('Cancel'),
             ),
             ElevatedButton(
               onPressed: () async {
-                Navigator.pop(context);
+                Navigator.pop(dialogContext);
                 setState(() => _isLoading = true);
                 
                 final res = await _warehouseService.updateInventoryItem(
@@ -138,6 +139,8 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
                   location: locationController.text,
                   notes: notesController.text,
                 );
+
+                if (!mounted) return;
 
                 if (res['success'] == true) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -261,7 +264,7 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
         border: Border(
           bottom: BorderSide(
             color: (isDark ? AppTheme.darkSecondaryGreen : AppTheme.lightGray)
-                .withOpacity(0.3),
+                .withValues(alpha: 0.3),
           ),
         ),
       ),
@@ -272,12 +275,12 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
               color: isDark
-                  ? Colors.white.withOpacity(0.08)
-                  : Colors.white.withOpacity(0.9),
+                  ? Colors.white.withValues(alpha: 0.08)
+                  : Colors.white.withValues(alpha: 0.9),
               border: Border.all(
                 color: isDark
-                    ? AppColors.neonCyan.withOpacity(0.2)
-                    : Colors.black.withOpacity(0.05),
+                    ? AppColors.neonCyan.withValues(alpha: 0.2)
+                    : Colors.black.withValues(alpha: 0.05),
               ),
             ),
             child: TextField(
@@ -339,17 +342,17 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
               : null,
           color: isSelected
               ? null
-              : (isDark ? Colors.white.withOpacity(0.08) : Colors.white.withOpacity(0.8)),
+              : (isDark ? Colors.white.withValues(alpha: 0.08) : Colors.white.withValues(alpha: 0.8)),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected
                 ? Colors.transparent
-                : (isDark ? accentColor.withOpacity(0.3) : Colors.black.withOpacity(0.1)),
+                : (isDark ? accentColor.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.1)),
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: accentColor.withOpacity(0.3),
+                    color: accentColor.withValues(alpha: 0.3),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -386,7 +389,7 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
         border: Border(
           bottom: BorderSide(
             color: (isDark ? AppTheme.darkSecondaryGreen : AppTheme.lightGray)
-                .withOpacity(0.3),
+                .withValues(alpha: 0.3),
           ),
         ),
       ),
@@ -455,13 +458,13 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isLowStock
-              ? AppTheme.errorRed.withOpacity(0.3)
+              ? AppTheme.errorRed.withValues(alpha: 0.3)
               : (isDark ? AppTheme.darkSecondaryGreen : AppTheme.lightGray)
-                  .withOpacity(0.3),
+                  .withValues(alpha: 0.3),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -492,7 +495,7 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             color: (isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen)
-                                .withOpacity(0.1),
+                                .withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
@@ -521,7 +524,7 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    color: AppTheme.errorRed.withOpacity(0.1),
+                    color: AppTheme.errorRed.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
@@ -616,7 +619,7 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: (isDark ? AppTheme.darkSecondaryGreen : AppTheme.lightGray)
-              .withOpacity(0.3),
+              .withValues(alpha: 0.3),
         ),
       ),
       child: Column(
@@ -654,7 +657,7 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
             Icons.inventory_2_outlined,
             size: 64,
             color: (isDark ? AppTheme.darkTextSecondary : AppTheme.textLight)
-                .withOpacity(0.5),
+                .withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
           Text(

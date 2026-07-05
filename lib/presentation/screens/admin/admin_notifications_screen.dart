@@ -394,7 +394,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
           if (_unreadCount > 0)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              color: AdminColors.accentBlue.withOpacity(0.1),
+              color: AdminColors.accentBlue.withValues(alpha: 0.1),
               child: Row(
                 children: [
                   Container(
@@ -467,13 +467,13 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                   ? const Color(
                       0xFF1E3A5F) // Dark blue tint for unread in dark mode
                   : AdminColors.accentBlue
-                      .withOpacity(0.05), // Light blue tint for unread
+                      .withValues(alpha: 0.05), // Light blue tint for unread
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
               color: isDark
-                  ? Colors.black.withOpacity(0.3)
-                  : Colors.black.withOpacity(0.05),
+                  ? Colors.black.withValues(alpha: 0.3)
+                  : Colors.black.withValues(alpha: 0.05),
               blurRadius: notification.isRead ? 2 : 4,
               offset: const Offset(0, 2),
             ),
@@ -513,7 +513,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: notification.iconColor.withOpacity(0.1),
+                              color: notification.iconColor.withValues(alpha: 0.1),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
@@ -621,7 +621,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
           Icon(
             Icons.notifications_none,
             size: 80,
-            color: emptyTheme.textTheme.bodyMedium?.color?.withOpacity(0.5),
+            color: emptyTheme.textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
           Text(

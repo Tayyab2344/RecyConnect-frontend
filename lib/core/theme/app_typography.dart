@@ -123,7 +123,7 @@ class AppTypography {
   static TextStyle caption(BuildContext context) => GoogleFonts.lato(
         fontSize: 12,
         fontWeight: FontWeight.normal,
-        color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7),
+        color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
       );
 
   /// Overline - Category labels, section dividers
@@ -171,7 +171,7 @@ class AppTypography {
   static TextStyle statLabel(BuildContext context) => GoogleFonts.lato(
         fontSize: 14,
         fontWeight: FontWeight.w500,
-        color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+        color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
       );
 
   /// Price - Currency display

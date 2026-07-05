@@ -12,12 +12,11 @@ class RecycleLoader extends StatefulWidget {
   final double size;
   final Color? color;
 
-  const RecycleLoader({Key? key, this.size = 60, this.color}) : super(key: key);
+  const RecycleLoader({super.key, this.size = 60, this.color});
 
-  const RecycleLoader.small({Key? key})
+  const RecycleLoader.small({super.key})
       : size = 22,
-        color = null,
-        super(key: key);
+        color = null;
 
   /// Convenience constructor — wraps in Center widget
   static Widget centered({double size = 60, Color? color}) {
@@ -93,7 +92,7 @@ class _RecycleLoaderState extends State<RecycleLoader>
                   height: size * 0.72,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: accentColor.withOpacity(0.08),
+                    color: accentColor.withValues(alpha: 0.08),
                   ),
                 ),
 
@@ -144,7 +143,7 @@ class _RecycleLoaderState extends State<RecycleLoader>
           height: dotRadius * 2,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: color.withOpacity(opacity),
+            color: color.withValues(alpha: opacity),
           ),
         ),
       );
@@ -155,7 +154,7 @@ class _RecycleLoaderState extends State<RecycleLoader>
 /// Full-screen loading overlay — use inside a Scaffold body or Stack
 class RecycleLoadingScreen extends StatelessWidget {
   final String? message;
-  const RecycleLoadingScreen({Key? key, this.message}) : super(key: key);
+  const RecycleLoadingScreen({super.key, this.message});
 
   @override
   Widget build(BuildContext context) {

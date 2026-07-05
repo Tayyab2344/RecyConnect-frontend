@@ -325,7 +325,7 @@ class _AdminUserProfileScreenState extends State<AdminUserProfileScreen> {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            AdminColors.primaryGreen.withOpacity(0.1),
+            AdminColors.primaryGreen.withValues(alpha: 0.1),
             Colors.white,
           ],
         ),
@@ -339,7 +339,7 @@ class _AdminUserProfileScreenState extends State<AdminUserProfileScreen> {
             height: 100,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AdminColors.primaryGreen.withOpacity(0.2),
+              color: AdminColors.primaryGreen.withValues(alpha: 0.2),
               border: Border.all(color: AdminColors.primaryGreen, width: 3),
             ),
             child: Center(
@@ -405,7 +405,7 @@ class _AdminUserProfileScreenState extends State<AdminUserProfileScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       decoration: BoxDecoration(
-        color: badgeColor.withOpacity(0.1),
+        color: badgeColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: badgeColor),
       ),
@@ -428,7 +428,7 @@ class _AdminUserProfileScreenState extends State<AdminUserProfileScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       decoration: BoxDecoration(
-        color: statusColor.withOpacity(0.15),
+        color: statusColor.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: statusColor, width: 1.5),
       ),
@@ -546,7 +546,7 @@ class _AdminUserProfileScreenState extends State<AdminUserProfileScreen> {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: iconColor.withOpacity(0.1),
+            color: iconColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(icon, size: 20, color: iconColor),
@@ -652,16 +652,16 @@ class _AdminUserProfileScreenState extends State<AdminUserProfileScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.05),
+        color: color.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: color, size: 24),
@@ -736,7 +736,7 @@ class _AdminUserProfileScreenState extends State<AdminUserProfileScreen> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.blue.withOpacity(0.1),
+              color: Colors.blue.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Icon(Icons.description, color: Colors.blue, size: 24),
@@ -843,7 +843,7 @@ class _AdminUserProfileScreenState extends State<AdminUserProfileScreen> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: activity.color.withOpacity(0.1),
+                color: activity.color.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(activity.icon, color: activity.color, size: 20),
@@ -875,7 +875,7 @@ class _AdminUserProfileScreenState extends State<AdminUserProfileScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: activity.color.withOpacity(0.1),
+                color: activity.color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
@@ -1247,7 +1247,7 @@ class _AdminUserProfileScreenState extends State<AdminUserProfileScreen> {
         border: Border.all(color: AdminColors.border),
         boxShadow: [
           BoxShadow(
-            color: AdminColors.shadow.withOpacity(0.05),
+            color: AdminColors.shadow.withValues(alpha: 0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -1261,7 +1261,7 @@ class _AdminUserProfileScreenState extends State<AdminUserProfileScreen> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: typeColor.withOpacity(0.1),
+                  color: typeColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(materialIcon, color: typeColor, size: 24),
@@ -1288,7 +1288,7 @@ class _AdminUserProfileScreenState extends State<AdminUserProfileScreen> {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: statusColor.withOpacity(0.1),
+                            color: statusColor.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
@@ -1311,7 +1311,7 @@ class _AdminUserProfileScreenState extends State<AdminUserProfileScreen> {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: typeColor.withOpacity(0.1),
+                            color: typeColor.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(

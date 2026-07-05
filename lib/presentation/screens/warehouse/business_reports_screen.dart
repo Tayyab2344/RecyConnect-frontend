@@ -135,7 +135,7 @@ class _BusinessReportsScreenState extends State<BusinessReportsScreen> {
         color: isDark ? AppTheme.darkCardSurface : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: (isDark ? AppTheme.darkSecondaryGreen : AppTheme.lightGray).withOpacity(0.2),
+          color: (isDark ? AppTheme.darkSecondaryGreen : AppTheme.lightGray).withValues(alpha: 0.2),
         ),
       ),
       child: Column(
@@ -147,7 +147,7 @@ class _BusinessReportsScreenState extends State<BusinessReportsScreen> {
           ),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
-            value: _selectedReportType,
+            initialValue: _selectedReportType,
             decoration: const InputDecoration(labelText: 'Report Type'),
             items: const [
               DropdownMenuItem(value: 'general', child: Text('Profit & Loss Summary')),
@@ -201,7 +201,7 @@ class _BusinessReportsScreenState extends State<BusinessReportsScreen> {
         color: isDark ? AppTheme.darkCardSurface : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: (isDark ? AppTheme.darkSecondaryGreen : AppTheme.lightGray).withOpacity(0.2),
+          color: (isDark ? AppTheme.darkSecondaryGreen : AppTheme.lightGray).withValues(alpha: 0.2),
         ),
       ),
       child: Column(

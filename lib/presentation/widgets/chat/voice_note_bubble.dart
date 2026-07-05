@@ -7,10 +7,10 @@ class VoiceNoteBubble extends StatefulWidget {
   final bool isMe;
 
   const VoiceNoteBubble({
-    Key? key,
+    super.key,
     required this.voiceUrl,
     required this.isMe,
-  }) : super(key: key);
+  });
 
   @override
   State<VoiceNoteBubble> createState() => _VoiceNoteBubbleState();
@@ -136,7 +136,7 @@ class _VoiceNoteBubbleState extends State<VoiceNoteBubble> {
                     activeTrackColor: sliderActiveColor,
                     inactiveTrackColor: sliderInactiveColor,
                     thumbColor: sliderActiveColor,
-                    overlayColor: sliderActiveColor.withOpacity(0.2),
+                    overlayColor: sliderActiveColor.withValues(alpha: 0.2),
                   ),
                   child: Slider(
                     min: 0.0,
@@ -163,11 +163,11 @@ class _VoiceNoteBubbleState extends State<VoiceNoteBubble> {
                     children: [
                       Text(
                         _formatDuration(_position),
-                        style: TextStyle(color: textColor.withOpacity(0.7), fontSize: 10),
+                        style: TextStyle(color: textColor.withValues(alpha: 0.7), fontSize: 10),
                       ),
                       Text(
                         _formatDuration(_duration),
-                        style: TextStyle(color: textColor.withOpacity(0.7), fontSize: 10),
+                        style: TextStyle(color: textColor.withValues(alpha: 0.7), fontSize: 10),
                       ),
                     ],
                   ),
