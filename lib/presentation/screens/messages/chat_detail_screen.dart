@@ -10,6 +10,8 @@ import '../../../core/services/chat_service.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../widgets/chat/voice_note_bubble.dart';
+import 'package:latlong2/latlong.dart';
+import '../marketplace/in_app_map_screen.dart';
 
 class ChatDetailScreen extends StatefulWidget {
   final int conversationId;
@@ -295,11 +297,16 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       final double? lat = double.tryParse(parts[0]);
       final double? lon = double.tryParse(parts[1]);
       if (lat != null && lon != null) {
-        final url = 'https://www.google.com/maps/search/?api=1&query=$lat,$lon';
-        final uri = Uri.parse(url);
-        if (await canLaunchUrl(uri)) {
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
-        }
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => InAppMapScreen(
+              destination: LatLng(lat, lon),
+              destinationName: "Shared Location",
+              destinationAddress: "Shared coordinates: $lat, $lon",
+            ),
+          ),
+        );
       }
     }
   }

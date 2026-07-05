@@ -9,6 +9,7 @@ import 'dart:async';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/collector_service.dart';
 import '../../widgets/skeleton_loader.dart';
+import '../marketplace/in_app_map_screen.dart';
 
 class CollectorMapScreen extends StatefulWidget {
   final Map<String, dynamic> task;
@@ -281,29 +282,24 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
     final String status = _task['status']?.toString() ?? 'ASSIGNED';
     final bool isPickedUp = ['PICKED_UP', 'IN_TRANSIT', 'ARRIVED_AT_DESTINATION', 'COMPLETED', 'DELIVERED'].contains(status);
     final LatLng target = isPickedUp ? dest : pickup;
-    
-    final double lat = target.latitude;
-    final double lng = target.longitude;
-    
-    final uri = Uri.parse('google.navigation:q=$lat,$lng');
-    final appleUri = Uri.parse('https://maps.apple.com/?daddr=$lat,$lng');
-    
-    try {
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri);
-      } else if (await canLaunchUrl(appleUri)) {
-        await launchUrl(appleUri);
-      } else {
-        final fallbackUrl = Uri.parse('https://www.google.com/maps/dir/?api=1&destination=$lat,$lng');
-        if (await canLaunchUrl(fallbackUrl)) {
-          await launchUrl(fallbackUrl, mode: LaunchMode.externalApplication);
-        } else {
-          _showMessage("Could not open navigation app", isError: true);
-        }
-      }
-    } catch (e) {
-      _showMessage("Error opening maps: $e", isError: true);
-    }
+    final String targetName = isPickedUp 
+        ? (_task['buyer']?['name'] ?? _task['destinationName'] ?? 'Warehouse') 
+        : (_task['seller']?['name'] ?? _task['sourceName'] ?? 'Seller');
+    final String targetAddr = isPickedUp 
+        ? (_task['buyer']?['street'] ?? _task['destinationAddress'] ?? '') 
+        : (_task['seller']?['street'] ?? _task['sourceAddress'] ?? '');
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => InAppMapScreen(
+          destination: target,
+          destinationName: targetName,
+          destinationAddress: targetAddr,
+          initialSource: _currentPosition,
+        ),
+      ),
+    );
   }
 
   @override

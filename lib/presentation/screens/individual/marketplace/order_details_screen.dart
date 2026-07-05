@@ -20,6 +20,7 @@ import '../../../widgets/marketplace/glass_card.dart';
 import '../../../widgets/recycle_loader.dart';
 import '../../../widgets/chat/voice_note_bubble.dart';
 import '../../../widgets/ratings_reviews_dialog.dart';
+import '../../marketplace/in_app_map_screen.dart';
 
 class OrderDetailsScreen extends StatefulWidget {
   final Order? order;
@@ -990,26 +991,28 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen>
                       heroTag: 'nav_btn_${order.id}',
                       backgroundColor: Colors.blueAccent,
                       foregroundColor: Colors.white,
-                      onPressed: () async {
+                      onPressed: () {
                         final travelerIsBuyer = order.deliveryMethod == 'BUYER_PICKUP';
                         final double targetLat = travelerIsBuyer ? sellerLat : buyerLat;
                         final double targetLng = travelerIsBuyer ? sellerLng : buyerLng;
-                        
-                        final uri = Uri.parse('google.navigation:q=$targetLat,$targetLng');
-                        final appleUri = Uri.parse('https://maps.apple.com/?daddr=$targetLat,$targetLng');
-                        
-                        try {
-                          if (await canLaunchUrl(uri)) {
-                            await launchUrl(uri);
-                          } else if (await canLaunchUrl(appleUri)) {
-                            await launchUrl(appleUri);
-                          } else {
-                            final fallbackUrl = Uri.parse('https://www.google.com/maps/dir/?api=1&destination=$targetLat,$targetLng');
-                            await launchUrl(fallbackUrl, mode: LaunchMode.externalApplication);
-                          }
-                        } catch (e) {
-                          debugPrint('Error launching navigation maps: $e');
-                        }
+                        final String targetName = travelerIsBuyer ? order.sellerName : order.buyerName;
+                        final String targetAddr = travelerIsBuyer 
+                            ? (order.seller?.address ?? '') 
+                            : (order.buyer?.address ?? '');
+
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => InAppMapScreen(
+                              destination: LatLng(targetLat, targetLng),
+                              destinationName: targetName,
+                              destinationAddress: targetAddr,
+                              initialSource: _resolvedBuyerLat != null && _resolvedBuyerLng != null 
+                                  ? LatLng(_resolvedBuyerLat!, _resolvedBuyerLng!) 
+                                  : null,
+                            ),
+                          ),
+                        );
                       },
                       child: const Icon(Icons.navigation, size: 18),
                     ),
