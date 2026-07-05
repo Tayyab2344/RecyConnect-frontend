@@ -146,9 +146,30 @@ class Order {
   String get statusDisplay {
     const labels = {
       'CREATED': 'Pending',
+      'PENDING': 'Pending',
       'CONFIRMED': 'Confirmed',
       'COMPLETED': 'Completed',
       'CANCELLED': 'Cancelled',
+      'WAREHOUSE_ASSIGNED': 'Warehouse Assigned',
+      'WAITING_FOR_DISPATCH': 'Waiting for Dispatch',
+      'COLLECTOR_ASSIGNED': 'Collector Assigned',
+      'COLLECTOR_ACCEPTED': 'Collector Accepted',
+      'TRAVELLING_TO_SELLER': 'Travelling to Seller',
+      'ARRIVED_AT_PICKUP': 'Arrived at Pickup',
+      'MATERIAL_VERIFIED': 'Material Verified',
+      'PICKED_UP': 'Picked Up',
+      'IN_TRANSIT': 'In Transit',
+      'ARRIVED_AT_BUYER': 'Arrived at Buyer',
+      'BUYER_VERIFICATION': 'Buyer Verification',
+      'DELIVERED': 'Delivered',
+      'PROCESSING': 'Processing',
+      'SHIPPED': 'Shipped',
+      'WAREHOUSE_REJECTED': 'Warehouse Rejected',
+      'COLLECTOR_DECLINED': 'Collector Declined',
+      'BUYER_CANCELLED': 'Buyer Cancelled',
+      'SELLER_CANCELLED': 'Seller Cancelled',
+      'DELIVERY_FAILED': 'Delivery Failed',
+      'REFUND_INITIATED': 'Refund Initiated',
     };
 
     final normalizedStatus = status.trim().toUpperCase();

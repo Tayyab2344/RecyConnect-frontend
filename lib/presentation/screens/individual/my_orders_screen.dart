@@ -85,11 +85,32 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
           matchesStatus = order.status == 'CREATED' ||
               order.status == 'CONFIRMED' ||
               order.status == 'PENDING' ||
-              order.status == 'COLLECTED';
+              order.status == 'COLLECTED' ||
+              order.status == 'PAYMENT_PENDING' ||
+              order.status == 'WAITING_FOR_DISPATCH' ||
+              order.status == 'WAREHOUSE_ASSIGNED' ||
+              order.status == 'COLLECTOR_ASSIGNED' ||
+              order.status == 'COLLECTOR_ACCEPTED' ||
+              order.status == 'TRAVELLING_TO_SELLER' ||
+              order.status == 'ARRIVED_AT_PICKUP' ||
+              order.status == 'MATERIAL_VERIFIED' ||
+              order.status == 'PICKED_UP' ||
+              order.status == 'IN_TRANSIT' ||
+              order.status == 'ARRIVED_AT_BUYER' ||
+              order.status == 'BUYER_VERIFICATION' ||
+              order.status == 'DELIVERED' ||
+              order.status == 'PROCESSING' ||
+              order.status == 'SHIPPED';
         } else if (_selectedStatus == 'Completed') {
           matchesStatus = order.status == 'COMPLETED';
         } else if (_selectedStatus == 'Cancelled') {
-          matchesStatus = order.status == 'CANCELLED';
+          matchesStatus = order.status == 'CANCELLED' ||
+              order.status == 'WAREHOUSE_REJECTED' ||
+              order.status == 'COLLECTOR_DECLINED' ||
+              order.status == 'BUYER_CANCELLED' ||
+              order.status == 'SELLER_CANCELLED' ||
+              order.status == 'DELIVERY_FAILED' ||
+              order.status == 'REFUND_INITIATED';
         }
 
         // Filter by search
@@ -1158,6 +1179,20 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
         };
       case 'CONFIRMED':
       case 'COLLECTED':
+      case 'WAREHOUSE_ASSIGNED':
+      case 'WAITING_FOR_DISPATCH':
+      case 'COLLECTOR_ASSIGNED':
+      case 'COLLECTOR_ACCEPTED':
+      case 'TRAVELLING_TO_SELLER':
+      case 'ARRIVED_AT_PICKUP':
+      case 'MATERIAL_VERIFIED':
+      case 'PICKED_UP':
+      case 'IN_TRANSIT':
+      case 'ARRIVED_AT_BUYER':
+      case 'BUYER_VERIFICATION':
+      case 'DELIVERED':
+      case 'PROCESSING':
+      case 'SHIPPED':
         return {
           'color': const Color(0xFF3B82F6),
           'gradient': LinearGradient(
@@ -1178,6 +1213,12 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
           'textColor': isDark ? AppColors.neonGreen : const Color(0xFF388E3C),
         };
       case 'CANCELLED':
+      case 'WAREHOUSE_REJECTED':
+      case 'COLLECTOR_DECLINED':
+      case 'BUYER_CANCELLED':
+      case 'SELLER_CANCELLED':
+      case 'DELIVERY_FAILED':
+      case 'REFUND_INITIATED':
         return {
           'color': AppColors.error,
           'gradient': LinearGradient(
@@ -1199,19 +1240,52 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
   }
 
   String _getStatusText(String status) {
-    switch (status) {
+    switch (status.toUpperCase()) {
       case 'CREATED':
+      case 'PENDING':
         return 'Pending';
       case 'CONFIRMED':
         return 'Confirmed';
-      case 'PENDING':
-        return 'Pending';
       case 'COLLECTED':
         return 'Collected';
       case 'COMPLETED':
         return 'Completed';
       case 'CANCELLED':
+      case 'BUYER_CANCELLED':
+      case 'SELLER_CANCELLED':
         return 'Cancelled';
+      case 'WAREHOUSE_ASSIGNED':
+        return 'Warehouse Assigned';
+      case 'WAITING_FOR_DISPATCH':
+        return 'Waiting for Dispatch';
+      case 'COLLECTOR_ASSIGNED':
+        return 'Collector Assigned';
+      case 'COLLECTOR_ACCEPTED':
+        return 'Collector Accepted';
+      case 'TRAVELLING_TO_SELLER':
+        return 'Travelling to Seller';
+      case 'ARRIVED_AT_PICKUP':
+        return 'Arrived at Pickup';
+      case 'MATERIAL_VERIFIED':
+        return 'Material Verified';
+      case 'PICKED_UP':
+        return 'Picked Up';
+      case 'IN_TRANSIT':
+        return 'In Transit';
+      case 'ARRIVED_AT_BUYER':
+        return 'Arrived at Buyer';
+      case 'BUYER_VERIFICATION':
+        return 'Buyer Verification';
+      case 'DELIVERED':
+        return 'Delivered';
+      case 'WAREHOUSE_REJECTED':
+        return 'Warehouse Rejected';
+      case 'COLLECTOR_DECLINED':
+        return 'Collector Declined';
+      case 'DELIVERY_FAILED':
+        return 'Delivery Failed';
+      case 'REFUND_INITIATED':
+        return 'Refund Initiated';
       default:
         return status;
     }
