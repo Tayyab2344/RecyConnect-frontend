@@ -638,6 +638,9 @@ class _CreateListingScreenState extends State<CreateListingScreen>
     if (!_formKey.currentState!.validate()) {
        return;
     }
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final isWarehouse = authService.userRole == 'warehouse';
+
     if (_latitude == null || _longitude == null || _addressController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select a valid item location.')),
@@ -688,7 +691,7 @@ class _CreateListingScreenState extends State<CreateListingScreen>
         city: _selectedCity,
         area: _selectedArea,
         metadata: {
-          'pickupRequired': _requestCollector,
+          'pickupRequired': isWarehouse ? false : _requestCollector,
           'userCurrentLocation': {
             'latitude': _userGpsLatitude ?? _latitude ?? 0.0,
             'longitude': _userGpsLongitude ?? _longitude ?? 0.0,
@@ -1091,6 +1094,9 @@ class _CreateListingScreenState extends State<CreateListingScreen>
   }
 
   Widget _buildPricingSection(bool isDark) {
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final isWarehouse = authService.userRole == 'warehouse';
+
     return Column(
       children: [
         // Rate Card
@@ -1124,75 +1130,77 @@ class _CreateListingScreenState extends State<CreateListingScreen>
             ],
           ),
         ),
-        const SizedBox(height: 16),
+        if (!isWarehouse) ...[
+          const SizedBox(height: 16),
 
-        // Pickup Required Radio Button
-        GlassCard(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.local_shipping_outlined,
-                      color: isDark ? Colors.white54 : Colors.black38, size: 20),
-                  const SizedBox(width: 12),
-                  Text(
-                    'Pickup Required?',
-                    style: TextStyle(
-                      color: isDark ? Colors.white60 : Colors.black45,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              RadioGroup<bool>(
-                groupValue: _requestCollector,
-                onChanged: (val) => setState(() => _requestCollector = val!),
-                child: Row(
+          // Pickup Required Radio Button
+          GlassCard(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Expanded(
-                      child: RadioListTile<bool>(
-                        title: Text(
-                          'Yes',
-                          style: TextStyle(
-                            color: isDark ? Colors.white : Colors.black87,
-                            fontSize: 14,
-                          ),
-                        ),
-                        value: true,
-                        activeColor: isDark
-                            ? MarketplaceTheme.darkAccentCyan
-                            : MarketplaceTheme.lightAccent,
-                        contentPadding: EdgeInsets.zero,
-                        dense: true,
-                      ),
-                    ),
-                    Expanded(
-                      child: RadioListTile<bool>(
-                        title: Text(
-                          'No',
-                          style: TextStyle(
-                            color: isDark ? Colors.white : Colors.black87,
-                            fontSize: 14,
-                          ),
-                        ),
-                        value: false,
-                        activeColor: isDark
-                            ? MarketplaceTheme.darkAccentCyan
-                            : MarketplaceTheme.lightAccent,
-                        contentPadding: EdgeInsets.zero,
-                        dense: true,
+                    Icon(Icons.local_shipping_outlined,
+                        color: isDark ? Colors.white54 : Colors.black38, size: 20),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Pickup Required?',
+                      style: TextStyle(
+                        color: isDark ? Colors.white60 : Colors.black45,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
                 ),
-              ),
-            ],
+                const SizedBox(height: 8),
+                RadioGroup<bool>(
+                  groupValue: _requestCollector,
+                  onChanged: (val) => setState(() => _requestCollector = val!),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: RadioListTile<bool>(
+                          title: Text(
+                            'Yes',
+                            style: TextStyle(
+                              color: isDark ? Colors.white : Colors.black87,
+                              fontSize: 14,
+                            ),
+                          ),
+                          value: true,
+                          activeColor: isDark
+                              ? MarketplaceTheme.darkAccentCyan
+                              : MarketplaceTheme.lightAccent,
+                          contentPadding: EdgeInsets.zero,
+                          dense: true,
+                        ),
+                      ),
+                      Expanded(
+                        child: RadioListTile<bool>(
+                          title: Text(
+                            'No',
+                            style: TextStyle(
+                              color: isDark ? Colors.white : Colors.black87,
+                              fontSize: 14,
+                            ),
+                          ),
+                          value: false,
+                          activeColor: isDark
+                              ? MarketplaceTheme.darkAccentCyan
+                              : MarketplaceTheme.lightAccent,
+                          contentPadding: EdgeInsets.zero,
+                          dense: true,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
+        ],
       ],
     );
   }
