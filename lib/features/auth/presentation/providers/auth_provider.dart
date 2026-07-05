@@ -120,6 +120,7 @@ class AuthProvider extends ChangeNotifier {
         'latitude': user.latitude,
         'longitude': user.longitude,
         'locationMethod': user.locationMethod,
+        'createdAt': user.createdAt,
       });
     }
     return map;

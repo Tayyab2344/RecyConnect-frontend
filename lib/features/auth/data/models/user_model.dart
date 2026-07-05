@@ -30,6 +30,7 @@ class UserModel extends UserEntity {
     super.latitude,
     super.longitude,
     super.locationMethod,
+    super.createdAt,
   });
 
   /// Create a UserModel from a JSON map (API response).
@@ -66,6 +67,7 @@ class UserModel extends UserEntity {
               : (json['longitude'] as num).toDouble())
           : null,
       locationMethod: json['locationMethod'] as String?,
+      createdAt: json['createdAt'] as String?,
     );
   }
 
@@ -95,6 +97,7 @@ class UserModel extends UserEntity {
       if (latitude != null) 'latitude': latitude,
       if (longitude != null) 'longitude': longitude,
       if (locationMethod != null) 'locationMethod': locationMethod,
+      if (createdAt != null) 'createdAt': createdAt,
     };
   }
 
@@ -121,6 +124,7 @@ class UserModel extends UserEntity {
       'locationMethod': userData['locationMethod'],
       'phone': userData['phone'] ?? userData['contactNo'],
       'profileImage': userData['profileImage'],
+      'createdAt': userData['createdAt'],
       'businessName': userData['businessName'],
       'companyName': userData['companyName'],
       'businessType': userData['businessType'],

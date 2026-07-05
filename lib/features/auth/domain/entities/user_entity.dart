@@ -25,6 +25,7 @@ class UserEntity {
   final double? latitude;
   final double? longitude;
   final String? locationMethod;
+  final String? createdAt;
 
   const UserEntity({
     this.id,
@@ -50,6 +51,7 @@ class UserEntity {
     this.latitude,
     this.longitude,
     this.locationMethod,
+    this.createdAt,
   });
 
   /// Get the display name (handles different user types)
