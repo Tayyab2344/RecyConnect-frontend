@@ -1751,8 +1751,8 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen>
           'subtitle': task != null && task['collector'] != null
               ? 'Rider ${task['collector']['name']} accepted the task.'
               : 'Awaiting a rider to claim the job.',
-          'isDone': task != null && ['ACCEPTED', 'EN_ROUTE_TO_PICKUP', 'ARRIVED_AT_SOURCE', 'VERIFIED', 'PICKED_UP', 'IN_TRANSIT', 'ARRIVED_AT_DESTINATION', 'DELIVERED', 'COMPLETED'].contains(task['status']),
-          'isActive': task != null && ['ACCEPTED', 'EN_ROUTE_TO_PICKUP', 'ARRIVED_AT_SOURCE'].contains(task['status']),
+          'isDone': task != null && ['ASSIGNED', 'ACCEPTED', 'EN_ROUTE_TO_PICKUP', 'ARRIVED_AT_SOURCE', 'VERIFIED', 'PICKED_UP', 'IN_TRANSIT', 'ARRIVED_AT_DESTINATION', 'DELIVERED', 'COMPLETED'].contains(task['status']),
+          'isActive': task != null && ['ASSIGNED', 'ACCEPTED', 'EN_ROUTE_TO_PICKUP', 'ARRIVED_AT_SOURCE'].contains(task['status']),
         },
         {
           'title': 'Picked Up & Verified',
