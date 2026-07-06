@@ -9,6 +9,7 @@ import 'dart:async';
 import 'dart:io';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/collector_service.dart';
+import '../../../core/services/listing_service.dart';
 import '../../../core/utils/image_source_helper.dart';
 import '../../widgets/skeleton_loader.dart';
 import '../marketplace/in_app_map_screen.dart';
@@ -47,12 +48,34 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
   bool _isLoadingRoute = true;
   DateTime? _lastRouteFetchTime;
 
+  List<String> _categories = ['Paper', 'Plastic', 'Glass', 'Metal', 'Organic', 'E-Waste', 'Mixed Recycle'];
+
   @override
   void initState() {
     super.initState();
     _task = Map<String, dynamic>.from(widget.task);
     _initializePoints();
     _startLocationTracking();
+    _loadCategories();
+  }
+
+  Future<void> _loadCategories() async {
+    try {
+      final rates = await ListingService().fetchMaterialRates();
+      if (rates.isNotEmpty && mounted) {
+        setState(() {
+          _categories = rates.keys.map((k) {
+            if (k.isEmpty) return k;
+            return k[0].toUpperCase() + k.substring(1).toLowerCase();
+          }).toList();
+          if (!_categories.contains('Mixed Recycle')) {
+            _categories.add('Mixed Recycle');
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading dynamic categories for collector: $e');
+    }
   }
 
   @override
@@ -814,9 +837,14 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
     final weightController = TextEditingController(text: estimatedWeight.toString());
     final notesController = TextEditingController();
     
-    // Available categories
-    final List<String> categories = ['Paper', 'Plastic', 'Glass', 'Metal', 'Organic', 'E-Waste', 'Mixed Recycle'];
-    String selectedCategory = categories.contains(currentCategory) ? currentCategory : 'Mixed Recycle';
+    // Available categories (dynamic from backend listing rates)
+    final List<String> categories = _categories;
+    String selectedCategory = categories.firstWhere(
+      (cat) => cat.toLowerCase() == currentCategory.toLowerCase(),
+      orElse: () => categories.contains('Mixed Recycle') 
+          ? 'Mixed Recycle' 
+          : (categories.isNotEmpty ? categories.first : 'Mixed Recycle'),
+    );
     
     List<XFile> pickedFiles = [];
     
