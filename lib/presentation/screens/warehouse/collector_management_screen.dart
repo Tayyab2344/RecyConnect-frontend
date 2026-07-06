@@ -220,13 +220,31 @@ class _CollectorManagementScreenState extends State<CollectorManagementScreen> {
                                   ),
                                 ),
                                 const SizedBox(height: 2),
-                                Text(
-                                  'ID: ${collector['collectorId']}',
-                                  style: TextStyle(
-                                    color: AppTheme.primaryGreen,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 12,
-                                  ),
+                                Row(
+                                  children: [
+                                    Text(
+                                      'ID: ${collector['collectorId']}',
+                                      style: TextStyle(
+                                        color: AppTheme.primaryGreen,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      '•',
+                                      style: TextStyle(color: Colors.grey[400], fontSize: 12),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Pass: ${collector['permissions']?['tempPassword'] ?? 'N/A'}',
+                                      style: TextStyle(
+                                        color: Colors.grey[600],
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
