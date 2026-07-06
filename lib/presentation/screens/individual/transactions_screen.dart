@@ -58,8 +58,6 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       appBar: AppBar(
         title: const Text('My Earnings'),
         centerTitle: true,
-        backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.primaryGreen,
-        foregroundColor: Colors.white,
         elevation: 0,
       ),
       body: _isLoading

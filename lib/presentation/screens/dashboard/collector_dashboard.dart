@@ -446,15 +446,38 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
           Row(
             children: [
               Expanded(
-                child: PremiumButton(
-                  text: isOffline ? 'Go On Duty' : 'Go Offline',
-                  icon: isOffline ? Icons.play_arrow_rounded : Icons.power_settings_new_rounded,
-                  gradient: isOffline 
-                      ? PremiumDesignSystem.primaryGradient 
-                      : PremiumDesignSystem.errorGradient,
-                  height: 48,
-                  onPressed: () => _setAvailability(isOffline ? 'ON_DUTY' : 'OFFLINE'),
-                ),
+                child: isOffline
+                    ? PremiumButton(
+                        text: 'Go On Duty',
+                        icon: Icons.play_arrow_rounded,
+                        gradient: PremiumDesignSystem.primaryGradient,
+                        height: 48,
+                        onPressed: () => _setAvailability('ON_DUTY'),
+                      )
+                    : Container(
+                        height: 48,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: PremiumDesignSystem.primary.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: PremiumDesignSystem.primary.withValues(alpha: 0.3)),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.check_circle_outline_rounded, color: PremiumDesignSystem.primary, size: 20),
+                            const SizedBox(width: 8),
+                            Text(
+                              'On Duty Active',
+                              style: TextStyle(
+                                color: PremiumDesignSystem.primary,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
               ),
               const SizedBox(width: 10),
               Tooltip(

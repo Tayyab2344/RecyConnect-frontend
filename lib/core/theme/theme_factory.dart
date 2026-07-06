@@ -126,17 +126,17 @@ class ThemeFactory {
 
   static AppBarTheme _buildAppBarTheme({required bool isDark}) {
     return AppBarTheme(
-      backgroundColor: isDark ? AppColors.darkSurface : AppColors.primaryGreen,
-      foregroundColor: isDark ? AppColors.darkTextPrimary : AppColors.white,
+      backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
+      foregroundColor: isDark ? AppColors.darkTextPrimary : AppColors.primaryGreen,
       elevation: 0,
       centerTitle: true,
       titleTextStyle: GoogleFonts.poppins(
         fontSize: 20,
         fontWeight: FontWeight.w600,
-        color: isDark ? AppColors.darkTextPrimary : AppColors.white,
+        color: isDark ? AppColors.darkTextPrimary : AppColors.primaryGreen,
       ),
       iconTheme: IconThemeData(
-        color: isDark ? AppColors.darkTextPrimary : AppColors.white,
+        color: isDark ? AppColors.darkTextPrimary : AppColors.primaryGreen,
       ),
     );
   }
