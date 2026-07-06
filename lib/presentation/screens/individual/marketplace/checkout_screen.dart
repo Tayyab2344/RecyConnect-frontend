@@ -79,7 +79,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   void initState() {
     super.initState();
     final pickupRequired = widget.item.metadata?['pickupRequired'] ?? true;
-    _selectedDeliveryMethod = pickupRequired ? 'RECYCONNECT_PICKUP' : 'SELF_DELIVERY';
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final userRole = authService.userRole;
+    final sellerRole = widget.item.user?.role ?? 'individual';
+    final isIndividualToIndividual = userRole == 'individual' && sellerRole == 'individual';
+
+    if (isIndividualToIndividual || !pickupRequired) {
+      _selectedDeliveryMethod = 'SELF_TRANSPORTATION';
+    } else {
+      _selectedDeliveryMethod = 'RECYCONNECT_PICKUP';
+    }
     _loadUserLocation();
   }
 
@@ -693,35 +702,75 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       ),
                       const SizedBox(height: 24),
 
-                      // ── DELIVERY METHOD ─────────────────────────────
-                      _sectionLabel('DELIVERY METHOD', isDark),
-                      const SizedBox(height: 12),
-                      _buildDeliveryMethodOption(
-                        isDark: isDark,
-                        value: 'SELF_DELIVERY',
-                        icon: Icons.directions_car_rounded,
-                        title: 'Self Delivery',
-                        subtitle: 'Seller will self-deliver the materials to you directly.',
-                      ),
-                      const SizedBox(height: 10),
-                      _buildDeliveryMethodOption(
-                        isDark: isDark,
-                        value: 'BUYER_PICKUP',
-                        icon: Icons.store_rounded,
-                        title: 'Buyer Pickup',
-                        subtitle: 'Go to the seller’s location to pick up materials yourself.',
-                      ),
-                      if (widget.item.metadata?['pickupRequired'] ?? true) ...[
-                        const SizedBox(height: 10),
-                        _buildDeliveryMethodOption(
-                          isDark: isDark,
-                          value: 'RECYCONNECT_PICKUP',
-                          icon: Icons.local_shipping_rounded,
-                          title: 'RecyConnect Pickup',
-                          subtitle: 'RecyConnect logistics warehouse collector picks up and delivers. Free delivery.',
-                          badge: 'RECOMMENDED',
-                        ),
-                      ],
+                      (() {
+                        final pickupRequired = widget.item.metadata?['pickupRequired'] ?? true;
+                        final sellerRole = widget.item.user?.role ?? 'individual';
+                        final isIndividualToIndividual = userRole == 'individual' && sellerRole == 'individual';
+
+                        if (isIndividualToIndividual || !pickupRequired) {
+                          return Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.02),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: isDark ? Colors.white12 : Colors.black12,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.chat_bubble_outline_rounded, color: Colors.green, size: 24),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Self Transportation',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                          color: isDark ? Colors.white : Colors.black87,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'You will coordinate the transport, pickup, or delivery details directly with the seller in the chat.',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: isDark ? Colors.white54 : Colors.black54,
+                                          height: 1.4,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        } else {
+                          return Column(
+                            children: [
+                              _buildDeliveryMethodOption(
+                                isDark: isDark,
+                                value: 'RECYCONNECT_PICKUP',
+                                icon: Icons.local_shipping_rounded,
+                                title: 'RecyConnect Pickup',
+                                subtitle: 'RecyConnect logistics warehouse collector picks up and delivers. Free delivery.',
+                                badge: 'RECOMMENDED',
+                              ),
+                              const SizedBox(height: 10),
+                              _buildDeliveryMethodOption(
+                                isDark: isDark,
+                                value: 'SELF_TRANSPORTATION',
+                                icon: Icons.chat_bubble_outline_rounded,
+                                title: 'Self Transportation',
+                                subtitle: 'Coordinate the delivery details directly in the chat.',
+                              ),
+                            ],
+                          );
+                        }
+                      })(),
                       if (_selectedDeliveryMethod == 'RECYCONNECT_PICKUP' && userRole != 'warehouse') ...[
                         const SizedBox(height: 16),
                         Container(
