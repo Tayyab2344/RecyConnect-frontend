@@ -83,8 +83,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final userRole = authService.userRole;
     final sellerRole = widget.item.user?.role ?? 'individual';
     final isIndividualToIndividual = userRole == 'individual' && sellerRole == 'individual';
+    final isWarehouseInvolved = userRole == 'warehouse' || sellerRole == 'warehouse';
 
-    if (isIndividualToIndividual || !pickupRequired) {
+    if (isWarehouseInvolved) {
+      _selectedDeliveryMethod = 'RECYCONNECT_PICKUP';
+    } else if (isIndividualToIndividual || !pickupRequired) {
       _selectedDeliveryMethod = 'SELF_TRANSPORTATION';
     } else {
       _selectedDeliveryMethod = 'RECYCONNECT_PICKUP';
@@ -706,8 +709,50 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         final pickupRequired = widget.item.metadata?['pickupRequired'] ?? true;
                         final sellerRole = widget.item.user?.role ?? 'individual';
                         final isIndividualToIndividual = userRole == 'individual' && sellerRole == 'individual';
+                        final isWarehouseInvolved = userRole == 'warehouse' || sellerRole == 'warehouse';
 
-                        if (isIndividualToIndividual || !pickupRequired) {
+                        if (isWarehouseInvolved) {
+                          return Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.02),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: isDark ? Colors.white12 : Colors.black12,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.local_shipping_rounded, color: Colors.green, size: 24),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Warehouse Collector Service',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                          color: isDark ? Colors.white : Colors.black87,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'The warehouse will dispatch its own collector to handle the pickup and transportation.',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: isDark ? Colors.white54 : Colors.black54,
+                                          height: 1.4,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        } else if (isIndividualToIndividual || !pickupRequired) {
                           return Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
