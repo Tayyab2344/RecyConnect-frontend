@@ -38,6 +38,7 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
   bool _isReverseGeocoding = false;
   List<Map<String, dynamic>> _searchResults = [];
   Timer? _debounceTimer;
+  Timer? _geocodeDebounceTimer;
 
   // Mock branches for Warehouses/Companies
   final List<Map<String, dynamic>> _mockBranches = [
@@ -83,7 +84,23 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
   void dispose() {
     _searchController.dispose();
     _debounceTimer?.cancel();
+    _geocodeDebounceTimer?.cancel();
     super.dispose();
+  }
+
+  void _onMapPositionChanged(dynamic position, bool hasGesture) {
+    if (hasGesture && position.center != null) {
+      _selectedLatLng = position.center!;
+      _geocodeDebounceTimer?.cancel();
+      _geocodeDebounceTimer = Timer(const Duration(milliseconds: 700), () {
+        if (mounted) {
+          setState(() {
+            _isReverseGeocoding = true;
+          });
+          _reverseGeocode(_selectedLatLng);
+        }
+      });
+    }
   }
 
   // Handle address searches via Nominatim
@@ -208,50 +225,28 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
               maxZoom: 18,
               minZoom: 5,
               onTap: (tapPosition, point) => _updateLocation(point),
+              onPositionChanged: _onMapPositionChanged,
             ),
             children: [
               TileLayer(
                 urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.recyconnect.app',
               ),
-              MarkerLayer(
-                markers: [
-                  Marker(
-                    point: _selectedLatLng,
-                    width: 60,
-                    height: 60,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: isDark ? MarketplaceTheme.darkAccentCyan : MarketplaceTheme.lightAccent,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.3),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
-                              )
-                            ],
-                          ),
-                          child: const Icon(Icons.location_on, color: Colors.white, size: 28),
-                        ),
-                        Container(
-                          width: 10,
-                          height: 10,
-                          decoration: BoxDecoration(
-                            color: isDark ? MarketplaceTheme.darkAccentCyan.withValues(alpha: 0.5) : MarketplaceTheme.lightAccent.withValues(alpha: 0.5),
-                            shape: BoxShape.circle,
-                          ),
-                        )
-                      ],
-                    ),
-                  ),
-                ],
-              ),
             ],
+          ),
+
+          // Center Pin Overlay
+          IgnorePointer(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 35.0),
+                child: Icon(
+                  Icons.location_on,
+                  color: isDark ? MarketplaceTheme.darkAccentCyan : MarketplaceTheme.lightAccent,
+                  size: 48,
+                ),
+              ),
+            ),
           ),
 
           // 2. Search & Results Overlay
