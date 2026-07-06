@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/auth_service.dart';
+import '../../../core/services/location_service.dart';
 import '../../../core/utils/image_source_helper.dart';
 import '../../widgets/city_area_selector.dart';
 import 'otp_verification_screen.dart';
@@ -65,6 +66,47 @@ class _IndividualRegistrationScreenState extends State<IndividualRegistrationScr
       try {
         final authService = Provider.of<AuthService>(context, listen: false);
         
+        // Resolve coordinates before registering
+        double? lat = _latitude;
+        double? lng = _longitude;
+        String locationMethod = _locationMethod ?? 'manual';
+
+        // 1. Try GPS location check if not already set
+        if (lat == null || lng == null) {
+          try {
+            final locService = LocationService();
+            final hasPermission = await locService.requestLocationPermission();
+            if (hasPermission) {
+              final gpsData = await locService.getCurrentLocationWithTimeout(
+                timeout: const Duration(seconds: 4),
+              );
+              if (gpsData != null) {
+                lat = gpsData['latitude'];
+                lng = gpsData['longitude'];
+                locationMethod = 'auto';
+              }
+            }
+          } catch (gpsErr) {
+            debugPrint('GPS check failed during signup: $gpsErr');
+          }
+        }
+
+        // 2. Geocode selected area and city if still null
+        if (lat == null || lng == null) {
+          try {
+            final locService = LocationService();
+            final addressQuery = '$_selectedArea, $_selectedCity';
+            final coords = await locService.geocodeAddress(addressQuery);
+            if (coords != null) {
+              lat = coords['latitude'];
+              lng = coords['longitude'];
+              locationMethod = 'manual';
+            }
+          } catch (geoErr) {
+            debugPrint('Geocoding signup address failed: $geoErr');
+          }
+        }
+
         final userData = {
           'role': 'individual',
           'name': _nameController.text.trim(),
@@ -72,11 +114,12 @@ class _IndividualRegistrationScreenState extends State<IndividualRegistrationScr
           'contactNo': _phoneController.text.trim(),
           'address': '$_selectedArea, $_selectedCity',
           'city': _selectedCity,
+          'area': _selectedArea,
           'password': _passwordController.text,
-          if (_latitude != null) 'latitude': _latitude,
-          if (_longitude != null) 'longitude': _longitude,
-          if (_locationMethod != null) 'locationMethod': _locationMethod,
-          'locationPermission': _locationMethod == 'auto',
+          if (lat != null) 'latitude': lat,
+          if (lng != null) 'longitude': lng,
+          'locationMethod': locationMethod,
+          'locationPermission': locationMethod == 'auto',
         };
 
         // Add profile image if selected

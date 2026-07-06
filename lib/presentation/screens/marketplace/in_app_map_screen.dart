@@ -304,14 +304,14 @@ class _InAppMapScreenState extends State<InAppMapScreen> with TickerProviderStat
                     // Shadow line for a premium glow effect
                     Polyline(
                       points: _routePoints,
-                      color: Colors.blueAccent.withValues(alpha: 0.3),
-                      strokeWidth: 9.0,
+                      color: const Color(0xFF1A73E8).withValues(alpha: 0.25),
+                      strokeWidth: 11.0,
                     ),
                     // Core line
                     Polyline(
                       points: _routePoints,
-                      color: Colors.blueAccent,
-                      strokeWidth: 5.5,
+                      color: const Color(0xFF1A73E8),
+                      strokeWidth: 7.0,
                     ),
                   ],
                 ),
@@ -335,7 +335,7 @@ class _InAppMapScreenState extends State<InAppMapScreen> with TickerProviderStat
                                 width: 20 + (_pulseController.value * 24),
                                 height: 20 + (_pulseController.value * 24),
                                 decoration: BoxDecoration(
-                                  color: Colors.blueAccent.withValues(alpha: 0.4 * (1.0 - _pulseController.value)),
+                                  color: const Color(0xFF1A73E8).withValues(alpha: 0.4 * (1.0 - _pulseController.value)),
                                   shape: BoxShape.circle,
                                 ),
                               ),
@@ -358,7 +358,7 @@ class _InAppMapScreenState extends State<InAppMapScreen> with TickerProviderStat
                                 width: 14,
                                 height: 14,
                                 decoration: const BoxDecoration(
-                                  color: Colors.blueAccent,
+                                  color: Color(0xFF1A73E8),
                                   shape: BoxShape.circle,
                                 ),
                               ),
@@ -520,7 +520,7 @@ class _InAppMapScreenState extends State<InAppMapScreen> with TickerProviderStat
             left: 0,
             right: 0,
             child: Container(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
               decoration: BoxDecoration(
                 color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
@@ -534,100 +534,76 @@ class _InAppMapScreenState extends State<InAppMapScreen> with TickerProviderStat
               ),
               child: SafeArea(
                 top: false,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
+                child: Row(
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                    Expanded(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
                             children: [
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.baseline,
-                                textBaseline: TextBaseline.alphabetic,
-                                children: [
-                                  Text(
-                                    _routeDurationMins > 0
-                                        ? "${_routeDurationMins.toStringAsFixed(0)} min"
-                                        : "Arrived",
-                                    style: const TextStyle(
-                                      color: Color(0xFF0F7D52), // Google Green
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    "(${_routeDistanceKm.toStringAsFixed(1)} km)",
-                                    style: TextStyle(
-                                      color: isDark ? Colors.grey[400] : Colors.grey[600],
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 4),
                               Text(
-                                "ETA: $etaString",
+                                _routeDurationMins > 0
+                                    ? "${_routeDurationMins.toStringAsFixed(0)} min"
+                                    : "Arrived",
+                                style: const TextStyle(
+                                  color: Color(0xFF0F7D52), // Google Green
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                "(${_routeDistanceKm.toStringAsFixed(1)} km)",
                                 style: TextStyle(
                                   color: isDark ? Colors.grey[400] : Colors.grey[600],
-                                  fontSize: 14,
+                                  fontSize: 16,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
                             ],
                           ),
-                        ),
-                        
-                        // Large Red End Route Button
-                        ElevatedButton(
-                          onPressed: () => Navigator.pop(context),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red[600],
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(24),
+                          const SizedBox(height: 4),
+                          Text(
+                            "ETA: $etaString",
+                            style: TextStyle(
+                              color: isDark ? Colors.grey[400] : Colors.grey[600],
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
+                          const Divider(height: 20),
+                          Row(
                             children: [
-                              Icon(Icons.close, size: 18),
-                              SizedBox(width: 6),
-                              Text(
-                                "EXIT",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
+                              Icon(Icons.location_on_outlined, color: primaryColor, size: 18),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  widget.destinationAddress,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: isDark ? Colors.grey[350] : Colors.grey[700],
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ],
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                    const Divider(height: 24),
-                    Row(
-                      children: [
-                        Icon(Icons.location_on_outlined, color: primaryColor, size: 18),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            widget.destinationAddress,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: isDark ? Colors.grey[350] : Colors.grey[700],
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
+                    const SizedBox(width: 16),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.red[600],
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.all(12),
+                        shape: const CircleBorder(),
+                      ),
+                      icon: const Icon(Icons.close, size: 24),
                     ),
                   ],
                 ),

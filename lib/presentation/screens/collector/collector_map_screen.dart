@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 import 'dart:convert';
 import 'dart:async';
+import 'dart:io';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/collector_service.dart';
+import '../../../core/utils/image_source_helper.dart';
 import '../../widgets/skeleton_loader.dart';
 import '../marketplace/in_app_map_screen.dart';
 
@@ -87,11 +89,11 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
     final task = _task;
     
     // Parse source coordinates (seller)
-    final double? sourceLat = task['seller']?['lat'] != null 
-        ? double.tryParse(task['seller']['lat'].toString()) 
+    final double? sourceLat = task['seller']?['latitude'] != null 
+        ? double.tryParse(task['seller']['latitude'].toString()) 
         : (task['sourceLatitude'] != null ? double.tryParse(task['sourceLatitude'].toString()) : null);
-    final double? sourceLon = task['seller']?['lng'] != null 
-        ? double.tryParse(task['seller']['lng'].toString()) 
+    final double? sourceLon = task['seller']?['longitude'] != null 
+        ? double.tryParse(task['seller']['longitude'].toString()) 
         : (task['sourceLongitude'] != null ? double.tryParse(task['sourceLongitude'].toString()) : null);
     
     if (sourceLat != null && sourceLon != null && sourceLat != 0.0) {
@@ -102,11 +104,11 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
     }
 
     // Parse destination coordinates (buyer)
-    final double? destLat = task['buyer']?['lat'] != null 
-        ? double.tryParse(task['buyer']['lat'].toString()) 
+    final double? destLat = task['buyer']?['latitude'] != null 
+        ? double.tryParse(task['buyer']['latitude'].toString()) 
         : (task['destinationLatitude'] != null ? double.tryParse(task['destinationLatitude'].toString()) : null);
-    final double? destLon = task['buyer']?['lng'] != null 
-        ? double.tryParse(task['buyer']['lng'].toString()) 
+    final double? destLon = task['buyer']?['longitude'] != null 
+        ? double.tryParse(task['buyer']['longitude'].toString()) 
         : (task['destinationLongitude'] != null ? double.tryParse(task['destinationLongitude'].toString()) : null);
         
     if (destLat != null && destLon != null && destLat != 0.0) {
@@ -343,10 +345,17 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
               if (_routePoints.isNotEmpty)
                 PolylineLayer(
                   polylines: [
+                    // Shadow line for a premium glow effect
                     Polyline(
                       points: _routePoints,
-                      color: const Color(0xFF1D9E75),
-                      strokeWidth: 5.0,
+                      color: const Color(0xFF1A73E8).withValues(alpha: 0.25),
+                      strokeWidth: 11.0,
+                    ),
+                    // Core line
+                    Polyline(
+                      points: _routePoints,
+                      color: const Color(0xFF1A73E8),
+                      strokeWidth: 7.0,
                     ),
                   ],
                 ),
@@ -757,7 +766,7 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
 
     String label = isPickedUp ? "Deliver" : "Collect";
     IconData icon = isPickedUp ? Icons.fact_check : Icons.inventory_2;
-    VoidCallback onPressed = isPickedUp ? _markAsDelivered : _markAsCollected;
+    VoidCallback onPressed = isPickedUp ? _showDeliveryProofSheet : _showCollectionProofSheet;
 
     return SizedBox(
       width: double.infinity,
@@ -799,12 +808,543 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
     );
   }
 
+  void _showCollectionProofSheet() {
+    final double estimatedWeight = (_task['estimatedWeight'] as num?)?.toDouble() ?? 0.0;
+    final String currentCategory = _task['materialCategory']?.toString() ?? 'Mixed Recycle';
+    final weightController = TextEditingController(text: estimatedWeight.toString());
+    final notesController = TextEditingController();
+    
+    // Available categories
+    final List<String> categories = ['Paper', 'Plastic', 'Glass', 'Metal', 'Organic', 'E-Waste', 'Mixed Recycle'];
+    String selectedCategory = categories.contains(currentCategory) ? currentCategory : 'Mixed Recycle';
+    
+    List<XFile> pickedFiles = [];
+    
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter sheetSetState) {
+            final isDark = Theme.of(context).brightness == Brightness.dark;
+            final cardBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+            final textColor = isDark ? Colors.white : Colors.black87;
+            
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: cardBg,
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 10, offset: const Offset(0, -4)),
+                  ],
+                ),
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 48,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    Text(
+                      "Verify Waste Collection",
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: textColor),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "Please verify the weight and upload proof images before collecting.",
+                      style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                    ),
+                    const SizedBox(height: 18),
+                    
+                    // Weight Input Field
+                    TextField(
+                      controller: weightController,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      decoration: InputDecoration(
+                        labelText: "Verified Weight (kg)",
+                        labelStyle: const TextStyle(fontSize: 13),
+                        prefixIcon: const Icon(Icons.scale, size: 20),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    
+                    // Category Dropdown
+                    DropdownButtonFormField<String>(
+                      initialValue: selectedCategory,
+                      decoration: InputDecoration(
+                        labelText: "Waste Category",
+                        labelStyle: const TextStyle(fontSize: 13),
+                        prefixIcon: const Icon(Icons.category_outlined, size: 20),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      ),
+                      items: categories.map((cat) {
+                        return DropdownMenuItem<String>(
+                          value: cat,
+                          child: Text(cat, style: const TextStyle(fontSize: 14)),
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        if (val != null) {
+                          sheetSetState(() {
+                            selectedCategory = val;
+                          });
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 14),
+                    
+                    // Notes Input
+                    TextField(
+                      controller: notesController,
+                      decoration: InputDecoration(
+                        labelText: "Notes (Optional)",
+                        labelStyle: const TextStyle(fontSize: 13),
+                        prefixIcon: const Icon(Icons.note_alt_outlined, size: 20),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    
+                    // Photo Upload section
+                    Text(
+                      "Proof Images (Weight Scale & Waste)",
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: textColor),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        // Camera/Gallery Picker Trigger
+                        InkWell(
+                          onTap: () async {
+                            final image = await ImageSourceHelper.pickImage(context);
+                            if (image != null) {
+                              sheetSetState(() {
+                                pickedFiles.add(image);
+                              });
+                            }
+                          },
+                          child: Container(
+                            width: 72,
+                            height: 72,
+                            decoration: BoxDecoration(
+                              color: Colors.grey.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
+                            ),
+                            child: const Icon(Icons.add_a_photo_outlined, color: Colors.grey, size: 26),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        // List of chosen images
+                        Expanded(
+                          child: SizedBox(
+                            height: 72,
+                            child: pickedFiles.isEmpty
+                                ? Center(
+                                    child: Text(
+                                      "No photos added yet",
+                                      style: TextStyle(color: Colors.grey.shade400, fontSize: 11, fontStyle: FontStyle.italic),
+                                    ),
+                                  )
+                                : ListView.builder(
+                                    scrollDirection: Axis.horizontal,
+                                    itemCount: pickedFiles.length,
+                                    itemBuilder: (context, index) {
+                                      final f = pickedFiles[index];
+                                      return Container(
+                                        width: 72,
+                                        height: 72,
+                                        margin: const EdgeInsets.only(right: 8),
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(12),
+                                          image: DecorationImage(
+                                            image: FileImage(File(f.path)),
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                        child: Align(
+                                          alignment: Alignment.topRight,
+                                          child: GestureDetector(
+                                            onTap: () {
+                                              sheetSetState(() {
+                                                pickedFiles.removeAt(index);
+                                              });
+                                            },
+                                            child: Container(
+                                              padding: const EdgeInsets.all(2),
+                                              margin: const EdgeInsets.all(2),
+                                              decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                                              child: const Icon(Icons.close, color: Colors.white, size: 14),
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    
+                    // Action Buttons
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12)),
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text("Cancel"),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primaryGreen,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            onPressed: () {
+                              final double? parsedWeight = double.tryParse(weightController.text);
+                              if (parsedWeight == null || parsedWeight <= 0.0) {
+                                _showMessage("Please enter a valid weight", isError: true);
+                                return;
+                              }
+                              if (pickedFiles.isEmpty) {
+                                _showMessage("Please upload at least one proof image", isError: true);
+                                return;
+                              }
+                              Navigator.pop(context);
+                              _executeCollectionWithProof(
+                                weight: parsedWeight,
+                                category: selectedCategory,
+                                notes: notesController.text.trim(),
+                                files: pickedFiles,
+                              );
+                            },
+                            child: const Text("Confirm & Collect", style: TextStyle(fontWeight: FontWeight.bold)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
 
+  void _showDeliveryProofSheet() {
+    final double verifiedWeight = (_task['verification']?['verifiedWeight'] as num?)?.toDouble() ?? 
+                                  (_task['estimatedWeight'] as num?)?.toDouble() ?? 0.0;
+    final weightController = TextEditingController(text: verifiedWeight.toString());
+    final receiverNameController = TextEditingController(text: _task['buyer']?['name'] ?? _task['destinationName'] ?? '');
+    final receiverContactController = TextEditingController(text: _task['buyer']?['contactNo'] ?? _task['destinationContact'] ?? '');
+    final notesController = TextEditingController();
+    
+    // Package condition
+    final List<String> conditions = ['Good', 'Fair', 'Damaged', 'Tampered'];
+    String selectedCondition = 'Good';
+    
+    List<XFile> pickedFiles = [];
+    
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter sheetSetState) {
+            final isDark = Theme.of(context).brightness == Brightness.dark;
+            final cardBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+            final textColor = isDark ? Colors.white : Colors.black87;
+            
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: cardBg,
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 10, offset: const Offset(0, -4)),
+                  ],
+                ),
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 48,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    Text(
+                      "Confirm Waste Delivery",
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: textColor),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "Please verify the final received weight and upload delivery proof images.",
+                      style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                    ),
+                    const SizedBox(height: 18),
+                    
+                    // Received Weight Input Field
+                    TextField(
+                      controller: weightController,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      decoration: InputDecoration(
+                        labelText: "Received Weight (kg)",
+                        labelStyle: const TextStyle(fontSize: 13),
+                        prefixIcon: const Icon(Icons.scale, size: 20),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    
+                    Row(
+                      children: [
+                        // Receiver Name
+                        Expanded(
+                          child: TextField(
+                            controller: receiverNameController,
+                            decoration: InputDecoration(
+                              labelText: "Receiver Name",
+                              labelStyle: const TextStyle(fontSize: 13),
+                              prefixIcon: const Icon(Icons.person_outline, size: 20),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        // Package Condition Dropdown
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            initialValue: selectedCondition,
+                            decoration: InputDecoration(
+                              labelText: "Condition",
+                              labelStyle: const TextStyle(fontSize: 13),
+                              prefixIcon: const Icon(Icons.inventory_2_outlined, size: 20),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                            ),
+                            items: conditions.map((cond) {
+                              return DropdownMenuItem<String>(
+                                value: cond,
+                                child: Text(cond, style: const TextStyle(fontSize: 14)),
+                              );
+                            }).toList(),
+                            onChanged: (val) {
+                              if (val != null) {
+                                sheetSetState(() {
+                                  selectedCondition = val;
+                                });
+                              }
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    
+                    // Notes Input
+                    TextField(
+                      controller: notesController,
+                      decoration: InputDecoration(
+                        labelText: "Notes (Optional)",
+                        labelStyle: const TextStyle(fontSize: 13),
+                        prefixIcon: const Icon(Icons.note_alt_outlined, size: 20),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    
+                    // Photo Upload section
+                    Text(
+                      "Proof Images (Delivery confirmation)",
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: textColor),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        // Camera/Gallery Picker Trigger
+                        InkWell(
+                          onTap: () async {
+                            final image = await ImageSourceHelper.pickImage(context);
+                            if (image != null) {
+                              sheetSetState(() {
+                                pickedFiles.add(image);
+                              });
+                            }
+                          },
+                          child: Container(
+                            width: 72,
+                            height: 72,
+                            decoration: BoxDecoration(
+                              color: Colors.grey.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
+                            ),
+                            child: const Icon(Icons.add_a_photo_outlined, color: Colors.grey, size: 26),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        // List of chosen images
+                        Expanded(
+                          child: SizedBox(
+                            height: 72,
+                            child: pickedFiles.isEmpty
+                                ? Center(
+                                    child: Text(
+                                      "No photos added yet",
+                                      style: TextStyle(color: Colors.grey.shade400, fontSize: 11, fontStyle: FontStyle.italic),
+                                    ),
+                                  )
+                                : ListView.builder(
+                                    scrollDirection: Axis.horizontal,
+                                    itemCount: pickedFiles.length,
+                                    itemBuilder: (context, index) {
+                                      final f = pickedFiles[index];
+                                      return Container(
+                                        width: 72,
+                                        height: 72,
+                                        margin: const EdgeInsets.only(right: 8),
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(12),
+                                          image: DecorationImage(
+                                            image: FileImage(File(f.path)),
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                        child: Align(
+                                          alignment: Alignment.topRight,
+                                          child: GestureDetector(
+                                            onTap: () {
+                                              sheetSetState(() {
+                                                pickedFiles.removeAt(index);
+                                              });
+                                            },
+                                            child: Container(
+                                              padding: const EdgeInsets.all(2),
+                                              margin: const EdgeInsets.all(2),
+                                              decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                                              child: const Icon(Icons.close, color: Colors.white, size: 14),
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    
+                    // Action Buttons
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12)),
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text("Cancel"),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primaryGreen,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            onPressed: () {
+                              final double? parsedWeight = double.tryParse(weightController.text);
+                              if (parsedWeight == null || parsedWeight <= 0.0) {
+                                _showMessage("Please enter a valid weight", isError: true);
+                                return;
+                              }
+                              if (pickedFiles.isEmpty) {
+                                _showMessage("Please upload at least one proof image", isError: true);
+                                return;
+                              }
+                              Navigator.pop(context);
+                              _executeDeliveryWithProof(
+                                weight: parsedWeight,
+                                condition: selectedCondition,
+                                name: receiverNameController.text.trim(),
+                                contact: receiverContactController.text.trim(),
+                                notes: notesController.text.trim(),
+                                files: pickedFiles,
+                              );
+                            },
+                            child: const Text("Confirm & Deliver", style: TextStyle(fontWeight: FontWeight.bold)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
 
-  Future<void> _markAsCollected() async {
+  Future<void> _executeCollectionWithProof({
+    required double weight,
+    required String category,
+    String? notes,
+    required List<XFile> files,
+  }) async {
     try {
       setState(() => _isLoadingRoute = true);
-      final updatedTask = await _collectorService.markTaskAsCollected(_task['id'] as int);
+      final updatedTask = await _collectorService.markTaskAsCollected(
+        _task['id'] as int,
+        verifiedWeight: weight,
+        verifiedCategory: category,
+        notes: notes,
+        proofFiles: files,
+      );
       
       // Log location immediately with the new status
       if (_currentPosition != null) {
@@ -822,7 +1362,7 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
         _isLoadingRoute = false;
       });
       widget.onTaskUpdated?.call();
-      _showMessage("Task marked as collected");
+      _showMessage("Task marked as collected with proof");
       // Fetch new route to the buyer's destination
       _fetchRoute();
     } catch (e) {
@@ -831,12 +1371,27 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
     }
   }
 
-  Future<void> _markAsDelivered() async {
+  Future<void> _executeDeliveryWithProof({
+    required double weight,
+    required String condition,
+    required String name,
+    required String contact,
+    String? notes,
+    required List<XFile> files,
+  }) async {
     try {
       setState(() => _isLoadingRoute = true);
-      // Pass estimated distance if available
       final double distance = _totalDistanceKm > 0 ? _totalDistanceKm : 5.0;
-      final response = await _collectorService.markTaskAsDelivered(_task['id'] as int, distance: distance);
+      final response = await _collectorService.markTaskAsDelivered(
+        _task['id'] as int,
+        receivedWeight: weight,
+        packageCondition: condition,
+        receiverName: name,
+        receiverContact: contact,
+        notes: notes,
+        distance: distance,
+        proofFiles: files,
+      );
       
       Map<String, dynamic> updatedTask = _task;
       if (response['task'] != null) {
@@ -864,7 +1419,7 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
         _isLoadingRoute = false;
       });
       widget.onTaskUpdated?.call();
-      _showMessage("Task marked as delivered");
+      _showMessage("Task marked as delivered with proof");
     } catch (e) {
       setState(() => _isLoadingRoute = false);
       _showMessage(e.toString(), isError: true);

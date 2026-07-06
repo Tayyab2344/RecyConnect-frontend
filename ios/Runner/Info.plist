@@ -45,6 +45,11 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
 	<!-- Permissions for image picker -->
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>We need access to your photo library to upload images for waste submissions and profile pictures.</string>

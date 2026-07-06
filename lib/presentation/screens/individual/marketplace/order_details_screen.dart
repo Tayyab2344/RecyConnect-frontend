@@ -950,10 +950,17 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen>
                       if (_routePoints.isNotEmpty)
                         PolylineLayer(
                           polylines: [
+                            // Shadow line for a premium glow effect
                             Polyline(
                               points: _routePoints,
-                              color: const Color(0xFF1D9E75),
-                              strokeWidth: 4.5,
+                              color: const Color(0xFF1A73E8).withValues(alpha: 0.25),
+                              strokeWidth: 11.0,
+                            ),
+                            // Core line
+                            Polyline(
+                              points: _routePoints,
+                              color: const Color(0xFF1A73E8),
+                              strokeWidth: 7.0,
                             ),
                           ],
                         ),

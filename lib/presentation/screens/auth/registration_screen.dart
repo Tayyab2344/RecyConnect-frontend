@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/auth_service.dart';
+import '../../../core/services/location_service.dart';
 import '../../../core/services/ocr_service.dart'; // Add OcrService import
 import '../../../core/utils/validators.dart';
 import '../../widgets/city_area_selector.dart';
@@ -1859,6 +1860,44 @@ class _RegistrationScreenState extends State<RegistrationScreen>
     try {
       final authService = context.read<AuthService>();
 
+      // Resolve coordinates before registering
+      double? lat;
+      double? lng;
+      String locationMethod = 'manual';
+
+      // 1. Try GPS location check first
+      try {
+        final locService = LocationService();
+        final hasPermission = await locService.requestLocationPermission();
+        if (hasPermission) {
+          final gpsData = await locService.getCurrentLocationWithTimeout(
+            timeout: const Duration(seconds: 4),
+          );
+          if (gpsData != null) {
+            lat = gpsData['latitude'];
+            lng = gpsData['longitude'];
+            locationMethod = 'auto';
+          }
+        }
+      } catch (gpsErr) {
+        debugPrint('GPS check failed during signup: $gpsErr');
+      }
+
+      // 2. Geocode selected area/city/street if still null
+      if (lat == null || lng == null) {
+        try {
+          final locService = LocationService();
+          final addressQuery = '${_addressController.text.trim()}, $_selectedArea, $_selectedCity';
+          final coords = await locService.geocodeAddress(addressQuery);
+          if (coords != null) {
+            lat = coords['latitude'];
+            lng = coords['longitude'];
+          }
+        } catch (geoErr) {
+          debugPrint('Geocoding signup address failed: $geoErr');
+        }
+      }
+
       final Map<String, dynamic> userData = {
         'role': widget.role,
         'email': _emailController.text.trim(),
@@ -1869,6 +1908,10 @@ class _RegistrationScreenState extends State<RegistrationScreen>
         'streetAddress': _addressController.text.trim(),
         'contactNo': _contactNoController.text.trim(),
         'name': _nameController.text.trim(), // Always include name
+        if (lat != null) 'latitude': lat,
+        if (lng != null) 'longitude': lng,
+        'locationMethod': locationMethod,
+        'locationPermission': locationMethod == 'auto',
       };
 
       if (_cnicController.text.isNotEmpty) {

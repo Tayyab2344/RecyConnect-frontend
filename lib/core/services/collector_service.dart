@@ -381,22 +381,81 @@ class CollectorService {
     return decoded['data'] ?? [];
   }
 
-  Future<Map<String, dynamic>> markTaskAsCollected(int taskId) async {
-    final response = await http.post(
+  Future<Map<String, dynamic>> markTaskAsCollected(
+    int taskId, {
+    required double verifiedWeight,
+    required String verifiedCategory,
+    String? verifiedMaterial,
+    String? notes,
+    List<XFile> proofFiles = const [],
+  }) async {
+    final token = await _authService.getToken();
+    final request = http.MultipartRequest(
+      'POST',
       Uri.parse('${ApiConstants.baseUrl}/collector/task/$taskId/collected'),
-      headers: await _headers(),
     );
+
+    request.headers.addAll({'Authorization': 'Bearer $token'});
+    request.fields['verifiedWeight'] = verifiedWeight.toString();
+    request.fields['verifiedCategory'] = verifiedCategory;
+    if (verifiedMaterial != null && verifiedMaterial.isNotEmpty) {
+      request.fields['verifiedMaterial'] = verifiedMaterial;
+    }
+    if (notes != null && notes.isNotEmpty) {
+      request.fields['notes'] = notes;
+    }
+
+    for (final file in proofFiles) {
+      request.files.add(await http.MultipartFile.fromPath('proofImages', file.path));
+    }
+
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
     return _decode(response)['data'] ?? {};
   }
 
-  Future<Map<String, dynamic>> markTaskAsDelivered(int taskId, {double? distance}) async {
-    final response = await http.post(
+  Future<Map<String, dynamic>> markTaskAsDelivered(
+    int taskId, {
+    double? receivedWeight,
+    String? packageCondition,
+    String? receiverName,
+    String? receiverContact,
+    String? notes,
+    double? distance,
+    List<XFile> proofFiles = const [],
+  }) async {
+    final token = await _authService.getToken();
+    final request = http.MultipartRequest(
+      'POST',
       Uri.parse('${ApiConstants.baseUrl}/collector/task/$taskId/delivered'),
-      headers: await _headers(),
-      body: jsonEncode({
-        if (distance != null) 'distance': distance,
-      }),
     );
+
+    request.headers.addAll({'Authorization': 'Bearer $token'});
+    if (receivedWeight != null) {
+      request.fields['receivedWeight'] = receivedWeight.toString();
+    }
+    if (packageCondition != null && packageCondition.isNotEmpty) {
+      request.fields['packageCondition'] = packageCondition;
+    }
+    if (receiverName != null && receiverName.isNotEmpty) {
+      request.fields['receiverName'] = receiverName;
+    }
+    if (receiverContact != null && receiverContact.isNotEmpty) {
+      request.fields['receiverContact'] = receiverContact;
+    }
+    if (notes != null && notes.isNotEmpty) {
+      request.fields['notes'] = notes;
+    }
+    if (distance != null) {
+      request.fields['distance'] = distance.toString();
+    }
+
+    for (final file in proofFiles) {
+      request.files.add(await http.MultipartFile.fromPath('proofImages', file.path));
+    }
+
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
     return _decode(response)['data'] ?? {};
   }
 
