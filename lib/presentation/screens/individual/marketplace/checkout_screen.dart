@@ -14,7 +14,6 @@ import '../../../../core/theme/marketplace_theme.dart';
 import '../../../widgets/marketplace/glass_card.dart';
 import '../../../widgets/marketplace/neon_button.dart';
 import '../../marketplace/location_selection_screen.dart';
-import 'order_details_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
   final Listing item;
@@ -393,17 +392,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       context: context,
       barrierDismissible: false,
       builder: (ctx) {
-        // Automatically close dialog and redirect after 1.5 seconds
         Future.delayed(const Duration(milliseconds: 1500), () {
           if (ctx.mounted) {
             Navigator.of(ctx).pop(); // Close success dialog
           }
           if (mounted) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
-                builder: (context) => OrderDetailsScreen(order: order),
-              ),
-            );
+            Navigator.of(context).pop(order);
           }
         });
 

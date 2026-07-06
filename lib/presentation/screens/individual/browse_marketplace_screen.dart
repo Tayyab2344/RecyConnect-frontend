@@ -11,6 +11,7 @@ import '../../../core/models/listing_model.dart';
 import '../../../core/utils/static_data.dart';
 import '../../widgets/skeleton_loader.dart';
 import 'marketplace/item_detail_screen.dart';
+import 'marketplace/order_details_screen.dart';
 import 'create_listing_screen.dart';
 
 class BrowseMarketplaceScreen extends StatefulWidget {
@@ -333,7 +334,20 @@ class _BrowseMarketplaceScreenState extends State<BrowseMarketplaceScreen>
         builder: (context) => ItemDetailScreen(item: item),
       ),
     );
-    if (result == true) _loadItems();
+    if (result == true) {
+      _loadItems();
+    } else if (result != null) {
+      // Successful purchase (returns Order object)
+      _loadItems();
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OrderDetailsScreen(order: result),
+          ),
+        );
+      }
+    }
   }
 
   List<Color> _getGradient(String materialType) {

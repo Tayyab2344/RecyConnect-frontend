@@ -569,7 +569,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                     )
                   : ElevatedButton(
                       onPressed: () async {
-                        final result = await Navigator.push<bool>(
+                        final result = await Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (_) => CheckoutScreen(item: widget.item),
@@ -577,8 +577,8 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                         );
                         // If purchase was completed, pop this screen too so we
                         // return cleanly to the marketplace list.
-                        if (result == true && context.mounted) {
-                          Navigator.pop(context, true);
+                        if (result != null && context.mounted) {
+                          Navigator.pop(context, result);
                         }
                       },
                       style: ElevatedButton.styleFrom(
