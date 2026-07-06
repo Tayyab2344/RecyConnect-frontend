@@ -8,6 +8,9 @@ class ListingUser {
   final String? contactNo;
   final String? role;
   final DateTime? createdAt;
+  final String? currentLevel;
+  final int? ecoPoints;
+  final List<dynamic>? badges;
 
   ListingUser({
     required this.id,
@@ -16,6 +19,9 @@ class ListingUser {
     this.contactNo,
     this.role,
     this.createdAt,
+    this.currentLevel,
+    this.ecoPoints,
+    this.badges,
   });
 
   factory ListingUser.fromJson(Map<String, dynamic> json) {
@@ -26,6 +32,9 @@ class ListingUser {
       contactNo: json['contactNo'],
       role: json['role'],
       createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt']) : null,
+      currentLevel: json['currentLevel'],
+      ecoPoints: json['ecoPoints'] is int ? json['ecoPoints'] : int.tryParse('${json['ecoPoints']}'),
+      badges: json['badges'],
     );
   }
 }

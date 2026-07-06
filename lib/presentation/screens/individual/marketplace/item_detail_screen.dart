@@ -359,13 +359,36 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        widget.item.user?.name ?? 'Verified Seller',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: isDark ? Colors.white : const Color(0xFF1A1A2E),
-                                        ),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            widget.item.user?.name ?? 'User',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                              color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: (isDark ? const Color(0xFF00B894) : const Color(0xFF2E7D32)).withValues(alpha: 0.1),
+                                              borderRadius: BorderRadius.circular(4),
+                                              border: Border.all(
+                                                color: (isDark ? const Color(0xFF00B894) : const Color(0xFF2E7D32)).withValues(alpha: 0.3),
+                                              ),
+                                            ),
+                                            child: Text(
+                                              (widget.item.user?.role ?? 'User').toUpperCase(),
+                                              style: TextStyle(
+                                                fontSize: 9,
+                                                fontWeight: FontWeight.bold,
+                                                color: isDark ? const Color(0xFF00B894) : const Color(0xFF2E7D32),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
@@ -377,6 +400,84 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                                           color: isDark ? Colors.white54 : const Color(0xFF6B7280),
                                         ),
                                       ),
+                                      if (widget.item.user?.currentLevel != null) ...[
+                                        const SizedBox(height: 4),
+                                        Row(
+                                          children: [
+                                            Icon(Icons.military_tech_outlined, size: 14, color: isDark ? const Color(0xFF00B894) : const Color(0xFF2E7D32)),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              widget.item.user!.currentLevel!,
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w600,
+                                                color: isDark ? const Color(0xFF00B894) : const Color(0xFF2E7D32),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                      if (widget.item.user?.badges != null && widget.item.user!.badges!.isNotEmpty) ...[
+                                        const SizedBox(height: 6),
+                                        Wrap(
+                                          spacing: 4,
+                                          runSpacing: 4,
+                                          children: widget.item.user!.badges!.map<Widget>((b) {
+                                            final String badgeName = b['badgeName'] ?? 'Badge';
+                                            IconData icon = Icons.workspace_premium;
+                                            Color color = Colors.green;
+                                            if (badgeName.contains('First')) {
+                                              icon = Icons.local_mall;
+                                              color = Colors.orange;
+                                            } else if (badgeName.contains('Hero')) {
+                                              icon = Icons.emoji_events;
+                                              color = Colors.amber;
+                                            } else if (badgeName.contains('Trusted')) {
+                                              icon = Icons.verified_user;
+                                              color = Colors.deepPurple;
+                                            } else if (badgeName.contains('Master')) {
+                                              icon = Icons.workspace_premium;
+                                              color = Colors.teal;
+                                            } else if (badgeName.contains('Bronze')) {
+                                              icon = Icons.shield_outlined;
+                                              color = Colors.brown;
+                                            } else if (badgeName.contains('Silver')) {
+                                              icon = Icons.shield_outlined;
+                                              color = Colors.grey;
+                                            } else if (badgeName.contains('Gold')) {
+                                              icon = Icons.workspace_premium;
+                                              color = Colors.amber;
+                                            } else if (badgeName.contains('Platinum')) {
+                                              icon = Icons.diamond_outlined;
+                                              color = Colors.teal;
+                                            }
+
+                                            return Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                              decoration: BoxDecoration(
+                                                color: color.withValues(alpha: 0.1),
+                                                borderRadius: BorderRadius.circular(6),
+                                                border: Border.all(color: color.withValues(alpha: 0.2)),
+                                              ),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Icon(icon, size: 10, color: color),
+                                                  const SizedBox(width: 3),
+                                                  Text(
+                                                    badgeName,
+                                                    style: TextStyle(
+                                                      fontSize: 9,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: color,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          }).toList(),
+                                        ),
+                                      ],
                                     ],
                                   ),
                                 ),

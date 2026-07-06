@@ -236,15 +236,103 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        Text(
-                          'Seller: ${item.user?.name ?? "Unknown"}',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: isDark
-                                ? Colors.white70
-                                : Colors.grey.shade700,
-                          ),
+                        Row(
+                          children: [
+                            Text(
+                              'Seller: ${item.user?.name ?? "Unknown"}',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: isDark
+                                    ? Colors.white70
+                                    : Colors.grey.shade700,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: (isDark ? const Color(0xFF00B894) : const Color(0xFF2E7D32)).withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(
+                                  color: (isDark ? const Color(0xFF00B894) : const Color(0xFF2E7D32)).withValues(alpha: 0.3),
+                                ),
+                              ),
+                              child: Text(
+                                (item.user?.role ?? 'User').toUpperCase(),
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.bold,
+                                  color: isDark ? const Color(0xFF00B894) : const Color(0xFF2E7D32),
+                                ),
+                              ),
+                            ),
+                            if (item.user?.currentLevel != null) ...[
+                              const SizedBox(width: 8),
+                              Icon(Icons.military_tech_outlined, size: 16, color: isDark ? MarketplaceTheme.darkAccentGreen : MarketplaceTheme.lightAccent),
+                            ],
+                          ],
                         ),
+                        if (item.user?.badges != null && item.user!.badges!.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 4,
+                            runSpacing: 4,
+                            children: item.user!.badges!.map<Widget>((b) {
+                              final String badgeName = b['badgeName'] ?? 'Badge';
+                              IconData icon = Icons.workspace_premium;
+                              Color color = Colors.green;
+                              if (badgeName.contains('First')) {
+                                icon = Icons.local_mall;
+                                color = Colors.orange;
+                              } else if (badgeName.contains('Hero')) {
+                                icon = Icons.emoji_events;
+                                color = Colors.amber;
+                              } else if (badgeName.contains('Trusted')) {
+                                icon = Icons.verified_user;
+                                color = Colors.deepPurple;
+                              } else if (badgeName.contains('Master')) {
+                                icon = Icons.workspace_premium;
+                                color = Colors.teal;
+                              } else if (badgeName.contains('Bronze')) {
+                                icon = Icons.shield_outlined;
+                                color = Colors.brown;
+                              } else if (badgeName.contains('Silver')) {
+                                icon = Icons.shield_outlined;
+                                color = Colors.grey;
+                              } else if (badgeName.contains('Gold')) {
+                                icon = Icons.workspace_premium;
+                                color = Colors.amber;
+                              } else if (badgeName.contains('Platinum')) {
+                                icon = Icons.diamond_outlined;
+                                color = Colors.teal;
+                              }
+
+                              return Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: color.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(color: color.withValues(alpha: 0.2)),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(icon, size: 10, color: color),
+                                    const SizedBox(width: 3),
+                                    Text(
+                                      badgeName,
+                                      style: TextStyle(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.bold,
+                                        color: color,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ],
                         const SizedBox(height: 24),
                         
                         // Price Calculation Mock

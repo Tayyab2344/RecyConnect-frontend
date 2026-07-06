@@ -420,7 +420,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                   ),
                   const SizedBox(height: 8),
 
-                  // Email
+                   // Email
                   Text(
                     user['email'] as String? ?? 'No email',
                     style: TextStyle(
@@ -428,6 +428,83 @@ class _ProfileScreenState extends State<ProfileScreen>
                       color: isDark ? Colors.white60 : const Color(0xFF666666),
                     ),
                   ),
+                  
+                  // Earned Badges Row
+                  if (user['badges'] != null && (user['badges'] as List).isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      'EARNED BADGES',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white38 : Colors.black38,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      alignment: WrapAlignment.center,
+                      children: (user['badges'] as List).map<Widget>((b) {
+                        final String badgeName = b['badgeName'] ?? 'Badge';
+                        IconData icon = Icons.workspace_premium;
+                        Color color = Colors.green;
+                        if (badgeName.contains('First')) {
+                          icon = Icons.local_mall;
+                          color = Colors.orange;
+                        } else if (badgeName.contains('Hero')) {
+                          icon = Icons.emoji_events;
+                          color = Colors.amber;
+                        } else if (badgeName.contains('Trusted')) {
+                          icon = Icons.verified_user;
+                          color = Colors.deepPurple;
+                        } else if (badgeName.contains('Master')) {
+                          icon = Icons.workspace_premium;
+                          color = Colors.teal;
+                        } else if (badgeName.contains('Bronze')) {
+                          icon = Icons.shield_outlined;
+                          color = Colors.brown;
+                        } else if (badgeName.contains('Silver')) {
+                          icon = Icons.shield_outlined;
+                          color = Colors.grey;
+                        } else if (badgeName.contains('Gold')) {
+                          icon = Icons.workspace_premium;
+                          color = Colors.amber;
+                        } else if (badgeName.contains('Platinum')) {
+                          icon = Icons.diamond_outlined;
+                          color = Colors.teal;
+                        }
+
+                        return Tooltip(
+                          message: badgeName,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: color.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: color.withValues(alpha: 0.3)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(icon, size: 14, color: color),
+                                const SizedBox(width: 4),
+                                Text(
+                                  badgeName,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: isDark ? Colors.white : Colors.black87,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ],
                   const SizedBox(height: 20),
 
                   // Edit Profile Button

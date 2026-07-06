@@ -23,7 +23,7 @@ class _RewardsScreenState extends State<RewardsScreen> with TickerProviderStateM
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 6, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
     
     _pulseController = AnimationController(
       vsync: this,
@@ -165,7 +165,6 @@ class _RewardsScreenState extends State<RewardsScreen> with TickerProviderStateM
                             _buildStreaksTab(status, isDark, rewardsService),
                             _buildLeaderboardTab(rewardsService, isDark),
                             _buildBadgesTab(status, isDark),
-                            _buildChallengesTab(rewardsService, isDark),
                             _buildHistoryTab(rewardsService, isDark),
                           ],
                         ),
@@ -269,7 +268,6 @@ class _RewardsScreenState extends State<RewardsScreen> with TickerProviderStateM
           Tab(text: 'Streaks'),
           Tab(text: 'Leaderboard'),
           Tab(text: 'Badges'),
-          Tab(text: 'Challenges'),
           Tab(text: 'History'),
         ],
       ),
@@ -1248,40 +1246,86 @@ class _RewardsScreenState extends State<RewardsScreen> with TickerProviderStateM
     if (status == null) return const SizedBox.shrink();
 
     final userBadges = status['badges'] as List? ?? [];
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final userRole = authService.userRole;
+    final isWarehouse = userRole == 'warehouse';
     
     // System badges database configurations
-    final systemBadges = [
-      _BadgeConfig(
-        name: 'First Sale Badge',
-        description: 'Complete your first successful recyclable waste materials sale.',
-        icon: Icons.local_mall,
-        color: Colors.orange,
-      ),
-      _BadgeConfig(
-        name: 'Green Contributor',
-        description: 'Stay active and complete transactions this calendar month.',
-        icon: Icons.eco,
-        color: Colors.green,
-      ),
-      _BadgeConfig(
-        name: 'Eco Hero',
-        description: 'Achieve an outstanding lifetime score of 1,000+ Eco Points.',
-        icon: Icons.emoji_events,
-        color: Colors.amber,
-      ),
-      _BadgeConfig(
-        name: 'Trusted Seller',
-        description: 'Demonstrate top tier reliability with 100+ completed marketplace orders.',
-        icon: Icons.verified_user,
-        color: Colors.deepPurple,
-      ),
-      _BadgeConfig(
-        name: 'Recycling Master',
-        description: 'Master the circular economy with 500+ total reward activity events.',
-        icon: Icons.workspace_premium,
-        color: Colors.teal,
-      ),
-    ];
+    final List<_BadgeConfig> systemBadges = isWarehouse
+        ? [
+            _BadgeConfig(
+              name: 'Bronze Warehouse',
+              description: 'Demonstrate active warehouse operations and reach 500+ points.',
+              icon: Icons.shield_outlined,
+              color: Colors.brown,
+              requirementText: 'Requires 500 Eco Points',
+            ),
+            _BadgeConfig(
+              name: 'Silver Warehouse',
+              description: 'Establish consistent waste collection and reach 2,000+ points.',
+              icon: Icons.shield_outlined,
+              color: Colors.grey,
+              requirementText: 'Requires 2,000 Eco Points',
+            ),
+            _BadgeConfig(
+              name: 'Gold Warehouse',
+              description: 'Reach a top tier recycling operations level of 5,000+ points.',
+              icon: Icons.workspace_premium,
+              color: Colors.amber,
+              requirementText: 'Requires 5,000 Eco Points',
+            ),
+            _BadgeConfig(
+              name: 'Platinum Warehouse',
+              description: 'Achieve executive tier recycling operations and reach 10,000+ points.',
+              icon: Icons.diamond_outlined,
+              color: Colors.teal,
+              requirementText: 'Requires 10,000 Eco Points',
+            ),
+            _BadgeConfig(
+              name: 'Green Partner Warehouse',
+              description: 'Hold 20,000+ points and establish 95%+ high reliability reviews.',
+              icon: Icons.verified_user,
+              color: Colors.green,
+              requirementText: 'Requires 20,000 Points & 95%+ Rating',
+            ),
+          ]
+        : [
+            _BadgeConfig(
+              name: 'First Sale Badge',
+              description: 'Complete your first successful recyclable waste materials sale.',
+              icon: Icons.local_mall,
+              color: Colors.orange,
+              requirementText: 'Requires 1 completed sale',
+            ),
+            _BadgeConfig(
+              name: 'Green Contributor',
+              description: 'Stay active and complete transactions this calendar month.',
+              icon: Icons.eco,
+              color: Colors.green,
+              requirementText: 'Requires 1 activity this month',
+            ),
+            _BadgeConfig(
+              name: 'Eco Hero',
+              description: 'Achieve an outstanding lifetime score of 1,000+ Eco Points.',
+              icon: Icons.emoji_events,
+              color: Colors.amber,
+              requirementText: 'Requires 1,000 Eco Points',
+            ),
+            _BadgeConfig(
+              name: 'Trusted Seller',
+              description: 'Demonstrate top tier reliability with 100+ completed marketplace orders.',
+              icon: Icons.verified_user,
+              color: Colors.deepPurple,
+              requirementText: 'Requires 100 completed sales',
+            ),
+            _BadgeConfig(
+              name: 'Recycling Master',
+              description: 'Master the circular economy with 500+ total reward activity events.',
+              icon: Icons.workspace_premium,
+              color: Colors.teal,
+              requirementText: 'Requires 500 reward activities',
+            ),
+          ];
 
     return GridView.builder(
       padding: const EdgeInsets.all(20),
@@ -1342,6 +1386,16 @@ class _RewardsScreenState extends State<RewardsScreen> with TickerProviderStateM
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 6),
+                Text(
+                  b.requirementText,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                    color: isDark ? Colors.white54 : Colors.black54,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
 
                 // Lock/Unlock Label
                 Container(
@@ -1468,6 +1522,15 @@ class _RewardsScreenState extends State<RewardsScreen> with TickerProviderStateM
                   fontSize: 14,
                   height: 1.4,
                   color: isDark ? Colors.white70 : Colors.black54,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                badge.requirementText,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? AppColors.neonCyan : AppColors.primaryGreen,
                 ),
               ),
               const SizedBox(height: 32),
@@ -1929,11 +1992,13 @@ class _BadgeConfig {
   final String description;
   final IconData icon;
   final Color color;
+  final String requirementText;
 
   _BadgeConfig({
     required this.name,
     required this.description,
     required this.icon,
     required this.color,
+    required this.requirementText,
   });
 }
