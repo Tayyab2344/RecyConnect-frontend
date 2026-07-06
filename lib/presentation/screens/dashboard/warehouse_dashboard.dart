@@ -13,11 +13,11 @@ import '../../widgets/eco_assist_sheet.dart';
 import '../../../core/models/order_model.dart';
 
 import '../individual/create_listing_screen.dart';
+import '../individual/my_listings_screen.dart';
 import '../individual/browse_marketplace_screen.dart';
 import '../individual/my_orders_screen.dart';
 import '../individual/seller_orders_screen.dart';
 import '../profile/profile_screen.dart';
-import '../warehouse/inventory_list_screen.dart';
 import '../warehouse/collector_management_screen.dart';
 import '../warehouse/my_earnings_screen.dart';
 import '../rewards/rewards_screen.dart';
@@ -27,7 +27,6 @@ import '../warehouse/customer_management_screen.dart';
 import '../warehouse/ai_insights_screen.dart';
 import '../warehouse/ai_assistant_screen.dart';
 import '../warehouse/business_reports_screen.dart';
-import '../warehouse/warehouse_dispatch_dashboard.dart';
 import 'package:flutter/foundation.dart';
 
 class WarehouseDashboard extends StatefulWidget {
@@ -402,11 +401,11 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
             _buildQuickActionCard('Sell Waste', Icons.add_circle_outline, const Color(0xFF4CAF50), () {
               Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateListingScreen()));
             }),
+            _buildQuickActionCard('My Listings', Icons.list_alt_rounded, Colors.purple, () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const MyListingsScreen()));
+            }),
             _buildQuickActionCard('Marketplace', Icons.search, const Color(0xFF2196F3), () {
               _pageController.animateToPage(1, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
-            }),
-            _buildQuickActionCard('Inventory', Icons.inventory_outlined, const Color(0xFFFFA726), () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const InventoryListScreen()));
             }),
             _buildQuickActionCard('Collectors', Icons.people_alt_outlined, Colors.orange, () {
               Navigator.push(context, MaterialPageRoute(builder: (context) => const CollectorManagementScreen()));
@@ -422,9 +421,6 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
             }),
             _buildQuickActionCard('My Rewards', Icons.emoji_events_outlined, const Color(0xFFFF9800), () {
               Navigator.push(context, MaterialPageRoute(builder: (context) => const RewardsScreen()));
-            }),
-            _buildQuickActionCard('Logistics', Icons.local_shipping_outlined, Colors.indigo, () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const WarehouseDispatchDashboard()));
             }),
           ],
         ),
