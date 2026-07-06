@@ -95,7 +95,10 @@ class _CollectorManagementScreenState extends State<CollectorManagementScreen> {
                       ),
                       actions: [
                         TextButton(
-                          onPressed: () => Navigator.pop(successContext),
+                          onPressed: () {
+                            Navigator.pop(successContext);
+                            _loadCollectors();
+                          },
                           child: const Text('Done'),
                         ),
                       ],
@@ -123,8 +126,6 @@ class _CollectorManagementScreenState extends State<CollectorManagementScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Collector Management'),
-        backgroundColor: AppTheme.primaryGreen,
-        foregroundColor: Colors.white,
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddCollectorDialog,

@@ -13,18 +13,18 @@ class MarketplaceTheme {
   static const Color lightCardShadow = Color(0x1A000000); // Soft shadow
   static const Color lightSidebarBg = Color(0xFFF6FBF9);
 
-  // Dark Theme Colors (Neon / Futuristic)
-  static const Color darkBackgroundStart = Color(0xFF0F172A); // Deep Navy
-  static const Color darkBackgroundEnd = Color(0xFF1E293B); // Charcoal
+  // Dark Theme Colors (Flat Black / Green Accent)
+  static const Color darkBackgroundStart = Color(0xFF000000); // Pure Black
+  static const Color darkBackgroundEnd = Color(0xFF000000); // Pure Black
   static const Color darkGlassColor =
-      Color(0xCC1E293B); // High alpha dark for glass
-  static const Color darkGlassBorder = Color(0xFF00E5FF); // Cyan Border
+      Color(0xFF121212); // Solid dark grey for cards
+  static const Color darkGlassBorder = Color(0xFF00B894); // Mint Green Border
   static const Color darkTextPrimary = Color(0xFFFFFFFF);
   static const Color darkTextSecondary = Color(0xFFB2BEC3);
-  static const Color darkAccentCyan = Color(0xFF00E5FF); // Neon Cyan
-  static const Color darkAccentGreen = Color(0xFF00FF9D); // Neon Green
-  static const Color darkCardShadow = Color(0x8000E5FF); // Neon Glow
-  static const Color darkSidebarBg = Color(0xFF111827);
+  static const Color darkAccentCyan = Color(0xFF00B894); // Mint Green Accent
+  static const Color darkAccentGreen = Color(0xFF00B894); // Mint Green Accent
+  static const Color darkCardShadow = Color(0x00000000); // No glow
+  static const Color darkSidebarBg = Color(0xFF000000);
 
   /// Get background gradient based on theme
   static LinearGradient getBackgroundGradient(bool isDark) {
@@ -51,19 +51,19 @@ class MarketplaceTheme {
   }) {
     return BoxDecoration(
       color: isDark
-          ? darkGlassColor.withValues(alpha: opacity)
+          ? const Color(0xFF121212)
           : lightGlassColor.withValues(alpha: opacity),
       borderRadius: BorderRadius.circular(radius),
       border: Border.all(
         color: isDark
-            ? darkGlassBorder.withValues(alpha: 0.5)
+            ? darkGlassBorder.withValues(alpha: 0.3)
             : lightGlassBorder.withValues(alpha: 0.5),
         width: 1.5,
       ),
       boxShadow: [
         BoxShadow(
           color: isDark
-              ? darkCardShadow.withValues(alpha: 0.15) // Subtle neon glow
+              ? Colors.black54
               : lightCardShadow,
           blurRadius: 16,
           offset: const Offset(0, 8),
@@ -74,23 +74,7 @@ class MarketplaceTheme {
 
   /// Get neon shadow for buttons
   static List<BoxShadow> getNeonShadow({required bool isDark, Color? color}) {
-    if (!isDark) return []; // No neon in light mode
-
-    final shadowColor = color ?? darkAccentCyan;
-    return [
-      BoxShadow(
-        color: shadowColor.withValues(alpha: 0.6),
-        blurRadius: 12,
-        spreadRadius: 1,
-        offset: const Offset(0, 0),
-      ),
-      BoxShadow(
-        color: shadowColor.withValues(alpha: 0.3),
-        blurRadius: 24,
-        spreadRadius: 2,
-        offset: const Offset(0, 0),
-      ),
-    ];
+    return []; // No neon glows
   }
 
   static LinearGradient getKPIGradient(bool isDark) {

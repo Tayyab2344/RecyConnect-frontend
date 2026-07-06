@@ -497,6 +497,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final item = widget.item;
     final authService = Provider.of<AuthService>(context);
     final userRole = authService.userRole;
+    final sellerRole = item.user?.role ?? 'individual';
+    final isWarehouseInvolved = userRole == 'warehouse' || sellerRole == 'warehouse';
     final rate = item.price > 0 ? item.price : 20.0;
     final deliveryFee = 0.0; // Collector fee removed for all users
     final total = item.estimatedWeight * rate + deliveryFee;
@@ -810,7 +812,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           );
                         }
                       })(),
-                      if (_selectedDeliveryMethod == 'RECYCONNECT_PICKUP' && userRole != 'warehouse') ...[
+                      if (_selectedDeliveryMethod == 'RECYCONNECT_PICKUP' && !isWarehouseInvolved) ...[
                         const SizedBox(height: 16),
                         Container(
                           padding: const EdgeInsets.all(16),
