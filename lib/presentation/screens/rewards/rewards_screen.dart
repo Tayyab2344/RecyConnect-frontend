@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/services/rewards_service.dart';
+import '../../../core/services/auth_service.dart';
 
 class RewardsScreen extends StatefulWidget {
   const RewardsScreen({super.key});

@@ -943,38 +943,8 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
     final nextLevelInfo = status['nextLevelInfo'];
     final progressPercent = (nextLevelInfo?['progressPercent'] as num?)?.toDouble() ?? 0.0;
     final pointsNeeded = nextLevelInfo?['pointsNeeded'] ?? 0;
-    final badgesList = status['badges'] as List? ?? [];
 
-    final primaryColor = isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen;
-
-    // Helper to get display name & icon for warehouse badges
-    String getBadgeDisplay(String badgeName) {
-      switch (badgeName.toUpperCase()) {
-        case 'BRONZE_WAREHOUSE': return 'Bronze';
-        case 'SILVER_WAREHOUSE': return 'Silver';
-        case 'GOLD_WAREHOUSE': return 'Gold';
-        case 'PLATINUM_WAREHOUSE': return 'Platinum';
-        case 'GREEN_PARTNER': return 'Green Partner';
-        default: return badgeName;
-      }
-    }
-
-    Widget getBadgeIcon(String badgeName) {
-      switch (badgeName.toUpperCase()) {
-        case 'BRONZE_WAREHOUSE':
-          return const Icon(Icons.workspace_premium_rounded, color: Colors.orangeAccent, size: 20);
-        case 'SILVER_WAREHOUSE':
-          return const Icon(Icons.workspace_premium_rounded, color: Colors.grey, size: 20);
-        case 'GOLD_WAREHOUSE':
-          return const Icon(Icons.workspace_premium_rounded, color: Colors.amber, size: 20);
-        case 'PLATINUM_WAREHOUSE':
-          return const Icon(Icons.diamond_outlined, color: Colors.cyan, size: 20);
-        case 'GREEN_PARTNER':
-          return const Icon(Icons.eco_rounded, color: Colors.greenAccent, size: 20);
-        default:
-          return const Icon(Icons.shield_outlined, color: Colors.white60, size: 20);
-      }
-    }
+    final primaryColor = isDark ? const Color(0xFF4CAF50) : const Color(0xFF2E7D32);
 
     return GestureDetector(
       onTap: () {
@@ -986,7 +956,6 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(20),
           gradient: LinearGradient(
             begin: Alignment.topLeft,
@@ -1079,68 +1048,6 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            
-            // Warehouse Badges Section
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text(
-                  'Warehouse Badges:',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: isDark ? Colors.white70 : Colors.black87,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                if (badgesList.isEmpty)
-                  Text(
-                    'No badges yet',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontStyle: FontStyle.italic,
-                      color: isDark ? Colors.white38 : Colors.black45,
-                    ),
-                  )
-                else
-                  Expanded(
-                    child: SizedBox(
-                      height: 32,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: badgesList.length,
-                        itemBuilder: (context, idx) {
-                          final badge = badgesList[idx];
-                          final badgeName = badge['badgeName'] as String? ?? '';
-                          return Tooltip(
-                            message: badgeName,
-                            child: Padding(
-                              padding: const EdgeInsets.only(right: 8),
-                              child: Chip(
-                                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                padding: EdgeInsets.zero,
-                                labelPadding: const EdgeInsets.symmetric(horizontal: 6),
-                                backgroundColor: isDark ? Colors.white10 : Colors.white70,
-                                avatar: getBadgeIcon(badgeName),
-                                label: Text(
-                                  getBadgeDisplay(badgeName),
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                    color: isDark ? Colors.white : Colors.black87,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            
             const SizedBox(height: 14),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,

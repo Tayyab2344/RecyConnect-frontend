@@ -566,14 +566,25 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
     return Scaffold(
       backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.backgroundLight,
       appBar: AppBar(
-        title: const Text('Manage Sales'),
+        title: Text(
+          'Manage Sales',
+          style: TextStyle(
+            color: isDark ? AppTheme.darkTextPrimary : AppTheme.textDark,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         centerTitle: true,
-        backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.primaryGreen,
-        foregroundColor: Colors.white,
+        backgroundColor: isDark ? AppTheme.darkBackground : Colors.white,
         elevation: 0,
+        iconTheme: IconThemeData(
+          color: isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen,
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.download_rounded),
+            icon: Icon(
+              Icons.download_rounded,
+              color: isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen,
+            ),
             tooltip: 'Export Records',
             onPressed: _showExportOptions,
           ),

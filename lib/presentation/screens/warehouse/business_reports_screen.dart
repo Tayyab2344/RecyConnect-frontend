@@ -182,8 +182,15 @@ class _BusinessReportsScreenState extends State<BusinessReportsScreen> {
                 backgroundColor: isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding: EdgeInsets.zero,
               ),
-              child: const Text('Generate Document', style: TextStyle(fontWeight: FontWeight.bold)),
+              child: const Text(
+                'Generate Document',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
             ),
           )
         ],
