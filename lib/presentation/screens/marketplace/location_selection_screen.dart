@@ -145,6 +145,7 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
       );
 
       if (addressData != null) {
+        final displayName = addressData['displayName'] ?? '';
         final street = addressData['street'] ?? '';
         final subLocality = addressData['subLocality'] ?? '';
         final locality = addressData['locality'] ?? '';
@@ -158,7 +159,9 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
         ];
 
         setState(() {
-          _selectedAddress = parts.isNotEmpty ? parts.join(', ') : 'Selected Point Location';
+          _selectedAddress = displayName.isNotEmpty 
+              ? displayName 
+              : (parts.isNotEmpty ? parts.join(', ') : 'Selected Point Location');
           _selectedCity = locality.isNotEmpty ? locality : null;
           _selectedArea = subLocality.isNotEmpty ? subLocality : null;
           _isReverseGeocoding = false;

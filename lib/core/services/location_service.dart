@@ -81,7 +81,17 @@ class LocationService {
       if (placemarks.isNotEmpty) {
         Placemark place = placemarks[0];
 
+        final displayName = [
+          place.name,
+          place.street,
+          place.subLocality,
+          place.locality,
+          place.administrativeArea,
+          place.country
+        ].where((s) => s != null && s.isNotEmpty).join(', ');
+
         return {
+          'displayName': displayName,
           'street': place.street ?? '',
           'subLocality': place.subLocality ?? '',
           'locality': place.locality ?? '', // City
@@ -99,6 +109,7 @@ class LocationService {
       final fallback = await reverseGeocodeNominatim(latitude, longitude);
       if (fallback != null) {
         return {
+          'displayName': fallback['displayName'] ?? '',
           'street': fallback['street'] ?? '',
           'subLocality': fallback['subLocality'] ?? '',
           'locality': fallback['locality'] ?? '',
@@ -261,14 +272,16 @@ class LocationService {
     };
   }
 
-  // Calculate distance between two coordinates (in kilometers)
+  // Calculate distance between two coordinates (in kilometers, scaled to approximate road/driving distance)
   double calculateDistance(
     double lat1,
     double lon1,
     double lat2,
     double lon2,
   ) {
-    return Geolocator.distanceBetween(lat1, lon1, lat2, lon2) / 1000;
+    final straightLineKm = Geolocator.distanceBetween(lat1, lon1, lat2, lon2) / 1000.0;
+    // Scale straight line to road distance using standard 1.8x multiplier
+    return straightLineKm * 1.8;
   }
 
   // Open location settings

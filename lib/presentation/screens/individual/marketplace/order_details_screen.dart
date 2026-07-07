@@ -209,8 +209,9 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen>
           if (mounted) {
             setState(() {
               _routePoints = points;
-              _routeDistanceKm = distanceMeters / 1000.0;
-              _routeDurationMins = durationSeconds / 60.0;
+              // Scale OSRM distance by 1.8 to approximate realistic driving distances
+              _routeDistanceKm = (distanceMeters / 1000.0) * 1.8;
+              _routeDurationMins = (durationSeconds / 60.0) * 1.8;
               _isLoadingRoute = false;
             });
           }
@@ -219,6 +220,9 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen>
         if (mounted) {
           setState(() {
             _routePoints = [LatLng(sellerLat!, sellerLng!), LatLng(buyerLat!, buyerLng!)];
+            // Scale fallback distance using road routing approximation multiplier
+            _routeDistanceKm = (Geolocator.distanceBetween(sellerLat!, sellerLng!, buyerLat!, buyerLng!) / 1000.0) * 1.8;
+            _routeDurationMins = _routeDistanceKm * 2.0;
             _isLoadingRoute = false;
           });
         }
@@ -228,6 +232,9 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen>
       if (mounted) {
         setState(() {
           _routePoints = [LatLng(sellerLat!, sellerLng!), LatLng(buyerLat!, buyerLng!)];
+          // Scale fallback distance using road routing approximation multiplier
+          _routeDistanceKm = (Geolocator.distanceBetween(sellerLat!, sellerLng!, buyerLat!, buyerLng!) / 1000.0) * 1.8;
+          _routeDurationMins = _routeDistanceKm * 2.0;
           _isLoadingRoute = false;
         });
       }
