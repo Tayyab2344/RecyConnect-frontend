@@ -219,6 +219,26 @@ class _MessagesScreenState extends State<MessagesScreen> {
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
+                                    )
+                                  else if (lastMsgObj != null)
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          'Seen',
+                                          style: TextStyle(
+                                            color: Colors.grey.shade500,
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Icon(
+                                          Icons.done_all,
+                                          size: 14,
+                                          color: Colors.blue.shade400,
+                                        ),
+                                      ],
                                     ),
                                 ],
                               ),

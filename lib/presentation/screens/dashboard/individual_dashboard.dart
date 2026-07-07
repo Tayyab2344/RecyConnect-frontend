@@ -21,6 +21,7 @@ import '../individual/transactions_screen.dart';
 import '../profile/profile_screen.dart';
 import '../rewards/rewards_screen.dart';
 import '../messages/messages_screen.dart';
+import '../../../core/services/chat_service.dart';
 import 'package:flutter/foundation.dart';
 
 
@@ -43,6 +44,7 @@ class _IndividualDashboardState extends State<IndividualDashboard> {
   bool _isLoading = true;
   List<Listing> _recentListings = [];
   List<Order> _recentOrders = [];
+  int _unreadChatCount = 0;
 
   @override
   void initState() {
@@ -128,6 +130,10 @@ class _IndividualDashboardState extends State<IndividualDashboard> {
         _recentListings = (results[2])['listings'] as List<Listing>? ?? [];
         _recentOrders = (results[3])['orders'] as List<Order>? ?? [];
         _isLoading = false;
+      });
+      // Fetch chat unread count in background
+      ChatService().getTotalUnreadCount().then((count) {
+        if (mounted) setState(() => _unreadChatCount = count);
       });
     } catch (e) {
       if (kDebugMode) print('Error loading stats: $e');
@@ -314,16 +320,39 @@ class _IndividualDashboardState extends State<IndividualDashboard> {
                   MaterialPageRoute(builder: (_) => const MessagesScreen()),
                 );
               },
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardColor,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
+                      ),
+                    ),
+                    child: Icon(Icons.chat_bubble_outline_rounded, color: Theme.of(context).iconTheme.color, size: 20),
                   ),
-                ),
-                child: Icon(Icons.chat_bubble_outline_rounded, color: Theme.of(context).iconTheme.color, size: 20),
+                  if (_unreadChatCount > 0)
+                    Positioned(
+                      right: -4,
+                      top: -4,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                        child: Text(
+                          _unreadChatCount > 9 ? '9+' : '$_unreadChatCount',
+                          style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
             const SizedBox(width: 10),

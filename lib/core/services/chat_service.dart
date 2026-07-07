@@ -33,6 +33,20 @@ class ChatService {
     return decoded['data'] ?? [];
   }
 
+  // Get total unread message count across all conversations
+  Future<int> getTotalUnreadCount() async {
+    try {
+      final conversations = await getConversations();
+      int total = 0;
+      for (final c in conversations) {
+        total += (c['unreadCount'] as num?)?.toInt() ?? 0;
+      }
+      return total;
+    } catch (_) {
+      return 0;
+    }
+  }
+
   // Get messages for a specific conversation with pagination
   Future<List<dynamic>> getMessages(int conversationId) async {
     final response = await http.get(

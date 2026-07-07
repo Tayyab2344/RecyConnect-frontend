@@ -21,6 +21,7 @@ import '../individual/transactions_screen.dart';
 import '../profile/profile_screen.dart';
 import '../rewards/rewards_screen.dart';
 import '../messages/messages_screen.dart';
+import '../../../core/services/chat_service.dart';
 
 class CompanyDashboard extends StatefulWidget {
   const CompanyDashboard({super.key});
@@ -42,6 +43,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   List<dynamic>? _recentActivity;
   List<dynamic>? _marketRates;
   bool _isLoading = true;
+  int _unreadChatCount = 0;
 
   @override
   void initState() {
@@ -75,6 +77,10 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
         _recentActivity = results[2] as List<dynamic>?;
         _marketRates = results[3] as List<dynamic>?;
         _isLoading = false;
+      });
+      // Fetch chat unread count in background
+      ChatService().getTotalUnreadCount().then((count) {
+        if (mounted) setState(() => _unreadChatCount = count);
       });
     } catch (e) {
       if (kDebugMode) print('Error loading company dashboard stats: $e');
@@ -198,16 +204,39 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                   MaterialPageRoute(builder: (_) => const MessagesScreen()),
                 );
               },
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardColor,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
+                      ),
+                    ),
+                    child: Icon(Icons.chat_bubble_outline_rounded, color: Theme.of(context).iconTheme.color, size: 20),
                   ),
-                ),
-                child: Icon(Icons.chat_bubble_outline_rounded, color: Theme.of(context).iconTheme.color, size: 20),
+                  if (_unreadChatCount > 0)
+                    Positioned(
+                      right: -4,
+                      top: -4,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                        child: Text(
+                          _unreadChatCount > 9 ? '9+' : '$_unreadChatCount',
+                          style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
             const SizedBox(width: 10),

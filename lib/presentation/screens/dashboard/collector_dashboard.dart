@@ -15,6 +15,7 @@ import '../messages/messages_screen.dart';
 import '../notifications/notifications_screen.dart';
 import '../collector/collector_map_screen.dart';
 import '../auth/login_screen.dart';
+import '../../../core/services/chat_service.dart';
 
 class CollectorDashboard extends StatefulWidget {
   const CollectorDashboard({super.key});
@@ -39,6 +40,7 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
   Map<String, dynamic> _earnings = {};
   int _activeTasksTab = 0;
   List<dynamic> _availableTasks = [];
+  int _unreadChatCount = 0;
 
   static const List<String> _taskProgression = [
     'EN_ROUTE_TO_PICKUP',
@@ -98,6 +100,10 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
         _earnings = results[4] as Map<String, dynamic>;
         _availableTasks = availableJobs;
         _isLoading = false;
+      });
+      // Fetch chat unread count in background
+      ChatService().getTotalUnreadCount().then((count) {
+        if (mounted) setState(() => _unreadChatCount = count);
       });
     } catch (e) {
       if (!mounted) return;
@@ -370,22 +376,68 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
               ],
             ),
           ),
-          Container(
-            decoration: BoxDecoration(
-              color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: IconButton(
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: IconButton(
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const MessagesScreen()),
+                      ),
+                      icon: Icon(
+                        Icons.chat_bubble_outline_rounded,
+                        color: isDark ? PremiumDesignSystem.darkTextPrimary : PremiumDesignSystem.textPrimary,
+                      ),
+                      tooltip: 'Messages',
+                    ),
+                  ),
+                  if (_unreadChatCount > 0)
+                    Positioned(
+                      right: -2,
+                      top: -2,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                        child: Text(
+                          _unreadChatCount > 9 ? '9+' : '$_unreadChatCount',
+                          style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                ],
               ),
-              icon: Icon(
-                Icons.notifications_none_outlined,
-                color: isDark ? PremiumDesignSystem.darkTextPrimary : PremiumDesignSystem.textPrimary,
+              const SizedBox(width: 8),
+              Container(
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: IconButton(
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                  ),
+                  icon: Icon(
+                    Icons.notifications_none_outlined,
+                    color: isDark ? PremiumDesignSystem.darkTextPrimary : PremiumDesignSystem.textPrimary,
+                  ),
+                  tooltip: 'Notifications',
+                ),
               ),
-              tooltip: 'Notifications',
-            ),
+            ],
           ),
         ],
       ),

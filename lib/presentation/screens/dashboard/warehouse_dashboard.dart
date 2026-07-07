@@ -21,6 +21,8 @@ import '../profile/profile_screen.dart';
 import '../warehouse/collector_management_screen.dart';
 import '../individual/transactions_screen.dart';
 import '../rewards/rewards_screen.dart';
+import '../messages/messages_screen.dart';
+import '../../../core/services/chat_service.dart';
 import 'package:flutter/foundation.dart';
 
 class WarehouseDashboard extends StatefulWidget {
@@ -45,6 +47,7 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
   List<dynamic>? _marketRates;
   List<Order> _pendingOrders = [];
   bool _isLoading = true;
+  int _unreadChatCount = 0;
 
   @override
   void initState() {
@@ -85,6 +88,10 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
         _pendingOrders = List<Order>.from(ordersData?['orders'] ?? []);
         
         _isLoading = false;
+      });
+      // Fetch chat unread count in background
+      ChatService().getTotalUnreadCount().then((count) {
+        if (mounted) setState(() => _unreadChatCount = count);
       });
     } catch (e) {
       if (kDebugMode) print('Error loading stats: $e');
@@ -200,6 +207,49 @@ class _WarehouseDashboardState extends State<WarehouseDashboard> {
         ),
         Row(
           children: [
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const MessagesScreen()),
+                );
+              },
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardColor,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
+                      ),
+                    ),
+                    child: Icon(Icons.chat_bubble_outline_rounded, color: Theme.of(context).iconTheme.color, size: 20),
+                  ),
+                  if (_unreadChatCount > 0)
+                    Positioned(
+                      right: -4,
+                      top: -4,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                        child: Text(
+                          _unreadChatCount > 9 ? '9+' : '$_unreadChatCount',
+                          style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
             GestureDetector(
               onTap: () {
                 _pageController.animateToPage(
