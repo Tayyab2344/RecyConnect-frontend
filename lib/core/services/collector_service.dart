@@ -487,5 +487,68 @@ class CollectorService {
     final decoded = _decode(response);
     return decoded['data'] ?? [];
   }
+
+  // Update collector info
+  Future<Map<String, dynamic>> updateCollector({
+    required int id,
+    required String name,
+    required String address,
+    required String contactNo,
+    XFile? profileImage,
+    XFile? cnicImage,
+  }) async {
+    final token = await _authService.getToken();
+    var request = http.MultipartRequest(
+      'PUT',
+      Uri.parse('${ApiConstants.baseUrl}/warehouse/collectors/$id'),
+    );
+
+    request.headers.addAll({
+      'Authorization': 'Bearer $token',
+    });
+
+    request.fields['name'] = name;
+    request.fields['address'] = address;
+    request.fields['contactNo'] = contactNo;
+
+    if (profileImage != null) {
+      request.files.add(await http.MultipartFile.fromPath(
+        'profileImage',
+        profileImage.path,
+      ));
+    }
+
+    if (cnicImage != null) {
+      request.files.add(await http.MultipartFile.fromPath(
+        'cnic',
+        cnicImage.path,
+      ));
+    }
+
+    var streamedResponse = await request.send();
+    var response = await http.Response.fromStream(streamedResponse);
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(error['message'] ?? 'Failed to update collector');
+    }
+  }
+
+  // Delete a collector
+  Future<Map<String, dynamic>> deleteCollector(int id) async {
+    final response = await http.delete(
+      Uri.parse('${ApiConstants.baseUrl}/warehouse/collectors/$id'),
+      headers: await _headers(),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(error['message'] ?? 'Failed to delete collector');
+    }
+  }
 }
 

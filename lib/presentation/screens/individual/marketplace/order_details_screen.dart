@@ -2152,9 +2152,30 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen>
         itemBuilder: (context, index) {
           final conv = _conversations[index];
           final bool isSelected = _selectedConversation?['id'] == conv['id'];
-          final String title = conv['type'] == 'BUYER_SELLER'
-              ? (_order!.buyerId == _currentUserId ? 'Chat with Seller' : 'Chat with Buyer')
-              : 'Chat with Collector';
+          
+          final otherPart = conv['otherParticipant'];
+          String title = 'Chat';
+          if (otherPart != null) {
+            final String role = (otherPart['role'] ?? '').toString().toLowerCase();
+            if (role == 'collector') {
+              title = 'Chat with Collector';
+            } else if (role == 'warehouse') {
+              title = 'Chat with Warehouse';
+            } else if (role == 'individual' || role == 'company') {
+              if (_order!.buyerId == otherPart['id']) {
+                title = 'Chat with Buyer';
+              } else {
+                title = 'Chat with Seller';
+              }
+            } else {
+              final String name = (otherPart['name'] ?? '').toString();
+              title = name.isNotEmpty ? 'Chat with $name' : 'Chat';
+            }
+          } else {
+            title = conv['type'] == 'BUYER_SELLER'
+                ? (_order!.buyerId == _currentUserId ? 'Chat with Seller' : 'Chat with Buyer')
+                : 'Chat with Collector';
+          }
 
           return GestureDetector(
             onTap: () {

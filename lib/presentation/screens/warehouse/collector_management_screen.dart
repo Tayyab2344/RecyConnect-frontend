@@ -121,6 +121,69 @@ class _CollectorManagementScreenState extends State<CollectorManagementScreen> {
     );
   }
 
+  void _deleteCollector(Map<String, dynamic> collector) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete Collector'),
+        content: Text('Are you sure you want to delete ${collector['name']}? This action is irreversible.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(dialogContext); // Close confirm dialog
+              
+              // Show loading dialog
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (_) => const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(24.0),
+                    child: CircularProgressIndicator(),
+                  ),
+                ),
+              );
+
+              try {
+                await _collectorService.deleteCollector(collector['id']);
+                if (mounted) {
+                  Navigator.pop(context); // Close loading dialog
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Collector deleted successfully')),
+                  );
+                  _loadCollectors();
+                }
+              } catch (e) {
+                if (mounted) {
+                  Navigator.pop(context); // Close loading dialog
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error deleting collector: $e')),
+                  );
+                }
+              }
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditCollectorDialog(Map<String, dynamic> collector) {
+    showDialog(
+      context: context,
+      builder: (context) => EditCollectorDialog(collector: collector),
+    ).then((updated) {
+      if (updated == true) {
+        _loadCollectors();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -250,21 +313,59 @@ class _CollectorManagementScreenState extends State<CollectorManagementScreen> {
                               ],
                             ),
                           ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: statusColor.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: statusColor.withValues(alpha: 0.3)),
-                            ),
-                            child: Text(
-                              statusText,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: statusColor,
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: statusColor.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: statusColor.withValues(alpha: 0.3)),
+                                ),
+                                child: Text(
+                                  statusText,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: statusColor,
+                                  ),
+                                ),
                               ),
-                            ),
+                              PopupMenuButton<String>(
+                                padding: EdgeInsets.zero,
+                                icon: const Icon(Icons.more_vert, color: Colors.grey),
+                                onSelected: (value) {
+                                  if (value == 'edit') {
+                                    _showEditCollectorDialog(collector);
+                                  } else if (value == 'delete') {
+                                    _deleteCollector(collector);
+                                  }
+                                },
+                                itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                                  const PopupMenuItem<String>(
+                                    value: 'edit',
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.edit, color: Colors.blue, size: 20),
+                                        SizedBox(width: 8),
+                                        Text('Edit Info'),
+                                      ],
+                                    ),
+                                  ),
+                                  const PopupMenuItem<String>(
+                                    value: 'delete',
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.delete, color: Colors.red, size: 20),
+                                        SizedBox(width: 8),
+                                        Text('Delete Collector', style: TextStyle(color: Colors.red)),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -649,6 +750,248 @@ class _AddCollectorDialogState extends State<AddCollectorDialog> {
                           )
                         : const Text(
                             'Create Collector',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class EditCollectorDialog extends StatefulWidget {
+  final Map<String, dynamic> collector;
+  const EditCollectorDialog({super.key, required this.collector});
+
+  @override
+  State<EditCollectorDialog> createState() => _EditCollectorDialogState();
+}
+
+class _EditCollectorDialogState extends State<EditCollectorDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late TextEditingController _nameController;
+  late TextEditingController _addressController;
+  late TextEditingController _contactController;
+  final CollectorService _collectorService = CollectorService();
+  
+  XFile? _profileImage;
+  XFile? _cnicImage;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.collector['name']);
+    _addressController = TextEditingController(text: widget.collector['address']);
+    _contactController = TextEditingController(text: widget.collector['contactNo']);
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _addressController.dispose();
+    _contactController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickImage(bool isProfile) async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      setState(() {
+        if (isProfile) {
+          _profileImage = image;
+        } else {
+          _cnicImage = image;
+        }
+      });
+    }
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      await _collectorService.updateCollector(
+        id: widget.collector['id'],
+        name: _nameController.text,
+        address: _addressController.text,
+        contactNo: _contactController.text,
+        profileImage: _profileImage,
+        cnicImage: _cnicImage,
+      );
+
+      if (mounted) {
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final profileImage = widget.collector['profileImage'];
+    
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        constraints: const BoxConstraints(maxWidth: 400),
+        child: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Edit Collector Info',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.primaryGreen,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                
+                // Profile Image Upload
+                Center(
+                  child: GestureDetector(
+                    onTap: () => _pickImage(true),
+                    child: Container(
+                      width: 100,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.grey[300]!),
+                        image: _profileImage != null
+                            ? DecorationImage(
+                                image: FileImage(File(_profileImage!.path)),
+                                fit: BoxFit.cover,
+                              )
+                            : (profileImage != null
+                                ? DecorationImage(
+                                    image: NetworkImage(profileImage),
+                                    fit: BoxFit.cover,
+                                  )
+                                : null),
+                      ),
+                      child: _profileImage == null && profileImage == null
+                          ? const Icon(Icons.camera_alt, size: 40, color: Colors.grey)
+                          : null,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Center(child: Text('Tap to change photo', style: TextStyle(fontSize: 12, color: Colors.grey))),
+                const SizedBox(height: 24),
+
+                TextFormField(
+                  controller: _nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Full Name',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.person),
+                  ),
+                  validator: (v) => v?.isEmpty == true ? 'Required' : null,
+                ),
+                const SizedBox(height: 16),
+
+                TextFormField(
+                  controller: _contactController,
+                  decoration: const InputDecoration(
+                    labelText: 'Contact Number',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.phone),
+                  ),
+                  keyboardType: TextInputType.phone,
+                  validator: (v) => v?.isEmpty == true ? 'Required' : null,
+                ),
+                const SizedBox(height: 16),
+
+                TextFormField(
+                  controller: _addressController,
+                  decoration: const InputDecoration(
+                    labelText: 'Address',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.location_on),
+                  ),
+                  maxLines: 2,
+                  validator: (v) => v?.isEmpty == true ? 'Required' : null,
+                ),
+                const SizedBox(height: 16),
+
+                // CNIC Upload
+                InkWell(
+                  onTap: () => _pickImage(false),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey[300]!),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.upload_file, color: _cnicImage != null ? AppTheme.primaryGreen : Colors.grey),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Text(
+                            _cnicImage != null ? 'New CNIC Selected' : 'Upload New CNIC Image (Optional)',
+                            style: TextStyle(
+                              color: _cnicImage != null ? AppTheme.primaryGreen : Colors.grey[600],
+                              fontWeight: _cnicImage != null ? FontWeight.bold : FontWeight.normal,
+                            ),
+                          ),
+                        ),
+                        if (_cnicImage != null) const Icon(Icons.check_circle, color: Colors.green),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _submit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryGreen,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Text(
+                            'Save Changes',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,

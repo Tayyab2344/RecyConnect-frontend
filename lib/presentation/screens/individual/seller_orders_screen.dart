@@ -900,16 +900,6 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
                       ],
                     ),
                   ),
-                  if (order.buyer?.contactNo != null)
-                    IconButton(
-                      icon: Icon(Icons.phone, color: isDark ? AppTheme.darkPrimaryGreen : AppTheme.primaryGreen),
-                      onPressed: () {
-                        // Show contact info
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Contact: ${order.buyer!.contactNo}')),
-                        );
-                      },
-                    ),
                 ],
               ),
             ),
