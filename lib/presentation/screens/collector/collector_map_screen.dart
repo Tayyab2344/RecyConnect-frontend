@@ -266,9 +266,9 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
         if (mounted) {
           setState(() {
             _routePoints = points;
-            // Scale OSRM distance by 1.8 to approximate realistic driving distances
-            _totalDistanceKm = (distanceMeters / 1000.0) * 1.8;
-            _totalDurationMinutes = (durationSeconds / 60.0) * 1.8;
+            // Use actual OSRM driving distance directly
+            _totalDistanceKm = distanceMeters / 1000.0;
+            _totalDurationMinutes = durationSeconds / 60.0;
             _isLoadingRoute = false;
           });
         }
@@ -280,8 +280,8 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
         if (mounted) {
           setState(() {
             _routePoints = [start, target];
-            // Scale fallback distance using road routing approximation multiplier
-            _totalDistanceKm = (directDistanceMeters / 1000.0) * 1.8;
+            // Scale fallback distance using realistic city road circuitry factor (1.35x)
+            _totalDistanceKm = (directDistanceMeters / 1000.0) * 1.35;
             _totalDurationMinutes = _totalDistanceKm * 2.0; // Estimate 2 mins per km
             _isLoadingRoute = false;
           });
@@ -296,8 +296,8 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
         setState(() {
           _isLoadingRoute = false;
           _routePoints = [start, target];
-          // Scale fallback distance using road routing approximation multiplier
-          _totalDistanceKm = (directDistanceMeters / 1000.0) * 1.8;
+          // Scale fallback distance using realistic city road circuitry factor (1.35x)
+          _totalDistanceKm = (directDistanceMeters / 1000.0) * 1.35;
           _totalDurationMinutes = _totalDistanceKm * 2.0;
         });
       }

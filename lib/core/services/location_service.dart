@@ -280,8 +280,8 @@ class LocationService {
     double lon2,
   ) {
     final straightLineKm = Geolocator.distanceBetween(lat1, lon1, lat2, lon2) / 1000.0;
-    // Scale straight line to road distance using standard 1.8x multiplier
-    return straightLineKm * 1.8;
+    // Scale straight line to road distance using standard 1.35x multiplier
+    return straightLineKm * 1.35;
   }
 
   // Open location settings

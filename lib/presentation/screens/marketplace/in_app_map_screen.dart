@@ -168,9 +168,9 @@ class _InAppMapScreenState extends State<InAppMapScreen> with TickerProviderStat
           if (mounted) {
             setState(() {
               _routePoints = points;
-              // Scale OSRM distance by 1.8 to approximate realistic driving distances for user's FYP demonstration
-              _routeDistanceKm = (distanceMeters / 1000.0) * 1.8;
-              _routeDurationMins = (durationSeconds / 60.0) * 1.8;
+              // Use the actual OSRM driving distance directly (real road path)
+              _routeDistanceKm = distanceMeters / 1000.0;
+              _routeDurationMins = durationSeconds / 60.0;
               _isLoading = false;
               if (points.length > 1) {
                 _bearing = _calculateBearing(points[0], points[1]);
@@ -191,13 +191,13 @@ class _InAppMapScreenState extends State<InAppMapScreen> with TickerProviderStat
     if (mounted) {
       setState(() {
         _routePoints = [_currentPosition!, widget.destination];
-        // Scale fallback distance using road routing approximation multiplier
+        // Scale fallback distance using realistic city road circuitry factor (1.35x)
         _routeDistanceKm = (Geolocator.distanceBetween(
           _currentPosition!.latitude,
           _currentPosition!.longitude,
           widget.destination.latitude,
           widget.destination.longitude,
-        ) / 1000.0) * 1.8;
+        ) / 1000.0) * 1.35;
         _routeDurationMins = _routeDistanceKm * 2.0; // Assume 30km/h average
         _isLoading = false;
         _bearing = _calculateBearing(_currentPosition!, widget.destination);
