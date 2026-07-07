@@ -13,10 +13,64 @@ import '../di/service_locator.dart';
 import '../../features/notification/data/models/notification_model.dart';
 import '../../features/notification/presentation/providers/notification_provider.dart';
 
-
+// ──────────────────────────────────────────────────────────────────────────────
+// Top-level background handler — MUST be a top-level function (not a method).
+// This runs in its own isolate when the app is killed/background.
+// ──────────────────────────────────────────────────────────────────────────────
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
+
+  // Create a local-notification plugin instance inside the isolate
+  final FlutterLocalNotificationsPlugin localPlugin =
+      FlutterLocalNotificationsPlugin();
+
+  // Ensure the notification channel exists
+  await localPlugin
+      .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>()
+      ?.createNotificationChannel(
+        const AndroidNotificationChannel(
+          'orders',
+          'Order Notifications',
+          description: 'Notifications for new orders and order updates',
+          importance: Importance.high,
+        ),
+      );
+
+  const androidInit = AndroidInitializationSettings('@mipmap/launcher_icon');
+  const initSettings = InitializationSettings(
+    android: androidInit,
+    iOS: DarwinInitializationSettings(),
+  );
+  await localPlugin.initialize(settings: initSettings);
+
+  // Show the notification locally so the user sees it even when the app is killed
+  final notification = message.notification;
+  final String title = notification?.title ?? message.data['title'] ?? 'RecyConnect';
+  final String body = notification?.body ?? message.data['message'] ?? '';
+
+  if (title.isNotEmpty || body.isNotEmpty) {
+    await localPlugin.show(
+      id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      title: title,
+      body: body,
+      notificationDetails: const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'orders',
+          'Order Notifications',
+          channelDescription: 'Notifications for new orders and order updates',
+          importance: Importance.high,
+          priority: Priority.high,
+          icon: '@mipmap/launcher_icon',
+          sound: RawResourceAndroidNotificationSound('notification'),
+          playSound: true,
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
+      payload: jsonEncode(message.data),
+    );
+  }
 }
 
 class NotificationService {
@@ -33,8 +87,10 @@ class NotificationService {
   );
 
   static Future<void> initialize() async {
+    // Register the background handler FIRST
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
+    // Create the notification channel
     await _localNotifications
         .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin>()
@@ -50,10 +106,31 @@ class NotificationService {
     await _localNotifications.initialize(
       settings: initSettings,
     );
+
+    // Request permission early on (Android 13+ needs POST_NOTIFICATIONS runtime permission)
     await _requestPermission();
 
+    // ── Foreground messages ──
     FirebaseMessaging.onMessage.listen(_showForegroundNotification);
+
+    // ── Background tap (app was in background, user taps notification) ──
+    FirebaseMessaging.onMessageOpenedApp.listen(_handleNotificationTap);
+
+    // ── Terminated tap (app was killed, launched by tapping notification) ──
+    final initialMessage = await _messaging.getInitialMessage();
+    if (initialMessage != null) {
+      _handleNotificationTap(initialMessage);
+    }
+
+    // ── Token refresh ──
     _messaging.onTokenRefresh.listen((token) => _saveTokenToBackend(token));
+
+    // ── Ensure foreground notifications are shown on iOS and Android ──
+    await _messaging.setForegroundNotificationPresentationOptions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
   }
 
   static Future<void> registerDeviceToken() async {
@@ -71,12 +148,18 @@ class NotificationService {
   }
 
   static Future<void> _requestPermission() async {
-    await _messaging.requestPermission(
+    final settings = await _messaging.requestPermission(
       alert: true,
       badge: true,
       sound: true,
+      provisional: false,
     );
 
+    if (kDebugMode) {
+      print('[FCM] Authorization status: ${settings.authorizationStatus}');
+    }
+
+    // Android 13+ runtime notification permission
     await _localNotifications
         .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin>()
@@ -103,11 +186,20 @@ class NotificationService {
     }
   }
 
+  /// Handles a notification tap when the app is in background or was terminated
+  static void _handleNotificationTap(RemoteMessage message) {
+    if (kDebugMode) {
+      print('[FCM] Notification tapped: ${message.data}');
+    }
+    // Optionally navigate to a specific screen based on message.data['type']
+  }
+
   static Future<void> _showForegroundNotification(RemoteMessage message) async {
     final notification = message.notification;
-    if (notification == null) {
-      return;
-    }
+    final String title = notification?.title ?? message.data['title'] ?? '';
+    final String body = notification?.body ?? message.data['message'] ?? '';
+
+    if (title.isEmpty && body.isEmpty) return;
 
     try {
       final dataId = message.data['id'];
@@ -116,8 +208,8 @@ class NotificationService {
       final model = NotificationModel(
         id: id,
         userId: 0,
-        title: notification.title ?? '',
-        message: notification.body ?? '',
+        title: title,
+        message: body,
         type: message.data['type'] ?? 'SYSTEM',
         priority: message.data['priority'] ?? 'MEDIUM',
         isRead: false,
@@ -133,9 +225,9 @@ class NotificationService {
     }
 
     await _localNotifications.show(
-      id: notification.hashCode,
-      title: notification.title,
-      body: notification.body,
+      id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      title: title,
+      body: body,
       notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           _ordersChannel.id,
@@ -145,9 +237,9 @@ class NotificationService {
           priority: Priority.high,
           icon: '@mipmap/launcher_icon',
           styleInformation: BigTextStyleInformation(
-            notification.body ?? '',
+            body,
             htmlFormatBigText: true,
-            contentTitle: notification.title,
+            contentTitle: title,
             htmlFormatContentTitle: true,
           ),
         ),
