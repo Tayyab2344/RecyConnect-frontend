@@ -443,7 +443,7 @@ class _BulkSellScreenState extends State<BulkSellScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'AI Detected (${result.sourceDisplay}): ${result.displayName} (${result.confidencePercent})',
+              'Image Classified: ${result.displayName} (${result.confidencePercent})',
             ),
             backgroundColor: const Color(0xFF9C27B0),
             duration: const Duration(seconds: 3),

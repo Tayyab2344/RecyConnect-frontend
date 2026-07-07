@@ -597,7 +597,7 @@ class _CreateListingScreenState extends State<CreateListingScreen>
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'AI Detected (${result.sourceDisplay}): ${result.displayName} (${result.confidencePercent})',
+                      'Image Classified: ${result.displayName} (${result.confidencePercent})',
                     ),
                   ),
                 ],

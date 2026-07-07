@@ -283,16 +283,7 @@ class ClassificationResult {
 
   /// Human-readable source name for UI display
   String get sourceDisplay {
-    switch (source) {
-      case 'groq':
-        return 'Groq AI';
-      case 'gemini':
-        return 'Gemini AI';
-      case 'tflite':
-        return 'Device AI';
-      default:
-        return 'AI';
-    }
+    return 'Image Classified';
   }
 
   /// Confidence as a percentage string (e.g., "94%")
