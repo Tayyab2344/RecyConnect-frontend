@@ -284,7 +284,10 @@ class _CollectorManagementScreenState extends State<CollectorManagementScreen> {
                                   ),
                                 ),
                                 const SizedBox(height: 2),
-                                Row(
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 2,
+                                  crossAxisAlignment: WrapCrossAlignment.center,
                                   children: [
                                     Text(
                                       'ID: ${collector['collectorId']}',
@@ -294,12 +297,10 @@ class _CollectorManagementScreenState extends State<CollectorManagementScreen> {
                                         fontSize: 12,
                                       ),
                                     ),
-                                    const SizedBox(width: 8),
                                     Text(
                                       '•',
                                       style: TextStyle(color: Colors.grey[400], fontSize: 12),
                                     ),
-                                    const SizedBox(width: 8),
                                     Text(
                                       'Pass: ${collector['permissions']?['tempPassword'] ?? 'N/A'}',
                                       style: TextStyle(
