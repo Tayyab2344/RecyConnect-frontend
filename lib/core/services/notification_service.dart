@@ -51,6 +51,21 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   final String body = notification?.body ?? message.data['message'] ?? '';
 
   if (title.isNotEmpty || body.isNotEmpty) {
+    // Persist the notification ID so login won't re-show it
+    final dataId = message.data['id'];
+    if (dataId != null) {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final existing = prefs.getStringList('shown_notification_ids') ?? [];
+        final idSet = existing.toSet()..add(dataId.toString());
+        final trimmed = idSet.toList();
+        if (trimmed.length > 200) {
+          trimmed.removeRange(0, trimmed.length - 200);
+        }
+        await prefs.setStringList('shown_notification_ids', trimmed);
+      } catch (_) {}
+    }
+
     await localPlugin.show(
       id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
       title: title,
@@ -63,8 +78,6 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
           importance: Importance.high,
           priority: Priority.high,
           icon: '@mipmap/launcher_icon',
-          sound: RawResourceAndroidNotificationSound('notification'),
-          playSound: true,
         ),
         iOS: DarwinNotificationDetails(),
       ),
@@ -85,6 +98,9 @@ class NotificationService {
     description: 'Notifications for new orders and order updates',
     importance: Importance.high,
   );
+
+  // ── Track notification IDs already delivered by FCM push (prevents duplicates) ──
+  static final Set<int> _deliveredIds = {};
 
   static Future<void> initialize() async {
     // Register the background handler FIRST
@@ -201,10 +217,15 @@ class NotificationService {
 
     if (title.isEmpty && body.isEmpty) return;
 
+    int notifId = DateTime.now().millisecondsSinceEpoch;
     try {
       final dataId = message.data['id'];
-      final id = dataId != null ? (int.tryParse(dataId) ?? DateTime.now().millisecondsSinceEpoch) : DateTime.now().millisecondsSinceEpoch;
-      
+      final id = dataId != null ? (int.tryParse(dataId) ?? notifId) : notifId;
+      notifId = id;
+
+      // Track this ID so the pending-check on login won't re-show it
+      _deliveredIds.add(id);
+
       final model = NotificationModel(
         id: id,
         userId: 0,
@@ -224,8 +245,11 @@ class NotificationService {
       }
     }
 
+    // Persist the delivered ID immediately so background handler & login won't duplicate
+    _persistDeliveredId(notifId);
+
     await _localNotifications.show(
-      id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      id: notifId % 2147483647, // keep within 32-bit int range
       title: title,
       body: body,
       notificationDetails: NotificationDetails(
@@ -249,6 +273,23 @@ class NotificationService {
     );
   }
 
+  /// Persist a delivered notification ID to SharedPreferences so it survives app restarts
+  static Future<void> _persistDeliveredId(int id) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final existing = prefs.getStringList('shown_notification_ids') ?? [];
+      final idSet = existing.toSet();
+      idSet.add(id.toString());
+
+      // Keep only the latest 200 IDs to prevent unbounded growth
+      final trimmed = idSet.toList();
+      if (trimmed.length > 200) {
+        trimmed.removeRange(0, trimmed.length - 200);
+      }
+      await prefs.setStringList('shown_notification_ids', trimmed);
+    } catch (_) {}
+  }
+
   static Future<void> showLocalNotification({
     required int id,
     required String title,
@@ -256,7 +297,7 @@ class NotificationService {
     Map<String, dynamic>? payload,
   }) async {
     await _localNotifications.show(
-      id: id,
+      id: id % 2147483647,
       title: title,
       body: body,
       notificationDetails: NotificationDetails(
@@ -278,6 +319,8 @@ class NotificationService {
     );
   }
 
+  /// On login, check for unread notifications the user hasn't seen yet.
+  /// Instead of firing them all individually (burst), show a single summary.
   static Future<void> checkAndShowPendingNotifications() async {
     try {
       final authToken = await SecureStorageService.readToken();
@@ -291,34 +334,60 @@ class NotificationService {
 
       if (unreadNotifications.isEmpty) return;
 
+      // Load previously shown/delivered IDs
       final prefs = await SharedPreferences.getInstance();
       final shownIdsStrList = prefs.getStringList('shown_notification_ids') ?? [];
       final shownIds = shownIdsStrList.map((e) => int.tryParse(e)).whereType<int>().toSet();
 
-      bool updated = false;
-      for (final n in unreadNotifications) {
-        if (!shownIds.contains(n.id)) {
-          await showLocalNotification(
-            id: n.id,
-            title: n.title,
-            body: n.message,
-            payload: {
-              'type': n.type,
-              'id': n.id.toString(),
-              'actionUrl': n.actionUrl,
-            },
-          );
-          shownIds.add(n.id);
-          updated = true;
-        }
-      }
+      // Merge in-memory delivered IDs (from foreground handler)
+      shownIds.addAll(_deliveredIds);
 
-      if (updated) {
-        await prefs.setStringList(
-          'shown_notification_ids',
-          shownIds.map((e) => e.toString()).toList(),
+      // Filter to truly unseen notifications
+      final unseenNotifications = unreadNotifications
+          .where((n) => !shownIds.contains(n.id))
+          .toList();
+
+      if (unseenNotifications.isEmpty) return;
+
+      // Show only ONE notification instead of a burst of many
+      if (unseenNotifications.length == 1) {
+        // Single missed notification — show it normally
+        final n = unseenNotifications.first;
+        await showLocalNotification(
+          id: n.id,
+          title: n.title,
+          body: n.message,
+          payload: {
+            'type': n.type,
+            'id': n.id.toString(),
+            'actionUrl': n.actionUrl,
+          },
+        );
+      } else {
+        // Multiple missed — show a single grouped summary
+        final count = unseenNotifications.length;
+        final latest = unseenNotifications.first;
+        await showLocalNotification(
+          id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+          title: 'You have $count new notifications',
+          body: 'Latest: ${latest.title}',
+          payload: {
+            'type': 'SUMMARY',
+          },
         );
       }
+
+      // Mark all unseen as shown
+      for (final n in unseenNotifications) {
+        shownIds.add(n.id);
+      }
+
+      // Trim to latest 200 entries and save
+      final trimmed = shownIds.map((e) => e.toString()).toList();
+      if (trimmed.length > 200) {
+        trimmed.removeRange(0, trimmed.length - 200);
+      }
+      await prefs.setStringList('shown_notification_ids', trimmed);
     } catch (e) {
       if (kDebugMode) {
         print('Error checking and showing pending notifications: $e');
