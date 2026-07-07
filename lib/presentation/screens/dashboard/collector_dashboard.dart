@@ -160,19 +160,31 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
     }
   }
 
-  Future<void> _acceptAndStartRouteForTask(Map<String, dynamic> task) async {
+  /// Accept the task only (ASSIGNED → ACCEPTED) without starting the route.
+  /// Lets the collector accept multiple orders and choose which to start.
+  Future<void> _acceptTask(Map<String, dynamic> task) async {
     _showLoadingDialog();
     try {
-      // Automatically accept first
       await _collectorService.acceptTask(task['id'] as int);
-      // Then start the route
+      await _loadCollectorData(showSkeleton: false);
+      if (mounted) Navigator.pop(context);
+      _showMessage('Task accepted — tap "Start Order" when ready');
+    } catch (e) {
+      if (mounted) Navigator.pop(context);
+      _showMessage(e.toString(), isError: true);
+    }
+  }
+
+  /// Start the route for an already-accepted task (ACCEPTED → EN_ROUTE_TO_PICKUP).
+  Future<void> _startRouteForTask(Map<String, dynamic> task) async {
+    _showLoadingDialog();
+    try {
       await _collectorService.updateTaskStatus(task['id'] as int, 'EN_ROUTE_TO_PICKUP');
-      // Sync location without full reload
       await _syncLocation(taskId: task['id'] as int, status: 'EN_ROUTE_TO_PICKUP', reload: false);
       await _loadCollectorData(showSkeleton: false);
       if (mounted) Navigator.pop(context);
       _showMessage('Route started');
-      _goToTab(2); // Automatically transition to the in-app map screen
+      _goToTab(2); // Switch to the map screen
     } catch (e) {
       if (mounted) Navigator.pop(context);
       _showMessage(e.toString(), isError: true);
@@ -981,12 +993,14 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
 
   Widget _buildTaskActions(Map<String, dynamic> task) {
     final status = task['status']?.toString() ?? 'ASSIGNED';
+
+    // ── ASSIGNED: Accept or Decline ──
     if (status == 'ASSIGNED') {
       return Row(
         children: [
           Expanded(
             child: FilledButton.icon(
-              onPressed: () => _acceptAndStartRouteForTask(task),
+              onPressed: () => _acceptTask(task),
               icon: const Icon(Icons.check),
               label: const Text('Accept'),
             ),
@@ -1011,6 +1025,24 @@ class _CollectorDashboardState extends State<CollectorDashboard> {
             },
             style: OutlinedButton.styleFrom(foregroundColor: Colors.red, side: const BorderSide(color: Colors.red)),
             child: const Text('Decline'),
+          ),
+        ],
+      );
+    }
+
+    // ── ACCEPTED: Start Order (collector chooses when to begin) ──
+    if (status == 'ACCEPTED') {
+      return Row(
+        children: [
+          Expanded(
+            child: FilledButton.icon(
+              onPressed: () => _startRouteForTask(task),
+              icon: const Icon(Icons.play_arrow_rounded),
+              label: const Text('Start Order'),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppTheme.primaryGreen,
+              ),
+            ),
           ),
           const SizedBox(width: 8),
           IconButton.filledTonal(
