@@ -672,17 +672,12 @@ class _RewardsScreenState extends State<RewardsScreen> with TickerProviderStateM
   Widget _buildQuickOverviewStats(Map<String, dynamic> status, bool isDark) {
     final int badgesCount = (status['badges'] as List?)?.length ?? 0;
 
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 16,
-      mainAxisSpacing: 16,
-      childAspectRatio: 1.5,
-      children: [
-        _buildStatBox('Badges Unlocked', '$badgesCount / 5', Icons.workspace_premium, Colors.amber, isDark),
-        _buildStatBox('Tier Boost', 'x1.2 Multiplier', Icons.bolt, AppColors.neonCyan, isDark),
-      ],
+    return _buildStatBox(
+      'Badges Unlocked',
+      '$badgesCount / 5',
+      Icons.workspace_premium,
+      Colors.amber,
+      isDark,
     );
   }
 
