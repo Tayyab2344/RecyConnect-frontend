@@ -222,7 +222,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen>
             _routePoints = [LatLng(sellerLat!, sellerLng!), LatLng(buyerLat!, buyerLng!)];
             // Scale fallback distance using realistic city road circuitry factor (1.35x)
             _routeDistanceKm = (Geolocator.distanceBetween(sellerLat!, sellerLng!, buyerLat!, buyerLng!) / 1000.0) * 1.35;
-            _routeDurationMins = _routeDistanceKm * 2.0;
+            _routeDurationMins = _routeDistanceKm! * 2.0;
             _isLoadingRoute = false;
           });
         }
@@ -234,7 +234,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen>
           _routePoints = [LatLng(sellerLat!, sellerLng!), LatLng(buyerLat!, buyerLng!)];
           // Scale fallback distance using realistic city road circuitry factor (1.35x)
           _routeDistanceKm = (Geolocator.distanceBetween(sellerLat!, sellerLng!, buyerLat!, buyerLng!) / 1000.0) * 1.35;
-          _routeDurationMins = _routeDistanceKm * 2.0;
+          _routeDurationMins = _routeDistanceKm! * 2.0;
           _isLoadingRoute = false;
         });
       }
