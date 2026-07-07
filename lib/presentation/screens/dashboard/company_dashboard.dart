@@ -409,6 +409,9 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
             _buildQuickActionCard('My Listings', Icons.local_offer_outlined, const Color(0xFFFFA726), () {
               Navigator.push(context, MaterialPageRoute(builder: (context) => const MyListingsScreen()));
             }),
+            _buildQuickActionCard('My Purchases', Icons.shopping_bag_outlined, const Color(0xFF009688), () {
+              _pageController.animateToPage(2, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+            }),
             _buildQuickActionCard('Manage Sales', Icons.point_of_sale_outlined, Colors.orange, () {
               Navigator.push(context, MaterialPageRoute(builder: (context) => const SellerOrdersScreen()));
             }),
@@ -417,6 +420,12 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
             }),
             _buildQuickActionCard('My Rewards', Icons.emoji_events_outlined, const Color(0xFFFF9800), () {
               Navigator.push(context, MaterialPageRoute(builder: (context) => const RewardsScreen()));
+            }),
+            _buildQuickActionCard('Messages', Icons.chat_bubble_outline_rounded, const Color(0xFF03A9F4), () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const MessagesScreen()));
+            }),
+            _buildQuickActionCard('EcoAssist', Icons.smart_toy_outlined, const Color(0xFFE91E63), () {
+              EcoAssistSheet.show(context);
             }),
           ],
         ),
