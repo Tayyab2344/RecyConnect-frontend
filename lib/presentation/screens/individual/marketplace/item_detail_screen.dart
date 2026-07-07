@@ -577,7 +577,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                                       Icon(Icons.eco_rounded, color: lightGreen, size: 20),
                                       const SizedBox(height: 2),
                                       Text(
-                                        '+${(widget.item.estimatedWeight * 10).toInt()} pts',
+                                        '+10 pts',
                                         style: TextStyle(
                                           fontSize: 11,
                                           fontWeight: FontWeight.w700,

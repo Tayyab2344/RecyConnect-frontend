@@ -58,21 +58,21 @@ abstract class AppColors {
   static const Color infoDark = Color(0xFF0288D1);
 
   // ============================================
-  // DARK MODE PALETTE
+  // DARK MODE PALETTE (Sleek Pitch Black & Dark Grey)
   // ============================================
-  static const Color darkBackground = Color(0xFF121212);
-  static const Color darkBackgroundAlt = Color(0xFF161616);
-  static const Color darkSurface = Color(0xFF1E1E1E);
-  static const Color darkCard = Color(0xFF252525);
-  static const Color darkCardElevated = Color(0xFF2D2D2D);
-  static const Color darkBorder = Color(0xFF2E5930);
-  static const Color darkTextPrimary = Color(0xFFE8F5E9);
-  static const Color darkTextSecondary = Color(0xFFA5D6A7);
+  static const Color darkBackground = Color(0xFF0A0A0A);
+  static const Color darkBackgroundAlt = Color(0xFF000000);
+  static const Color darkSurface = Color(0xFF121212);
+  static const Color darkCard = Color(0xFF161616);
+  static const Color darkCardElevated = Color(0xFF1A1A1A);
+  static const Color darkBorder = Color(0xFF222222);
+  static const Color darkTextPrimary = Color(0xFFFFFFFF);
+  static const Color darkTextSecondary = Color(0xFF9E9E9E);
 
   // Dark mode greens
-  static const Color darkPrimaryGreen = Color(0xFF66BB6A);
+  static const Color darkPrimaryGreen = Color(0xFF4CAF50);
   static const Color darkSecondaryGreen = Color(0xFF81C784);
-  static const Color darkAccentGreen = Color(0xFF4CAF50);
+  static const Color darkAccentGreen = Color(0xFF2E7D32);
 
   // ============================================
   // LIGHT MODE GRADIENT BACKGROUNDS

@@ -222,7 +222,7 @@ class _IndividualDashboardState extends State<IndividualDashboard> {
             ? const LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [Color(0xFF1B3A2F), Color(0xFF0F1F19)],
+                colors: [Color(0xFF0A0A0A), Color(0xFF000000)],
               )
             : null,
       ),
@@ -898,8 +898,6 @@ class _IndividualDashboardState extends State<IndividualDashboard> {
     final progressPercent = (nextLevelInfo?['progressPercent'] as num?)?.toDouble() ?? 0.0;
     final pointsNeeded = nextLevelInfo?['pointsNeeded'] ?? 0;
 
-    final primaryColor = isDark ? const Color(0xFF4CAF50) : const Color(0xFF2E7D32);
-
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -915,20 +913,14 @@ class _IndividualDashboardState extends State<IndividualDashboard> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: isDark
-                ? [const Color(0xFF1A3A2F), const Color(0xFF0D1F1A)]
-                : [Colors.green.shade50, Colors.green.shade100],
+                ? [const Color(0xFF161616), const Color(0xFF0C0C0C)]
+                : [const Color(0xFFFFFFFF), const Color(0xFFF9F9F9)],
           ),
           border: Border.all(
-            color: isDark ? primaryColor.withValues(alpha: 0.3) : Colors.green.shade200,
-            width: 1.5,
+            color: isDark ? const Color(0xFF222222) : const Color(0xFFEAEAEA),
+            width: 1.0,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          boxShadow: const [],
         ),
         child: Column(
           children: [

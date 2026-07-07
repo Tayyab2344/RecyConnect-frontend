@@ -148,10 +148,14 @@ class ThemeFactory {
   static CardThemeData _buildCardTheme({required bool isDark}) {
     return CardThemeData(
       color: isDark ? AppColors.darkCard : AppColors.white,
-      elevation: DesignTokens.elevationLow,
-      shadowColor: isDark ? Colors.black45 : Colors.black12,
+      elevation: 0,
+      shadowColor: Colors.transparent,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(DesignTokens.cardRadius),
+        side: BorderSide(
+          color: isDark ? const Color(0xFF222222) : const Color(0xFFEAEAEA),
+          width: 1.0,
+        ),
       ),
       margin: const EdgeInsets.all(DesignTokens.spacing8),
     );

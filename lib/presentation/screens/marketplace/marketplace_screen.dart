@@ -377,7 +377,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> with SingleTicker
                              const Icon(Icons.eco, size: 10, color: AppColors.primaryGreen),
                              const SizedBox(width: 2),
                              // Simulated Eco Points calc
-                             Text("${(listing.estimatedWeight * 10).toInt()} Pts", 
+                             Text("10 Pts", 
                                 style: const TextStyle(fontSize: 10, color: AppColors.primaryGreen)),
                            ],
                          ),
